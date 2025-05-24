@@ -1,1 +1,10 @@
-outliyr-framework/docisfy/*
+# Ignore everything in docsify
+/outliyr-framework/docsify/*
+
+# But don't ignore these two files
+!/outliyr-framework/docsify/index.html
+!/outliyr-framework/docsify/.nojekyll
+
+
+# Ignore .idea files
+/.idea/*

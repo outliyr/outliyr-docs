@@ -15,22 +15,21 @@ function transformMarkdown(input) {
             return `> [!${style.toLowerCase()}]\n> ${cleaned}`;
         })
 
-        // <details><summary>Title</summary> → custom-styled collapsible
+        // <details><summary>Title</summary>
         .replace(/<details>\s*<summary>(.*?)<\/summary>/g, (_m, title) => `<div class="collapse">\n<p class="collapse-title">${title}</p>\n<div class="collapse-content">`)
         .replace(/<\/details>/g, '</div>\n</div>')
 
-        // Convert <figure><img ...><figcaption>...</figcaption></figure> to Markdown ![]('caption')
-        .replace(/<figure>\s*<img src="([^"]+)" alt="([^"]*)">\s*<figcaption>(.*?)<\/figcaption>\s*<\/figure>/g,
-            (_match, src, alt, caption) => `![${alt}](${src} '${caption}')`)
+        // Convert <figure><img ...><figcaption>...</figcaption></figure> to <img ... title="...">
+        .replace(/<figure>\s*<img\s+src="(?:\.\.\/)*\.gitbook\/assets\/([^"]+)"([^>]*)>\s*<figcaption>\s*<p>(.*?)<\/p>\s*<\/figcaption>\s*<\/figure>/g,
+            (_m, src, attrs = '', caption) =>
+                `<img src="/.gitbook/assets/${src}"${attrs} title="${caption.trim()}">`)
 
-        // Handle <figure><img> only (no figcaption)
-        .replace(/<figure>\s*<img src="([^"]+)" alt="([^"]*)">\s*<\/figure>/g,
-            (_match, src, alt) => `![${alt}](${src})`)
+        // Convert <figure><img ...></figure> (no caption)
+        .replace(/<figure>\s*<img\s+src="(?:\.\.\/)*\.gitbook\/assets\/([^"]+)"([^>]*)>\s*<\/figure>/g,
+            (_m, src, attrs = '') =>
+                `<img src="/.gitbook/assets/${src}"${attrs}>`)
 
-        // Fix GitBook image paths
-        .replace(/<img src="(\.\.\/)*\.gitbook\/assets\//g, '<img src="/.gitbook/assets/')
-
-        // Unescape underscores
+        // Unescape GitBook underscores
         .replace(/\\_/g, '_');
 }
 
@@ -49,15 +48,13 @@ function copyAndTransform(srcDir, outDir) {
             const transformed = transformMarkdown(raw);
             fs.writeFileSync(outPath, transformed, 'utf8');
         } else {
-            fs.copyFileSync(srcPath, outPath); // Copy non-md files directly
+            fs.copyFileSync(srcPath, outPath);
         }
     }
 }
 
-// Step 1: Copy and transform ./docs -> ./docsify
 copyAndTransform('./docs', './docsify');
 
-// Step 2: Make summary path absolute links
 const summaryPath = './docsify/SUMMARY.md';
 if (fs.existsSync(summaryPath)) {
     let summary = fs.readFileSync(summaryPath, 'utf8');
@@ -66,7 +63,6 @@ if (fs.existsSync(summaryPath)) {
     console.log('✅ Converted SUMMARY.md links to absolute paths');
 }
 
-// Step 3: Copy image assets to /docsify/.gitbook/assets
 const gitbookAssetsSrc = './docs/.gitbook';
 const gitbookAssetsDst = './docsify/.gitbook';
 if (fs.existsSync(gitbookAssetsSrc)) {
@@ -75,3 +71,4 @@ if (fs.existsSync(gitbookAssetsSrc)) {
 }
 
 console.log('✅ Docs transformed to ./docsify');
+
