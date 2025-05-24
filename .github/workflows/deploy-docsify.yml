@@ -18,15 +18,17 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies (if needed)
+        working-directory: ./outliyr-framework
+        run: npm install || true
 
       - name: Run convert.js
+        working-directory: ./outliyr-framework
         run: node scripts/convert.js
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docsify
+          publish_dir: ./outliyr-framework/docsify
           force_orphan: true
