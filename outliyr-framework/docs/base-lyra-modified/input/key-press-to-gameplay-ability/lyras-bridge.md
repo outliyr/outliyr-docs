@@ -1,7 +1,3 @@
----
-description: 'Lyra''s Bridge: ULyraInputConfig'
----
-
 # Lyra's Bridge
 
 After the Enhanced Input system has processed a hardware input and triggered an abstract `Input Action` (IA), Lyra needs a way to connect this generic IA to its more specific, `GameplayTag`-driven systems. This is where the **`ULyraInputConfig`** Data Asset plays a pivotal role. It acts as a crucial bridge, translating editor-defined `Input Actions` into `GameplayTags` that the rest of Lyra's framework, particularly the Gameplay Ability System (GAS) and native input handlers, can understand and act upon.
@@ -55,14 +51,14 @@ A `ULyraInputConfig` Data Asset contains two main lists of mappings:
    * The binding fires, and `ULyraHeroComponent` calls `ASC->AbilityInputTagPressed(InputTag.Ability.Jump)`.
    * The ASC then looks for a granted ability whose `DynamicAbilityTags` include `InputTag.Ability.Jump` and attempts to activate it.
 
-**In Summary:**
+***
+
+### Summary
 
 The `ULyraInputConfig` is a vital Data Asset in Lyra's input pipeline. It translates abstract `Input Actions` (from the Enhanced Input system) into meaningful `GameplayTags`. These tags then serve as the common language for the `ULyraInputComponent` to know which `Input Actions` to bind and for the `ULyraAbilitySystemComponent` to identify which abilities to activate in response to player input.
 
-**Next Step in the Journey:**
+#### **Next Step in the Journey:**
 
 Now that an `Input Action` has been conceptually linked to a `GameplayTag` by the `ULyraInputConfig`, the next stage involves the actual binding of this input to game logic and the subsequent dispatch of commands to the relevant systems.
-
-Proceed to **Sub-Page: Binding & Dispatch - `ULyraInputComponent` & `ULyraHeroComponent`** to explore how these components take over.
 
 ***

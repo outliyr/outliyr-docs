@@ -1,7 +1,3 @@
----
-description: 'Game Features: Activation Flow (ULyraExperienceManagerComponent)'
----
-
 # Activation Flow
 
 The `ULyraExperienceManagerComponent`, residing on the `ALyraGameState`, is the central orchestrator responsible for managing the lifecycle of the current `ULyraExperienceDefinition` and, critically, the **loading, activation, and deactivation of the Game Feature plugins** associated with it.

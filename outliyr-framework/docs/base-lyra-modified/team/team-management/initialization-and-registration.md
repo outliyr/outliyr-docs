@@ -1,7 +1,3 @@
----
-description: 'Team Management: Initialization & Registration'
----
-
 # Initialization & Registration
 
 The `ULyraTeamSubsystem` needs to be initialized correctly when the game world starts and requires `ALyraTeamInfoBase` actors (representing the teams) to register themselves so the subsystem can track them.

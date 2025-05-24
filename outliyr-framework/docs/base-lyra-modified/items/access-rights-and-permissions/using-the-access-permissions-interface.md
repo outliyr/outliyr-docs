@@ -1,7 +1,3 @@
----
-description: 'Access Rights & Permission: Using the Access-Permissions Interface'
----
-
 # Using the Access-Permissions Interface
 
 Whenever your gameplay code or UI needs to **check** or **modify** access rights or permissions, **always** go through the `IItemPermissionOwner` interface.\

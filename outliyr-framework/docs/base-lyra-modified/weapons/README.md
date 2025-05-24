@@ -1,11 +1,5 @@
 # Weapons
 
-Okay, let's draft the **Weapon System: Overview** page.
-
-***
-
-## Weapon System: Overview
-
 The Weapon System builds directly upon the foundation laid by the **Equipment System**, specializing its concepts to handle the unique requirements of firearms and other wieldable offensive tools within the game. It provides specialized components and data structures for managing weapon state, firing mechanics, visual representation, and UI feedback like reticles and hit markers.
 
 ### Purpose: Specialized Equipment Handling

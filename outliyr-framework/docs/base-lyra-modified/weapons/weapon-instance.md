@@ -1,7 +1,3 @@
----
-description: 'Weapon System: Weapon Instance (ULyraWeaponInstance)'
----
-
 # Weapon Instance
 
 The `ULyraWeaponInstance` serves as the **base runtime class** for all weapon equipment within the system. It inherits directly from `ULyraEquipmentInstance`, gaining all the standard equipment functionality (lifecycle events, instigator tracking, attribute container, subobject replication), and adds features specifically relevant to wieldable weapons.

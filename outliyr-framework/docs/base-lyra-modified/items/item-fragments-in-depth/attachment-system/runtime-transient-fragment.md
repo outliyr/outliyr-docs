@@ -1,7 +1,3 @@
----
-description: 'Attachment System: Runtime (UTransientRuntimeFragment_Attachment)'
----
-
 # Runtime Transient Fragment
 
 While `UInventoryFragment_Attachment` defines the static rules and potential behaviors, the `UTransientRuntimeFragment_Attachment` is the **runtime UObject** created on an `ULyraInventoryItemInstance` that actually **manages the currently attached items** and **applies their defined behaviors** based on the host item's state.

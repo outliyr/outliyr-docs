@@ -1,7 +1,3 @@
----
-description: 'Supporting Data Assets: World Settings (ALyraWorldSettings)'
----
-
 # World Settings
 
 Each map (`.umap` file) in an Unreal Engine project has an associated **World Settings Actor**. This actor stores map-specific configuration, including which Game Mode class to use by default. Lyra provides a custom subclass, `ALyraWorldSettings`, primarily to specify a **default Gameplay Experience** for a map.

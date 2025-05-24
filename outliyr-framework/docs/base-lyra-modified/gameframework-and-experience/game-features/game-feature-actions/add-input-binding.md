@@ -1,7 +1,3 @@
----
-description: 'Game Feature Actions: Add Input Binding (UGameFeatureAction_AddInputBinding)'
----
-
 # Add Input Binding
 
 This Game Feature Action is responsible for dynamically adding **Input Configurations (`ULyraInputConfig`)** to Pawns when the associated Game Feature or Experience is activated. Input Configs define mappings between specific Input Tags (representing abstract actions like "Jump" or "Fire") and Gameplay Ability Tags (representing the abilities that should be activated by those inputs).

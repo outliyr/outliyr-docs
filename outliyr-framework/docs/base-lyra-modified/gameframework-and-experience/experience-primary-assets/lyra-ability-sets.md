@@ -1,7 +1,3 @@
----
-description: Understanding Lyra Ability Sets (ULyraAbilitySet)
----
-
 # Lyra Ability Sets
 
 The `ULyraAbilitySet` is a fundamental `UPrimaryDataAsset` within the Lyra/Shooter Base framework, designed to bundle together Gameplay Abilities, Gameplay Effects, and Attribute Sets into a single, manageable unit. Think of it as a pre-packaged "kit" of capabilities that can be granted to an Ability System Component (ASC).
@@ -110,7 +106,3 @@ struct FLyraAbilitySet_GrantedHandles
 * **`AbilitySet_Interaction`:** Contains abilities for interacting with doors, items, objectives. Granted generally to player characters.
 
 `ULyraAbilitySet` is a powerful tool for organizing and managing gameplay capabilities within the Lyra framework. By bundling abilities, effects, and attributes, and facilitating input binding, they promote a cleaner, more reusable, and compositional approach to designing character and item functionality.
-
-***
-
-Now you have a dedicated page for `ULyraAbilitySet` that you can link to from the `GameFeatureAction_AddAbilities` page and potentially from documentation about `ULyraPawnData`. Remember to update the `GameFeatureAction_AddAbilities` page to briefly mention `ULyraAbilitySet` and refer the reader to this new page for full details.

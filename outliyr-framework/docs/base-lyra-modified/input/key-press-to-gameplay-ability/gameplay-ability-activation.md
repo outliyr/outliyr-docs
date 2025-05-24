@@ -1,12 +1,4 @@
----
-description: >-
-  Gameplay Ability Activation: ULyraAbilitySystemComponent &
-  ULyraGameplayAbility
----
-
 # Gameplay Ability Activation
-
-
 
 The final stage in the journey of an input intended to trigger a Gameplay Ability involves the **`ULyraAbilitySystemComponent` (ASC)** and the **`ULyraGameplayAbility`** itself. After the `ULyraHeroComponent` has processed an input and determined the relevant `InputTag` (derived from the active `ULyraInputConfig`), it passes this tag to the ASC. The ASC then takes over to find and potentially activate a corresponding ability.
 
@@ -70,16 +62,16 @@ The final stage in the journey of an input intended to trigger a Gameplay Abilit
    * `MyASC->ProcessAbilityInput()` eventually calls `TryActivateAbility()` on the `GA_Weapon_Fire` spec.
 9. **`ULyraGameplayAbility`** (`GA_Weapon_Fire`): If activation checks pass, its `ActivateAbility()` method is called, and the weapon fires.
 
-**In Summary:**
+***
+
+### Summary
 
 The `ULyraAbilitySystemComponent` acts as the receiver for `InputTags` dispatched by the `ULyraHeroComponent`. It uses these tags to identify which of its granted abilities should react to the input, considering the ability's activation policy. The `ULyraGameplayAbility` itself is linked to an `InputTag` at the point of granting (typically via `ULyraAbilitySet`), enabling this sophisticated, data-driven activation chain.
 
 This concludes the detailed walkthrough of how a player's input press becomes a Gameplay Ability activation in Lyra. The subsequent sections will focus on how to configure these pieces and customize various aspects of the input system.
 
-**Next Step in Documentation:**
+#### **Next Step in Documentation:**
 
 With the core flow understood, the next logical step is to explore how these different pieces are configured and brought together using Data Assets and Game Features.
-
-Proceed to **Page: Configuring Input - Data Assets & Game Features\`** to learn about the practical setup.
 
 ***

@@ -1,7 +1,3 @@
----
-description: 'Modularity: Fragment Injector Overview'
----
-
 # Modularity: Fragment Injector
 
 As your project grows, especially when incorporating plugins or Unreal Engine's Game Features, you might encounter a common challenge: how do you add or remove functionality (represented by `ULyraInventoryItemFragment`s) to _existing_ `ULyraInventoryItemDefinition`s without directly modifying those original base assets? Modifying base assets shipped with core systems or other plugins can lead to merge conflicts and maintenance headaches.

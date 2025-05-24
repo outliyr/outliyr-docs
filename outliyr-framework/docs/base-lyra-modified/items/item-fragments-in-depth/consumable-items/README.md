@@ -1,7 +1,3 @@
----
-description: 'Item Fragments: Consume Fragment (UInventoryFragment_Consume)'
----
-
 # Consumable Items
 
 This section details the system for creating items that players can "use" or "consume" to trigger specific gameplay-affecting actions, such as drinking a potion, eating food, throwing a grenade, or activating a special device. This functionality is primarily enabled by the `UInventoryFragment_Consume` and works in conjunction with specialized Gameplay Abilities.

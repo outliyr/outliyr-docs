@@ -1,9 +1,3 @@
----
-description: >-
-  Game Feature Actions: Splitscreen Config
-  (UGameFeatureAction_SplitscreenConfig)
----
-
 # Splitscreen Config
 
 The `UGameFeatureAction_SplitscreenConfig` serves as a straightforward example of a Game Feature Action that modifies a global or per-world setting – in this case, controlling whether splitscreen functionality is forcibly disabled.

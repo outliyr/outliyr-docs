@@ -1,7 +1,3 @@
----
-description: 'Game Features Integration: Overview'
----
-
 # Game Features
 
 This asset leverages Unreal Engine's built-in **Game Features Plugin** system extensively to achieve a highly modular and extensible architecture. Instead of compiling all gameplay logic and content into a monolithic game module, distinct features (like core shooting mechanics, specific game modes, UI elements, or inventory extensions) can be developed and packaged as separate Game Feature Plugins.

@@ -1,12 +1,8 @@
----
-description: 'Enhanced Input Layer: InputMappingContext & InputAction'
----
-
 # Enhanced Input Layer
 
 The very first step in Lyra's input processing chain (and indeed, any modern Unreal Engine project utilizing it) is handled by the **Enhanced Input Plugin**. This system is responsible for taking raw hardware inputs—like a key press, mouse movement, or gamepad button press—and translating them into abstract, game-relevant signals. The two primary assets at this stage are the `Input Mapping Context` (IMC) and the `Input Action` (IA).
 
-**`UInputMappingContext` (IMC)**
+### **`UInputMappingContext` (IMC)**
 
 * **Role:** An `Input Mapping Context` is a Data Asset that defines a collection of mappings between specific physical hardware inputs and abstract `Input Actions`. Think of it as a "control scheme" or a "layer" of input bindings. For example, you might have one IMC for general gameplay controls (`IMC_Default_KBM`), another for vehicle controls (`IMC_Vehicle_KBM`), and yet another for menu navigation (`IMC_Menu_Navigation_KBM`).
 * **Creation & Configuration:**
@@ -35,7 +31,7 @@ The very first step in Lyra's input processing chain (and indeed, any modern Unr
     The Value Type should match the type of input you expect. For example, a "Move Forward/Backward" action driven by W/S keys might be an `Axis1D` (W gives +1, S gives -1), while mouse look would be `Axis2D`.
 * **Triggers & Modifiers (on the IA itself):** `Input Actions` can also have their own list of default Triggers and Modifiers, which apply globally whenever that IA is triggered, regardless of which IMC mapping activated it. However, it's often more flexible to apply these per-mapping within the IMC.
 
-**Input Triggers & Modifiers (Brief Overview)**
+### **Input Triggers & Modifiers (Brief Overview)**
 
 While a deep dive into all available Triggers and Modifiers is beyond the scope of this initial overview, it's important to understand their general purpose within the Enhanced Input layer:
 
@@ -53,7 +49,9 @@ While a deep dive into all available Triggers and Modifiers is beyond the scope 
   * `Swizzle Input Axis Values`: Remaps or ignores axes from a multi-axis input (e.g., using only the Y-axis of a 2D mouse input).\
     Modifiers can be added to individual key mappings within an `Input Mapping Context` or globally to an `Input Action` asset itself. Lyra provides several custom modifiers (e.g., `ULyraInputModifierGamepadSensitivity`, `ULyraInputModifierDeadZone`) that are often applied here. These will be discussed in more detail in the "Customizing Input Behavior" section.
 
-**In Summary:**
+***
+
+### Summary
 
 The Enhanced Input Layer, through `Input Mapping Contexts` and `Input Actions`, takes raw physical inputs and transforms them into meaningful, abstract game actions.
 
@@ -63,10 +61,8 @@ The Enhanced Input Layer, through `Input Mapping Contexts` and `Input Actions`, 
 
 This structured approach separates hardware concerns from gameplay logic, making the input system more adaptable and easier to manage.
 
-**Next Step in the Journey:**
+#### **Next Step in the Journey:**
 
 With an `Input Action` now triggered and carrying a value, the system needs to decide what specific game logic or ability this corresponds to. This is where Lyra's custom layer, primarily the `ULyraInputConfig`, comes into play.
-
-Proceed to **Sub-Page:Lyra's Bridge - `ULyraInputConfig`** to see how Lyra interprets these abstract `Input Actions`.
 
 ***

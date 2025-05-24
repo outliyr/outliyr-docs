@@ -1,7 +1,3 @@
----
-description: 'Utilities: Team Statics (ULyraTeamStatics)'
----
-
 # Team Statics
 
 The `ULyraTeamStatics` class is a **Blueprint Function Library** providing convenient, static functions for accessing information from the `ULyraTeamSubsystem` directly within Blueprint graphs. These functions mirror many of the core query capabilities of the subsystem but abstract away the need to explicitly get the subsystem instance first.

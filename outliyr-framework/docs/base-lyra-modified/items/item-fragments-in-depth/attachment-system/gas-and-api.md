@@ -1,7 +1,3 @@
----
-description: 'Attachment System: GAS & API'
----
-
 # GAS & API
 
 Interacting with attachments during gameplay often involves using Gameplay Abilities (GAS) or specific C++ / Blueprint functions designed for the attachment system. This page covers the key tools and concepts for these interactions.

@@ -1,7 +1,3 @@
----
-description: 'Game Feature Actions: Add Widgets (UGameFeatureAction_AddWidgets)'
----
-
 # Add Widgets
 
 This Game Feature Action provides a data-driven way to add User Interface elements – specifically **HUD Layouts** (using `UCommonActivatableWidget`) and individual **Widgets** (`UUserWidget`) – to the player's screen when the associated Game Feature or Experience is activated. It integrates with Lyra's Common UI and UI Extension systems.

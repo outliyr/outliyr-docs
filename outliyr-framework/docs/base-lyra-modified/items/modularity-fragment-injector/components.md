@@ -1,7 +1,3 @@
----
-description: 'Fragment Injector: Components (UFragmentInjector & UFragmentInjectorManager)'
----
-
 # Components
 
 The Fragment Injector system relies on two key components: a Data Asset to define the injection/removal rules (`UFragmentInjector`) and a manager class to apply these rules at runtime (`UFragmentInjectorManager`).

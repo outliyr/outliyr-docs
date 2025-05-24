@@ -64,6 +64,3 @@ Based _strictly_ on the provided code:
 4. External UI systems _can_ call `ULyraUICameraManagerComponent::SetViewTarget` to make the `ALyraPlayerCameraManager` blend to a different actor, but the component doesn't actively take control during the regular `UpdateViewTarget` flow in the provided base implementation.
 5. For debugging (`showdebug camera`), `ALyraPlayerCameraManager` ensures that the detailed debug info from the Pawn's `ULyraCameraComponent` is also drawn.
 
-***
-
-This covers the higher-level management classes. The next page will focus on the **Supporting Interfaces**, specifically `ILyraCameraAssistInterface`.

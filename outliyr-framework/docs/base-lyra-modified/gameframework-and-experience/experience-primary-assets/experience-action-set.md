@@ -1,7 +1,3 @@
----
-description: 'Experiences: Experience Action Set (ULyraExperienceActionSet)'
----
-
 # Experience Action Set
 
 The `ULyraExperienceActionSet` is a **Primary Data Asset** designed to promote **reusability and composition** when defining `ULyraExperienceDefinition`s. It acts as a container for a collection of Game Features to enable and specific Game Feature Actions to execute, allowing you to define common setup steps once and include them in multiple different Experiences.

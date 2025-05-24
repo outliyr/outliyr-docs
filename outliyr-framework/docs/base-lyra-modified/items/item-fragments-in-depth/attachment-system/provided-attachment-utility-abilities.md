@@ -1,7 +1,3 @@
----
-description: 'Attachment System: Provided Attachment Utility Abilities'
----
-
 # Provided Attachment Utility Abilities
 
 To streamline common attachment functionalities—specifically modifying stats on the host equipment or its associated item instance—this asset provides pre-built Gameplay Ability base classes. These utility abilities encapsulate the logic for applying and reversing modifications, reducing boilerplate code and providing clear examples for developers.

@@ -1,7 +1,3 @@
----
-description: 'Equipment System: Overview'
----
-
 # Equipment
 
 This system is a cornerstone of the shooter asset, providing the essential framework for characters (Pawns) to equip items and gain the gameplay functionality associated with them.

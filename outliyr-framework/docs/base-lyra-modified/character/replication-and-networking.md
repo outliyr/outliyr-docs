@@ -66,6 +66,3 @@ The character system employs a multi-layered networking strategy:
 
 This robust foundation provides a solid starting point for building responsive and visually convincing networked shooter experiences.
 
-***
-
-This covers the core networking aspects presented in the code. The final page would be **Extending the Character System**. Would you like to proceed with that?

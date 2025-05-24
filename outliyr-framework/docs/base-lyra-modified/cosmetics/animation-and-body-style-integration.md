@@ -1,7 +1,3 @@
----
-description: 'Cosmetics: Animation & Body Style Integration'
----
-
 # Animation & Body Style Integration
 
 Beyond simply attaching visual elements, the Cosmetic System provides mechanisms to allow applied character parts to influence more fundamental aspects of the Pawn's appearance, such as its base Skeletal Mesh or the Animation Layers used in its Animation Blueprint. This is achieved primarily through **Gameplay Tags**.
@@ -152,6 +148,3 @@ The Cosmetic System integrates with the Pawn's base visuals and animation throug
 
 This tag-driven approach allows for flexible and decoupled control over the character's appearance based on the cosmetic items currently applied.
 
-***
-
-Next, we can cover the **Developer Tools & Cheats**.

@@ -1,7 +1,3 @@
----
-description: 'Cosmetics: Core Data Structures'
----
-
 # Core Data Structures
 
 The cosmetic system relies on several key `USTRUCT`s to define cosmetic parts, manage their application state, and track them across different components. Understanding these structures is essential for working with the system's APIs and data flow.
@@ -162,6 +158,3 @@ These data structures form the backbone of the cosmetic system:
 
 Understanding these structs clarifies how information flows between the Controller and Pawn components and how cosmetic parts are defined and managed.
 
-***
-
-Next, we can explore **Animation & Body Style Integration**.

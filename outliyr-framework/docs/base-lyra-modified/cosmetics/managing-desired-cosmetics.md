@@ -1,7 +1,3 @@
----
-description: 'Cosmetics: Managing Desired Cosmetics'
----
-
 # Managing Desired Cosmetics
 
 While the `ULyraPawnComponent_CharacterParts` handles the runtime application of cosmetics on the Pawn, the `ULyraControllerComponent_CharacterParts` is responsible for managing the persistent list of cosmetics that a specific Controller (representing a player or AI) wants to have applied.
@@ -68,6 +64,3 @@ This component lives on the `AController` (e.g., `ALyraPlayerController`) and ac
 
 The `ULyraControllerComponent_CharacterParts` is essential for managing the desired cosmetic state associated with a Controller. It ensures persistence across Pawn lifetimes and acts as the authoritative source instructing the Pawn component on what visuals to display, while also managing overrides from developer settings and cheats.
 
-***
-
-Next, we should cover the **Core Data Structures** involved in the system.

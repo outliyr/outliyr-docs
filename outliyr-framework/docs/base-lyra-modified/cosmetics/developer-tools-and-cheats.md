@@ -1,7 +1,3 @@
----
-description: 'Cosmetics:'
----
-
 # Developer Tools & Cheats
 
 To facilitate testing, iteration, and debugging of character cosmetics, the system includes developer-focused settings and cheat commands. These allow developers to easily override or apply specific cosmetic parts without needing to modify gameplay logic or player loadouts.
@@ -75,6 +71,3 @@ The developer tools and cheats provide essential workflows for cosmetic developm
 
 These tools, combined with the core system's flexibility, enable efficient creation and testing of character cosmetic features.
 
-***
-
-This concludes the planned documentation pages for the Cosmetic System based on the provided code. You now have a comprehensive overview, detailed breakdowns of the components and data structures, explanations of the animation integration, and information on the developer tools.

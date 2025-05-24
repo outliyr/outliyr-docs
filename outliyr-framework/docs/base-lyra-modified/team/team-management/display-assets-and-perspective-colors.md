@@ -1,7 +1,3 @@
----
-description: 'Team Subsystem: Display Assets & Perspective Colors'
----
-
 # Display Assets & Perspective Colors
 
 A key function of the `ULyraTeamSubsystem` is managing how teams are visually represented. This involves retrieving the correct **Team Display Asset (`ULyraTeamDisplayAsset`)** for a given team and handling the **Perspective Color Mode**, which allows overriding team colors based on the local player's viewpoint (Ally vs. Enemy).

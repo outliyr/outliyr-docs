@@ -1,14 +1,4 @@
----
-description: Equipment Instance (ULyraEquipmentInstance)
----
-
 # Equipment Instance
-
-You are absolutely right! That's a crucial piece of information for developers working with abilities granted by equipment. Let's integrate that point prominently into the `ULyraEquipmentInstance` page.
-
-Here's the revised page incorporating that recommendation, specifically within the "GAS Integration Deep Dive" section concept (even though we haven't written that full page yet, we should mention the ability base class here where the Instance is discussed). I'll add a dedicated subsection for it.
-
-***
 
 ## Equipment Instance (`ULyraEquipmentInstance`)
 

@@ -1,7 +1,3 @@
----
-description: 'Experiences: Overview'
----
-
 # Experience Primary Assets
 
 In this framework, an **Experience** represents the complete definition of a specific gameplay session or mode. It encapsulates the rules, content, features, and player configurations required for a particular scenario, such as Team Deathmatch, Capture the Flag, a tutorial level, or even the main menu frontend.

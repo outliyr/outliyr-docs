@@ -1,7 +1,3 @@
----
-description: 'Experiences: Experience Definition (ULyraExperienceDefinition)'
----
-
 # Experience Definition
 
 The `ULyraExperienceDefinition` is a **Primary Data Asset** that serves as the central blueprint defining the specific rules, content, features, and default configuration for a particular gameplay session or mode. When the game decides to run, for example, "Team Deathmatch" or "Capture the Flag", it loads the corresponding `ULyraExperienceDefinition` asset.

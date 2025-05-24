@@ -152,6 +152,3 @@ UAbilitySystemComponent* ALyraCharacterWithAbilities::GetAbilitySystemComponent(
 | Team Interface                 |                ✅               |                ✅                |               ✅               | All implement `ILyraTeamAgentInterface`.                            |
 | **Best For**                   | Player Characters, Humanoid AI | Vehicles, Turrets, Custom Pawns |   Self-Contained AI/Objects   | Choose based on movement and ASC ownership requirements.            |
 
-***
-
-This page should give developers a clear understanding of the available base Pawn classes and when to use each one. Let me know what you think, and we can proceed to the "Core Pawn Components" page next.

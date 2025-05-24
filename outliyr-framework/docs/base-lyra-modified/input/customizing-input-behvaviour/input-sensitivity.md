@@ -1,7 +1,3 @@
----
-description: 'Sub-Page: Input Sensitivity (ULyraAimSensitivityData)'
----
-
 # Input Sensitivity
 
 A critical aspect of player comfort and control, especially for aiming with gamepads, is input sensitivity. Lyra provides a dedicated Data Asset, **`ULyraAimSensitivityData`**, to manage the mapping between abstract sensitivity presets (defined as an enum) and their corresponding floating-point scalar values. This allows for a clean, data-driven approach to handling different sensitivity levels.

@@ -2,7 +2,7 @@
 
 This system is foundational to how players interact with the game world, controlling characters and activating abilities. It's built upon two powerful Unreal Engine systems: **Enhanced Input** and the **Gameplay Ability System (GAS)**. Our goal here is to provide you with a clear understanding of how these systems work together, enabling you to effectively customize and extend input functionality.
 
-#### Why Lyra's Approach to Input?
+### Why Lyra's Approach to Input?
 
 Lyra's input architecture is designed to be robust, flexible, and highly data-driven. This offers several key advantages for developers:
 
@@ -14,7 +14,7 @@ Lyra's input architecture is designed to be robust, flexible, and highly data-dr
   * **Platform Adaptability:** Enhanced Input is designed to handle input from various devices and platforms more easily.
 * **Modularity via Game Feature Plugins:** Input schemes, new actions, and ability bindings can be encapsulated within Game Feature Plugins. This means you can add or alter input functionality for specific game modes or content updates without deeply modifying core systems, promoting a cleaner, more extensible architecture.
 
-#### The Big Picture: How an Input Becomes an Action or Ability
+### The Big Picture: How an Input Becomes an Action or Ability
 
 Understanding the flow of an input event from the player's physical action to an in-game result is crucial. Here's a high-level overview of this journey:
 
@@ -32,7 +32,7 @@ Understanding the flow of an input event from the player's physical action to an
 
 This flow, while involving several components, provides a highly decoupled and configurable system. We will explore each of these steps in greater detail in the subsequent pages.
 
-#### Key Terminology
+### Key Terminology
 
 As you delve into Lyra's input system, you'll encounter these terms frequently:
 
@@ -43,7 +43,7 @@ As you delve into Lyra's input system, you'll encounter these terms frequently:
 * **Gameplay Ability System (GAS):** A comprehensive Unreal Engine framework for creating and managing character abilities, attributes, and status effects.
 * **Ability System Component (ASC):** The core GAS component, typically attached to a Pawn or PlayerState. It owns and manages an actor's abilities, attributes, and active gameplay effects.
 
-#### Structure of this Documentation
+### Structure of this Documentation
 
 To help you navigate this complex but powerful system, this documentation is structured as follows:
 

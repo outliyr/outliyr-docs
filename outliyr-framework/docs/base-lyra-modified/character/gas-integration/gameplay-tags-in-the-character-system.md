@@ -92,6 +92,3 @@ Here's how different parts of the system utilize specific tags (referencing tags
 
 Gameplay Tags provide a powerful and flexible way to manage state and communication between different parts of the character system and GAS. Effectively utilizing them is key to building complex and reactive gameplay.
 
-***
-
-This concludes the expanded section on GAS Integration. We've covered ASC location, the crucial Attribute Sets, the calculation logic in Executions, and the pervasive use of Gameplay Tag

@@ -1,7 +1,3 @@
----
-description: 'GAS & UI Integration: UInventoryAbilityFunctionLibrary'
----
-
 # Inventory Ability Function Library
 
 The `UInventoryAbilityFunctionLibrary` is a dedicated Blueprint Function Library designed to simplify the process of triggering Gameplay Abilities related to inventory actions, particularly from User Interface widgets or other Blueprint logic. It acts as the primary bridge for sending requests into the GAS layer, packaging the necessary data correctly.

@@ -79,6 +79,3 @@ _(Note: This is simplified; the exact timing depends on network conditions and r
 * **Network Robustness:** Handles the asynchronous nature of replication more gracefully than relying solely on `BeginPlay`.
 * **Modularity:** Allows Game Features to add components that seamlessly participate in the Pawn's initialization lifecycle.
 
-***
-
-This page explains how the character gets properly set up using Lyra's Init State system, emphasizing the roles of the core components and `PawnData`. Next up is **Replication & Networking**.

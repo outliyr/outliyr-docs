@@ -1,7 +1,3 @@
----
-description: 'Cosmetics: Overview'
----
-
 # Cosmetics
 
 This system provides a flexible and robust framework for dynamically changing the visual appearance of Pawns by attaching modular "Character Parts". It's designed to handle everything from simple accessory attachments to driving changes in the base character mesh or associated animations, all within a networked environment.
@@ -98,7 +94,3 @@ Dive deeper into the specific components and data structures:
 * **Core Data Structures:** Detail the key structs like `FLyraCharacterPart`.
 * **Animation & Body Style Integration:** Explore how tags influence mesh and animation selection.
 * **Developer Tools & Cheats:** See how to test and override cosmetics during development.
-
-***
-
-This overview should provide a solid conceptual foundation for the cosmetic system. Let me know if you'd like any adjustments before moving to the `ULyraPawnComponent_CharacterParts` page.

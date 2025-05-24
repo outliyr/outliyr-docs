@@ -41,6 +41,3 @@ To fully understand how to work with and create camera modes, we will explore:
 * **Camera Mode View & Stack:** How modes output their data (`FLyraCameraModeView`) and how the stack (`ULyraCameraModeStack`) manages and blends them.
 * **Example: `ULyraCameraMode_ThirdPerson`:** A detailed look at a concrete implementation, showcasing how to build upon the base class for specific behaviors like third-person follow and penetration avoidance.
 
-***
-
-This page introduces the "why" and "what" of Camera Modes. Does this provide a good conceptual foundation before we dive into the specifics of `ULyraCameraMode` itself?

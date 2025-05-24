@@ -1,7 +1,3 @@
----
-description: 'Core Settings Storage: ULyraSettingsLocal – Machine-Specific Configurations'
----
-
 # Machine-Specific Configurations
 
 Complementing `ULyraSettingsShared`, the `ULyraSettingsLocal` class is responsible for managing game settings that are specific to the local machine or hardware configuration. These are settings that typically wouldn't make sense to roam with a player to a different device, as they are often tied to the capabilities of the current system.

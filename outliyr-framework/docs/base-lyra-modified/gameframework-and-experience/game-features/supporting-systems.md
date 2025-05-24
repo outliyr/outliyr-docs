@@ -1,9 +1,3 @@
----
-description: >-
-  Game Features: Supporting Systems (ULyraGameFeaturePolicy,
-  ULyraExperienceManager)
----
-
 # Supporting Systems
 
 While the core interaction with Game Features happens through Experiences and Actions, a couple of specialized classes provide policy overrides and editor-specific management for the system.

@@ -1,7 +1,3 @@
----
-description: 'Item Fragments: Category Fragment (UInventoryFragment_Category)'
----
-
 # Category Fragment
 
 The `UInventoryFragment_Category` provides a simple mechanism to assign one or more **Gameplay Tags** to an item type, effectively placing it into different categories. This is primarily used for filtering, sorting, or applying category-specific logic in UI or gameplay systems.

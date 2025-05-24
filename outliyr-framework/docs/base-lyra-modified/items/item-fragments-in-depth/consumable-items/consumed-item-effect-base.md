@@ -1,7 +1,3 @@
----
-description: 'Consumable Items: Consumed Item Effect Base (ULyraGameplayAbility_FromConsume)'
----
-
 # Consumed Item Effect Base
 
 ### Your playground: `ULyraGameplayAbility_FromConsume`

@@ -1,7 +1,3 @@
----
-description: 'Fragment Injector: Concept & Use Case'
----
-
 # Concept & Usecase
 
 Understanding _why_ the Fragment Injector system exists is key to using it effectively. It directly addresses challenges related to **modularity, dependencies, and extending functionality** in complex projects, especially those utilizing Unreal Engine's **Game Features** or a plugin-based architecture like the one employed in this asset.

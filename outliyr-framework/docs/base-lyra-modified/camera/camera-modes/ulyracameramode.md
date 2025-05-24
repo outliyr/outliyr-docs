@@ -76,6 +76,3 @@ To provide a standardized framework for defining a camera's desired perspective 
 
 By inheriting from `ULyraCameraMode` and overriding functions like `UpdateView`, developers can create diverse and complex camera behaviors that integrate seamlessly into the stack-based blending system.
 
-***
-
-This page details the toolkit provided by the `ULyraCameraMode` base class. Next, we'll look at the `FLyraCameraModeView` struct and the `ULyraCameraModeStack` manager on the **Camera Mode View & Stack** page.

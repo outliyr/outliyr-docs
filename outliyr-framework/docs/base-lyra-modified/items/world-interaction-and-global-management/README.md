@@ -1,7 +1,3 @@
----
-description: 'World Interaction & Global Management: Overview'
----
-
 # World Interaction & Global Management
 
 While inventory components manage items _within_ containers (like a player's backpack or a chest), games often require items to exist physically in the world and need a way to manage item creation centrally. This section covers the systems responsible for:

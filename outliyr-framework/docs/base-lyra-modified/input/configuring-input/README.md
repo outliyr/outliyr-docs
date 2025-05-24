@@ -1,7 +1,3 @@
----
-description: 'Configuring Input: Data Assets & Game Features'
----
-
 # Configuring Input
 
 Understanding the flow of input is essential, but equally important is knowing where and how to configure all the interconnected pieces. Lyra's input system heavily relies on Data Assets for its setup, promoting a data-driven and modular approach. Furthermore, Game Feature Plugins play a significant role in dynamically adding or modifying input configurations based on the active gameplay context (Experience).

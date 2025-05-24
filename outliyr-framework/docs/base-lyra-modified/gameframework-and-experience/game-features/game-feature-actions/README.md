@@ -1,7 +1,3 @@
----
-description: 'Game Features: Game Feature Actions (UGameFeatureAction)'
----
-
 # Game Feature Actions
 
 **Game Feature Actions** are the primary mechanism by which a Game Feature Plugin injects logic and integrates itself into the running game during its activation and deactivation lifecycle. They are UObject classes, typically defined within a Game Feature Plugin, that perform specific setup or teardown tasks.
@@ -48,4 +44,4 @@ This asset utilizes several specific Game Feature Action types to perform common
 
 ***
 
-Game Feature Actions are the executable components within Game Feature Plugins, triggered by the Experience loading lifecycle managed by `ULyraExperienceManagerComponent`. They provide the crucial link for modularly adding specific functionality – like abilities, input, and UI – to the game world based on the currently active Experience. The following pages detail the specific actions commonly used in this asset.
+Game Feature Actions are the executable components within Game Feature Plugins, triggered by the Experience loading lifecycle managed by `ULyraExperienceManagerComponent`. They provide the crucial link for modularly adding specific functionality, like abilities, input, and UI to the game world based on the currently active Experience. The following pages detail the specific actions commonly used in this asset.

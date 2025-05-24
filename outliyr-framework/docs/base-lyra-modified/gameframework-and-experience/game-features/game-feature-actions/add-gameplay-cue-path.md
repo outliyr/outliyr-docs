@@ -1,9 +1,3 @@
----
-description: >-
-  Game Feature Actions: Add Gameplay Cue Path
-  (UGameFeatureAction_AddGameplayCuePath)
----
-
 # Add Gameplay Cue Path
 
 The `UGameFeatureAction_AddGameplayCuePath` is a simple but essential Game Feature Action responsible for registering specific directory paths with the **Gameplay Cue Manager** (`UGameplayCueManager`). This allows the Ability System Global singleton to scan these directories and discover `GameplayCueNotify` assets (like `GameplayCueNotify_Static` and `GameplayCueNotify_Actor`) defined within your Game Feature Plugin.

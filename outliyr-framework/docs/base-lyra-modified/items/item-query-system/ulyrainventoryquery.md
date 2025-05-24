@@ -1,7 +1,3 @@
----
-description: 'Item Query System: ULyraInventoryQuery (C++ Usage)'
----
-
 # ULyraInventoryQuery
 
 The `ULyraInventoryQuery` class is the core C++ object responsible for tracking specific item definitions within a designated `ULyraInventoryManagerComponent`. While the `UAsyncAction_ItemQuery` provides a convenient Blueprint wrapper, using `ULyraInventoryQuery` directly in C++ offers more control, especially within persistent C++ systems or actor components.

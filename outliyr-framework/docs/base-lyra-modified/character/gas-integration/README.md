@@ -113,6 +113,3 @@ The integration of GAS provides the character system with:
 
 Understanding these core GAS elements and how they plug into the Pawn, Player State, and various Components is essential for customizing character behavior in your project.
 
-***
-
-This page covers the core GAS concepts as they relate to the provided character code. Let me know if it's clear, or if you'd like adjustments before moving to **Initialization & Spawning**.

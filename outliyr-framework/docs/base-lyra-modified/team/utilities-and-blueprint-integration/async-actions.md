@@ -1,7 +1,3 @@
----
-description: 'Utilities: Async Actions (Observing Team Changes)'
----
-
 # Async Actions
 
 While `ULyraTeamStatics` provides functions for _querying_ the current team state, constantly polling these functions (e.g., on Tick) in Blueprints to detect changes is inefficient. To enable **reactive** Blueprint logic, the system provides several **Blueprint Async Action nodes** that allow you to subscribe to specific team-related events and execute logic only when those events occur.

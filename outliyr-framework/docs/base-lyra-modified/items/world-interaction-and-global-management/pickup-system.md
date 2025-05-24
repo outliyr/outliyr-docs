@@ -1,7 +1,3 @@
----
-description: 'World Interaction: Pickup System (IPickupable & ALyraWorldCollectable)'
----
-
 # Pickup System
 
 This section details the system used to represent inventory items physically within the game world and allow players to pick them up. It relies on the `IPickupable` interface and provides `ALyraWorldCollectable` as a ready-to-use example actor.

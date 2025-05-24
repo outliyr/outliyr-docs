@@ -142,5 +142,3 @@ flowchart TD
 ```
 
 ***
-
-Next up: [Making an Actor Interactable](making-an-actor-interactable.md) — we’ll walk through the exact steps to implement your own interactable actor or component. Ready to continue?

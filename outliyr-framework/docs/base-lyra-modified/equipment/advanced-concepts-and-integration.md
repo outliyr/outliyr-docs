@@ -1,7 +1,3 @@
----
-description: 'Equipment: Advanced Concepts & Integration'
----
-
 # Advanced Concepts & Integration
 
 This section explores some of the more intricate details of the Equipment System, focusing on how it handles network replication, integrates deeply with the Gameplay Ability System (GAS), utilizes Gameplay Messaging, and leverages Gameplay Tags. Understanding these aspects is crucial for advanced customization and debugging.

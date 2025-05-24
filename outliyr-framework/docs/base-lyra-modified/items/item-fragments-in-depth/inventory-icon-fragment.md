@@ -1,7 +1,3 @@
----
-description: 'Item Fragments: Inventory Icon Fragment (UInventoryFragment_InventoryIcon)'
----
-
 # Inventory Icon Fragment
 
 The `UInventoryFragment_InventoryIcon` is a fundamental fragment, essential for most items that need to interact with the base `ULyraInventoryManagerComponent` and be represented in inventory UIs. It defines core properties like stacking behavior, weight, basic display information, and visual representation.

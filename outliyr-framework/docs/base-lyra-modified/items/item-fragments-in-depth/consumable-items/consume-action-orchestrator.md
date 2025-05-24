@@ -1,7 +1,3 @@
----
-description: 'Consumable Items: Consume Action Trigger (ULyraGameplayAbility_Consume)'
----
-
 # Consume Action Orchestrator
 
 ### The job: make “use” consistent

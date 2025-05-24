@@ -1,11 +1,5 @@
 # Game Session
 
-Okay, let's cover the sub-page for the **Game Session (`ALyraGameSession`)**. Note that in Lyra (and likely your asset), this class often has minimal overrides because much of the session logic is handled by the `UCommonSessionSubsystem` driven by `ULyraUserFacingExperienceDefinition`.
-
-***
-
-## Core Game Flow: Game Session (`ALyraGameSession`)
-
 The `ALyraGameSession` class, inheriting from the base engine `AGameSession`, traditionally handles logic related to managing the online or network session for the game, including player login validation, match state notifications, and interactions with the Online Subsystem.
 
 However, in modern Unreal Engine development, particularly with the introduction of systems like the **Common Session Subsystem (`UCommonSessionSubsystem`)**, the role of the custom `AGameSession` subclass is often significantly reduced.

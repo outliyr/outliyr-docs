@@ -1,7 +1,3 @@
----
-description: 'Item Query System: Overview'
----
-
 # Item Query System
 
 In many gameplay scenarios, systems outside of the core inventory UI need to know about the presence or quantity of specific items within an inventory. For example:

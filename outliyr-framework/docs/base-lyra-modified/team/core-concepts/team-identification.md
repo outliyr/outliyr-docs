@@ -1,7 +1,3 @@
----
-description: 'Core Concepts: Team Identification (ALyraTeamInfoBase, Team IDs)'
----
-
 # Team Identification
 
 At its most fundamental level, the Team System identifies distinct teams using simple **integer IDs**. However, to represent the existence and shared state of these teams within the networked game world, replicated **`AInfo` actors** derived from `ALyraTeamInfoBase` are used.

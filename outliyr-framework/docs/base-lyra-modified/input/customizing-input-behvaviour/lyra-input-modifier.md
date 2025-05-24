@@ -1,7 +1,3 @@
----
-description: Lyra's Input Modifiers (LyraInputModifiers.h)
----
-
 # Lyra Input Modifier
 
 Enhanced Input Modifiers are a powerful feature allowing you to process and alter raw input values as they flow from a hardware input, through an `InputMappingContext`'s specific mapping, to the final `InputAction` value. Lyra extends this by providing several custom input modifiers, often designed to integrate with its shared user settings system. These modifiers allow for dynamic adjustments to input feel based on player preferences or game state.

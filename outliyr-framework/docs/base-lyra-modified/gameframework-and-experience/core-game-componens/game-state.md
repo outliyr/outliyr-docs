@@ -1,7 +1,3 @@
----
-description: 'Core Game Flow: Game State (ALyraGameState)'
----
-
 # Game State
 
 The `ALyraGameState` class, inheriting from `AModularGameStateBase`, serves as the **central replicated container for game-wide state information** accessible to all clients. In this modular framework, its role is expanded beyond simple state replication to become a primary host for crucial manager components, including the system that drives the Experience and Game Feature lifecycle.

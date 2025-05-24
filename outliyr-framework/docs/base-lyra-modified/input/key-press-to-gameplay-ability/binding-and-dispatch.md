@@ -1,7 +1,3 @@
----
-description: 'Binding & Dispatch: ULyraInputComponent & ULyraHeroComponent'
----
-
 # Binding & Dispatch
 
 With an `Input Action` triggered by the Enhanced Input system and translated into a `GameplayTag` by an active `ULyraInputConfig`, the next crucial stage is to **bind** this tagged input to executable game logic and **dispatch** commands to the appropriate systems. This responsibility primarily falls to two key components working in tandem: the `ULyraInputComponent` and the `ULyraHeroComponent`, both typically found on a player-controlled Pawn.
@@ -65,14 +61,14 @@ With an `Input Action` triggered by the Enhanced Input system and translated int
 7. The Enhanced Input binding fires, calling `MyHeroComponent->Input_AbilityInputTagPressed(InputTag.Ability.PrimaryFire)`.
 8. `Input_AbilityInputTagPressed` then calls `MyAbilitySystemComponent->AbilityInputTagPressed(InputTag.Ability.PrimaryFire)`.
 
-**In Summary:**
+***
+
+### Summary
 
 The `ULyraInputComponent` handles the low-level work of binding `Input Actions` to C++ delegates using the Enhanced Input system, guided by a `ULyraInputConfig`. The `ULyraHeroComponent` orchestrates this process, ensuring the correct IMCs are active and that `Input Actions` are bound to its own handler functions. These handlers then dispatch the interpreted input (as a `GameplayTag`) to the `AbilitySystemComponent` for ability activation, or execute native C++ logic directly for non-ability inputs.
 
-**Next Step in the Journey:**
+#### **Next Step in the Journey:**
 
 The input, now represented as a `GameplayTag`, has reached the doorstep of the Gameplay Ability System. The final stage is how the `ULyraAbilitySystemComponent` and `ULyraGameplayAbility` classes consume this tag to activate abilities.
-
-Proceed to **Sub-Page: Gameplay Ability Activation - `ULyraAbilitySystemComponent` & `ULyraGameplayAbility`** to complete the input's journey.
 
 ***

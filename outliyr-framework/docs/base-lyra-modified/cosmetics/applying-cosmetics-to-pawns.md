@@ -1,7 +1,3 @@
----
-description: 'Cosmetics: Applying Cosmetics to Pawns'
----
-
 # Applying Cosmetics to Pawns
 
 The `ULyraPawnComponent_CharacterParts` component resides on the Pawn actor (e.g., `ALyraCharacter`) and acts as the **runtime executor** for the cosmetic system. It takes the authoritative list of desired character parts and translates it into visible, attached actors on all clients.
@@ -91,7 +87,3 @@ The efficiency and correctness of the cosmetic system across the network rely he
 ### Summary
 
 The `ULyraPawnComponent_CharacterParts` is the workhorse on the Pawn, managing the replicated state of cosmetics and translating that state into spawned actors and visual updates. It leverages efficient replication via `FFastArraySerializer` and provides hooks (`BroadcastChanged`, `OnCharacterPartsChanged`) for integrating cosmetic changes deeply with the Pawn's visuals and animation system.
-
-***
-
-This covers the Pawn component in detail. Next, we can discuss the Controller component (ULyraControllerComponent\_CharacterParts) which manages the desired state.

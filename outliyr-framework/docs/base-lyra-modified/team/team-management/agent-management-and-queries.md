@@ -1,7 +1,3 @@
----
-description: 'Team Subsystem: Agent Management & Queries'
----
-
 # Agent Management & Queries
 
 Once teams are registered via their `ALyraTeamInfoBase` actors, the `ULyraTeamSubsystem` provides the core functionality for determining which team an actor belongs to, changing an actor's team affiliation, and comparing the relationship between different actors.

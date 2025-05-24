@@ -68,14 +68,14 @@ When a Game Feature Plugin is activated (often driven by the current `ULyraExper
 
 Now, when the "GrapplingHook" feature is active, players will have the 'Q' key bound, it will be interpreted as the grapple ability input, and they will have the grapple ability granted and ready to be triggered.
 
-**In Summary:**
+***
+
+### **Summary:**
 
 Game Feature Actions provide a powerful and clean way to dynamically introduce and manage input configurations. By using actions like `UGameFeatureAction_AddInputContextMapping` and `UGameFeatureAction_AddInputBinding`, developers can create self-contained gameplay modules that bring their own input schemes and ability bindings, integrating seamlessly with Lyra's core input system.
 
 **Next Step in Documentation:**
 
 Having covered the core flow and configuration aspects, the next section will focus on how you can customize the _behavior_ of the input itself, such as sensitivity, dead zones, and user-configurable settings.
-
-Proceed to **Page: Customizing Input Behavior\`**.
 
 ***

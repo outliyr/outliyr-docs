@@ -1,7 +1,3 @@
----
-description: 'UI Integration: The ULyraGameSettingRegistry – Bridging Backend and Frontend'
----
-
 # UI Integration
 
 While `ULyraSettingsShared` and `ULyraSettingsLocal` manage the actual storage and application of game settings, the `ULyraGameSettingRegistry` is the central orchestrator for how these settings are discovered, organized, and presented to the player through the user interface. It leverages Unreal Engine's **GameSettings Plugin** (part of CommonUI) to create a data-driven approach to building settings screens.

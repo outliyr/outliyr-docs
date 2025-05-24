@@ -1,7 +1,3 @@
----
-description: Access Rights ( EItemContainerAccessRights )
----
-
 # Access rights
 
 Access Rights are the **first gate** every container passes through before it even _thinks_ about permissions or gameplay abilities.\

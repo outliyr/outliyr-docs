@@ -1,7 +1,3 @@
----
-description: 'Team System: Overview'
----
-
 # Team
 
 Welcome to the Team System documentation. This system provides the framework for grouping players and AI into distinct teams, managing their affiliations, applying team-specific visuals, and enabling gameplay logic based on team relationships (e.g., friendly fire, team scoring, objective ownership).

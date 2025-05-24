@@ -1,7 +1,3 @@
----
-description: Equipment Manager Component (ULyraEquipmentManagerComponent)
----
-
 # Equipment Manager Component
 
 The `ULyraEquipmentManagerComponent` is the primary runtime component responsible for managing all equipped items on a **single Pawn**. Think of it as the Pawn's personal loadout manager. It orchestrates the equipping, unequipping, and state changes (Holstered vs. Held) of gear.

@@ -1,7 +1,3 @@
----
-description: 'Core Game Flow Classes: Overview'
----
-
 # Core Game Componens
 
 This section covers the standard Unreal Engine framework classes (`GameMode`, `GameState`, `GameInstance`, `GameSession`) as they are customized and utilized within this asset. While these classes retain their fundamental engine roles, their responsibilities are often adapted to work effectively with the **Experience** and **Game Feature** systems.

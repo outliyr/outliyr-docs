@@ -1,7 +1,3 @@
----
-description: 'Core Concepts: Team Agent Interface (ILyraTeamAgentInterface)'
----
-
 # Team Agent Interface
 
 For an Actor to be recognized as belonging to a team and participate in the team system (especially for AI Perception and generic team queries), it needs to implement the `ILyraTeamAgentInterface`. This interface provides the standard mechanism for setting and retrieving an Actor's team affiliation.

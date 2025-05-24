@@ -1,7 +1,3 @@
----
-description: 'Experiences: User Facing Experience (ULyraUserFacingExperienceDefinition)'
----
-
 # User Facing Experience
 
 While `ULyraExperienceDefinition` defines the _internal_ mechanics and content of a gameplay session, the `ULyraUserFacingExperienceDefinition` defines how that experience is **presented to the player in the UI** (like menus or server browsers) and provides the necessary information to **initiate a game session** for that experience.

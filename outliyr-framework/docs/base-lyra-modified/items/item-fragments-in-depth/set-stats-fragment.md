@@ -1,7 +1,3 @@
----
-description: 'Item Fragments: Set Stats Fragment (UInventoryFragment_SetStats)'
----
-
 # Set Stats Fragment
 
 The `UInventoryFragment_SetStats` fragment provides a convenient, data-driven way to initialize specific **Stat Tags** (`FGameplayTagStackContainer`) on a `ULyraInventoryItemInstance` the moment it is created.

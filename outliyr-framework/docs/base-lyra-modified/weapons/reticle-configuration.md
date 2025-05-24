@@ -1,7 +1,3 @@
----
-description: 'Weapon System: Reticle Configuration (UInventoryFragment_ReticleConfig)'
----
-
 # Reticle Configuration
 
 To provide appropriate aiming feedback to the player, weapons often require different User Interface **reticles** (crosshairs) depending on the weapon type and potentially its current state (hip fire vs. aiming down sights). The `UInventoryFragment_ReticleConfig` provides a simple, data-driven way to associate specific reticle widget classes with a weapon's definition.

@@ -1,7 +1,3 @@
----
-description: 'Core Game Flow: Game Instance (ULyraGameInstance)'
----
-
 # Game Instance
 
 The `ULyraGameInstance` class, inheriting from `UCommonGameInstance` (which itself inherits from `UGameInstance`), serves as the **persistent manager across the entire application lifecycle**, including level transitions. While not directly involved in second-to-second gameplay logic like Game Mode or Game State, it plays a crucial role in initializing engine subsystems, handling user login and initialization, managing session flows, and providing a stable context for systems that need to persist between maps.

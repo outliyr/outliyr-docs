@@ -1,7 +1,3 @@
----
-description: 'Team System: Core Concepts Overview'
----
-
 # Core Concepts
 
 Before diving into the managers and setup components, it's essential to understand the core building blocks that represent teams and team affiliation within the system. These concepts define how teams are identified, how actors belong to them, and how their visual identity is managed.

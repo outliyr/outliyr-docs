@@ -1,7 +1,3 @@
----
-description: Pawn-Level Configuration - ULyraPawnData
----
-
 # Pawn-Level Configuration
 
 {% hint style="success" %}
@@ -42,7 +38,9 @@ When a player-controlled Pawn is initialized, the `ULyraHeroComponent` on that P
     * `Priority`: 0
     * `bRegisterWithSettings`: true
 
-**In Summary:**
+***
+
+### **Summary:**
 
 The `ULyraPawnData` acts as the primary data-driven source for a Pawn's initial input setup. It dictates:
 
@@ -54,8 +52,5 @@ By modifying these properties within different `ULyraPawnData` assets, you can c
 **Next:**
 
 While `ULyraPawnData` sets up the general input interpretation and hardware bindings, the actual Gameplay Abilities triggered by these inputs are often granted via `ULyraAbilitySet`s, which also play a role in linking abilities to `InputTags`.
-
-Proceed to **Sub-Page: Granting Abilities with Input - `ULyraAbilitySet`**.\
-Then, continue with **Sub-Page: Modular Input with Game Features\`**.
 
 ***

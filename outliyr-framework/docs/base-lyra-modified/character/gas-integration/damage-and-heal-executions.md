@@ -78,6 +78,3 @@ You can create custom executions for more complex scenarios:
 
 Executions provide the flexibility to implement nearly any calculation logic needed for your game's combat or interaction systems, cleanly integrating source potential, target state, and contextual information.
 
-***
-
-This page focuses specifically on the role and implementation of the damage and heal executions. The final page in this GAS section will cover **Gameplay Tags in the Character System**.

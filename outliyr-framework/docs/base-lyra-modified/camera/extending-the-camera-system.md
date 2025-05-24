@@ -118,6 +118,3 @@ While less common, further customization is possible:
 
 By leveraging these extension points, you can tailor the camera system extensively to fit the specific needs and feel of your shooter game.
 
-***
-
-This concludes the documentation for the core Camera System based on the provided code. It covers the architecture, components, implementation details, and extension methods.

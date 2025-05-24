@@ -1,9 +1,3 @@
----
-description: >-
-  Game Feature Actions: Add Input Mapping Context
-  (UGameFeatureAction_AddInputContextMapping)
----
-
 # Add Input Mapping Context
 
 This Game Feature Action is responsible for adding **Enhanced Input Mapping Contexts (`UInputMappingContext`)** to local players when the associated Game Feature or Experience activates. Input Mapping Contexts define the raw bindings between physical hardware inputs (like keyboard keys, mouse buttons, gamepad buttons) and abstract **Input Actions** (like `IA_Move`, `IA_Jump`, `IA_Fire`).

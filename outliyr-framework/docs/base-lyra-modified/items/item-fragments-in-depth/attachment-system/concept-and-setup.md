@@ -1,7 +1,3 @@
----
-description: 'Attachment System: Concepts & Setup (UInventoryFragment_Attachment)'
----
-
 # Concept & Setup
 
 This page focuses on configuring the **static** aspects of the attachment system using the `UInventoryFragment_Attachment`. This fragment is added to an `ULyraInventoryItemDefinition` to enable it to either **host attachments** or **be an attachment** itself (or both). The configuration done here dictates the rules, available slots, and the _potential_ behaviors of attachments.

@@ -1,7 +1,3 @@
----
-description: 'GAS & UI Integration: Workflow Example (Moving an Item)'
----
-
 # Workflow
 
 To solidify understanding of how the UI, GAS, Function Library, and Source Data Structs work together to handle diverse item interactions, let's walk through a common example: **Equipping an item by dragging it (as a "Move Icon") from any compatible source slot and dropping it onto an equipment slot UI.**

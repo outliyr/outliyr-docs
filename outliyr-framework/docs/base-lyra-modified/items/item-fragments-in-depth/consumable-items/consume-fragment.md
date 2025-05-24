@@ -1,7 +1,3 @@
----
-description: 'Consumable Items: Consume Fragment'
----
-
 # Consume Fragment
 
 ### “What makes this item usable?”

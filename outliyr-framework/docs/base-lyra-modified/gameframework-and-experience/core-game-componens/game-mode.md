@@ -1,7 +1,3 @@
----
-description: 'Core Game Flow: Game Mode (ALyraGameMode)'
----
-
 # Game Mode
 
 The `ALyraGameMode` class serves as the **server-authoritative foundation** for defining the rules and managing the player lifecycle within a gameplay session. While inheriting from `AModularGameModeBase` (which itself inherits from `AGameModeBase`), its role in this modular framework is focused primarily on session initialization, player connection management, and pawn spawning logic, delegating specific game mode rules to systems loaded via Experiences.

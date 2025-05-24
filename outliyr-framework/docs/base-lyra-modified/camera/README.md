@@ -91,6 +91,3 @@ With this overview, you can explore the specifics of the system:
 * **Player Camera Management:** Learn about the higher-level `APlayerCameraManager`.
 * **Supporting Interfaces:** Discover how other actors can provide hints to the camera.
 
-***
-
-This page sets the stage by explaining the core concepts and the overall flow. Let me know if this captures the essence well enough before moving to the `ULyraCameraComponent` page.

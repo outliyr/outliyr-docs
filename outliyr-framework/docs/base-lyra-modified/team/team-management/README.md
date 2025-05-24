@@ -1,7 +1,3 @@
----
-description: 'Team Management (ULyraTeamSubsystem): Overview'
----
-
 # Team Management
 
 While Core Concepts define _what_ teams are and how actors affiliate with them, the actual runtime **management, tracking, and querying** of teams and their members is handled by the `ULyraTeamSubsystem`. This World Subsystem acts as the central nervous system for all team-related information within a specific game world instance.

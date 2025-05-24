@@ -159,5 +159,3 @@ This will:
 | `InteractionWidgetComponent`                            | Where to show the prompt in world space          |
 
 ***
-
-Next up: Customizing Interaction UI — learn how to replace or extend the interaction prompts with your own widgets and logic.

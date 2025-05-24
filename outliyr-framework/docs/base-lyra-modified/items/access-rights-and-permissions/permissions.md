@@ -1,7 +1,3 @@
----
-description: Permissions ( EItemContainerPermissions )
----
-
 # Permissions
 
 Once a player has **FullAccess** to a container, the **Permissions** bitmask decides _what they can actually do_ with the data that is now in-sync on their client.

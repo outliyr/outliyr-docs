@@ -1,7 +1,3 @@
----
-description: 'Game Framework & Experiences: Overview'
----
-
 # GameFramework & Experience
 
 This section delves into the core systems that manage the overall game flow, session rules, and modular content delivery within this asset. Building upon Unreal Engine's standard framework (Game Mode, Game State, etc.), it leverages Lyra's **Experience** system and Unreal's **Game Features** plugin infrastructure to create highly modular and customizable gameplay sessions.

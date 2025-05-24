@@ -1,7 +1,3 @@
----
-description: 'Core Concepts: Team Display Assets (ULyraTeamDisplayAsset)'
----
-
 # Team Display Assets
 
 While Team IDs and the Team Agent Interface handle _affiliation_, the `ULyraTeamDisplayAsset` defines the **visual identity** of a team. This Data Asset stores configurable parameters (colors, textures, scalar values) that can be applied to materials, particle effects, and UI elements to give teams a distinct look and feel.

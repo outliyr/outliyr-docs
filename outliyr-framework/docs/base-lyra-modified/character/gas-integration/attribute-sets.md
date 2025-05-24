@@ -99,6 +99,3 @@ Let's trace a simple Hitscan weapon damage event:
 
 By understanding this separation and the flow through Executions and `PostGameplayEffectExecute`, you can more effectively modify damage calculations, add resistances (likely as new attributes on `ULyraHealthSet` captured by the execution), or create new combat-related effects.
 
-***
-
-This expanded explanation aims to clarify the roles of `ULyraHealthSet` and `ULyraCombatSet`. Now lets get a better deep dive into **Damage & Heal Executions**.

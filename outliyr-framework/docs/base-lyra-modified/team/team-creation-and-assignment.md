@@ -1,7 +1,3 @@
----
-description: Team Creation & Assignment (ULyraTeamCreationComponent)
----
-
 # Team Creation & Assignment
 
 While the `ULyraTeamSubsystem` manages team information at runtime, the `ULyraTeamCreationComponent` is typically responsible for the **initial setup** of teams and the **assignment of players** to those teams when a game session begins. It's a `UGameStateComponent`, usually added dynamically to the `ALyraGameState` by a Game Feature Action associated with a team-based `ULyraExperienceDefinition`.

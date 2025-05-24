@@ -1,7 +1,3 @@
----
-description: 'Team Subsystem: Team Tags'
----
-
 # Team Tags
 
 The `ULyraTeamSubsystem`, in conjunction with the `ALyraTeamInfoBase` actors, provides a mechanism for associating **replicated Gameplay Tag stacks** with entire teams. This allows for storing and querying team-wide state information or applying team-level buffs/debuffs tracked via tags.

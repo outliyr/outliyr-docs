@@ -1,7 +1,3 @@
----
-description: 'GAS & UI Integration: Source Item Data (FAbilityData_SourceItem & Derivatives)'
----
-
 # Slot Address
 
 When triggering Gameplay Abilities for inventory actions, directly passing pointers like `ULyraInventoryItemInstance*` from the client is insecure. To solve this, the system uses **`FAbilityData_SourceItem`** and its derived structs. These act as **safe, abstract "locators"** for items, encapsulating the information needed for the server to find an item authoritatively.

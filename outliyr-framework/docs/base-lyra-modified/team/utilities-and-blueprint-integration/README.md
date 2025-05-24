@@ -1,7 +1,3 @@
----
-description: 'Utilities & Blueprint Integration: Overview'
----
-
 # Utilities & Blueprint Integration
 
 While the core team logic resides within the `ULyraTeamSubsystem` and `ULyraTeamCreationComponent`, several utilities are provided to make interacting with the team system easier, especially from **Blueprints** and for handling **asynchronous state changes**.

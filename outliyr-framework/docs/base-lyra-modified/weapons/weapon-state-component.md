@@ -1,7 +1,3 @@
----
-description: 'Weapon System: Weapon State Component (ULyraWeaponStateComponent)'
----
-
 # Weapon State Component
 
 The `ULyraWeaponStateComponent` is a **Controller Component**, meaning it should be added to your `APlayerController` (or potentially AI Controllers if they need similar feedback). Its primary role is to manage weapon-related state that is specific to the _controller's perspective_, particularly focusing on client-side feedback like **confirmed hit markers**. It can also serve as a convenient location to drive the `Tick` function of the currently held weapon instance.

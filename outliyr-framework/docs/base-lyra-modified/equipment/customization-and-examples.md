@@ -1,7 +1,3 @@
----
-description: 'Equipment: Customization & Examples'
----
-
 # Customization & Examples
 
 Now that you understand the core components and advanced concepts of the Equipment System, let's explore how you can tailor it to your specific needs and look at some practical examples.

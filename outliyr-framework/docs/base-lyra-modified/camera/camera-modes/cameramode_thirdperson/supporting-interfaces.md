@@ -34,6 +34,3 @@ To allow different actors and controllers to provide hints or specific data to t
 
 This interface provides a clean way to decouple the camera logic from specific actor classes, allowing actors to "assist" the camera system by providing necessary context or reacting to camera events.
 
-***
-
-This covers the `ILyraCameraAssistInterface`. The final page in this section will be **Extending the Camera System**, providing guidance on customization.

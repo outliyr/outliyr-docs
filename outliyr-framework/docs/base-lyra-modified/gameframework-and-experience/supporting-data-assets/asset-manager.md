@@ -1,7 +1,3 @@
----
-description: 'Supporting Data Assets: Asset Manager (ULyraAssetManager)'
----
-
 # Asset Manager
 
 The `ULyraAssetManager` is a custom subclass of Unreal Engine's `UAssetManager`. The Asset Manager is a global singleton responsible for discovering, loading, and managing game assets, particularly **Primary Assets** (like `ULyraExperienceDefinition`, `ULyraPawnData`, `ULyraUserFacingExperienceDefinition`, and `ULyraExperienceActionSet`). Lyra's customization adds specific game data loading, startup job processing, and utility functions.

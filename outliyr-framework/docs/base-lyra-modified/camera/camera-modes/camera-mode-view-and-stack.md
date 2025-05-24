@@ -93,7 +93,3 @@ The `ULyraCameraModeStack` is a `UObject` class owned and managed by the `ULyraC
 * Finally, the stack blends all these views together into a single `FLyraCameraModeView`, which `ULyraCameraComponent` uses to set the final camera properties for rendering.
 
 This separation of concerns – individual modes defining behavior, a view struct defining the data, and a stack defining the management and blending – creates a highly flexible and powerful camera system.
-
-***
-
-This detailed breakdown of `FLyraCameraModeView` and `ULyraCameraModeStack` should clarify how the system manages multiple camera behaviors. Next, we'll look at the detailed example: **Example: `ULyraCameraMode_ThirdPerson`**.

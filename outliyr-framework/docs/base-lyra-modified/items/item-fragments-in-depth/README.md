@@ -1,7 +1,3 @@
----
-description: 'Item Fragments In-Depth: Overview'
----
-
 # Item Fragments In-Depth
 
 Having covered the core concepts of Items, the Inventory Manager, GAS integration, World Interaction, and Querying, we now return to a deeper dive into the **building blocks of item functionality: the specific `ULyraInventoryItemFragment` types** provided by this asset.

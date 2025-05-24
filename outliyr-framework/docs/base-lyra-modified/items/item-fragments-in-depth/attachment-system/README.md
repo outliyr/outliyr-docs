@@ -1,7 +1,3 @@
----
-description: 'Item Fragments: Attachment System (UInventoryFragment_Attachment) Overview'
----
-
 # Attachment System
 
 One of the most powerful and flexible features of this inventory system is the **Attachment System**. It allows items to be designated as capable of **hosting** other items (attachments) in specific slots, and for other items to **be** attachments. This enables complex item customization, such as adding scopes, grips, and magazines to weapons, or socketing gems into armor, all handled through a unified, fragment-based approach.

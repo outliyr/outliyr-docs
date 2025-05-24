@@ -94,6 +94,3 @@ While the `ULyraCameraComponent` manages the stack, it doesn't typically decide 
 
 This delegation keeps the camera management logic separate from the input/gameplay state logic.
 
-***
-
-This page focuses on the role and mechanics of the `ULyraCameraComponent` itself. Next, we'll break down the concepts behind `ULyraCameraMode`, `FLyraCameraModeView`, and `ULyraCameraModeStack` in the **Camera Modes (Defining Behavior)** section.

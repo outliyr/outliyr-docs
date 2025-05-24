@@ -1,9 +1,3 @@
----
-description: >-
-  Game Feature Actions: Add Components (UGameFeatureAction_AddComponents -
-  Engine Default)
----
-
 # Add components
 
 This Game Feature Action, provided directly by Unreal Engine's `GameFeature` plugin, allows a Game Feature to **dynamically add specified Actor Components** to Actors of a specific class when the feature is activated.

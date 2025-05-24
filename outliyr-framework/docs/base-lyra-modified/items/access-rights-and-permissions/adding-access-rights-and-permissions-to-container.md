@@ -1,7 +1,5 @@
 # Adding Access-Rights & Permissions to container
 
-### Integrating a Container with Access-Rights & Permissions
-
 > **Goal:** add the “who-can-see / who-can-touch” layer to **any** inventory, equipment, or custom container class while keeping its original replication logic intact.
 
 ***

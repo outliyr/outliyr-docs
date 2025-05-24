@@ -1,7 +1,3 @@
----
-description: Granting Abilities with Input - ULyraAbilitySet
----
-
 # Granting Abilities With Input
 
 {% hint style="success" %}
@@ -49,14 +45,14 @@ An `ULyraAbilitySet` is a collection of Gameplay Abilities, Gameplay Effects, an
 5. **Ensure the `ULyraAbilitySet` is granted** to the actor (e.g., via `ULyraPawnData`, `GameFeatureAction_AddAbilities`, or an equipment system).
 6. **Ensure an `InputMappingContext` maps a hardware key to `IA_SpecialAttack`.**
 
-**In Summary:**
+***
+
+### **Summary:**
 
 The `ULyraAbilitySet` is the primary vehicle for granting abilities that respond to player input. By setting the `InputTag` field within its `FLyraAbilitySet_GameplayAbility` entries, you create the crucial link between the abstract input intent (defined by `ULyraInputConfig`) and the specific `ULyraGameplayAbility` that should execute. This data-driven approach allows for flexible and modular assignment of input-triggered abilities.
 
 **Next:**
 
 Now that we've seen how `ULyraPawnData` and `ULyraAbilitySet` contribute to configuring input at a base level, let's explore how Game Feature Plugins can dynamically extend and modify these input configurations.
-
-Proceed to **Sub-Page: Modular Input with Game Features\`**.
 
 ***

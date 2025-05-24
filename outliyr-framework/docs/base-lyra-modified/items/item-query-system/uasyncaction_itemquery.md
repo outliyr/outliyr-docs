@@ -1,7 +1,3 @@
----
-description: 'Item Query System: UAsyncAction_ItemQuery (Blueprint Usage)'
----
-
 # UAsyncAction\_ItemQuery
 
 While `ULyraInventoryQuery` provides the core C++ logic for tracking items, the `UAsyncAction_ItemQuery` offers a convenient **Blueprint Async Action node** (`QueryInventoryAsync`) that simplifies the process for use within Blueprints, especially UI Widgets, Actor Components, or Gameplay Abilities.

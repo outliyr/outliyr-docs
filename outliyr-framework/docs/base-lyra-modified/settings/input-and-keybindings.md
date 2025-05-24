@@ -1,7 +1,3 @@
----
-description: 'Input & Keybindings: Enhanced Input User Settings Integration'
----
-
 # Input & Keybindings
 
 Lyra leverages Unreal Engine's **Enhanced Input System** for its input processing, which includes providing users the ability to customize their keybindings. While the general settings UI is managed by `ULyraGameSettingRegistry`, the specifics of keybinding configuration are deeply tied to the features of Enhanced Input, particularly `UEnhancedInputUserSettings`.

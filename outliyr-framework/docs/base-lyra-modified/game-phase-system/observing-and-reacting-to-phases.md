@@ -109,7 +109,9 @@ void UMyGameSystemComponent::HandleScoreboardPhaseEnded(const FGameplayTag& Phas
    * **When Phase Ends:** Similar process using the `When Phase End` delegate pin.
 3. Implement the logic within the bound custom events.
 
-_(Self/Weak Pointers: When using `CreateUObject` or Blueprint binding, ensure the object instance (`this` in C++, `Self` in BP) will still be valid when the delegate fires. For longer-lived bindings or potential destruction scenarios, consider using `CreateWeakLambda` in C++ or carefully managing Blueprint object lifecycles)._
+{% hint style="success" %}
+_**Self/Weak Pointers**: When using `CreateUObject` or Blueprint binding, ensure the object instance (`this` in C++, `Self` in BP) will still be valid when the delegate fires. For longer-lived bindings or potential destruction scenarios, consider using `CreateWeakLambda` in C++ or carefully managing Blueprint object lifecycles._
+{% endhint %}
 
 ### Polling (`IsPhaseActive`)
 

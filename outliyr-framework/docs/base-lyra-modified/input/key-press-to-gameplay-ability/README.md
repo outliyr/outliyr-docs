@@ -31,8 +31,4 @@ The journey can be broadly divided into these key stages, each of which will be 
 
 Each of these stages involves specific assets and C++ classes working in concert. The following sub-pages will dissect each stage, explaining the "why" and "how" of their individual roles and interactions. By understanding this entire pipeline, you'll be well-equipped to debug, customize, and extend Lyra's input system to suit your project's needs.
 
-**Next Steps:**
-
-* Dive into **Sub-Page: Enhanced Input Layer - `InputMappingContext` & `InputAction`** to understand the initial capture and abstraction of player input.
-
 ***

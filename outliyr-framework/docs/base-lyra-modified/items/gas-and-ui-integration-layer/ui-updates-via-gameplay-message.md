@@ -1,7 +1,3 @@
----
-description: 'GAS & UI Integration: UI Updates via Gameplay Messages'
----
-
 # UI Updates via Gameplay Message
 
 While the Gameplay Ability System (GAS) integration handles requests flowing _from_ the UI _to_ the inventory system, **Gameplay Messages** handle communication in the other direction: informing the UI and other interested systems about authoritative changes _within_ the inventory.

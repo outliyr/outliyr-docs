@@ -1,7 +1,3 @@
----
-description: 'Game Feature Actions: Add Abilities (UGameFeatureAction_AddAbilities)'
----
-
 # Add Abilities
 
 This Game Feature Action is responsible for granting Gameplay Abilities, Ability Sets (both `ULyraAbilitySet` and standard `UAttributeSet`), and initializing Attribute Sets for specific types of actors when the associated Game Feature or Experience is activated. It's a cornerstone for defining the capabilities available to characters or other entities within a given gameplay context.

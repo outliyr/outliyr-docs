@@ -1,7 +1,3 @@
----
-description: 'GAS & UI Integration: The Problem & Solution'
----
-
 # The problem & Solution
 
 Understanding _why_ the Gameplay Ability System (GAS) is used as an intermediary between the User Interface (UI) and the Inventory System is crucial for appreciating its design and working with it effectively, especially in a networked multiplayer environment.

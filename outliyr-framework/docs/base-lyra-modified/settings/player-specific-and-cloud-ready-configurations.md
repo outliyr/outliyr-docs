@@ -1,7 +1,3 @@
----
-description: 'Core Settings Storage: ULyraSettingsShared – Player-Specific & Cloud-Ready'
----
-
 # Player-Specific & Cloud-Ready Configurations
 
 At the heart of Lyra's ability to remember player-specific preferences across sessions and potentially across different devices lies the `ULyraSettingsShared` class. This component is specifically designed to handle settings that are tied to an individual player's choices rather than the machine they are currently using.

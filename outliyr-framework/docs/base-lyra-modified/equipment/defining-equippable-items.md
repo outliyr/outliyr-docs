@@ -1,7 +1,3 @@
----
-description: Defining Equippable Items (ULyraEquipmentDefinition & Item Fragment)
----
-
 # Defining Equippable Items
 
 This section explains how you define the _behavior_ and _visuals_ of items when they are equipped by a character. The system uses a data-driven approach, primarily centered around two key assets:
