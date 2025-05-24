@@ -3,6 +3,9 @@ const path = require('path');
 
 function transformMarkdown(input) {
     return input
+        // Remove GitBook YAML front matter
+        .replace(/^\s*---[\s\S]*?---\s*\n/, '')
+
         // Tabs
         .replace(/{% tabs %}/g, '<!-- tabs:start -->')
         .replace(/{% endtabs %}/g, '<!-- tabs:end -->')
