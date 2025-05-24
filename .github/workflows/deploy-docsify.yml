@@ -1,16 +1,15 @@
-name: Deploy Docsify
+name: Deploy Docsify Site
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout main branch
         uses: actions/checkout@v3
 
       - name: Setup Node.js
@@ -18,17 +17,19 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies (if needed)
-        working-directory: ./outliyr-framework
-        run: npm install || true
+      - name: Install dependencies (if any)
+        run: |
+          cd outliyr-framework
+          npm install
 
       - name: Run convert.js
-        working-directory: ./outliyr-framework
-        run: node scripts/convert.js
+        run: |
+          cd outliyr-framework
+          node scripts/convert.js
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./outliyr-framework/docsify
+          publish_dir: outliyr-framework/docsify
           force_orphan: true
