@@ -1,7 +1,5 @@
 # Item Fragments (Tetris Specific)
 
-## Item Fragments (Tetris Specific)
-
 Item Fragments are the modular building blocks that define an item's behavior and properties. While the Tetris Inventory system relies heavily on fragments defined in the base Lyra system (like `InventoryFragment_InventoryIcon` and `InventoryFragment_SetStats`), it also introduces new fragments and significantly enhances others to enable its unique spatial and interactive features.
 
 This section focuses on these **Tetris-specific fragments**. It details how they configure items for grid interaction, enable container nesting, facilitate item combining, and provide data for the 3D inspection system.

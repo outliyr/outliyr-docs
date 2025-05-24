@@ -298,7 +298,6 @@
     * [Item Movement](core-modules/tetris-inventory/tetris-inventory-manager-component/item-movement.md)
     * [Stacking & Splitting](core-modules/tetris-inventory/tetris-inventory-manager-component/stacking-and-splitting.md)
     * [Container Integration](core-modules/tetris-inventory/tetris-inventory-manager-component/container-integration.md)
-    * [Access Rights & Permissions](core-modules/tetris-inventory/tetris-inventory-manager-component/access-rights-and-permissions.md)
     * [Resizing the Inventory](core-modules/tetris-inventory/tetris-inventory-manager-component/resizing-the-inventory.md)
   * [Utilities](core-modules/tetris-inventory/utilities/README.md)
     * [Data Types](core-modules/tetris-inventory/utilities/data-types.md)
