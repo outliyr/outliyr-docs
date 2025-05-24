@@ -20,14 +20,14 @@ function transformMarkdown(input) {
         .replace(/<\/details>/g, '</div>\n</div>')
 
         // Convert <figure><img ...><figcaption>...</figcaption></figure> to <img ... title="...">
-        .replace(/<figure>\s*<img\s+src="(?:\.\.\/)*\.gitbook\/assets\/([^"]+)"([^>]*)>\s*<figcaption>\s*<p>(.*?)<\/p>\s*<\/figcaption>\s*<\/figure>/g,
+        .replace(/<figure>\s*<img\s+src="(?:\.\.\/)*\.gitbook\/assets\/([^"]+)"([^>]*)>\s*<figcaption>(.*?)<\/figcaption>\s*<\/figure>/gs,
             (_m, src, attrs = '', caption) =>
-                `<img src=".gitbook/assets/${src}"${attrs} title="${caption.trim()}">`)
+                `<img src="/.gitbook/assets/${src}"${attrs} title="${caption.trim().replace(/<[^>]+>/g, '')}">`)
 
         // Convert <figure><img ...></figure> (no caption)
-        .replace(/<figure>\s*<img\s+src="(?:\.\.\/)*\.gitbook\/assets\/([^"]+)"([^>]*)>\s*<\/figure>/g,
+        .replace(/<figure>\s*<img\s+src="(?:\.\.\/)*\.gitbook\/assets\/([^"]+)"([^>]*)>\s*<\/figure>/gs,
             (_m, src, attrs = '') =>
-                `<img src=".gitbook/assets/${src}"${attrs}>`)
+                `<img src="/.gitbook/assets/${src}"${attrs}>`)
 
         // Unescape GitBook underscores
         .replace(/\\_/g, '_');
