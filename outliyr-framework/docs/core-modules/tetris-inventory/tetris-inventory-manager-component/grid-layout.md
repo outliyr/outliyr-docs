@@ -1,7 +1,3 @@
----
-description: 'Tetris Inventory Manager: Grid Layout'
----
-
 # Grid Layout
 
 The foundation of any Tetris-style inventory is the grid itself – the defined space where items can be placed. Unlike simple list inventories, the **Grid Layout** defines the specific structure, dimensions, and available cells of a `ULyraTetrisInventoryManagerComponent`. This system uses a flexible approach based on "Clumps" to allow for complex and non-rectangular inventory shapes.

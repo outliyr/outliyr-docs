@@ -1,7 +1,3 @@
----
-description: 'Hitscan Ability: UGameplayAbility_RangedWeapon_Hitscan - Client-Side Execution'
----
-
 # Client-Side Execution
 
 The `UGameplayAbility_RangedWeapon_Hitscan` ability implements the logic for instant, trace-based weapon fire. A significant portion of its work happens immediately on the firing client to ensure responsiveness, even before the server confirms the action.

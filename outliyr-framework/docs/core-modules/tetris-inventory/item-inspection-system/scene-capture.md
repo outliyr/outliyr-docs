@@ -1,7 +1,5 @@
 # Scene Capture
 
-## Scene Capture (`UPocketCapture` & Subsystem)
-
 Once the `APocketLevelStageManager` has set up the 3D scene within the pocket level, the next step is to render that scene into 2D textures (`UTextureRenderTarget2D`) that can be used by the UI (for live inspection) or read back for icon generation. This rendering process is handled by the `UPocketCapture` object, managed by the `UPocketCaptureSubsystem`.
 
 ### `UPocketCaptureSubsystem`

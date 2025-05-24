@@ -1,7 +1,5 @@
 # ULyraTetrisInventoryQuery
 
-## Querying: `ULyraTetrisInventoryQuery` (C++ Usage)
-
 The `ULyraTetrisInventoryQuery` class is the C++ foundation for tracking specific item definitions across a hierarchy of nested inventories, starting from a root `ULyraInventoryManagerComponent`. It automatically discovers and monitors child inventories within container items.
 
 ### Purpose & Functionality

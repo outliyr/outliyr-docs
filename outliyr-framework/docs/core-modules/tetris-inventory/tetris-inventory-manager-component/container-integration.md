@@ -1,7 +1,5 @@
 # Container Integration
 
-## Tetris Manager: Container Integration (Parent/Child)
-
 A powerful feature of the Tetris Inventory system is the ability for items themselves to act as containers, holding their own nested `ULyraTetrisInventoryManagerComponent`. This allows for creating complex inventory hierarchies, like backpacks containing pouches, or weapon cases holding weapons and magazines. This section details how the system manages these parent-child relationships.
 
 ### Enabling Containers (`InventoryFragment_Container`)

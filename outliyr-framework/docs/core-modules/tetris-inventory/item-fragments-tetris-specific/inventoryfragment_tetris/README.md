@@ -1,7 +1,3 @@
----
-description: 'Item Fragments: InventoryFragment_Tetris'
----
-
 # InventoryFragment\_Tetris
 
 The `InventoryFragment_Tetris` is the cornerstone fragment for enabling items to interact spatially within the Tetris Inventory system. Any item definition that needs to occupy grid cells, be rotated, and visually represented within a grid layout _must_ include this fragment.

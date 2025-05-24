@@ -1,7 +1,3 @@
----
-description: 'Item Inspection System: Pocket Level Management'
----
-
 # Pocket Level Management
 
 The foundation of the item inspection and icon generation system relies on effectively managing isolated pocket world instances. Several components work together to handle the spawning, identification, streaming, and cleanup of these dedicated levels.

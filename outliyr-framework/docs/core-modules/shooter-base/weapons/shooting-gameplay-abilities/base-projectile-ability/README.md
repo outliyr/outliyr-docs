@@ -1,7 +1,3 @@
----
-description: 'Projectile Ability: UGameplayAbility_RangedWeapon_Projectile'
----
-
 # Base Projectile Ability
 
 This ability handles the firing logic for weapons that launch **projectile actors** (`AProjectileBase` or subclasses) into the world. Unlike hitscan, these projectiles have travel time and are simulated as distinct actors.

@@ -1,7 +1,5 @@
 # Tetris Inventory Window Lifecycle
 
-## GAS & UI: (Optional) Tetris Inventory Window Lifecycle
-
 While not strictly mandatory for basic functionality, managing the lifecycle of UI windows associated with Tetris inventories, especially those belonging to container items (`InventoryFragment_Container`), often benefits from integration with the Gameplay Ability System (GAS). This ensures proper server validation and potentially allows for gameplay logic to influence window opening/closing.
 
 ### The Challenge

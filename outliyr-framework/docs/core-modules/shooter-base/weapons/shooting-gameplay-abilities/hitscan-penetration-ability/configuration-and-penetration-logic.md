@@ -1,9 +1,3 @@
----
-description: >-
-  Hitscan Penetration Ability: UGameplayAbility_HitScanPenetration -
-  Configuration & Penetration Logic
----
-
 # Configuration & Penetration Logic
 
 The `UGameplayAbility_HitScanPenetration` ability extends the standard hitscan functionality (`UGameplayAbility_RangedWeapon_Hitscan`) by allowing bullets to pass through certain surfaces, potentially hitting targets behind them. This adds tactical depth, enabling players to shoot through thin cover or hit multiple enemies lined up.

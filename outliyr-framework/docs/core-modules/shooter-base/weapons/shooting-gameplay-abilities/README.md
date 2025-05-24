@@ -1,7 +1,3 @@
----
-description: 'Gameplay Abilities (GAS Integration): Overview'
----
-
 # Shooting Gameplay Abilities
 
 The heart of the weapon firing logic in both Lyra and the extended ShooterBase system lies within Unreal Engine's **Gameplay Ability System (GAS)**. This powerful framework allows for modular, data-driven implementation of actions, effects, cooldowns, and costs.

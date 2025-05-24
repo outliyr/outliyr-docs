@@ -1,7 +1,3 @@
----
-description: 'Base Ability: UGameplayAbility_RangedWeapon - Target Data Handling'
----
-
 # Target Data Handling
 
 After performing targeting traces, the results (hit locations, actors hit, surface materials, etc.) need to be packaged and processed. In GAS, this is done using `FGameplayAbilityTargetDataHandle`, which can contain one or more `FGameplayAbilityTargetData` objects. `UGameplayAbility_RangedWeapon` establishes the framework for creating and managing this data, particularly for hitscan-like results.

@@ -1,7 +1,3 @@
----
-description: 'Aim Assist: Configuration & Customization'
----
-
 # Configuration & Customization
 
 Understanding how the Aim Assist system works internally is one part of the equation; the other is knowing how to configure it to perfectly suit your game's needs. This page details the various ways you can set up, tune, and extend the Aim Assist system.

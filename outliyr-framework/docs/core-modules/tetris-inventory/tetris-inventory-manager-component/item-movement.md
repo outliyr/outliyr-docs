@@ -1,7 +1,5 @@
 # Item Movement
 
-## Tetris Manager: Item Movement (Internal & External)
-
 Moving items is a fundamental interaction in any inventory system. The `ULyraTetrisInventoryManagerComponent` provides specialized functions for moving items spatially, both within the same grid and between different Tetris inventories, ensuring grid rules are respected.
 
 ### Moving Items Within the Same Inventory (`MoveItemInternally`)

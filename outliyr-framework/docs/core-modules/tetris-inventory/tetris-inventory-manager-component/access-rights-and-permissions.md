@@ -1,7 +1,5 @@
 # Access Rights & Permissions
 
-## Tetris Manager: Access Rights & Permissions (Tetris Context)
-
 Managing who can see and interact with inventories is critical, especially with nested containers. The `ULyraTetrisInventoryManagerComponent` leverages the existing Access Rights and Permissions system established in the base `ULyraInventoryManagerComponent` but applies it consistently across the inventory hierarchy.
 
 ### Core Principle: Delegation to Base Inventory

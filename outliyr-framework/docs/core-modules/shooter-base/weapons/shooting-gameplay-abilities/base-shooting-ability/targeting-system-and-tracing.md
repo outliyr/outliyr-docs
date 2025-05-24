@@ -1,7 +1,3 @@
----
-description: 'Base Ability: UGameplayAbility_RangedWeapon - Targeting System & Tracing'
----
-
 # Targeting System & Tracing
 
 A fundamental task of any ranged weapon ability is determining _where_ the weapon is aimed and performing traces (line or sphere) to see what, if anything, is hit. `UGameplayAbility_RangedWeapon` provides helper functions and a framework for handling this targeting process.

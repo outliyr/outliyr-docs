@@ -1,7 +1,3 @@
----
-description: 'Lag Compensation System: Overview'
----
-
 # Lag Compensation
 
 In any online multiplayer shooter, network latency is an unavoidable reality. The time it takes for information to travel from a client (player) to the server and back means that what a player sees on their screen is always slightly in the past compared to the current state of the game world on the authoritative server.

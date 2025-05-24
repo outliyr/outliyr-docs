@@ -1,7 +1,3 @@
----
-description: 'AProjectileBase: Core Concepts'
----
-
 # Core Concepts
 
 `ProjectileBase` is the fundamental actor class for all simulated projectiles originating from weapons within the ShooterBase system. It serves as a networked container for movement logic, prediction state, and the advanced trajectory features like the Merge Point system.

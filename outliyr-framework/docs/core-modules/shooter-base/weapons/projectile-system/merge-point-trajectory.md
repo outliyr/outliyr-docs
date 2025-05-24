@@ -1,7 +1,3 @@
----
-description: 'AProjectileBase: Merge Point Trajectory'
----
-
 # Merge Point Trajectory
 
 A significant challenge in first/third-person shooters is reconciling the player's aiming perspective (typically from a camera) with the projectile's actual spawn location (often the weapon's muzzle). When aiming at nearby objects or peeking around cover, a projectile fired straight from the muzzle might hit the cover instantly, even though the player's crosshair is clear. Conversely, if the projectile instantly originated from the camera, it would feel disconnected from the weapon model.

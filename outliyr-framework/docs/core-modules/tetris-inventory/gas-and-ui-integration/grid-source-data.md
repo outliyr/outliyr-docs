@@ -1,7 +1,5 @@
 # Grid Source Data
 
-## GAS & UI: Grid Source Data (`FInventoryAbilityData_SourceTetrisItem`)
-
 To communicate item locations within the spatial context of a Tetris grid through the Gameplay Ability System (GAS), the plugin introduces a specialized data structure: `FInventoryAbilityData_SourceTetrisItem`. This struct inherits from the base `FAbilityData_SourceItem` and provides the necessary information to precisely identify an item's root position and orientation within a specific `ULyraTetrisInventoryManagerComponent`.
 
 ### Purpose

@@ -1,9 +1,3 @@
----
-description: >-
-  Predictive Projectile Ability: UGameplayAbility_PredictiveProjectile -
-  Synchronization & Interpolation
----
-
 # Synchronization & Interpolation
 
 After the client has predictively spawned a "fake" visual projectile and the server has spawned the "real" authoritative one, the system needs to visually reconcile them on the client to maintain the illusion of responsiveness while ultimately deferring to the server's simulation. This is handled through matching, interpolation, and a final handoff.

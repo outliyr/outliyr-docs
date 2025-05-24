@@ -1,7 +1,5 @@
 # Spatial Placement & Querying
 
-## Tetris Manager: Spatial Placement & Querying
-
 A core capability of the `ULyraTetrisInventoryManagerComponent` is its ability to understand and query the spatial arrangement of items within its grid. This involves finding empty space suitable for new items and checking the state of specific grid locations.
 
 ### Finding Available Space (`FindAvailableSlotsForItem`)

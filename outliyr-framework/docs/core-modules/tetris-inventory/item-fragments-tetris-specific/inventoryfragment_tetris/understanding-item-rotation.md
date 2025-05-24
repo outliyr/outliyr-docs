@@ -1,7 +1,3 @@
----
-description: 'InventoryFragment_Tetris: Understanding Item Rotation'
----
-
 # Understanding Item Rotation
 
 In a Tetris-style inventory, allowing players to rotate items is often crucial for fitting them into available space efficiently. The `InventoryFragment_Tetris` handles the logic for determining which rotations are valid for a given item shape.

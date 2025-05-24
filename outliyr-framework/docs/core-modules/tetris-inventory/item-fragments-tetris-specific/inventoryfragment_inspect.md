@@ -1,7 +1,3 @@
----
-description: 'Item Fragments: InventoryFragment_Inspect'
----
-
 # InventoryFragment\_Inspect
 
 This fragment provides the necessary data and configuration for integrating an item with the 3D **Item Inspection System**, which utilizes the PocketWorlds plugin to render interactive previews. Adding this fragment to an item definition allows players to potentially view that item in a dedicated inspection viewport.

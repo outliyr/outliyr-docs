@@ -1,7 +1,5 @@
 # Adding & Removing Items
 
-## Tetris Manager: Adding & Removing Items (Grid Logic)
-
 While the `ULyraTetrisInventoryManagerComponent` inherits the base item management functions, its core purpose is managing items spatially. Therefore, it introduces specialized logic and functions for adding and removing items that interact directly with the grid layout.
 
 ### Overridden Base Functions

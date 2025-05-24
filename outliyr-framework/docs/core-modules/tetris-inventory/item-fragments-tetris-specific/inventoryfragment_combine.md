@@ -1,7 +1,3 @@
----
-description: 'Item Fragments: InventoryFragment_Combine'
----
-
 # InventoryFragment\_Combine
 
 This fragment allows you to define rules for combining the item it's attached to (the "target" item) with other specific items (the "incoming" item) when the incoming item is dropped onto the target item within a Tetris inventory grid. It facilitates crafting or transformation interactions directly within the inventory interface.

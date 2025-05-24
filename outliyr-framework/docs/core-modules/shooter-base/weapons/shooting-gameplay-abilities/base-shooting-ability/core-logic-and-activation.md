@@ -1,7 +1,3 @@
----
-description: 'Base Ability: UGameplayAbility_RangedWeapon - Core Logic & Activation'
----
-
 # Core Logic & Activation
 
 `UGameplayAbility_RangedWeapon` serves as the abstract base class for all Gameplay Abilities designed to fire ranged weapons within the ShooterBase system. It inherits from `ULyraGameplayAbility_FromEquipment` and establishes the fundamental activation flow, validation checks, and common helper functions used by its specialized subclasses (Hitscan, Projectile, etc.).

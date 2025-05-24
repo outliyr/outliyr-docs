@@ -1,7 +1,3 @@
----
-description: 'Hitscan Penetration Ability: UGameplayAbility_HitScanPenetration'
----
-
 # Hitscan Penetration Ability
 
 Building directly upon the foundation of the standard hitscan ability, `UGameplayAbility_HitScanPenetration` introduces the capability for instant-hit traces to **pass through** certain surfaces, potentially hitting multiple targets or objects along a single line of fire. This adds a significant tactical layer, allowing players to engage enemies through thin cover or collateral targets.

@@ -1,9 +1,3 @@
----
-description: >-
-  Hitscan Ability: UGameplayAbility_RangedWeapon_Hitscan - Processing Validated
-  Data
----
-
 # Processing Validated Data
 
 After the server has performed the necessary lag-compensated validation (or if running in a non-networked/listen server context where validation isn't needed against a remote client), the final step is to process the results, apply gameplay consequences, and confirm the outcome with the client. This happens within the `ProcessValidatedTargetData` function.

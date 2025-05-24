@@ -1,7 +1,5 @@
 # UAsyncAction\_TetrisInventoryQuery
 
-## Querying: `UAsyncAction_TetrisItemQuery` (Blueprint Usage)
-
 For easy integration with Blueprints (like UI Widgets or Actor Components), the `UAsyncAction_TetrisItemQuery` provides a convenient Blueprint Async Action node (`QueryTetrisInventoryAsync`) that wraps the functionality of the C++ `ULyraTetrisInventoryQuery` for hierarchical inventory tracking.
 
 ### Purpose & Functionality

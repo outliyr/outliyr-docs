@@ -1,7 +1,3 @@
----
-description: 'ShooterBase Weapon Systems: Introduction'
----
-
 # Weapons
 
 This section details the advanced weapon functionalities built upon the core Lyra framework, specifically enhanced within the `ShooterBase` plugin to provide a robust and flexible foundation for your Unreal Engine 5 shooter project.

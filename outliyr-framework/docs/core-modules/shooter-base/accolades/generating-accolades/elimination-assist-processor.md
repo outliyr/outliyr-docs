@@ -1,9 +1,3 @@
----
-description: >-
-  Generating Accolades > Elimination Assist Processor
-  (UEliminationAssistProcessor)
----
-
 # Elimination Assist Processor
 
 This processor is responsible for detecting and awarding "Assists" – situations where a player deals damage to an enemy who is subsequently eliminated by a _different_ player.

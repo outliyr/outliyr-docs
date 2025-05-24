@@ -1,7 +1,5 @@
 # Grid-Specific Gameplay Messages
 
-## GAS & UI: Grid-Specific Gameplay Messages
-
 While many UI updates can be driven by messages from the base inventory system (like `TAG_Lyra_Inventory_Message_StackChanged`), the Tetris Inventory introduces spatial concepts that require specific messages to keep the UI synchronized with grid state changes.
 
 These messages are broadcast by the `ULyraTetrisInventoryManagerComponent` (primarily via its `FGridCellInfoList`) when relevant events occur, allowing UI widgets and other systems to react appropriately without direct coupling.

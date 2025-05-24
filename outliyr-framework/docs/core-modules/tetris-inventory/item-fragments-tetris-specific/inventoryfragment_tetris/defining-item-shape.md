@@ -1,7 +1,3 @@
----
-description: 'InventoryFragment_Tetris: Defining Item Shape'
----
-
 # Defining Item Shape
 
 The spatial presence of an item in the Tetris inventory grid is determined entirely by its `Shape` property within the `InventoryFragment_Tetris`. Understanding how to define this shape is crucial.

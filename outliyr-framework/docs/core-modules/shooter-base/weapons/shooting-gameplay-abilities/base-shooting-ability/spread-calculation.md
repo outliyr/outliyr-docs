@@ -1,7 +1,3 @@
----
-description: 'Base Ability: UGameplayAbility_RangedWeapon - Spread Calculation'
----
-
 # Spread Calculation
 
 Accuracy is rarely perfect in shooters. Weapon spread introduces a degree of randomness to shot placement, simulating weapon inaccuracy that can vary based on movement, firing rate (heat), aiming state, and more. The `UGameplayAbility_RangedWeapon` interacts with the associated `ULyraRangedWeaponInstance` to apply this spread dynamically during the targeting phase.

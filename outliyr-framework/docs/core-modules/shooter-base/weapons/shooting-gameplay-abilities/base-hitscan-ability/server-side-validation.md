@@ -1,9 +1,3 @@
----
-description: >-
-  Hitscan Ability: UGameplayAbility_RangedWeapon_Hitscan - Server-Side
-  Validation (Lag Compensation)
----
-
 # Server-Side Validation
 
 Because hitscan weapons rely on instantaneous traces, simply trusting the client's reported hit results would make cheating trivial (e.g., aimbots reporting headshots regardless of actual aim). Therefore, the server must authoritatively validate the client's shot using the state of the world _as the client perceived it_ when the shot was fired. This is achieved using a **Lag Compensation Manager**.

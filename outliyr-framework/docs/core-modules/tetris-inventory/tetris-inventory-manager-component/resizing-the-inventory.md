@@ -1,7 +1,5 @@
 # Resizing the Inventory
 
-## Tetris Manager: Resizing the Inventory
-
 In some scenarios, you might want to dynamically change the layout of a Tetris inventory at runtime. This could be due to gameplay events, upgrades, or other dynamic factors. The `ULyraTetrisInventoryManagerComponent` provides a mechanism to handle this resizing, including attempting to refit existing items into the new layout.
 
 ### The `ResizeInventory` Function

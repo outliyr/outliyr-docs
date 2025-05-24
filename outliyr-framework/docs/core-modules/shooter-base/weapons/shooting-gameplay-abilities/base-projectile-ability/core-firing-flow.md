@@ -1,9 +1,3 @@
----
-description: >-
-  Projectile Ability: UGameplayAbility_RangedWeapon_Projectile - Core Firing
-  Flow
----
-
 # Core Firing Flow
 
 This ability orchestrates the process of firing a server-authoritative projectile. The client determines the initial trajectory, while the server handles the actual spawning of the projectile actor.

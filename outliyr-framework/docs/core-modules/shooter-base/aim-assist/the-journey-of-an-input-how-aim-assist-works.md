@@ -1,7 +1,3 @@
----
-description: 'Aim Assist: The Journey of an Input - How Aim Assist Works'
----
-
 # The Journey of an Input - How Aim Assist Works
 
 Now that you have a general idea of what our Aim Assist system does, let's dive into the mechanics. This page will walk you through the step-by-step process of how player input is received, how targets are identified and evaluated, and how the final aim assistance is calculated and applied. Think of this as following a single "look" command from the player's controller all the way to the adjusted camera movement on screen.

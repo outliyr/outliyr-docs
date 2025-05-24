@@ -1,7 +1,5 @@
 # Item Utility Library
 
-## Utilities: Item Utility Library (`UItemUtilityLibrary`)
-
 This Blueprint Function Library provides more general-purpose utility functions that can be useful in conjunction with the inventory system, particularly for scenarios involving item placement or spawning in the game world, but are not strictly tied to the core inventory management logic itself.
 
 ### `GetRandomPointsInSplineArea`

@@ -1,7 +1,5 @@
 # Configuration & Initialization
 
-## Tetris Manager: Configuration & Initialization
-
 Setting up a `ULyraTetrisInventoryManagerComponent` involves configuring its specific properties, primarily the grid layout and any starting items, and understanding how it gets initialized.
 
 ### Configuration Properties

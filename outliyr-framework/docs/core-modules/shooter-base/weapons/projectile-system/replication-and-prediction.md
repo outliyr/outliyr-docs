@@ -1,7 +1,3 @@
----
-description: 'AProjectileBase: Replication & Prediction'
----
-
 # Replication & Prediction
 
 Networking projectiles effectively requires careful handling of replication and prediction to ensure they appear correctly and consistently for all players while minimizing the perceived effects of latency. `AProjectileBase` incorporates several mechanisms to achieve this.

@@ -1,7 +1,3 @@
----
-description: Weapon Instance Enhancements (UGunWeaponInstance)
----
-
 # Gun Weapon Instance
 
 While `ULyraRangedWeaponInstance` provides the base functionality for ranged weapons (like spread calculation, damage falloff, etc.), the `UGunWeaponInstance` class, specific to the ShooterBase plugin, extends this foundation to incorporate features commonly associated with firearms. Its primary and most significant addition is the **Predictive Recoil System**.

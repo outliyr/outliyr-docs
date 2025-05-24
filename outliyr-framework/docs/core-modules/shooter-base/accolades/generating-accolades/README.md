@@ -1,7 +1,3 @@
----
-description: Generating Accolades (Server-Side Logic)
----
-
 # Generating Accolades
 
 While defining accolades in data tables provides the "what" (what text, icon, sound to display), the crucial step of determining _when_ an accolade should be awarded happens on the server. Raw game events, like a single elimination or instance of damage, don't automatically correspond to accolades like "Double Kill" or "Assist." These require interpretation, state tracking, and logic – the job of **Gameplay Message Processors**.

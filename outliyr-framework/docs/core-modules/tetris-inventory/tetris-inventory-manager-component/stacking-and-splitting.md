@@ -1,7 +1,5 @@
 # Stacking & Splitting
 
-## Tetris Manager: Stacking & Splitting (Grid Context)
-
 While the base inventory system handles the concept of item stacks via StatTags and `MaxStackSize`, the `ULyraTetrisInventoryManagerComponent` provides specific functions to manage stacking and splitting directly within the grid context, often used during drag-and-drop operations.
 
 ### Combining Stacks (`CombineItemStack`)

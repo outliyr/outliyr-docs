@@ -1,7 +1,5 @@
 # Grid Representation
 
-## Tetris Manager: Grid Representation (`FGridCellInfoList`)
-
 The core of the `ULyraTetrisInventoryManagerComponent`'s spatial awareness lies in how it represents the state of its grid internally. This is primarily handled by the `FGridCellInfoList` struct, which manages an array of `FGridCellInfo` structs, one for each _accessible_ cell defined in the `InventoryLayout`.
 
 ### `FGridCellInfo` Struct

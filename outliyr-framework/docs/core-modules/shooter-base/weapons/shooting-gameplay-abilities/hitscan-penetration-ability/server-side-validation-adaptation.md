@@ -1,9 +1,3 @@
----
-description: >-
-  Hitscan Penetration Ability: UGameplayAbility_HitScanPenetration - Server-Side
-  Validation Adaptation
----
-
 # Server-Side Validation Adaptation
 
 Validating hitscan penetration adds complexity compared to standard hitscan. The server not only needs to verify the _first_ hit but also the _entire sequence_ of penetrations reported by the client. It must ensure the client isn't claiming penetrations through materials that shouldn't allow it, exceeding penetration limits, or hitting targets that weren't actually behind penetrable cover in the server's rewound world state.

@@ -1,9 +1,3 @@
----
-description: >-
-  Predictive Projectile Ability: UGameplayAbility_PredictiveProjectile - Core
-  Concept & Spawning
----
-
 # Core Concept & Spawning
 
 The core of the predictive system lies in how and when projectiles are spawned on the client and server, aiming to provide immediate feedback while maintaining server authority. This ability overrides the standard projectile spawning flow significantly.

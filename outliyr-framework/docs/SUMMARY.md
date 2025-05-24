@@ -318,7 +318,6 @@
     * [Scene Capture](core-modules/tetris-inventory/item-inspection-system/scene-capture.md)
     * [Live Inspection UI](core-modules/tetris-inventory/item-inspection-system/live-inspection-ui.md)
     * [Async Icon Generation](core-modules/tetris-inventory/item-inspection-system/async-icon-generation.md)
-  * [Getting Started / Examples](core-modules/tetris-inventory/getting-started-examples.md)
 * [True First Person](core-modules/true-first-person.md)
 
 ## Game Modes

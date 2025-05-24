@@ -1,7 +1,3 @@
----
-description: 'Predictive Projectile Ability: UGameplayAbility_PredictiveProjectile'
----
-
 # Predictive Projectile Ability
 
 This ability represents the most sophisticated approach to firing projectiles in ShooterBase, specifically designed to combat network latency and provide a highly responsive experience for the player firing the weapon. It builds upon the projectile trajectory concepts (`AProjectileBase`, Merge Point) and integrates **client-side prediction** for the projectile itself.

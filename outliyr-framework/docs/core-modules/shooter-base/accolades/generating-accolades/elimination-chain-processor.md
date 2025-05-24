@@ -1,9 +1,3 @@
----
-description: >-
-  Generating Accolades > Elimination Chain Processor
-  (UEliminationChainProcessor)
----
-
 # Elimination Chain Processor
 
 This processor is designed to detect and reward players for achieving "Elimination Chains" – scoring multiple eliminations within a short, predefined time window (often referred to as multi-kills like Double Kills, Triple Kills, etc.).

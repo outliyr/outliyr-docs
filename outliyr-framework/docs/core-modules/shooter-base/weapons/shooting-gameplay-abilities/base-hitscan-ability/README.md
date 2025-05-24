@@ -1,7 +1,3 @@
----
-description: 'Hitscan Ability: UGameplayAbility_RangedWeapon_Hitscan'
----
-
 # Base Hitscan Ability
 
 This ability provides the core implementation for weapons that use **hitscan** mechanics – where the "bullet" travels instantaneously along a line or narrow sweep from the firing point to its maximum range, registering hits immediately. This is typical for many rifles, pistols, and SMGs in shooter games.

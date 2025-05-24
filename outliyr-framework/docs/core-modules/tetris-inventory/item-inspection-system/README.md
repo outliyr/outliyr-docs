@@ -1,7 +1,3 @@
----
-description: Item Inspection System (PocketWorlds Integration)
----
-
 # Item Inspection System
 
 ### Purpose: Beyond 2D Icons

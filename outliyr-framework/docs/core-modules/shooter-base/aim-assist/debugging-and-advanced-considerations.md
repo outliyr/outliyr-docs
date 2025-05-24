@@ -1,7 +1,3 @@
----
-description: 'Aim Assist: Debugging & Advanced Considerations'
----
-
 # Debugging & Advanced Considerations
 
 With the Aim Assist system configured and your actors targetable, you might need to troubleshoot issues or explore more advanced topics. This page provides information on debugging tools, performance insights, and ideas for extending the system.

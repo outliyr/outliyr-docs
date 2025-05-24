@@ -1,7 +1,3 @@
----
-description: 'Projectile System: Overview'
----
-
 # Projectile System
 
 While hitscan weapons deal damage instantly along a line, many shooters rely on projectiles – objects that travel through the world over time, affected by gravity and velocity. Implementing projectiles effectively in a networked environment presents unique challenges, primarily related to latency and visual consistency.

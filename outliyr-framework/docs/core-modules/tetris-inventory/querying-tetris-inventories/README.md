@@ -1,7 +1,5 @@
 # Querying Tetris Inventories
 
-## Querying Tetris Inventories
-
 Often, game systems outside the immediate UI need to efficiently track the presence and quantity of specific item types, even when those items might be hidden inside nested containers (like backpacks within backpacks). Constantly iterating through multiple inventories is inefficient.
 
 The **Tetris Inventory Query** system provides a reactive and performant solution for monitoring specific items across an entire inventory hierarchy, starting from a root component.

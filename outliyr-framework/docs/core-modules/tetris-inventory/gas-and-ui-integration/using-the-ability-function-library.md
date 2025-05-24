@@ -1,7 +1,5 @@
 # Using the Ability Function Library
 
-## GAS & UI: Using the Ability Function Library (Tetris Context)
-
 A key advantage of the integration design is that the **existing `UInventoryAbilityFunctionLibrary` from the base Lyra system works seamlessly with the Tetris inventory's grid-specific data structures.** You don't need a separate function library for Tetris interactions.
 
 This is achieved through the use of **wildcard struct pins** (`CustomStructureParam`) on the library's core Blueprint nodes.

@@ -1,9 +1,3 @@
----
-description: >-
-  Generating Accolades > Elimination Streak Processor
-  (UEliminationStreakProcessor)
----
-
 # Elimination Streak Processor
 
 This processor focuses on tracking and rewarding "Elimination Streaks" – achieving a certain number of eliminations consecutively without being eliminated yourself.

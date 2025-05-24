@@ -1,7 +1,3 @@
----
-description: Displaying Accolades (Client-Side UI)
----
-
 # Displaying Accolades
 
 Once an accolade has been detected, processed, and relayed to the correct client, the final step is presenting it visually to the player. This crucial client-side responsibility falls upon the **`UAccoladeHostWidget`**. This UMG widget acts as the manager and display container for accolades appearing in a specific region of the player's HUD.

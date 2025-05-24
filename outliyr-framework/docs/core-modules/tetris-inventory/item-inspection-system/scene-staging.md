@@ -1,7 +1,3 @@
----
-description: Item Inspection System:Scene Staging (APocketLevelStageManager)
----
-
 # Scene Staging
 
 The `APocketLevelStageManager` is an Actor specifically designed to reside within a pocket level instance managed by the `UPocketLevelBridgeSubsystem`. It acts as the director for the item rendering scene, responsible for spawning the visuals, positioning the camera, handling interactions, and providing the necessary context for the `UPocketCapture` component to render the scene.
