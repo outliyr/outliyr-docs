@@ -11,6 +11,47 @@
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.css">
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/sidebar.min.css"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-breadcrumb@latest/dist/breadcrumb.min.css">
+  <style>
+    /* Target only divs that wrap images */
+    div:has(> img) {
+      display: block !important;
+      text-align: center !important;
+      margin: 1em auto;
+    }
+  </style>
+  <style>
+    .alert.flat a {
+      text-decoration: underline;
+      font-weight: 600;
+    }
+
+    .alert.flat.note a {
+      color: #0078d4; /* brighter blue */
+    }
+
+    .alert.flat.tip a {
+      color: #2e8b57; /* medium-sea green */
+    }
+
+    .alert.flat.warning a {
+      color: #d35400; /* strong orange */
+    }
+
+    .alert.flat.attention a {
+      color: #c0392b; /* vivid red */
+    }
+
+    /* Optional hover effect */
+    .alert.flat a:hover {
+      text-decoration: none;
+      opacity: 0.85;
+    }
+
+    /* Optional slight glow (can be removed if too much) */
+    .alert.flat a {
+      text-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+    }
+  </style>
 </head>
 <body>
   <div id="app"></div>
@@ -45,28 +86,18 @@
       mermaidConfig: {
         querySelector: ".mermaid",
       },
+      mermaidZoom: {
+        minimumScale: 1,
+        maximumScale: 5,
+        zoomPannel: true
+      },
       'flexible-alerts': {
-        note: {
-          label: {
-            '/': 'info'
-          }
-        },
-        tip: {
-          label: {
-            '/': 'success'
-          }
-        },
-        warning: {
-          label: {
-            '/': 'warning'
-          }
-        },
-        attention: {
-          label: {
-            '/': 'attention'
-          }
-        }
-      }
+        style: 'flat',
+        note: { label: 'info' },
+        warning: { label: 'warning' },
+        attention: { label: 'attention' },
+        success: { label: 'tip', icon: 'icon-tip', className: 'tip'},
+      },
     }
   </script>
   <!-- Docsify v4 -->
@@ -81,7 +112,7 @@
     mermaid.initialize({ startOnLoad: true });
     window.mermaid = mermaid;
   </script>
-  <script src="//unpkg.com/docsify-mermaid@2.0.0/dist/docsify-mermaid.js"></script>
+  <script src="//unpkg.com/docsify-mermaid@2.0.1/dist/docsify-mermaid.js"></script>
   <script src="//unpkg.com/docsify-mermaid-zoom/dist/docsify-mermaid-zoom.js"></script>
   <script src="//unpkg.com/docsify-pagination/dist/docsify-pagination.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docsify-breadcrumb@latest/dist/index.min.js"></script>
