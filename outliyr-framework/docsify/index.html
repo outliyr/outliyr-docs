@@ -52,6 +52,51 @@
       text-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
     }
   </style>
+  <style>
+    /* Better spacing for the sidebar */
+    .sidebar {
+      padding: 1rem;
+      font-size: 15px;
+    }
+
+    /* Space out each item */
+    .sidebar ul li a {
+      padding: 0.5rem 0.75rem;
+      display: block;
+      border-radius: 4px;
+      transition: background 0.2s ease;
+    }
+
+    /* Add hover background */
+    .sidebar ul li a:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    /* Increase font size and weight for collapsible section titles */
+    .sidebar ul li > p {
+      font-size: 16px;
+      font-weight: 600;
+      padding: 0.75rem 0.75rem;
+      margin: 0.25rem 0;
+      color: var(--theme-color, #42b983);
+    }
+
+    /* Optional: make current page link more distinct */
+    .sidebar ul li.active > a {
+      font-weight: bold;
+      background-color: rgba(0, 0, 0, 0.07);
+    }
+
+    .sidebar-nav ul:not(.app-sub-sidebar) > li:not(.file)::before
+    {
+      top: 19px;
+    }
+
+    .sidebar-nav ul:not(.app-sub-sidebar) > li.open::before
+    {
+      top: 17px;
+    }
+  </style>
 </head>
 <body>
   <div id="app"></div>
