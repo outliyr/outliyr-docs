@@ -29,22 +29,38 @@ One of the most common customizations is adding specific visual or auditory feed
 * Drive Material Parameters on the character or equipment meshes based on state changes.
 * Attach/detach specific cosmetic actors (like a scope cover) during `K2_OnHolster`/`K2_OnUnHolster`.
 
-### Modifying Behavior with Custom Instances
+### Modifying Behavior with Custom Equipment Instances
 
-Sometimes you need more than just visuals; you need custom logic within the instance itself.
+The recommended way to implement equipment behavior in this system is through **Gameplay Abilities**, **Tag Attributes**, and **modular composition**. These tools allow you to keep logic isolated, performant, and extensible — without relying on inheritance-heavy structures.
 
-**Method:** Subclass `ULyraEquipmentInstance` in C++ or Blueprint and add custom variables and functions.
+#### When _Not_ to Subclass
 
-**Example: Tracking Weapon Heat in C++**
+Avoid subclassing `ULyraEquipmentInstance` (or its children) just to:
 
-(Similar to the `ULyraRangedWeaponInstance` example provided earlier)
+* Add variables or state containers
+* Handle action logic like firing, reloading, etc.
+* Implement behavior that's only needed while an ability is active
 
-1. **Create C++ Class:** Create `MyRangedWeaponInstance` inheriting from `ULyraWeaponInstance`.
-2. **Add Variables:** Add properties like `CurrentHeat`, `HeatDissipationRate`, etc. Make them `UPROPERTY()` and potentially `Replicated` if clients need the exact value.
-3. **Override Tick:** Implement the `Tick` function to handle heat dissipation over time.
-4. **Add Functions:** Create functions like `AddHeat(float Amount)` to be called by abilities (like the firing ability).
-5. **Update Definition:** Set the `Instance Type` in the `ULyraEquipmentDefinition` to `MyRangedWeaponInstance`.
-6. **Access from Ability:** In your firing ability (derived from `ULyraGameplayAbility_FromEquipment`), get the instance via `GetAssociatedEquipment()`, cast it to `MyRangedWeaponInstance*`, and call `AddHeat()`.
+Instead:
+
+* Use **Gameplay Abilities** to encapsulate behaviors (e.g., `GA_ShootBullet`, `GA_ReloadMagazine`)
+* Use **Tag Attributes** to store runtime variables or stats (e.g., spread, muzzle velocity, reload speed)
+* Use **Attachments** or **Fragments** for conditional or modular logic (e.g., suppressors, scopes, modifiers)
+
+#### When Subclassing _Is_ Justified
+
+Subclass `ULyraEquipmentInstance` **only** when you need persistent runtime logic that:
+
+* Must execute every frame (i.e., in `Tick()`), where timer-based abilities are insufficient
+* Cannot be scoped to an individual ability or fragment
+* Needs to affect or be queried by multiple abilities or systems continuously
+
+**Valid Use Cases:**
+
+* **Weapon Heat/Spread:** Updated every frame while equipped (see [`ULyraRangedWeaponInstance`](../weapons/range-weapon-instance.md))
+* **Recoil Tracking & Recovery:** Involves frame-accurate interpolation and aim compensation (see [`UGunWeaponInstance`](../../core-modules/shooter-base/weapons/gun-weapon-instance.md))
+
+These are cases where **tick-based logic in C++** is more performant and reliable than using timers inside abilities, particularly when low latency or fine control is needed.
 
 ### Reacting to Equipment Changes (UI & Other Systems)
 
@@ -130,10 +146,17 @@ Use Tag Attributes to manage ability-specific or modifiable parameters on the eq
    * If it's the correct weapon type:
      * Call `EquipmentInstance->ModifyTagAttribute(TAG_Weapon_Stat_SpreadExponent, -0.2f, EFloatModOp::Add)`.
      * **Important:** Store the returned `FFloatStatModification` struct somewhere associated with this attachment effect instance.
-4. **Revert Modification:** Inside the `OnRemoved` logic (or when the effect expires) for the attachment:
-   * Retrieve the stored `FFloatStatModification` struct.
-   * Get the `ULyraEquipmentInstance` again.
-   * Call `EquipmentInstance->ReverseTagAttributeModification(StoredModInfo)`.
+4.  **Revert Modification:** Inside the `OnRemoved` logic (or when the effect expires) for the attachment:
+
+    * Retrieve the stored `FFloatStatModification` struct.
+    * Get the `ULyraEquipmentInstance` again.
+    * Call `EquipmentInstance->ReverseTagAttributeModification(StoredModInfo)`.
+
+    <figure><img src="../../.gitbook/assets/image (109).png" alt=""><figcaption><p>Generalized Equipment Stat Modifier ability primarily used by attachments</p></figcaption></figure>
+
+{% hint style="info" %}
+See the [Attachment fragment documentation ](../items/item-fragments-in-depth/attachment-system/)for more details on the attachment ability
+{% endhint %}
 
 ### Debugging Tips
 
@@ -141,7 +164,7 @@ Use Tag Attributes to manage ability-specific or modifiable parameters on the eq
 * **Check Authority:** Remember that core functions like `EquipItemToSlot`, `HoldItem`, etc., are generally authority-only. Ensure they are being called on the server. Use `HasAuthority()` checks.
 * **Replication Issues:**
   * Use the Gameplay Debugger (`'`) or network debugging tools to inspect the `ULyraEquipmentManagerComponent` on both server and client. Is the `EquipmentList` replicated correctly?
-  * Check the logs for errors related to subobject replication. Ensure `bReplicateUsingRegisteredSubObjectList = true` on the Manager component if using UE5's newer subobject system (which is recommended).
+  * Check the logs for errors related to subobject replication. Ensure `bReplicateUsingRegisteredSubObjectList = false` on the Manager component.
   * Verify the `ULyraEquipmentInstance` and its `Instigator` (`ULyraInventoryItemInstance`) are valid on the client after replication.
 * **GAS Issues:**
   * Use the GAS console command `showabilitysystem` to inspect the Pawn's ASC. Are the expected ability sets granted when equipment is equipped/held? Are they removed correctly?

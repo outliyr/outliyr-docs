@@ -66,19 +66,19 @@ The Quick Bar component focuses on the player-facing selection aspect:
 
 The Quick Bar **delegates** the actual equipping work. Its internal helper functions bridge the gap:
 
-* `EquipItemInSlot()` (Private Helper)
+* `EquipItemInSlot()` (**Private Helper**)
   * Called by `SetActiveSlotIndex` after the index is updated.
   * Checks if the `ActiveSlotIndex` is valid and points to a valid `ItemInstance` in the `Slots` array.
   * Finds the controlled Pawn's `ULyraEquipmentManagerComponent` using `FindEquipmentManager()`.
   * Calls `EquipmentManager->HoldItem(SlotItem)`.
   * Stores the returned `ULyraEquipmentInstance` in the `EquippedItem` variable (a non-replicated pointer used internally to track what the quick bar is currently responsible for holding).
-* `UnequipItemInSlot()` (Private Helper)
+* `UnequipItemInSlot()` (**Private Helper**)
   * Called by `SetActiveSlotIndex` _before_ changing the index, and by `RemoveItemFromSlot` if removing the active slot.
   * Checks if the internal `EquippedItem` pointer is valid.
   * Finds the Pawn's `ULyraEquipmentManagerComponent`.
   * Calls `EquipmentManager->UnholdItem(EquippedItem)`.
   * Clears the internal `EquippedItem` pointer (`nullptr`).
-* `FindEquipmentManager()` (Private Helper)
+* `FindEquipmentManager()` (**Private Helper**)
   * Gets the owning `AController`.
   * Gets the `APawn` possessed by the controller.
   * Finds and returns the `ULyraEquipmentManagerComponent` on that Pawn using `Pawn->FindComponentByClass()`.

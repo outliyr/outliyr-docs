@@ -21,11 +21,8 @@ The Equipment System manages this entire process, bridging the gap between abstr
 
 This system builds upon Lyra's robust foundations and embraces several key design principles:
 
-*   **Data-Driven Configuration:** Most equipment behavior is defined in **Data Assets** (`ULyraEquipmentDefinition`). This empowers designers to create and tweak equipment (what abilities it grants, how it looks when equipped) with minimal code changes.
-
-    ```
-    Example: Defining a rifle might involve linking ability sets for shooting/reloading and specifying the rifle mesh to spawn.
-    ```
+* **Data-Driven Configuration:** Most equipment behavior is defined in **Data Assets** (`ULyraEquipmentDefinition`). This empowers designers to create and tweak equipment (what abilities it grants, how it looks when equipped) with minimal code changes.\
+  **Example:** Defining a rifle might involve linking ability sets for shooting/reloading and specifying the rifle mesh to spawn.
 * **Component-Based Architecture:** Functionality is neatly packaged into Unreal Engine **Components**. This promotes modularity and clear separation of concerns.
   * `ULyraEquipmentManagerComponent`: Lives on the **Pawn** and manages _its_ equipment.
   * `ULyraQuickBarComponent`: Lives on the **Controller** (Player or AI) and handles player input for _selecting_ items to hold.
@@ -45,7 +42,7 @@ This system builds upon Lyra's robust foundations and embraces several key desig
 
 ### Key Components at a Glance
 
-Here are the main actors in the Equipment System play:
+Here are the main components involved in the Equipment System:
 
 * `ULyraEquipmentDefinition` (Data Asset)
   * **The Blueprint/Recipe:** Defines _what_ an item _does_ when equipped (Abilities, Actors) for both **Holstered** (per-slot) and **Held** states. This is where you define which `GameplayTags` represent valid slots for an item.

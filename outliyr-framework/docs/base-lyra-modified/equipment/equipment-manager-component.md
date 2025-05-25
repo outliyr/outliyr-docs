@@ -33,69 +33,84 @@ The Manager component juggles several critical tasks:
 
 These are the main functions you'll interact with to change the Pawn's equipped state. **They should generally only be called on the network authority (server).**
 
-* `EquipItemToSlot(ULyraInventoryItemInstance* ItemInstance, FGameplayTag SlotTag)`
-  * **Action:** Attempts to equip an existing `ItemInstance` from an inventory into the specified `SlotTag`.
-  * **Checks:**
-    1. Is `ItemInstance` valid and does it have an `InventoryFragment_EquippableItem` with a valid `ULyraEquipmentDefinition`?
-    2. Is the provided `SlotTag` valid?
-    3. **Crucially:** Does the item's `ULyraEquipmentDefinition` define behavior for this `SlotTag` in its `EquipmentSlotDetails`? (This is checked implicitly by the logic, as an item can only be equipped to a slot it "knows" about). The function `UInventoryFragment_EquippableItem::IsCompatible` can be used for this check.
-    4. Is the `SlotTag` currently empty on this manager (checked via `FindEntryIndexBySlot`)?
-  * **Process (on Success):**
-    1. Adds a new `FLyraAppliedEquipmentEntry` to the `EquipmentList`.
-    2. Creates the `ULyraEquipmentInstance` (using the `InstanceType` from the Definition).
-    3. Sets the `ItemInstance` as the `Instigator` on the `ULyraEquipmentInstance`.
-    4. Applies **Holstered** behavior: Grants `AbilitySetsToGrant` and spawns `ActorsToSpawn` defined for _this specific slot_ in the `EquipmentSlotDetails`.
-    5. Calls `OnHolster()` on the `ULyraEquipmentInstance`.
-    6. Updates the `ItemInstance`'s `CurrentSlot` data (using `FEquipmentAbilityData_SourceEquipment`).
-    7. Marks the list/entry for replication.
-  * **Returns:** The spawned `ULyraEquipmentInstance` on success, `nullptr` on failure.
-* `EquipItemDefToSlot(TSubclassOf<ULyraInventoryItemDefinition> ItemDef, FGameplayTag SlotTag)`
-  * **Action:** Similar to `EquipItemToSlot`, but useful for initially spawning equipment without needing an existing inventory item.
-  * **Process:**
-    1. Creates a _new_ `ULyraInventoryItemInstance` from the provided `ItemDef` (using `UGlobalInventoryManager`).
-    2. Proceeds with the exact same logic as `EquipItemToSlot` using the newly created instance.
-  * **Returns:** The spawned `ULyraEquipmentInstance` on success, `nullptr` on failure.
-* `UnequipItemFromSlot(FGameplayTag SlotTag)`
-  * **Action:** Removes the item currently equipped in the specified `SlotTag`.
-  * **Checks:** Is there an item in `SlotTag`?
-  * **Process (on Success):**
-    1. Finds the `FLyraAppliedEquipmentEntry` for the slot.
-    2. Retrieves the `ULyraEquipmentInstance`.
-    3. **Crucially, if the item is currently Held, it first calls `UnholdItem(EquipmentInstance)`** to ensure Held abilities/actors are removed correctly before proceeding.
-    4. Removes **Holstered** behavior: Takes back `AbilitySetsToGrant` and destroys `ActorsToSpawn` associated with _this slot_.
-    5. Calls `OnUnHolster()` on the `ULyraEquipmentInstance`.
-    6. Sets the associated `ItemInstance`'s `CurrentSlot` back to a null/invalid state.
-    7. Removes the `FLyraAppliedEquipmentEntry` from the `EquipmentList`.
-    8. Marks the list for replication.
-    9. Removes the `ULyraEquipmentInstance` as a replicated subobject.
-  * **Returns:** The `ULyraInventoryItemInstance` that was unequipped, or `nullptr`.
-* `HoldItem(ULyraEquipmentInstance* EquipmentInstance)` / `HoldItem(ULyraInventoryItemInstance* ItemInstance)`
-  * **Action:** Attempts to transition the specified equipment/item instance to the "Held" state.
-  * **Checks:**
-    1. Is another item already Held by this Manager? (Only one item can be held at a time).
-    2. Is the `EquipmentInstance` (or the one derived from `ItemInstance`) valid?
-    3. Does its `ULyraEquipmentDefinition` have `bCanBeHeld` set to `true`?
-  * **Process (on Success):**
-    1. Finds the `FLyraAppliedEquipmentEntry` (or creates a temporary one if holding directly from an inventory `ItemInstance` that wasn't previously slotted).
-    2. If the item was previously **Holstered** in a slot, its Holstered abilities/actors are removed first.
-    3. Applies **Held** behavior: Grants `AbilitySetsToGrant` and spawns `ActorsToSpawn` defined in the `ActiveEquipmentDetails` of the Definition.
-    4. Calls `OnEquipped()` on the `ULyraEquipmentInstance`.
-    5. Sets `bIsHeld = true` in the `FLyraAppliedEquipmentEntry`.
-    6. Marks the entry for replication.
-  * **Returns:** `true` or the held `ULyraEquipmentInstance` on success, `false` or `nullptr` otherwise.
-* `UnholdItem(ULyraEquipmentInstance* EquipmentInstance)`
-  * **Action:** Takes the specified `EquipmentInstance` out of the "Held" state.
-  * **Checks:** Is this `EquipmentInstance` currently Held (`bIsHeld == true`)?
-  * **Process (on Success):**
-    1. Finds the `FLyraAppliedEquipmentEntry`.
-    2. Removes **Held** behavior: Takes back `AbilitySetsToGrant` and destroys `ActorsToSpawn` associated with `ActiveEquipmentDetails`.
-    3. Calls `OnUnequipped()` on the `ULyraEquipmentInstance`.
-    4. Sets `bIsHeld = false`.
-    5. **Decision Point:**
-       * If the entry has a valid `SlotTag` (meaning it belongs to a slot), it transitions back to **Holstered**: Re-applies the slot-specific abilities/actors and calls `OnHolster()`.
-       * If the entry has _no_ valid `SlotTag` (meaning it was held directly from inventory), the `FLyraAppliedEquipmentEntry` is removed entirely from the `EquipmentList`, and the `ULyraEquipmentInstance` subobject replication is stopped.
-    6. Marks the entry/list for replication.
-  * **Returns:** `true` on success, `false` otherwise.
+*   `EquipItemToSlot(ULyraInventoryItemInstance* ItemInstance, FGameplayTag SlotTag)`
+
+    * **Action:** Attempts to equip an existing `ItemInstance` from an inventory into the specified `SlotTag`.
+    * **Checks:**
+      1. Is `ItemInstance` valid and does it have an `InventoryFragment_EquippableItem` with a valid `ULyraEquipmentDefinition`?
+      2. Is the provided `SlotTag` valid?
+      3. **Crucially:** Does the item's `ULyraEquipmentDefinition` define behavior for this `SlotTag` in its `EquipmentSlotDetails`? (This is checked implicitly by the logic, as an item can only be equipped to a slot it "knows" about). The function `UInventoryFragment_EquippableItem::IsCompatible` can be used for this check.
+      4. Is the `SlotTag` currently empty on this manager (checked via `FindEntryIndexBySlot`)?
+    * **Process (on Success):**
+      1. Adds a new `FLyraAppliedEquipmentEntry` to the `EquipmentList`.
+      2. Creates the `ULyraEquipmentInstance` (using the `InstanceType` from the Definition).
+      3. Sets the `ItemInstance` as the `Instigator` on the `ULyraEquipmentInstance`.
+      4. Applies **Holstered** behavior: Grants `AbilitySetsToGrant` and spawns `ActorsToSpawn` defined for _this specific slot_ in the `EquipmentSlotDetails`.
+      5. Calls `OnHolster()` on the `ULyraEquipmentInstance`.
+      6. Updates the `ItemInstance`'s `CurrentSlot` data (using `FEquipmentAbilityData_SourceEquipment`).
+      7. Marks the list/entry for replication.
+    * **Returns:** The spawned `ULyraEquipmentInstance` on success, `nullptr` on failure.
+
+    <figure><img src="../../.gitbook/assets/image (93).png" alt="" width="375"><figcaption></figcaption></figure>
+*   `EquipItemDefToSlot(TSubclassOf<ULyraInventoryItemDefinition> ItemDef, FGameplayTag SlotTag)`
+
+    * **Action:** Similar to `EquipItemToSlot`, but useful for initially spawning equipment without needing an existing inventory item.
+    * **Process:**
+      1. Creates a _new_ `ULyraInventoryItemInstance` from the provided `ItemDef` (using `UGlobalInventoryManager`).
+      2. Proceeds with the exact same logic as `EquipItemToSlot` using the newly created instance.
+    * **Returns:** The spawned `ULyraEquipmentInstance` on success, `nullptr` on failure.
+
+    <figure><img src="../../.gitbook/assets/image (89).png" alt="" width="375"><figcaption></figcaption></figure>
+*   `UnequipItemFromSlot(FGameplayTag SlotTag)`
+
+    * **Action:** Removes the item currently equipped in the specified `SlotTag`.
+    * **Checks:** Is there an item in `SlotTag`?
+    * **Process (on Success):**
+      1. Finds the `FLyraAppliedEquipmentEntry` for the slot.
+      2. Retrieves the `ULyraEquipmentInstance`.
+      3. **Crucially, if the item is currently Held, it first calls `UnholdItem(EquipmentInstance)`** to ensure Held abilities/actors are removed correctly before proceeding.
+      4. Removes **Holstered** behavior: Takes back `AbilitySetsToGrant` and destroys `ActorsToSpawn` associated with _this slot_.
+      5. Calls `OnUnHolster()` on the `ULyraEquipmentInstance`.
+      6. Sets the associated `ItemInstance`'s `CurrentSlot` back to a null/invalid state.
+      7. Removes the `FLyraAppliedEquipmentEntry` from the `EquipmentList`.
+      8. Marks the list for replication.
+      9. Removes the `ULyraEquipmentInstance` as a replicated subobject.
+    * **Returns:** The `ULyraInventoryItemInstance` that was unequipped, or `nullptr`.
+
+    <figure><img src="../../.gitbook/assets/image (90).png" alt="" width="375"><figcaption></figcaption></figure>
+*   `HoldItem(ULyraEquipmentInstance* EquipmentInstance)` / `HoldItem(ULyraInventoryItemInstance* ItemInstance)`
+
+    * **Action:** Attempts to transition the specified equipment/item instance to the "Held" state.
+    * **Checks:**
+      1. Is another item already Held by this Manager? (Only one item can be held at a time).
+      2. Is the `EquipmentInstance` (or the one derived from `ItemInstance`) valid?
+      3. Does its `ULyraEquipmentDefinition` have `bCanBeHeld` set to `true`?
+    * **Process (on Success):**
+      1. Finds the `FLyraAppliedEquipmentEntry` (or creates a temporary one if holding directly from an inventory `ItemInstance` that wasn't previously slotted).
+      2. If the item was previously **Holstered** in a slot, its Holstered abilities/actors are removed first.
+      3. Applies **Held** behavior: Grants `AbilitySetsToGrant` and spawns `ActorsToSpawn` defined in the `ActiveEquipmentDetails` of the Definition.
+      4. Calls `OnEquipped()` on the `ULyraEquipmentInstance`.
+      5. Sets `bIsHeld = true` in the `FLyraAppliedEquipmentEntry`.
+      6. Marks the entry for replication.
+    * **Returns:** `true` or the held `ULyraEquipmentInstance` on success, `false` or `nullptr` otherwise.
+
+    <figure><img src="../../.gitbook/assets/image (91).png" alt="" width="375"><figcaption></figcaption></figure>
+*   `UnholdItem(ULyraEquipmentInstance* EquipmentInstance)`
+
+    * **Action:** Takes the specified `EquipmentInstance` out of the "Held" state.
+    * **Checks:** Is this `EquipmentInstance` currently Held (`bIsHeld == true`)?
+    * **Process (on Success):**
+      1. Finds the `FLyraAppliedEquipmentEntry`.
+      2. Removes **Held** behavior: Takes back `AbilitySetsToGrant` and destroys `ActorsToSpawn` associated with `ActiveEquipmentDetails`.
+      3. Calls `OnUnequipped()` on the `ULyraEquipmentInstance`.
+      4. Sets `bIsHeld = false`.
+      5. **Decision Point:**
+         * If the entry has a valid `SlotTag` (meaning it belongs to a slot), it transitions back to **Holstered**: Re-applies the slot-specific abilities/actors and calls `OnHolster()`.
+         * If the entry has _no_ valid `SlotTag` (meaning it was held directly from inventory), the `FLyraAppliedEquipmentEntry` is removed entirely from the `EquipmentList`, and the `ULyraEquipmentInstance` subobject replication is stopped.
+      6. Marks the entry/list for replication.
+    * **Returns:** `true` on success, `false` otherwise.
+
+    <figure><img src="../../.gitbook/assets/image (92).png" alt="" width="375"><figcaption></figcaption></figure>
 
 ***
 

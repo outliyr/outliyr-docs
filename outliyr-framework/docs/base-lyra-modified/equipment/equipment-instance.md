@@ -1,7 +1,5 @@
 # Equipment Instance
 
-## Equipment Instance (`ULyraEquipmentInstance`)
-
 While the `ULyraEquipmentDefinition` is the _recipe_, the `ULyraEquipmentInstance` is the _cooked dish_ currently being used by the Pawn. It's the actual, live representation of a piece of equipment that has been equipped via the `ULyraEquipmentManagerComponent`.
 
 **Key Characteristics:**
@@ -44,7 +42,9 @@ The `ULyraEquipmentManagerComponent` notifies the `ULyraEquipmentInstance` of st
     * The item transitions from Holstered _to_ Held (during `HoldItem`).
   * **Use Case:** Clean up any holstered-specific logic before the item is held or removed entirely.
 
-> **Note:** The C++ functions (`OnEquipped`, etc.) provide base functionality (like calling item fragment callbacks) and then call the corresponding `K2_` Blueprint events. You should typically override the `K2_` events in Blueprint subclasses or the C++ functions if subclassing in C++. Remember to call `Super::FunctionName()` if overriding the C++ functions to maintain base functionality.
+{% hint style="info" %}
+The C++ functions (`OnEquipped`, etc.) provide base functionality (like calling item fragment callbacks) and then call the corresponding `K2_` Blueprint events. You should typically override the `K2_` events in Blueprint subclasses or the C++ functions if subclassing in C++. Remember to call `Super::FunctionName()` if overriding the C++ functions to maintain base functionality.
+{% endhint %}
 
 ***
 
@@ -107,14 +107,22 @@ The `ULyraEquipmentInstance` contains a replicated `FGameplayTagAttributeContain
 
 **How it's Used:**
 
-1. **Initialization:** Abilities granted by the equipment (via `ULyraAbilitySet` in the `ULyraEquipmentDefinition`) can add their relevant parameters to the container when the ability is granted, using `AddTagAttribute(FGameplayTag Tag, float InitialValue)`.
-   * Example: `GA_ShootBullet`'s `OnGranted` logic might call `EquipmentInstance->AddTagAttribute(TAG_Weapon_Stat_MuzzleVelocity, DefaultMuzzleVelocity)`.
+1.  **Initialization:** Abilities granted by the equipment (via `ULyraAbilitySet` in the `ULyraEquipmentDefinition`) can add their relevant parameters to the container when the ability is granted, using `AddTagAttribute(FGameplayTag Tag, float InitialValue)`.
+
+    * Example: `GA_ReloadMagazine`'s `OnGranted` logic might call `EquipmentInstance->AddTagAttribute(TAG_Gun_Stat_ReloadSpeed, PlayRate)`.
+
+    <figure><img src="../../.gitbook/assets/image (94).png" alt="" width="563"><figcaption><p>Add the reload speed stat to the equipment instance on ability added</p></figcaption></figure>
 2. **Modification:** Other systems can modify these values:
-   * An attachment's logic might get the `ULyraEquipmentInstance` and call `ModifyTagAttribute(TAG_Weapon_Stat_SpreadExponent, -0.2f, EFloatModOp::Add)` to reduce spread. The function returns an `FFloatStatModification` struct which _can_ be stored to reverse the change later.
    * A passive ability could temporarily boost a stat using `ModifyTagAttribute` and then use `ReverseTagAttributeModification` when the effect expires.
-3. **Querying:** Abilities or other systems can read the current value using `GetTagAttributeValue(FGameplayTag Tag)` or check for existence using `HasTagAttribute(FGameplayTag Tag)`.
-   * Example: `GA_ShootBullet` would call `EquipmentInstance->GetTagAttributeValue(TAG_Weapon_Stat_MuzzleVelocity)` to get the potentially modified velocity just before firing.
-4. **Cleanup:** When an ability is removed (e.g., when the item is unheld or unequipped), its `OnRemoved` logic should ideally call `RemoveTagAttribute(FGameplayTag Tag)` to clean up the parameters it introduced.
+   * Look at the [attachment utility ability documentation](../items/item-fragments-in-depth/attachment-system/provided-attachment-utility-abilities.md) for more indepth examples of modifications
+3.  **Querying:** Abilities or other systems can read the current value using `GetTagAttributeValue(FGameplayTag Tag)` or check for existence using `HasTagAttribute(FGameplayTag Tag)`.
+
+    * Example: `GA_ShootBullet` would call `EquipmentInstance->GetTagAttributeValue(TAG_Weapon_Stat_MuzzleVelocity)` to get the potentially modified velocity just before firing.
+
+    <figure><img src="../../.gitbook/assets/image (96).png" alt="" width="563"><figcaption><p>Using the tag attribute reload speed to modify montage play back rate</p></figcaption></figure>
+4.  **Cleanup:** When an ability is removed (e.g., when the item is unheld or unequipped), its `OnRemoved` logic should ideally call `RemoveTagAttribute(FGameplayTag Tag)` to clean up the parameters it introduced.
+
+    <figure><img src="../../.gitbook/assets/image (95).png" alt="" width="563"><figcaption><p>Remove the reload speed stat from the equipment instance on ability remove</p></figcaption></figure>
 
 **Example Tags:**
 
@@ -158,7 +166,12 @@ When creating Gameplay Abilities specifically intended to be granted by equipmen
 `ULyraGameplayAbility_FromEquipment` provides convenient helper functions:
 
 * `GetAssociatedEquipment() const`: Returns the `ULyraEquipmentInstance*` that granted this ability (by retrieving it from the ability spec's `SourceObject`).
+
+<figure><img src="../../.gitbook/assets/image (97).png" alt="" width="272"><figcaption></figcaption></figure>
+
 * `GetAssociatedItem() const`: A further convenience function that calls `GetAssociatedEquipment()` and then retrieves the `ULyraInventoryItemInstance*` from the equipment's `Instigator` property.
+
+<figure><img src="../../.gitbook/assets/image (98).png" alt="" width="264"><figcaption></figcaption></figure>
 
 **Benefits:**
 
@@ -167,6 +180,14 @@ When creating Gameplay Abilities specifically intended to be granted by equipmen
 
 **Example Usage (inside an ability derived from `ULyraGameplayAbility_FromEquipment`):**
 
+{% tabs %}
+{% tab title="Blueprints" %}
+<figure><img src="../../.gitbook/assets/image (99).png" alt=""><figcaption><p>Accessing the item stat tag that belongs to this equipment in <code>GA_Reload_Magazine</code> </p></figcaption></figure>
+
+<figure><img src="../../.gitbook/assets/image (100).png" alt=""><figcaption><p>Accessing the tag stat for the equipment that called this ability in <code>GA_Reload_Magazine</code></p></figcaption></figure>
+{% endtab %}
+
+{% tab title="C++" %}
 ```cpp
 void UMyFireWeaponAbility::ActivateAbility(...)
 {
@@ -191,6 +212,10 @@ void UMyFireWeaponAbility::ActivateAbility(...)
     }
 }
 ```
+
+
+{% endtab %}
+{% endtabs %}
 
 By using `ULyraGameplayAbility_FromEquipment`, you streamline the process of writing abilities that interact correctly with the specific equipment instance and its corresponding inventory item.
 

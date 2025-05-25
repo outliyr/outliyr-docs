@@ -22,13 +22,14 @@ Ensuring equipment state is consistent across the network is vital. The system e
    * **Registration:** The Manager also uses `AddReplicatedSubObject` / `RemoveReplicatedSubObject` (when `bReplicateUsingRegisteredSubObjectList` is enabled, which it should be for component subobject replication) when instances are created/destroyed, and in `ReadyForReplication` to ensure the networking system knows about these UObjects _before_ `ReplicateSubobjects` is called.
    * **Result:** This ensures that clients receive the necessary data for the Equipment Instances, their linked Inventory Items, and any associated runtime fragments, allowing client-side logic (like cosmetic updates or prediction) to function correctly.
 
-### Gameplay Ability System (GAS) Integration Deep Dive
+### Gameplay Ability System (GAS) Integration
 
 GAS is fundamental to how equipment grants functionality:
 
 1. **`FLyraAbilitySet`:**
    * **Definition:** The `ULyraEquipmentDefinition` specifies arrays of `ULyraAbilitySet*` assets for both `EquipmentSlotDetails` (per-slot Holstered) and `ActiveEquipmentDetails` (Held).
    * **Purpose:** Ability Sets are convenient containers provided by Lyra/GAS for grouping Gameplay Abilities, Gameplay Effects, and Attribute Sets that should be granted together.
+   * For more information on `LyraAbilitySets` check [see this documentation](../gameframework-and-experience/experience-primary-assets/lyra-ability-sets.md)
 2. **Granting & Removing Abilities:**
    * **Mechanism:** The `ULyraEquipmentManagerComponent` interacts with the Pawn's Ability System Component (ASC).
    * **Handles:** Each `FLyraAppliedEquipmentEntry` stores two `FLyraAbilitySet_GrantedHandles` structs: `HolsteredGrantedHandles` and `HeldGrantedHandles`.
@@ -45,22 +46,34 @@ GAS is fundamental to how equipment grants functionality:
 
 The system utilizes the `UGameplayMessageSubsystem` to broadcast key events locally. This is primarily intended for decoupling UI updates from the core component logic. UI elements or other interested systems can listen for these messages without needing direct references to the components.
 
-* **`TAG_Lyra_Equipment_Message_EquipmentChanged` (`FLyraEquipmentChangeMessage`)**
-  * **Broadcast By:** `FLyraEquipmentList::BroadcastChangeMessage` (called during replication updates and authority-side changes).
-  * **Contents:** `EquipmentManager`, `SlotTag`, `EquipmentInstance`, `bIsHeld`, `bRemoval`.
-  * **Purpose:** General notification that _something_ about the Pawn's equipment managed by this Manager has changed (added, removed, held state toggled). Useful for generic UI refreshes.
-* **`TAG_Lyra_QuickBar_Message_SlotsChanged` (`FLyraQuickBarSlotsChangedMessage`)**
-  * **Broadcast By:** `ULyraQuickBarComponent::OnRep_Slots`.
-  * **Contents:** `Owner` (Controller), `Slots` (the full TArray of item instances).
-  * **Purpose:** Specifically notifies that the _contents_ of the Quick Bar slots have changed. UI should listen to this to redraw the quick bar icons.
-* **`TAG_Lyra_QuickBar_Message_ActiveIndexChanged` (`FLyraQuickBarActiveIndexChangedMessage`)**
-  * **Broadcast By:** `ULyraQuickBarComponent::OnRep_ActiveSlotIndex`.
-  * **Contents:** `Owner` (Controller), `ActiveIndex`.
-  * **Purpose:** Specifically notifies that the _selected_ slot index in the Quick Bar has changed. UI should listen to this to update the highlight on the active slot.
-* **`TAG_Lyra_Inventory_Message_ItemMoved` (`FAbilityData_MoveItem`)**
-  * **Broadcast By:** `ULyraInventoryItemInstance::OnRep_CurrentSlot` (indirectly relevant).
-  * **Contents:** `SourceSlot`, `DestinationSlot`, `ItemInstance`.
-  * **Purpose:** While part of the item instance, this message fires when an item's `CurrentSlot` changes. Since the Equipment Manager sets the `CurrentSlot` when equipping to a slot (using `FEquipmentAbilityData_SourceEquipment`), listening to this message can _also_ signal equipment changes, though the dedicated Equipment messages are usually preferred for that purpose.
+*   **`TAG_Lyra_Equipment_Message_EquipmentChanged` (`FLyraEquipmentChangeMessage`)**
+
+    * **Broadcast By:** `FLyraEquipmentList::BroadcastChangeMessage` (called during replication updates and authority-side changes).
+    * **Contents:** `EquipmentManager`, `SlotTag`, `EquipmentInstance`, `bIsHeld`, `bRemoval`.
+    * **Purpose:** General notification that _something_ about the Pawn's equipment managed by this Manager has changed (added, removed, held state toggled). Useful for generic UI refreshes.
+
+    <figure><img src="../../.gitbook/assets/image (107).png" alt="" width="563"><figcaption></figcaption></figure>
+*   **`TAG_Lyra_QuickBar_Message_SlotsChanged` (`FLyraQuickBarSlotsChangedMessage`)**
+
+    * **Broadcast By:** `ULyraQuickBarComponent::OnRep_Slots`.
+    * **Contents:** `Owner` (Controller), `Slots` (the full TArray of item instances).
+    * **Purpose:** Specifically notifies that the _contents_ of the Quick Bar slots have changed. UI should listen to this to redraw the quick bar icons.
+
+    <figure><img src="../../.gitbook/assets/image (105).png" alt="" width="563"><figcaption></figcaption></figure>
+*   **`TAG_Lyra_QuickBar_Message_ActiveIndexChanged` (`FLyraQuickBarActiveIndexChangedMessage`)**
+
+    * **Broadcast By:** `ULyraQuickBarComponent::OnRep_ActiveSlotIndex`.
+    * **Contents:** `Owner` (Controller), `ActiveIndex`.
+    * **Purpose:** Specifically notifies that the _selected_ slot index in the Quick Bar has changed. UI should listen to this to update the highlight on the active slot.
+
+    <figure><img src="../../.gitbook/assets/image (106).png" alt="" width="563"><figcaption></figcaption></figure>
+*   **`TAG_Lyra_Inventory_Message_ItemMoved` (`FAbilityData_MoveItem`)**
+
+    * **Broadcast By:** `ULyraInventoryItemInstance::OnRep_CurrentSlot` (indirectly relevant).
+    * **Contents:** `SourceSlot`, `DestinationSlot`, `ItemInstance`.
+    * **Purpose:** While part of the item instance, this message fires when an item's `CurrentSlot` changes. Since the Equipment Manager sets the `CurrentSlot` when equipping to a slot (using `FEquipmentAbilityData_SourceEquipment`), listening to this message can _also_ signal equipment changes, though the dedicated Equipment messages are usually preferred for that purpose.
+
+    <figure><img src="../../.gitbook/assets/image (108).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ### **Gameplay Tags for Slots & Enforced Hierarchy**
 

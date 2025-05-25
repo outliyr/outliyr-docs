@@ -90,7 +90,7 @@ This has several important implications:
 * **Empty Arrays on Server:** If you call `GetCharacterPartActors()` on a dedicated server, it will return an **empty array**, even if parts are technically “applied” in the replicated list. This is not a bug — it’s because no part actors exist on the server.
 
 {% hint style="success" %}
-Be cautious when writing logic that iterates over cosmetic part actors, always account for the possibility that no actors are spawned if running in a server-only context.
+**Be cautious** when writing logic that **iterates over cosmetic part actors**, always account for the possibility that no actors are spawned if running in a server-only context.
 {% endhint %}
 
 ### Visual Updates & Animation Integration

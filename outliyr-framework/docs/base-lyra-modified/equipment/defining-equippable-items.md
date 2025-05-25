@@ -13,10 +13,16 @@ Think of it like this: The inventory item knows _what_ it is (a rifle, a helmet)
 
 Before the Equipment System can do anything with an inventory item, that item needs to explicitly state that it _can_ be equipped. This is done by adding the `UInventoryFragment_EquippableItem` fragment to the item's `ULyraInventoryItemDefinition`.
 
+<figure><img src="../../.gitbook/assets/image (86).png" alt=""><figcaption><p>Pistol Item Definition pointing to EquipmentDefinition <code>WID_Pistol</code> </p></figcaption></figure>
+
 **Purpose:**
 
 * **Flags the item as equippable:** Tells the `ULyraEquipmentManagerComponent` that this item type can potentially be processed.
 * **Links to the Equipment Definition:** Contains the crucial pointer to the `ULyraEquipmentDefinition` asset that holds all the specific equipment behavior.
+
+**Key Property:**
+
+* `Equipment Definition` (`TSubclassOf<ULyraEquipmentDefinition>`): **This is the most important field.** Assign the specific `ULyraEquipmentDefinition` asset (which you'll create next, e.g., `ED_Rifle`) that defines this item's equipped behavior.
 
 **How to Add:**
 
@@ -26,20 +32,13 @@ Before the Equipment System can do anything with an inventory item, that item ne
 4. In the dropdown for the new fragment element, search for and select `InventoryFragment_EquippableItem`.
 5. Expand the newly added fragment.
 
-**Key Property:**
+<figure><img src="../../.gitbook/assets/LinkEquipmentDefinition.gif" alt=""><figcaption><p>Add Equipment Definition To Fragment</p></figcaption></figure>
 
-* `Equipment Definition` (`TSubclassOf<ULyraEquipmentDefinition>`): **This is the most important field.** Assign the specific `ULyraEquipmentDefinition` asset (which you'll create next, e.g., `ED_Rifle`) that defines this item's equipped behavior.
+{% file src="../../.gitbook/assets/LinkEquipmentDefinition.mp4" %}
 
-```cpp
-// C++ Fragment Example (within ULyraInventoryItemDefinition setup)
-// Assumes you have already created an Equipment Definition asset referenceable as ED_MyRifle::StaticClass()
-
-UInventoryFragment_EquippableItem* EquipFragment = NewObject<UInventoryFragment_EquippableItem>(this);
-EquipFragment->EquipmentDefinition = ED_MyRifle::StaticClass(); // Assign the definition asset
-Fragments.Add(EquipFragment);
-```
-
-> **Important:** An item definition _must_ have this fragment with a valid `Equipment Definition` assigned for the `ULyraEquipmentManagerComponent::EquipItemToSlot` function (and related functions) to succeed.
+{% hint style="info" %}
+An item definition _must_ have this fragment with a valid `Equipment Definition` assigned for the `ULyraEquipmentManagerComponent::EquipItemToSlot` function (and related functions) to succeed.
+{% endhint %}
 
 ***
 
@@ -47,11 +46,7 @@ Fragments.Add(EquipFragment);
 
 This Data Asset is where you define _everything_ about how an item behaves once it's managed by the `ULyraEquipmentManagerComponent`.
 
-**How to Create:**
-
-1. In the Content Browser, right-click -> Miscellaneous -> Data Asset.
-2. Choose `LyraEquipmentDefinition` as the parent class.
-3. Give it a descriptive name, often prefixed with `ED_` (e.g., `ED_Rifle`, `ED_Helmet`).
+<figure><img src="../../.gitbook/assets/image (87).png" alt=""><figcaption><p>Pistol EquipmentDefinition <code>WID_Pistol</code></p></figcaption></figure>
 
 **Key Properties Breakdown:**
 
@@ -81,6 +76,16 @@ This Data Asset is where you define _everything_ about how an item behaves once 
    * **Purpose:** Defines behavior when the item is actively **Held**. This section is ignored if `bCanBeHeld` is `false`.
    * `Ability Sets To Grant`: Ability Sets (GAS) to grant _only when the item is held_. This is where you'd typically grant abilities like `GA_FireWeapon`, `GA_Reload`, `GA_AimDownSights`.
    * `Actors To Spawn`: Actors to spawn and attach _only when the item is held_. This is typically where you'd spawn the main weapon mesh that attaches to the character's hands (e.g., `BP_RifleMesh_InHands` attached to `hand_r_socket`).
+
+**How to Create:**
+
+1. In the Content Browser, right-click -> Blueprint -> BlueprintClass.
+2. Choose `LyraEquipmentDefinition` as the parent class.
+3. Give it a descriptive name, often prefixed with `ED_` (e.g., `ED_Rifle`, `ED_Helmet`).
+
+{% file src="../../.gitbook/assets/create_equipment_definition.mp4" %}
+
+<figure><img src="../../.gitbook/assets/create_equipment_definition (1).gif" alt=""><figcaption><p>Creating Equipment Definition</p></figcaption></figure>
 
 ***
 

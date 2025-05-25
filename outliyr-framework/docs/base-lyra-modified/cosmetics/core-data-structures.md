@@ -101,7 +101,7 @@ private:
 * **Role:** This is the internal data unit within the replicated array on the Pawn component, tracking both the definition and the runtime state (spawned component pointer) of each applied cosmetic.
 
 {% hint style="danger" %}
-`SpawnedComponent` will be `nullptr` on dedicated servers, as cosmetic part actors are **not spawned in that context** for performance reasons.
+`SpawnedComponent` **will be** `nullptr` on dedicated servers, as cosmetic part actors are **not spawned in that context** for performance reasons.
 {% endhint %}
 
 ### `FLyraControllerCharacterPartEntry` (Internal to Controller Component)
