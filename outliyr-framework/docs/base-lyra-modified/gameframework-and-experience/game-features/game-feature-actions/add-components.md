@@ -16,6 +16,8 @@ This Game Feature Action, provided directly by Unreal Engine's `GameFeature` plu
 
 Add instances of this action to the `Actions` list within a `ULyraExperienceDefinition` or `ULyraExperienceActionSet`.
 
+<figure><img src="../../../../.gitbook/assets/image (119).png" alt=""><figcaption><p><code>Add_Components</code> <strong>GameFeatureAction</strong> configuration</p></figcaption></figure>
+
 * **`Component List` (`TArray<FGameFeatureComponentEntry>`)**: An array where each entry specifies a component to add to a target actor class.
   * **`FGameFeatureComponentEntry`**:
     * **`Actor Class` (`TSoftClassPtr<AActor>`):** The target base class of Actor (e.g., `APawn`, `ALyraCharacter`, `AController`) that should receive the new component. The system will add the component to all instances of this class (and its subclasses) that exist or spawn while the feature is active.
@@ -69,50 +71,6 @@ This action utilizes the `UGameFrameworkComponentManager`, a subsystem designed 
 
 * **Actor Awareness:** The documentation comment `//@TODO: Write more documentation here about how to make an actor game feature / modular gameplay aware` is important. For the `UGameFrameworkComponentManager` to effectively manage components added by this action (especially regarding initialization timing via `AdditionFlags` and receiving events), the target `ActorClass` (or its components) often needs to participate in the manager's event system, typically by calling `UGameFrameworkComponentManager::SendExtensionEvent` at appropriate points in its initialization (like `BeginPlay`, `PossessedBy`, `OnRep_PlayerState`). Lyra's base classes like `ALyraCharacter` and `ALyraPlayerState` already integrate with this system. Custom actor classes might need manual integration.
 * **Dependencies:** Ensure that any systems relying on a component added by this action correctly handle cases where the component might not be present (if the Game Feature is inactive). Use safe checks (`FindComponentByClass`, `GetComponentByClass`) rather than assuming the component always exists.
-
-### Code Definition Reference
-
-```cpp
-// Struct defining a component addition request
-USTRUCT()
-struct FGameFeatureComponentEntry
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, Category="Components", meta=(AllowAbstract="True"))
-	TSoftClassPtr<AActor> ActorClass;
-
-	UPROPERTY(EditAnywhere, Category="Components")
-	TSoftClassPtr<UActorComponent> ComponentClass;
-
-	UPROPERTY(EditAnywhere, Category="Components")
-	uint8 bClientComponent:1;
-
-	UPROPERTY(EditAnywhere, Category="Components")
-	uint8 bServerComponent:1;
-
-	UPROPERTY(EditAnywhere, Category = "Components", meta = (Bitmask, BitmaskEnum = "/Script/ModularGameplay.EGameFrameworkAddComponentFlags"))
-	uint8 AdditionFlags; // EGameFrameworkAddComponentFlags
-};
-
-// The Game Feature Action itself
-UCLASS(MinimalAPI, meta = (DisplayName = "Add Components"))
-class UGameFeatureAction_AddComponents final : public UGameFeatureAction
-{
-	GENERATED_BODY()
-public:
-	//~ UGameFeatureAction overrides (OnGameFeatureActivating/Deactivating) ...
-	//~ UObject overrides (IsDataValid) ...
-
-	// List of component addition requests
-	UPROPERTY(EditAnywhere, Category="Components", meta=(TitleProperty="{ActorClass} -> {ComponentClass}"))
-	TArray<FGameFeatureComponentEntry> ComponentList;
-
-private:
-	// Internal tracking structures and helper functions (FContextHandles, AddToWorld, HandleGameInstanceStart)
-	// ...
-};
-```
 
 ***
 

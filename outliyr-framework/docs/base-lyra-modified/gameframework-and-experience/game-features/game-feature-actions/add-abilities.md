@@ -13,6 +13,8 @@ This Game Feature Action is responsible for granting Gameplay Abilities, Ability
 
 This action is configured by adding instances of it to the `Actions` list within a `ULyraExperienceDefinition` or `ULyraExperienceActionSet`. Its primary property is:
 
+<figure><img src="../../../../.gitbook/assets/image (118).png" alt=""><figcaption><p><code>Add_Abilities</code> <strong>GameFeatureAction</strong> configuration</p></figcaption></figure>
+
 * **`Abilities List` (`TArray<FGameFeatureAbilitiesEntry>`)**: An array where each entry defines grants for a specific target Actor class.
   * **`FGameFeatureAbilitiesEntry`**:
     * **`Actor Class` (`TSoftClassPtr<AActor>`):** Specifies the target actor class (e.g., `ALyraCharacter`, `ALyraPlayerState`, `AVehicleBase`) that will receive the grants defined in this entry. The action uses the `UGameFrameworkComponentManager` to listen for instances of this class (or subclasses) becoming ready.
@@ -55,41 +57,6 @@ This action inherits from `UGameFeatureAction_WorldActionBase`.
 * **Mode-Specific Abilities:** A `B_Experience_CTF` might use this action to grant flag interaction abilities (`GA_PickupFlag`, `GA_ReturnFlag`) to players (`ALyraPlayerState` or `ALyraCharacter`).
 * **Class Definition:** A specific `ULyraPawnData` (e.g., `PawnData_Medic`) could potentially be associated with an action set that uses this to grant unique healing abilities and attributes to pawns using that data. (Though often PawnData grants abilities directly via its own list).
 * **Vehicle Abilities:** An action in a "VehicleGameplay" feature could grant driving/shooting abilities to `AVehicleBase` actors.
-
-### Code Definition Reference
-
-```cpp
-// Structs for granting specific types
-USTRUCT(BlueprintType) struct FLyraAbilityGrant { /* TSoftClassPtr<UGameplayAbility> AbilityType; */ };
-USTRUCT(BlueprintType) struct FLyraAttributeSetGrant { /* TSoftClassPtr<UAttributeSet> AttributeSetType; TSoftObjectPtr<UDataTable> InitializationData; */ };
-
-// Entry defining grants for a specific actor class
-USTRUCT() struct FGameFeatureAbilitiesEntry
-{
-	GENERATED_BODY()
-	UPROPERTY(EditAnywhere) TSoftClassPtr<AActor> ActorClass;
-	UPROPERTY(EditAnywhere) TArray<FLyraAbilityGrant> GrantedAbilities;
-	UPROPERTY(EditAnywhere) TArray<FLyraAttributeSetGrant> GrantedAttributes;
-	UPROPERTY(EditAnywhere) TArray<TSoftObjectPtr<const ULyraAbilitySet>> GrantedAbilitySets;
-};
-
-// The Game Feature Action itself
-UCLASS(MinimalAPI, meta = (DisplayName = "Add Abilities"))
-class UGameFeatureAction_AddAbilities final : public UGameFeatureAction_WorldActionBase
-{
-	GENERATED_BODY()
-public:
-	// List defining which abilities/attributes/sets to grant to which actor types
-	UPROPERTY(EditAnywhere, Category="Abilities", meta=(TitleProperty="ActorClass"))
-	TArray<FGameFeatureAbilitiesEntry> AbilitiesList;
-
-	// ... Overrides for activation/deactivation and world handling ...
-private:
-	// Internal tracking structures (FPerContextData, FActorExtensions)
-	// Helper functions (Reset, HandleActorExtension, AddActorAbilities, RemoveActorAbilities, FindOrAddComponentForActor)
-	// ...
-};
-```
 
 ***
 

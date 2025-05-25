@@ -38,43 +38,6 @@ The `ULyraGameInstance` class, inheriting from `UCommonGameInstance` (which itse
 * **`ULyraLocalPlayer`:** After successful user initialization, tells the `ULyraLocalPlayer` instance to load its settings.
 * **Online Subsystems:** Indirectly interacts with the underlying platform's Online Subsystem via the Common User/Session subsystems for things like presence, sessions, and potentially login/authentication.
 
-### Code Definition Reference
-
-```cpp
-UCLASS()
-class ULyraGameInstance : public UCommonGameInstance
-{
-	GENERATED_BODY()
-public:
-	UE_API ULyraGameInstance(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
-	// Get primary controller cast to Lyra type
-	UE_API ALyraPlayerController* GetPrimaryPlayerController() const;
-
-	//~ UCommonGameInstance overrides ~
-	UE_API virtual bool CanJoinRequestedSession() const override;
-	UE_API virtual void HandlerUserInitialized(const UCommonUserInfo* UserInfo, bool bSuccess, FText Error, ECommonUserPrivilege RequestedPrivilege, ECommonUserOnlineContext OnlineContext) override;
-	//~ End UCommonGameInstance ~
-
-	//~ Network Encryption Hooks (Example Implementation) ~
-	UE_API virtual void ReceivedNetworkEncryptionToken(const FString& EncryptionToken, const FOnEncryptionKeyResponse& Delegate) override;
-	UE_API virtual void ReceivedNetworkEncryptionAck(const FOnEncryptionKeyResponse& Delegate) override;
-	//~ End Network Encryption Hooks ~
-
-protected:
-	//~ UGameInstance overrides ~
-	UE_API virtual void Init() override; // Registers Init States
-	UE_API virtual void Shutdown() override; // Unregisters delegates
-	//~ End UGameInstance ~
-
-	// Callback before traveling to a session
-	UE_API void OnPreClientTravelToSession(FString& URL); // Adds debug encryption token
-
-	/** A hard-coded debug encryption key (NOT SECURE) */
-	TArray<uint8> DebugTestEncryptionKey;
-};
-```
-
 ***
 
 The `ULyraGameInstance` acts as the persistent hub for the application, initializing key framework systems like the Component Manager's Init States and managing interactions with user and session subsystems. While less involved in direct gameplay logic, it provides the essential stable foundation across level transitions and manages the crucial early stages of player login and session connection.

@@ -2,6 +2,8 @@
 
 **Game Feature Actions** are the primary mechanism by which a Game Feature Plugin injects logic and integrates itself into the running game during its activation and deactivation lifecycle. They are UObject classes, typically defined within a Game Feature Plugin, that perform specific setup or teardown tasks.
 
+<figure><img src="../../../../.gitbook/assets/image (117).png" alt=""><figcaption><p>List of the available gameplay actions</p></figcaption></figure>
+
 ### Concept: Actions Triggered by State Changes
 
 * **Purpose:** To execute specific code or apply configurations when a Game Feature is loaded, activated, deactivated, or unloaded.

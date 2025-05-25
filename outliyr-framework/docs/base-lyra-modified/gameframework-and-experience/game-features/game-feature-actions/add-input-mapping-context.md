@@ -13,6 +13,8 @@ This Game Feature Action is responsible for adding **Enhanced Input Mapping Cont
 
 Add instances of this action to the `Actions` list within a `ULyraExperienceDefinition` or `ULyraExperienceActionSet`.
 
+<figure><img src="../../../../.gitbook/assets/image (121).png" alt=""><figcaption><p><code>Add_InputMapping</code> <strong>GameFeatureAction</strong> configuration</p></figcaption></figure>
+
 * **`Input Mappings` (`TArray<FInputMappingContextAndPriority>`)**: An array defining which contexts to add.
   * **`FInputMappingContextAndPriority`**:
     * `Input Mapping` (`TSoftObjectPtr<UInputMappingContext>`): A soft object pointer to the `UInputMappingContext` asset to add. This asset contains the actual mappings (e.g., W key -> `IA_MoveForward`, Space Bar -> `IA_Jump`).
@@ -77,50 +79,6 @@ This action also inherits from `UGameFeatureAction_WorldActionBase`.
 * **Higher Level:** `AddInputBinding` operates at the Gameplay Ability System level, defining the link between **Input Action (via Tag) -> Gameplay Ability (via Tag)**.
 
 You typically need **both** actions working together: `AddInputContextMapping` sets up _how_ pressing a key triggers an Input Action like `IA_Jump`, and `AddInputBinding` (using an `InputConfig` that references `InputTag.Jump`) tells the system _which Gameplay Ability_ (`GA_Jump`) should be activated when the `IA_Jump` action occurs.
-
-### Code Definition Reference
-
-```cpp
-// Struct defining an Input Mapping Context and its priority.
-USTRUCT()
-struct FInputMappingContextAndPriority
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, Category="Input", meta=(AssetBundles="Client,Server"))
-	TSoftObjectPtr<UInputMappingContext> InputMapping;
-
-	UPROPERTY(EditAnywhere, Category="Input")
-	int32 Priority = 0;
-
-	UPROPERTY(EditAnywhere, Category="Input")
-	bool bRegisterWithSettings = true;
-};
-
-// Game Feature Action to add mapping contexts.
-UCLASS(MinimalAPI, meta = (DisplayName = "Add Input Mapping"))
-class UGameFeatureAction_AddInputContextMapping final : public UGameFeatureAction_WorldActionBase
-{
-	GENERATED_BODY()
-
-public:
-	//~UGameFeatureAction interface
-	virtual void OnGameFeatureRegistering() override;
-	virtual void OnGameFeatureActivating(FGameFeatureActivatingContext& Context) override;
-	virtual void OnGameFeatureDeactivating(FGameFeatureDeactivatingContext& Context) override;
-	virtual void OnGameFeatureUnregistering() override;
-	//~End of UGameFeatureAction interface
-
-	// List of Input Mapping Contexts to add, along with their priorities.
-	UPROPERTY(EditAnywhere, Category="Input")
-	TArray<FInputMappingContextAndPriority> InputMappings;
-
-private:
-	// Internal tracking structures (FPerContextData)
-	// Helper functions (Register/Unregister context mappings, AddToWorld, Reset, HandleControllerExtension, etc.)
-	// ...
-};
-```
 
 ***
 

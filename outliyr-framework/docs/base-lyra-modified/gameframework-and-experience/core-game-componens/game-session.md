@@ -39,48 +39,6 @@ You would typically only need to add significant custom logic to `ALyraGameSessi
 
 For most common session management tasks in this framework, interacting with `UCommonSessionSubsystem` and configuring `ULyraUserFacingExperienceDefinition` is the preferred approach.
 
-### Code Definition Reference
-
-```cpp
-UCLASS(Config = Game)
-class ALyraGameSession : public AGameSession
-{
-	GENERATED_BODY()
-
-public:
-	ALyraGameSession(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
-protected:
-	/** Override to disable default behavior, logic moved elsewhere */
-	virtual bool ProcessAutoLogin() override;
-
-	/** Standard match state overrides (currently just call Super) */
-	virtual void HandleMatchHasStarted() override;
-	virtual void HandleMatchHasEnded() override;
-};
-
-// Implementation Snippets (.cpp)
-ALyraGameSession::ALyraGameSession(...) : Super(...) {}
-
-bool ALyraGameSession::ProcessAutoLogin()
-{
-	// Logic handled in ALyraGameMode::TryDedicatedServerLogin
-	return true;
-}
-
-void ALyraGameSession::HandleMatchHasStarted()
-{
-	Super::HandleMatchHasStarted();
-	// Add custom logic here if needed
-}
-
-void ALyraGameSession::HandleMatchHasEnded()
-{
-	Super::HandleMatchHasEnded();
-	// Add custom logic here if needed
-}
-```
-
 ***
 
 In summary, while `ALyraGameSession` exists as part of the core Unreal framework, its role is often simplified in modern Lyra-based architectures due to the delegation of session management tasks to the `UCommonSessionSubsystem`. It primarily serves as a place for specific overrides if the default or subsystem behavior is insufficient.

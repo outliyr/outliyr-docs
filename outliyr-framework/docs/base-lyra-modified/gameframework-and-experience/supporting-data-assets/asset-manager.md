@@ -2,6 +2,8 @@
 
 The `ULyraAssetManager` is a custom subclass of Unreal Engine's `UAssetManager`. The Asset Manager is a global singleton responsible for discovering, loading, and managing game assets, particularly **Primary Assets** (like `ULyraExperienceDefinition`, `ULyraPawnData`, `ULyraUserFacingExperienceDefinition`, and `ULyraExperienceActionSet`). Lyra's customization adds specific game data loading, startup job processing, and utility functions.
 
+<figure><img src="../../../.gitbook/assets/image (126).png" alt=""><figcaption><p>Asset Manager in ShooterBase GameFeature Data Asset</p></figcaption></figure>
+
 ### Role and Purpose
 
 * **Primary Asset Management:** Core engine functionality for managing assets designated as "Primary Assets" (which can be discovered, loaded by ID, and participate in cooking/chunking rules). Experiences, Pawn Data, etc., are typically Primary Assets.
@@ -12,6 +14,10 @@ The `ULyraAssetManager` is a custom subclass of Unreal Engine's `UAssetManager`.
 * **Debugging:** Offers functionality to dump currently loaded/tracked assets (`DumpLoadedAssets`).
 
 ### Key Functions and Features
+
+{% hint style="info" %}
+These internal functions support the framework and generally don’t require direct use in typical game development.
+{% endhint %}
 
 * **`Get()` (Static Function):**
   * Returns the singleton instance of `ULyraAssetManager`. Fatal errors if the `AssetManagerClassName` in `DefaultEngine.ini` is not correctly set to this class or a derivative.
@@ -45,7 +51,7 @@ The `ULyraAssetManager` is a custom subclass of Unreal Engine's `UAssetManager`.
 
 ### Configuration (`DefaultEngine.ini`)
 
-For the engine to use your custom asset manager, you must specify it in `Config/DefaultEngine.ini`:
+For the engine to use the asset manager, you must specify it in `Config/DefaultEngine.ini`:
 
 ```ini
 ;This configures the default LyraWorldSettings
@@ -57,63 +63,6 @@ AssetManagerClassName=/Script/LyraGame.LyraAssetManager
 
 * When `ULyraExperienceManagerComponent` needs to load an `ULyraExperienceDefinition` (which is a Primary Asset), it uses the `UAssetManager` (specifically `ULyraAssetManager::Get()`) to resolve the `FPrimaryAssetId` to an asset path and to request the loading of the asset and its dependencies.
 * The Asset Manager's bundle system (`ChangeBundleStateForPrimaryAssets`) is also used by the Experience Manager to load specific asset bundles (e.g., Client/Server specific assets) associated with Experiences and Actions.
-
-### Code Definition Reference
-
-```cpp
-UCLASS(MinimalAPI, Config = Game)
-class ULyraAssetManager : public UAssetManager
-{
-	GENERATED_BODY()
-public:
-	ULyraAssetManager();
-	static ULyraAssetManager& Get(); // Singleton accessor
-
-	// Templated helpers for synchronous loading
-	template<typename AssetType>
-	static AssetType* GetAsset(const TSoftObjectPtr<AssetType>& AssetPointer, bool bKeepInMemory = true);
-	template<typename AssetType>
-	static TSubclassOf<AssetType> GetSubclass(const TSoftClassPtr<AssetType>& AssetPointer, bool bKeepInMemory = true);
-
-	static void DumpLoadedAssets(); // Debug console command
-
-	// Accessors for global game data
-	const ULyraGameData& GetGameData();
-	const ULyraPawnData* GetDefaultPawnData() const;
-
-protected:
-	// ~UAssetManager overrides
-	virtual void StartInitialLoading() override;
-#if WITH_EDITOR
-	virtual void PreBeginPIE(bool bStartSimulate) override;
-#endif
-	// ~End UAssetManager
-
-	// Internal helpers
-	static UObject* SynchronousLoadAsset(const FSoftObjectPath& AssetPath);
-	void AddLoadedAsset(const UObject* Asset);
-	UPrimaryDataAsset* LoadGameDataOfClass(...);
-	void DoAllStartupJobs();
-	void InitializeGameplayCueManager();
-	void UpdateInitialGameContentLoadPercent(float GameContentPercent);
-
-protected:
-	// Configured paths to global data assets
-	UPROPERTY(Config) TSoftObjectPtr<ULyraGameData> LyraGameDataPath;
-	UPROPERTY(Config) TSoftObjectPtr<ULyraPawnData> DefaultPawnData;
-
-	// Cache for loaded global game data
-	UPROPERTY(Transient) TMap<TObjectPtr<UClass>, TObjectPtr<UPrimaryDataAsset>> GameDataMap;
-
-private:
-	// Internal list of startup tasks
-	TArray<FLyraAssetManagerStartupJob> StartupJobs;
-	
-	// Set to keep loaded assets in memory if requested
-	UPROPERTY(Transient) TSet<TObjectPtr<const UObject>> LoadedAssets;
-	FCriticalSection LoadedAssetsCritical;
-};
-```
 
 ***
 

@@ -41,50 +41,6 @@ The `ALyraGameMode` class serves as the **server-authoritative foundation** for 
 
 It's important to reiterate that `ALyraGameMode` itself generally **does not contain rules specific to a particular game mode** (like TDM scoring, CTF flag logic, etc.). These rules are expected to be implemented in components (often `UGameStateComponent` subclasses) that are added to the `ALyraGameState` dynamically via **Game Feature Actions** triggered by the loaded **Experience Definition**. The Game Mode's primary role is the setup and management of the session and player lifecycle within the context defined by the Experience.
 
-### Code Definition Reference
-
-```cpp
-UCLASS(MinimalAPI, Config = Game, Meta = (ShortTooltip = "The base game mode class used by this project."))
-class ALyraGameMode : public AModularGameModeBase
-{
-	GENERATED_BODY()
-public:
-	// ... Constructor ...
-
-	// Get PawnData based on controller (checks PS, then Experience)
-	UFUNCTION(BlueprintCallable, Category = "Lyra|Pawn")
-	const ULyraPawnData* GetPawnDataForController(const AController* InController) const;
-
-	//~ AGameModeBase overrides (InitGame, GetDefaultPawnClassForController, SpawnDefaultPawnAtTransform, HandleStartingNewPlayer, ChoosePlayerStart, etc.) ...
-	// ... focusing on Experience loading and PawnData application ...
-
-	// Request a player/bot restart
-	UFUNCTION(BlueprintCallable)
-	void RequestPlayerRestartNextFrame(AController* Controller, bool bForceReset = false);
-
-	// Check if controller can restart (delegates to Spawning Manager)
-	virtual bool ControllerCanRestart(AController* Controller);
-
-	// Delegate broadcast after GenericPlayerInitialization
-	FOnLyraGameModePlayerInitialized OnGameModePlayerInitialized;
-
-protected:
-	// Called when the Experience Manager finishes loading
-	void OnExperienceLoaded(const ULyraExperienceDefinition* CurrentExperience);
-	// Checks if the Experience Manager has finished loading
-	bool IsExperienceLoaded() const;
-
-	// Determines and sets the Experience ID based on various sources
-	void OnMatchAssignmentGiven(FPrimaryAssetId ExperienceId, const FString& ExperienceIdSource);
-	void HandleMatchAssignmentIfNotExpectingOne();
-
-	// Dedicated server specific logic
-	bool TryDedicatedServerLogin();
-	void HostDedicatedServerMatch(ECommonSessionOnlineMode OnlineMode);
-	UFUNCTION() void OnUserInitializedForDedicatedServer(...);
-};
-```
-
 ***
 
 `ALyraGameMode` acts as the entry point and lifecycle manager for gameplay sessions. It determines which Experience to run, ensures players are handled correctly based on the Experience load state, and spawns Pawns according to the configuration provided by `ULyraPawnData` assets linked to the Experience, while delegating specific game rules and spawn location logic to other components.

@@ -22,7 +22,7 @@ The `ULyraInventoryItemDefinition` serves as the static **blueprint** or **templ
 You typically create Item Definitions by creating Blueprint Classes:
 
 1. **Content Browser:** Navigate to where you want to store your item definitions (e.g., `Content/Inventory/Items/Weapons`).
-2. **Right-Click:** Right-click in the empty space -> Blueprint Class.
+2. **Right-Click:** Right-click in the empty space, select Blueprint -> Blueprint Class.
 3. **Choose Parent Class:** Search for and select `LyraInventoryItemDefinition` as the parent class.
 4. **Name Asset:** Give your Blueprint class a descriptive name, often prefixed with `ID_`(e.g., `ID_Rifle_AK47`, `ID_HealthPotion`).
 5. **Configure Defaults:** Open the Blueprint class and edit its Class Defaults. This is where you'll set `DisplayName` and add/configure `Fragments`.

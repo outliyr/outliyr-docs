@@ -3,7 +3,7 @@
 This section explains how you define the _behavior_ and _visuals_ of items when they are equipped by a character. The system uses a data-driven approach, primarily centered around two key assets:
 
 1. **`UInventoryFragment_EquippableItem`**: A small piece added to your _inventory item definition_.
-2. **`ULyraEquipmentDefinition`**: A dedicated Data Asset detailing the equipment-specific properties.
+2. **`ULyraEquipmentDefinition`**: A dedicated `UObject` detailing the equipment-specific properties.
 
 Think of it like this: The inventory item knows _what_ it is (a rifle, a helmet), and the `UInventoryFragment_EquippableItem` acts as a signpost saying, "Hey, I'm equippable! Look over _here_ (`ULyraEquipmentDefinition`) for the details on _how_ I work when equipped, including which slots I can go into."
 
@@ -82,6 +82,10 @@ This Data Asset is where you define _everything_ about how an item behaves once 
 1. In the Content Browser, right-click -> Blueprint -> BlueprintClass.
 2. Choose `LyraEquipmentDefinition` as the parent class.
 3. Give it a descriptive name, often prefixed with `ED_` (e.g., `ED_Rifle`, `ED_Helmet`).
+
+{% hint style="info" %}
+Weapon Equipment Definition in ShooterBase are prefixed with `WID_`  (Weapon Item Definition), this is what Lyra used so I stuck with it.
+{% endhint %}
 
 {% file src="../../.gitbook/assets/create_equipment_definition.mp4" %}
 Create Equipment Definition

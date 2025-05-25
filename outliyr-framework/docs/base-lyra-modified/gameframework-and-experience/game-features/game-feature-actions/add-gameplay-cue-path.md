@@ -12,6 +12,8 @@ The `UGameFeatureAction_AddGameplayCuePath` is a simple but essential Game Featu
 
 This action is typically added automatically if needed by other systems, but can be manually added to the `Actions` list within a `ULyraExperienceDefinition` or `ULyraExperienceActionSet` if you have custom Gameplay Cue paths within your feature.
 
+<figure><img src="../../../../.gitbook/assets/image (123).png" alt=""><figcaption><p><code>Add_GameplayCuePath</code> <strong>GameFeatureAction</strong> configuration</p></figcaption></figure>
+
 * **`Directory Paths To Add` (`TArray<FDirectoryPath>`)**: An array of directory paths (relative to the _Content_ directory of the plugin containing this action) that should be scanned by the `UGameplayCueManager`.
   * **Default:** Includes `/GameplayCues` by default, as this is a common convention.
   * **Configuration:** Use the path picker (+) to add additional directories within your Game Feature Plugin where you store `GameplayCueNotify` assets. Ensure the paths are marked as `RelativeToGameContentDir`.
@@ -50,62 +52,6 @@ _Example Configuration (if Cues are in `MyFeaturePlugin/Content/MySpecialCues`):
 
 * **Gameplay Ability System:** Relies on the `UAbilitySystemGlobals` and `UGameplayCueManager` (specifically the `ULyraGameplayCueManager` subclass in Lyra).
 * **Game Features Subsystem:** The activation/deactivation lifecycle triggers the path registration/unregistration via the observer policy.
-
-### Code Definition Reference
-
-```cpp
-/**
- * GameFeatureAction responsible for adding gameplay cue paths to the gameplay cue manager.
- */
-UCLASS(MinimalAPI, meta = (DisplayName = "Add Gameplay Cue Path"))
-class UGameFeatureAction_AddGameplayCuePath final : public UGameFeatureAction
-{
-	GENERATED_BODY()
-public:
-	UGameFeatureAction_AddGameplayCuePath(); // Constructor adds default "/GameplayCues" path
-
-	//~UObject interface
-#if WITH_EDITOR
-	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
-#endif
-	//~End of UObject interface
-
-	// Accessor for the observer policy
-	const TArray<FDirectoryPath>& GetDirectoryPathsToAdd() const { return DirectoryPathsToAdd; }
-
-private:
-	/** List of paths (relative to plugin content dir) to register with the gameplay cue manager. */
-	UPROPERTY(EditAnywhere, Category = "Game Feature | Gameplay Cues", meta = (RelativeToGameContentDir, LongPackageName))
-	TArray<FDirectoryPath> DirectoryPathsToAdd;
-};
-
-
-// Observer Class (Simplified - part of LyraGameFeaturePolicy.cpp)
-UCLASS()
-class ULyraGameFeature_AddGameplayCuePaths : public UObject, public IGameFeatureStateChangeObserver
-{
-	GENERATED_BODY()
-public:
-	virtual void OnGameFeatureRegistering(const UGameFeatureData* GameFeatureData, const FString& PluginName, const FString& PluginURL) override;
-	virtual void OnGameFeatureUnregistering(const UGameFeatureData* GameFeatureData, const FString& PluginName, const FString& PluginURL) override;
-};
-
-// Implementation Snippet (Simplified - Observer Logic)
-void ULyraGameFeature_AddGameplayCuePaths::OnGameFeatureRegistering(...)
-{
-	// ... find UGameFeatureAction_AddGameplayCuePath actions in GameFeatureData ...
-	// ... for each action ...
-	//     ... for each path in action->GetDirectoryPathsToAdd() ...
-	//         ... fix plugin path ...
-	//         ... ULyraGameplayCueManager::Get()->AddGameplayCueNotifyPath(fixedPath, false); ...
-	// ... ULyraGameplayCueManager::Get()->InitializeRuntimeObjectLibrary(); ...
-}
-
-void ULyraGameFeature_AddGameplayCuePaths::OnGameFeatureUnregistering(...)
-{
-	// ... similar logic using RemoveGameplayCueNotifyPath ...
-}
-```
 
 ***
 

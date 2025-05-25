@@ -56,46 +56,6 @@ This `UEngineSubsystem` serves a very specific and limited purpose, primarily re
 * This system works **automatically in the background** within the Editor/PIE environment.
 * You do not need to interact with it directly. Its existence ensures that Game Features shared across multiple PIE windows behave correctly regarding activation and deactivation lifecycles. It has no effect in packaged builds.
 
-### Code Definition References (Simplified)
-
-```cpp
-// Policy Class
-UCLASS(MinimalAPI, Config = Game)
-class ULyraGameFeaturePolicy : public UDefaultGameFeaturesProjectPolicies
-{
-	GENERATED_BODY()
-public:
-	// ... Get() function, Constructor ...
-	virtual void InitGameFeatureManager() override; // Registers observers
-	virtual void ShutdownGameFeatureManager() override; // Unregisters observers
-	virtual void GetGameFeatureLoadingMode(...) const override; // Sets client/server loading
-	// ... other overrides potentially calling Super ...
-private:
-	UPROPERTY(Transient) TArray<TObjectPtr<UObject>> Observers; // Holds instances like ULyraGameFeature_AddGameplayCuePaths
-};
-
-// PIE Manager Class (Engine Subsystem)
-UCLASS(MinimalAPI)
-class ULyraExperienceManager : public UEngineSubsystem
-{
-	GENERATED_BODY()
-public:
-#if WITH_EDITOR
-	void OnPlayInEditorBegun(); // Clears map
-	static void NotifyOfPluginActivation(const FString PluginURL); // Increments count
-	static bool RequestToDeactivatePlugin(const FString PluginURL); // Decrements count, returns true if now zero
-#else
-	// Provide empty stubs for non-editor builds
-	static void NotifyOfPluginActivation(const FString PluginURL) {}
-	static bool RequestToDeactivatePlugin(const FString PluginURL) { return true; }
-#endif
-private:
-#if WITH_EDITORONLY_DATA // Map only needed in editor
-	TMap<FString, int32> GameFeaturePluginRequestCountMap;
-#endif
-};
-```
-
 ***
 
 These supporting systems handle lower-level policy decisions and editor-specific management for the Game Features system. While `ULyraGameFeaturePolicy` allows project-wide customization and observer registration, and `ULyraExperienceManager` ensures correct PIE behavior, your primary interaction with Game Features will typically be through defining Experiences, Action Sets, and specific `UGameFeatureAction` assets.

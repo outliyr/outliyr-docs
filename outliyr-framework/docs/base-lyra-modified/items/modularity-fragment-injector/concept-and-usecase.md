@@ -52,7 +52,7 @@ This system enables powerful, decoupled workflows:
 You typically create FragmentInjector by creating Blueprint Classes (you can think of it like an item definition scoped to that specific plugin).
 
 1. **Content Browser:** Navigate to where you want to store your FragmentInjector (e.g., `Content/Items/Weapons`).
-2. **Right-Click:** Right-click in the empty space -> Blueprint Class.
+2. **Right-Click:** Right-click in the empty space, select Blueprint -> Blueprint Class.
 3. **Choose Parent Class:** Search for and select `FragmentInjector` as the parent class.
 4. **Name Asset:** Give your Blueprint class a descriptive name, often prefixed with `ID_FragmentInjector` (e.g., `BPID_Rifle_AK47`, `BPID_Consumable_HealthPotion`).
 5. **Configure Defaults:** Open the Blueprint class and edit its Class Defaults. This is where you'll set add/configure/remove `Fragments` and set their override index.

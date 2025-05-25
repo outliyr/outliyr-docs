@@ -13,15 +13,21 @@ The `ULyraPawnData` is a **Primary Data Asset** that serves as a comprehensive c
 
 Create Pawn Data assets in the Unreal Editor:
 
-1. **Content Browser:** Navigate to a suitable folder (e.g., Content/Pawns or Content/Characters).
+1. **Content Browser:** Navigate to a suitable folder in your game feeature plugin (e.g., Content/Hero,  Content/Game/Hero).
 2. **Right-Click:** Right-click in the empty space.
 3. **Miscellaneous:** Select Data Asset.
 4. **Choose Class:** Search for and select LyraPawnData as the parent class.
 5. **Name Asset:** Give it a descriptive name, often prefixed with `HeroData_` (e.g., `HeroData_StandardSoldier`, `HeroData_Medic`).
 
+{% file src="../../../.gitbook/assets/create_pawn_data.mp4" %}
+Create Pawn Data
+{% endfile %}
+
 ### Key Properties
 
 Configure these properties within the Pawn Data asset's Details panel:
+
+<figure><img src="../../../.gitbook/assets/image (110).png" alt=""><figcaption><p><code>HeroData_ShooterBase</code> PawnData</p></figcaption></figure>
 
 1. **Pawn Class (`TSubclassOf<APawn>`)**:
    * **Crucial:** Specifies the actual APawn (or more likely, ACharacter) derived class that should be instantiated when spawning a Pawn using this data (e.g., `BP_LyraCharacter_Default`, `BP_Vehicle_Tank`).
@@ -57,56 +63,6 @@ Configure these properties within the Pawn Data asset's Details panel:
 3. **Pawn Spawning:** `ALyraGameMode::SpawnDefaultPawnAtTransform` spawns the `PawnClass` specified in the selected `ULyraPawnData`.
 4. **Pawn Initialization:** Immediately after spawning, the Game Mode finds the `ULyraPawnExtensionComponent` on the new Pawn and calls `PawnExtComp->SetPawnData(SelectedPawnData)`.
 5. **Component Application:** The `ULyraPawnExtensionComponent` (and other components like `ULyraHeroComponent`, `ULyraCameraComponent`) listens for the Pawn Data to be set. Once set, these components read the relevant properties from the `ULyraPawnData` asset (Ability Sets, Input Config, Input Mappings, Camera Mode, HUD Layouts/Widgets) and apply them to the Pawn and its controller/player subsystems (ASC, Enhanced Input, Common UI, Camera Manager).
-
-### Code Definition Reference
-
-```cpp
-// Structs used within ULyraPawnData (simplified)
-USTRUCT() struct FPawnHUDLayoutRequest { /* TSubclassOf<UCommonActivatableWidget> LayoutClass; FGameplayTag LayerID; */ };
-USTRUCT() struct FPawnHUDElementEntry { /* TSubclassOf<UUserWidget> WidgetClass; FGameplayTag SlotID; */ };
-USTRUCT() struct FPawnInputMappingContextAndPriority { /* UInputMappingContext* InputMapping; int32 Priority; bool bRegisterWithSettings; */ };
-
-// The Pawn Data Asset
-UCLASS(BlueprintType, Const, Meta = (DisplayName = "Lyra Pawn Data"))
-class ULyraPawnData : public UPrimaryDataAsset
-{
-	GENERATED_BODY()
-public:
-	ULyraPawnData(const FObjectInitializer& ObjectInitializer);
-
-	// The Pawn class to spawn
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Lyra|Pawn")
-	TSubclassOf<APawn> PawnClass;
-
-	// Abilities/Attributes to grant via Ability Sets
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Lyra|Abilities")
-	TArray<TObjectPtr<ULyraAbilitySet>> AbilitySets;
-
-	// HUD Layouts to add
-	UPROPERTY(EditAnywhere, Category=UI)
-	TArray<FPawnHUDLayoutRequest> Layout;
-
-	// Individual HUD Widgets to add to slots
-	UPROPERTY(EditAnywhere, Category=UI)
-	TArray<FPawnHUDElementEntry> Widgets;
-
-	// Defines ability tag relationships (blocking/canceling)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Lyra|Abilities")
-	TObjectPtr<ULyraAbilityTagRelationshipMapping> TagRelationshipMapping;
-
-	// Defines InputTag -> AbilityTag mappings
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Lyra|Input")
-	TObjectPtr<ULyraInputConfig> InputConfig;
-
-	// Defines Hardware Input -> Input Action mappings
-	UPROPERTY(EditDefaultsOnly, Category = "Lyra|Input")
-	TArray<FPawnInputMappingContextAndPriority> InputMappings;
-
-	// Default camera mode for this pawn type
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Lyra|Camera")
-	TSubclassOf<ULyraCameraMode> DefaultCameraMode;
-};
-```
 
 ***
 

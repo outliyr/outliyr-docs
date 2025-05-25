@@ -134,6 +134,8 @@ To make your plugin do anything, you must:
 
 These concepts are explained fully in the next page, [Quick Start Guide](quick-start-guide.md),  and the [Game Framework & Experiences](../base-lyra-modified/gameframework-and-experience/) section.
 
+Or you can check [Lyra's guide](https://dev.epicgames.com/community/learning/tutorials/rdW2/unreal-engine-how-to-create-a-new-game-feature-plugin-and-experience-in-lyra) if you prefer a quick step by step guide
+
 ***
 
 Now that your project is set up and your workspace is ready, let’s launch a game mode and explore how Experiences and modular features come together.

@@ -18,11 +18,17 @@ You create Experience Definitions in the Unreal Editor:
 2. **Right-Click:** Right-click in the empty space.
 3. **Miscellaneous:** Select `Data Asset`.
 4. **Choose Class:** Search for and select `LyraExperienceDefinition` as the parent class.
-5. **Name Asset:** Give it a descriptive name, often prefixed with `B_` or `Experience_` (e.g., `B_Experience_TDM`, `B_Experience_CTF`). This name is important as it forms part of the Primary Asset ID used to load the experience.
+5. **Name Asset:** Give it a descriptive name, often prefixed with `B_` or  (e.g., `B_TeamDeathmatch`, `B_CaptureTheFlag`). This name is important as it forms part of the Primary Asset ID used to load the experience.
+
+{% hint style="success" %}
+Same steps as in the [`LyraPawnData` video](lyrapawndata.md#creation), just search for `LyraExperienceDefinition` instead.&#x20;
+{% endhint %}
 
 ### Key Properties
 
 Configure these properties within the Experience Definition asset's Details panel:
+
+<figure><img src="../../../.gitbook/assets/image (112).png" alt=""><figcaption><p>Experience Definition of the Headquarters Game Mode</p></figcaption></figure>
 
 1. **`Game Features To Enable` (`TArray<FString>`)**
    * **Purpose:** Lists the names of the Game Feature plugins that _must_ be active for this experience.
@@ -61,36 +67,6 @@ The asset includes editor-time validation (`IsDataValid`) to check for common er
 
 * Null entries in the `Actions` array.
 * Incorrect Blueprint subclassing (You should typically inherit directly from `ULyraExperienceDefinition` in Blueprint, not from another Blueprint subclass of it).
-
-### Code Definition Reference
-
-```cpp
-UCLASS(BlueprintType, Const)
-class ULyraExperienceDefinition : public UPrimaryDataAsset
-{
-	GENERATED_BODY()
-public:
-	ULyraExperienceDefinition();
-
-	// List of Game Feature Plugins this experience wants to have active
-	UPROPERTY(EditDefaultsOnly, Category = Gameplay)
-	TArray<FString> GameFeaturesToEnable;
-
-	// The default pawn data to spawn for players in this experience
-	UPROPERTY(EditDefaultsOnly, Category=Gameplay)
-	TObjectPtr<const ULyraPawnData> DefaultPawnData;
-
-	// List of actions to perform directly as part of this experience
-	UPROPERTY(EditDefaultsOnly, Instanced, Category="Actions")
-	TArray<TObjectPtr<UGameFeatureAction>> Actions;
-
-	// List of additional action sets to compose into this experience
-	UPROPERTY(EditDefaultsOnly, Category=Gameplay)
-	TArray<TObjectPtr<ULyraExperienceActionSet>> ActionSets;
-
-	// ... Editor validation and asset bundle functions ...
-};
-```
 
 ***
 

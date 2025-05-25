@@ -13,6 +13,8 @@ This Game Feature Action provides a data-driven way to add User Interface elemen
 
 Add instances of this action to the `Actions` list within a `ULyraExperienceDefinition` or `ULyraExperienceActionSet`.
 
+<figure><img src="../../../../.gitbook/assets/image (122).png" alt=""><figcaption><p><code>Add_Widgets</code> <strong>GameFeatureAction</strong> configuration</p></figcaption></figure>
+
 * **`Layout` (`TArray<FLyraHUDLayoutRequest>`)**: Defines entire UI _layouts_ to be pushed onto the screen's layer stack.
   * **`FLyraHUDLayoutRequest`**:
     * `Layout Class` (`TSoftClassPtr<UCommonActivatableWidget>`): A soft reference to the Activatable Widget class representing the layout (e.g., `WBP_HUD_Layout_Default`). These layouts typically contain named slots for other widgets.
@@ -78,39 +80,6 @@ This action inherits from `UGameFeatureAction_WorldActionBase`.
 * **Common UI Plugin:** Relies on the layer system (`UCommonUIExtensions`) for managing layouts.
 * **UI Extension Subsystem:** Uses the `UUIExtensionSubsystem` and slot tags for placing individual widgets within layouts.
 * **`ALyraHUD`:** Assumes the target HUD actor is derived from `ALyraHUD` or provides similar access to the Local Player and subsystems.
-
-### Code Definition Reference
-
-```cpp
-// Struct defining a request to add a full UI layout
-USTRUCT() struct FLyraHUDLayoutRequest { /* TSoftClassPtr<UCommonActivatableWidget> LayoutClass; FGameplayTag LayerID; */ };
-
-// Struct defining a request to add a single widget to a specific slot
-USTRUCT() struct FLyraHUDElementEntry { /* TSoftClassPtr<UUserWidget> WidgetClass; FGameplayTag SlotID; */ };
-
-// Game Feature Action to add layouts and widgets
-UCLASS(MinimalAPI, meta = (DisplayName = "Add Widgets"))
-class UGameFeatureAction_AddWidgets final : public UGameFeatureAction_WorldActionBase
-{
-	GENERATED_BODY()
-public:
-	//~ UGameFeatureAction / UObject overrides ...
-
-private:
-	// List of layouts to push onto UI layers
-	UPROPERTY(EditAnywhere, Category=UI, meta=(TitleProperty="{LayerID} -> {LayoutClass}"))
-	TArray<FLyraHUDLayoutRequest> Layout;
-
-	// List of widgets to add to specific UI extension slots
-	UPROPERTY(EditAnywhere, Category=UI, meta=(TitleProperty="{SlotID} -> {WidgetClass}"))
-	TArray<FLyraHUDElementEntry> Widgets;
-
-private:
-	// Internal tracking structures (FPerContextData, FPerActorData)
-	// Helper functions (AddToWorld, Reset, HandleActorExtension, AddWidgets, RemoveWidgets)
-	// ...
-};
-```
 
 ***
 

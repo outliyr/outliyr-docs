@@ -12,6 +12,8 @@ The `UGameFeatureAction_SplitscreenConfig` serves as a straightforward example o
 
 Add instances of this action to the `Actions` list within a `ULyraExperienceDefinition` or `ULyraExperienceActionSet`.
 
+<figure><img src="../../../../.gitbook/assets/image (124).png" alt=""><figcaption><p><code>Add_SplitScreenConfig</code> <strong>GameFeatureAction</strong> configuration</p></figcaption></figure>
+
 * **`b Disable Splitscreen` (`bool`, Default: true)**: If checked (true), this action will attempt to force splitscreen to be disabled for game instances associated with the worlds where this action becomes active. If unchecked, the action effectively does nothing (it doesn't force splitscreen _on_, it only manages disabling it).
 
 _Example Configuration (in `Experience_MainMenu` or `Experience_CompetitiveRanked`):_
@@ -51,35 +53,6 @@ This action inherits from `UGameFeatureAction_WorldActionBase`. It uses a static
 * **Force Single Screen:** Ensure main menus, competitive modes, or experiences with complex full-screen UI are always run without splitscreen enabled.
 * **Platform Constraints:** Potentially disable splitscreen on platforms where performance might be an issue for certain experiences.
 * **Simple Configuration Example:** Serves as a clear example of how a Game Feature Action can manage a global or per-world setting using the world action base and static tracking for multiple activations.
-
-### Code Definition Reference
-
-```cpp
-/**
- * GameFeatureAction responsible for configuring Splitscreen.
- */
-UCLASS(MinimalAPI, meta = (DisplayName = "Splitscreen Config"))
-class UGameFeatureAction_SplitscreenConfig final : public UGameFeatureAction_WorldActionBase
-{
-	GENERATED_BODY()
-public:
-	//~ UGameFeatureAction / UGameFeatureAction_WorldActionBase overrides ...
-	virtual void OnGameFeatureDeactivating(FGameFeatureDeactivatingContext& Context) override;
-	virtual void AddToWorld(const FWorldContext& WorldContext, const FGameFeatureStateChangeContext& ChangeContext) override;
-
-public:
-	// If true, this action will vote to disable splitscreen while active.
-	UPROPERTY(EditAnywhere, Category=Action)
-	bool bDisableSplitscreen = true;
-
-private:
-	// Tracks viewports disabled by THIS action instance in a specific context
-	TArray<FObjectKey> LocalDisableVotes;
-
-	// Tracks the total number of active actions disabling splitscreen per viewport
-	static TMap<FObjectKey, int32> GlobalDisableVotes;
-};
-```
 
 ***
 

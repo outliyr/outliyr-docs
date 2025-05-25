@@ -16,11 +16,17 @@ Similar to Experience Definitions, you create Action Sets in the Unreal Editor:
 2. **Right-Click:** Right-click in the empty space.
 3. **Miscellaneous:** Select `Data Asset`.
 4. **Choose Class:** Search for and select `LyraExperienceActionSet` as the parent class.
-5. **Name Asset:** Give it a descriptive name, often prefixed with `ActionSet_` (e.g., `ActionSet_CoreGameplay`, `ActionSet_StandardHUD`, `ActionSet_VehicleSetup`).
+5. **Name Asset:** Give it a descriptive name, often prefixed with `LAS_` (e.g., `LAS_StandardHUD`, `LAS_StandardComponents`, `LAS_SharedInput`).
+
+{% hint style="success" %}
+Same steps as in the [`LyraPawnData` video](lyrapawndata.md#creation), just search for `LyraExperienceActionSet` instead.&#x20;
+{% endhint %}
 
 ### Key Properties
 
 Configure these properties within the Action Set asset's Details panel:
+
+<figure><img src="../../../.gitbook/assets/image (114).png" alt=""><figcaption><p>LAS_Infection_StandardComponents</p></figcaption></figure>
 
 1. **`Actions` (`TArray<TObjectPtr<UGameFeatureAction>>`, Instanced)**
    * **Purpose:** A list of specific `UGameFeatureAction` instances to execute when any Experience _including_ this Action Set is activated.
@@ -54,31 +60,6 @@ The order of execution between actions defined directly in the Experience and th
 ### Validation
 
 Similar to Experience Definitions, Action Sets include editor-time validation (`IsDataValid`) to check for null entries in the `Actions` array.
-
-### Code Definition Reference
-
-```cpp
-/**
- * Definition of a set of actions to perform as part of entering an experience
- */
-UCLASS(BlueprintType, NotBlueprintable) // Not intended for direct Blueprint subclassing
-class ULyraExperienceActionSet : public UPrimaryDataAsset
-{
-	GENERATED_BODY()
-public:
-	ULyraExperienceActionSet();
-
-	// List of actions to perform when this set is included in an active experience
-	UPROPERTY(EditAnywhere, Instanced, Category="Actions to Perform")
-	TArray<TObjectPtr<UGameFeatureAction>> Actions;
-
-	// List of Game Feature Plugins required by the actions in this set
-	UPROPERTY(EditAnywhere, Category="Feature Dependencies")
-	TArray<FString> GameFeaturesToEnable;
-
-	// ... Editor validation and asset bundle functions ...
-};
-```
 
 ***
 

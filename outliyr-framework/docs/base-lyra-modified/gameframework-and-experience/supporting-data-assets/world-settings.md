@@ -9,6 +9,8 @@ Each map (`.umap` file) in an Unreal Engine project has an associated **World Se
 * **Editor Checks:** Includes editor-time validation to help catch common setup issues.
 * **PIE Net Mode Override (Editor Only):** Contains an editor-only flag to force a standalone net mode for testing frontend or single-player experiences.
 
+<figure><img src="../../../.gitbook/assets/image (125).png" alt=""><figcaption><p>LyraWorldSetting exposing the default experience definition for the map</p></figcaption></figure>
+
 ### Key Property
 
 * **`Default Gameplay Experience` (`TSoftClassPtr<ULyraExperienceDefinition>`)**:
@@ -44,53 +46,6 @@ WorldSettingsClassName=/Script/LyraGame.LyraWorldSettings
 ```
 
 Setting this ensures that when a new map is created, or an existing map has its World Settings reset, it defaults to using your `ALyraWorldSettings` class, making the `Default Gameplay Experience` property available. For existing maps, you can also manually set the `World Settings Class` in the World Settings panel.
-
-### Code Definition Reference
-
-```cpp
-UCLASS(MinimalAPI)
-class ALyraWorldSettings : public AWorldSettings
-{
-	GENERATED_BODY()
-public:
-	ALyraWorldSettings(const FObjectInitializer& ObjectInitializer);
-
-#if WITH_EDITOR
-	virtual void CheckForErrors() override;
-#endif
-
-public:
-	// Returns the Primary Asset ID for the default experience to use on this map.
-	UE_API FPrimaryAssetId GetDefaultGameplayExperience() const;
-
-protected:
-	// Soft class pointer to the ULyraExperienceDefinition asset.
-	UPROPERTY(EditDefaultsOnly, Category=GameMode)
-	TSoftClassPtr<ULyraExperienceDefinition> DefaultGameplayExperience;
-
-public:
-#if WITH_EDITORONLY_DATA
-	// Editor-only: If true, forces Standalone net mode when PIE'ing this map.
-	UPROPERTY(EditDefaultsOnly, Category=PIE)
-	bool ForceStandaloneNetMode = false;
-#endif
-};
-
-// Implementation Snippet (.cpp)
-FPrimaryAssetId ALyraWorldSettings::GetDefaultGameplayExperience() const
-{
-	FPrimaryAssetId Result;
-	if (!DefaultGameplayExperience.IsNull())
-	{
-		Result = UAssetManager::Get().GetPrimaryAssetIdForPath(DefaultGameplayExperience.ToSoftObjectPath());
-		if (!Result.IsValid())
-		{
-			// Log error if path doesn't resolve
-		}
-	}
-	return Result;
-}
-```
 
 ***
 

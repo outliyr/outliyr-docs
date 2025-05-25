@@ -89,20 +89,14 @@ This ensures that systems can reliably hook into the experience loading process,
 This means that initialization logic should not be placed in BeginPlay but should instead use the provided delegates for safe initialization.
 {% endhint %}
 
-<details>
-
-<summary>Blueprint Initialization Example</summary>
-
+{% tabs %}
+{% tab title="Blueprint" %}
 In blueprints, `WaitForExperienceReady` should be placed before the initialization logic, for safe initialization.
 
 <figure><img src="../../../.gitbook/assets/image (56).png" alt=""><figcaption><p>Safe initialization with experience system</p></figcaption></figure>
+{% endtab %}
 
-</details>
-
-<details>
-
-<summary>C++ Initialization Example</summary>
-
+{% tab title="C++" %}
 In c++ you would use one of the provided delegates depending on the priority.
 
 ```cpp
@@ -126,8 +120,8 @@ void AExampleActor::OnExperienceLoaded(const ULyraExperienceDefinition* Experien
     InitializationLogic();
 }
 ```
-
-</details>
+{% endtab %}
+{% endtabs %}
 
 ### Replication
 

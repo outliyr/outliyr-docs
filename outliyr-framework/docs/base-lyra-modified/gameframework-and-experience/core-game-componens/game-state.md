@@ -52,64 +52,6 @@ This pattern keeps the base `ALyraGameState` generic, while specific modes injec
 * **Inherited:** `PlayerArray`, `ElapsedTime`, etc. from `AGameStateBase`.
 * **Dynamically Added Components:** Any replicated properties within components added by Game Feature Actions will also be replicated as part of the Game State.
 
-### Code Definition Reference
-
-```cpp
-UCLASS(MinimalAPI, Config = Game)
-class ALyraGameState : public AModularGameStateBase, public IAbilitySystemInterface
-{
-	GENERATED_BODY()
-public:
-	UE_API ALyraGameState(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
-	//~ AActor / AGameStateBase overrides ...
-	UE_API virtual void PostInitializeComponents() override;
-	UE_API virtual void Tick(float DeltaSeconds) override;
-	//~ End overrides ...
-
-	//~ IAbilitySystemInterface ~
-	UE_API virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	//~ End IAbilitySystemInterface ~
-
-	// Getters for core components
-	UFUNCTION(BlueprintCallable, Category = "Lyra|GameState")
-	ULyraAbilitySystemComponent* GetLyraAbilitySystemComponent() const;
-	// Note: ExperienceManagerComponent is usually accessed internally or via GetGameState()->FindComponentByClass()
-
-	// Broadcasting messages
-	UFUNCTION(NetMulticast, Unreliable, BlueprintCallable)
-	UE_API void MulticastMessageToClients(const FLyraVerbMessage Message);
-	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
-	UE_API void MulticastReliableMessageToClients(const FLyraVerbMessage Message);
-
-	// Get replicated server FPS
-	UE_API float GetServerFPS() const;
-
-	// Replay specific functions
-	UE_API void SetRecorderPlayerState(APlayerState* NewPlayerState);
-	UE_API APlayerState* GetRecorderPlayerState() const;
-	DECLARE_MULTICAST_DELEGATE_OneParam(FOnRecorderPlayerStateChanged, APlayerState*);
-	FOnRecorderPlayerStateChanged OnRecorderPlayerStateChangedEvent;
-
-private:
-	// Core manager components hosted here
-	UPROPERTY()
-	TObjectPtr<ULyraExperienceManagerComponent> ExperienceManagerComponent;
-	UPROPERTY(VisibleAnywhere, Category = "Lyra|GameState")
-	TObjectPtr<ULyraAbilitySystemComponent> AbilitySystemComponent;
-
-protected:
-	// Replicated state variables
-	UPROPERTY(Replicated)
-	float ServerFPS;
-	UPROPERTY(Transient, ReplicatedUsing = OnRep_RecorderPlayerState)
-	TObjectPtr<APlayerState> RecorderPlayerState;
-
-	UFUNCTION()
-	UE_API void OnRep_RecorderPlayerState();
-};
-```
-
 ***
 
 The `ALyraGameState` serves as the replicated backbone of the game session's state and acts as the primary host for the Experience Manager and dynamically added game mode logic components. Its design facilitates the modular, Experience-driven architecture by providing a stable, replicated context for these systems to operate within.

@@ -21,7 +21,7 @@ The Equipment System manages this entire process, bridging the gap between abstr
 
 This system builds upon Lyra's robust foundations and embraces several key design principles:
 
-* **Data-Driven Configuration:** Most equipment behavior is defined in **Data Assets** (`ULyraEquipmentDefinition`). This empowers designers to create and tweak equipment (what abilities it grants, how it looks when equipped) with minimal code changes.\
+* **Data-Driven Configuration:** Most equipment behavior is defined in a **data-driven UObject**   `ULyraEquipmentDefinition`. This empowers designers to create and tweak equipment (what abilities it grants, how it looks when equipped) with minimal code changes.\
   **Example:** Defining a rifle might involve linking ability sets for shooting/reloading and specifying the rifle mesh to spawn.
 * **Component-Based Architecture:** Functionality is neatly packaged into Unreal Engine **Components**. This promotes modularity and clear separation of concerns.
   * `ULyraEquipmentManagerComponent`: Lives on the **Pawn** and manages _its_ equipment.
@@ -44,15 +44,15 @@ This system builds upon Lyra's robust foundations and embraces several key desig
 
 Here are the main components involved in the Equipment System:
 
-* `ULyraEquipmentDefinition` (Data Asset)
+* `ULyraEquipmentDefinition` (**UObject**)
   * **The Blueprint/Recipe:** Defines _what_ an item _does_ when equipped (Abilities, Actors) for both **Holstered** (per-slot) and **Held** states. This is where you define which `GameplayTags` represent valid slots for an item.
-* `UInventoryFragment_EquippableItem` (Item Fragment)
+* `UInventoryFragment_EquippableItem` (**Item Fragment**)
   * **The Link:** Added to an `ULyraInventoryItemDefinition` to mark it as equippable and point it to its corresponding `ULyraEquipmentDefinition`.
-* `ULyraEquipmentManagerComponent` (Pawn Component)
+* `ULyraEquipmentManagerComponent` (**Pawn Component**)
   * **The Manager:** Lives on the Pawn. Handles equip/unequip/hold requests, creates/destroys `ULyraEquipmentInstance`s, talks to GAS, and replicates state. The central brain for _this Pawn's_ gear. It does _not_ limit slots but rather manages items in slots defined by their `ULyraEquipmentDefinition`.
-* `ULyraEquipmentInstance` (UObject)
+* `ULyraEquipmentInstance` (**UObject**)
   * **The Runtime Object:** Represents a single piece of equipment _actually attached_ to the Pawn _right now_. Holds runtime data (like ammo in a specific magazine instance) and receives lifecycle events (like `OnEquipped`).
-* `ULyraQuickBarComponent` (Controller Component)
+* `ULyraQuickBarComponent` (**Controller Component**)
   * **The Player Interface:** Optional component on the Controller. Manages a list of items (like a hotbar) and tells the Pawn's `ULyraEquipmentManagerComponent` which item the player wants to _hold_.
 
 ***

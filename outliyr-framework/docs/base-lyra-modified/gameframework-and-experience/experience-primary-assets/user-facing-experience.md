@@ -20,9 +20,15 @@ Create User Facing Experience Definitions in the Unreal Editor:
 4. **Choose Class:** Search for and select `LyraUserFacingExperienceDefinition` as the parent class.
 5. **Name Asset:** Give it a descriptive name, often related to the gameplay mode and map combination (e.g., `UserFacing_TDM_Arena`, `UserFacing_CTF_Ruins`).
 
+{% hint style="success" %}
+Same steps as in the [`LyraPawnData` video](lyrapawndata.md#creation), just search for `LyraUserFacingExperienceDefinition` instead.&#x20;
+{% endhint %}
+
 ### Key Properties
 
 Configure these properties within the User Facing Experience asset's Details panel:
+
+<figure><img src="../../../.gitbook/assets/image (115).png" alt=""><figcaption><p>Gungame user facing experience definition</p></figcaption></figure>
 
 * **`Map ID` (`FPrimaryAssetId`, AllowedTypes="Map")**: **Crucial.** The Primary Asset ID of the specific map (`.umap` asset) that should be loaded when this experience is initiated.
 * **`Experience ID` (`FPrimaryAssetId`, AllowedTypes="LyraExperienceDefinition")**: **Crucial.** The Primary Asset ID of the `ULyraExperienceDefinition` asset that defines the actual gameplay rules and content for this session. This is what the `ALyraGameMode` will attempt to load once the map is loaded.
@@ -58,55 +64,6 @@ Configure these properties within the User Facing Experience asset's Details pan
 ### Relationship to `ULyraExperienceDefinition`
 
 The User Facing Experience acts as a **pointer and presentation layer** for the actual `ULyraExperienceDefinition`. It allows the UI and session systems to work with user-friendly representations and hosting parameters without needing to load or understand the full complexity of the runtime Experience Definition itself until the game session actually starts. A single `ULyraExperienceDefinition` (e.g., `B_Experience_TDM`) could potentially be referenced by multiple `ULyraUserFacingExperienceDefinition` assets if you wanted to offer Team Deathmatch on several different maps (`UserFacing_TDM_MapA`, `UserFacing_TDM_MapB`).
-
-### Code Definition Reference
-
-```cpp
-UCLASS(BlueprintType)
-class ULyraUserFacingExperienceDefinition : public UPrimaryDataAsset
-{
-	GENERATED_BODY()
-public:
-	// The specific map to load
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category=Experience, meta=(AllowedTypes="Map"))
-	FPrimaryAssetId MapID;
-
-	// The gameplay experience to load on that map
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category=Experience, meta=(AllowedTypes="LyraExperienceDefinition"))
-	FPrimaryAssetId ExperienceID;
-
-	// Extra arguments passed as URL options
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category=Experience)
-	TMap<FString, FString> ExtraArgs;
-
-	// --- UI Properties ---
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category=Experience) FText TileTitle;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category=Experience) FText TileSubTitle;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category=Experience) FText TileDescription;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category=Experience) TObjectPtr<UTexture2D> TileIcon;
-	// --- End UI Properties ---
-
-	// Loading screen associated with this experience
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category=LoadingScreen)
-	TSoftClassPtr<UUserWidget> LoadingScreenWidget;
-
-	// --- Flags for UI/System filtering ---
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category=Experience) bool bIsDefaultExperience;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category=Experience) bool bShowInFrontEnd;
-	// --- End Flags ---
-
-	// Should replays be recorded?
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category=Experience) bool bRecordReplay;
-
-	// Max players for sessions using this definition
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category=Experience) int32 MaxPlayerCount;
-
-public:
-	// Creates the request object needed by CommonSessionSubsystem to host a game
-	UFUNCTION(BlueprintCallable, BlueprintPure=false, meta = (WorldContext = "WorldContextObject"))
-	UCommonSession_HostSessionRequest* CreateHostingRequest(const UObject* WorldContextObject) const;
-};
-```
 
 ***
 

@@ -22,6 +22,10 @@ You create `ULyraAbilitySet` assets directly in the Unreal Editor:
 4. **Choose Class:** Search for and select **`LyraAbilitySet`** as the parent class.
 5. **Name Asset:** Give it a descriptive name, often prefixed with `AbilitySet_` (e.g., `AbilitySet_CoreMovement`, `AbilitySet_Weapon_Rifle`, `AbilitySet_MedicKit`).
 
+{% hint style="success" %}
+Same steps as in the [`LyraPawnData` video](lyrapawndata.md#creation), just search for `LyraAbilitySet` instead.&#x20;
+{% endhint %}
+
 ### Contents of an Ability Set
 
 Within the editor for your `ULyraAbilitySet` asset, you can define three types of grants:
@@ -37,12 +41,17 @@ Within the editor for your `ULyraAbilitySet` asset, you can define three types o
    * **`FLyraAbilitySet_GameplayEffect` struct:**
      * `GameplayEffect` (TSubclassOf): The specific `UGameplayEffect` class to apply.
      * `EffectLevel` (float): The level at which to apply the effect.
-3. **Granted Attributes (`TArray<FLyraAbilitySet_AttributeSet>`):**
-   * Specifies `UAttributeSet` classes to add to the owner's ASC.
-   * **`FLyraAbilitySet_AttributeSet` struct:**
-     * `AttributeSet` (TSubclassOf): The specific `UAttributeSet` class to grant (e.g., `MyHealthSet`, `MyStaminaSet`).
+3.  **Granted Attributes (`TArray<FLyraAbilitySet_AttributeSet>`):**
 
-### Granting Mechanism (`GiveToAbilitySystem`)
+    * Specifies `UAttributeSet` classes to add to the owner's ASC.
+    * **`FLyraAbilitySet_AttributeSet` struct:**
+      * `AttributeSet` (TSubclassOf): The specific `UAttributeSet` class to grant (e.g., `MyHealthSet`, `MyStaminaSet`).
+
+
+
+<figure><img src="../../../.gitbook/assets/image (111).png" alt=""><figcaption><p>Lyra Ability Set, <code>AbilitySet_ShooterHero</code> for the default ShooterBase Pawn</p></figcaption></figure>
+
+### Internal Granting Mechanism (`GiveToAbilitySystem`)
 
 The core function responsible for applying the Ability Set's contents is `ULyraAbilitySet::GiveToAbilitySystem`.
 
@@ -95,7 +104,7 @@ struct FLyraAbilitySet_GrantedHandles
 
 `ULyraAbilitySet` assets are primarily referenced and utilized in two key places:
 
-1. **`GameFeatureAction_AddAbilities`:** Within the `FGameFeatureAbilitiesEntry` struct, the `GrantedAbilitySets` array allows you to specify Ability Sets to grant when the action activates for a given Actor class.
+1. **`GameFeatureAction_AddAbilities`:** Within the `FGameFeatureAbilitiesEntry` struct, the `GrantedAbilitySets` array allows you to specify Ability Sets to grant when the action activates for a given Actor class. See the[ GameFeatureAction\_AddAbilities documentation](../game-features/game-feature-actions/add-abilities.md) for more details.
 2. **`ULyraPawnData`:** The `AbilitySets` array (`TArray<TObjectPtr<ULyraAbilitySet>>`) directly within the Pawn Data asset allows you to define a baseline set of capabilities inherent to any pawn using that data. The logic that initializes a pawn from its Pawn Data typically calls `GiveToAbilitySystem` for each set listed here.
 
 ### Use Cases & Examples

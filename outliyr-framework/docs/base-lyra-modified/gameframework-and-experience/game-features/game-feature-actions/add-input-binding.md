@@ -12,6 +12,8 @@ This Game Feature Action is responsible for dynamically adding **Input Configura
 
 This action is configured by adding instances of it to the `Actions` list within a `ULyraExperienceDefinition` or `ULyraExperienceActionSet`.
 
+<figure><img src="../../../../.gitbook/assets/image (120).png" alt=""><figcaption><p><code>Add_InputBinding</code> <strong>GameFeatureAction</strong> configuration</p></figcaption></figure>
+
 * **`Input Configs` (`TArray<TSoftObjectPtr<const ULyraInputConfig>>`)**: An array of soft object pointers to `ULyraInputConfig` data assets. Each `ULyraInputConfig` asset contains a list mapping Input Tags to Gameplay Ability Tags.
 
 _Example Configuration (in an Action Set for standard movement):_
@@ -58,66 +60,6 @@ This action also inherits from `UGameFeatureAction_WorldActionBase`.
 
 * **`UGameFeatureAction_AddAbilities`:** Often used in conjunction. `AddAbilities` grants the actual `UGameplayAbility` to the Pawn's ASC, while `AddInputBinding` provides the `ULyraInputConfig` that tells the input system _how_ to trigger that granted ability via player input.
 * **`UGameFeatureAction_AddInputContextMapping`:** Works at a lower level, adding entire `UInputMappingContext` assets (which define the raw hardware input-to-Input Action mappings). `AddInputBinding` works at a higher level, mapping abstract Input Actions (represented by Input Tags) to Ability Tags. You typically need both: `AddInputContextMapping` to define _what_ keys/buttons map to actions like "Jump", and `AddInputBinding` to define _what gameplay ability_ the "Jump" action should trigger _in this context_.
-
-### Code Definition Reference
-
-```cpp
-// Forward declaration
-class ULyraInputConfig;
-
-/**
- * Adds Input Configs to the Lyra Hero Component for Pawns.
- */
-UCLASS(MinimalAPI, meta = (DisplayName = "Add Input Binds"))
-class UGameFeatureAction_AddInputBinding final : public UGameFeatureAction_WorldActionBase
-{
-	GENERATED_BODY()
-
-public:
-	//~ Begin UGameFeatureAction interface
-	virtual void OnGameFeatureActivating(FGameFeatureActivatingContext& Context) override;
-	virtual void OnGameFeatureDeactivating(FGameFeatureDeactivatingContext& Context) override;
-	//~ End UGameFeatureAction interface
-
-	//~ Begin UObject interface
-#if WITH_EDITOR
-	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
-#endif
-	//~ End UObject interface
-
-	// Array of Input Config assets to add to Pawns when this action activates.
-	UPROPERTY(EditAnywhere, Category="Input", meta=(AssetBundles="Client,Server"))
-	TArray<TSoftObjectPtr<const ULyraInputConfig>> InputConfigs;
-
-private:
-	// Internal struct to track bindings per pawn
-	struct FPawnBindings
-	{
-		TWeakObjectPtr<APawn> PawnAddedTo;
-		TArray<uint32> BindHandles; // Handles returned by ULyraHeroComponent
-	};
-
-	// Internal struct to track data per activation context
-	struct FPerContextData
-	{
-		TArray<TSharedPtr<FComponentRequestHandle>> ExtensionRequestHandles;
-		TArray<FPawnBindings> PawnsAddedTo;
-	};
-
-	// Map storing data for each active context
-	TMap<FGameFeatureStateChangeContext, FPerContextData> ContextData;
-
-	//~ Begin UGameFeatureAction_WorldActionBase interface
-	virtual void AddToWorld(const FWorldContext& WorldContext, const FGameFeatureStateChangeContext& ChangeContext) override;
-	//~ End UGameFeatureAction_WorldActionBase interface
-
-	// Helper functions for managing state and component extensions
-	void Reset(FPerContextData& ActiveData);
-	void HandlePawnExtension(AActor* Actor, FName EventName, FGameFeatureStateChangeContext ChangeContext);
-	void AddInputMappingForPlayer(APawn* Pawn, FPerContextData& ActiveData);
-	void RemoveInputMapping(APawn* Pawn, FPerContextData& ActiveData);
-};
-```
 
 ***
 
