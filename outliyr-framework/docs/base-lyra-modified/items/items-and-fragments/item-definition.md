@@ -27,7 +27,9 @@ You typically create Item Definitions by creating Blueprint Classes:
 4. **Name Asset:** Give your Blueprint class a descriptive name, often prefixed with `ID_`(e.g., `ID_Rifle_AK47`, `ID_HealthPotion`).
 5. **Configure Defaults:** Open the Blueprint class and edit its Class Defaults. This is where you'll set `DisplayName` and add/configure `Fragments`.
 
-<figure><img src="../../../.gitbook/assets/Create Item Definition.gif" alt=""><figcaption><p>Creating an item definition</p></figcaption></figure>
+{% file src="../../../.gitbook/assets/create_item_definition.mp4" %}
+Create Item Definition
+{% endfile %}
 
 ***
 

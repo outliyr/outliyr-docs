@@ -32,9 +32,9 @@ Before the Equipment System can do anything with an inventory item, that item ne
 4. In the dropdown for the new fragment element, search for and select `InventoryFragment_EquippableItem`.
 5. Expand the newly added fragment.
 
-<figure><img src="../../.gitbook/assets/LinkEquipmentDefinition.gif" alt=""><figcaption><p>Add Equipment Definition To Fragment</p></figcaption></figure>
-
 {% file src="../../.gitbook/assets/LinkEquipmentDefinition.mp4" %}
+Link Equipment Definition
+{% endfile %}
 
 {% hint style="info" %}
 An item definition _must_ have this fragment with a valid `Equipment Definition` assigned for the `ULyraEquipmentManagerComponent::EquipItemToSlot` function (and related functions) to succeed.
@@ -84,8 +84,8 @@ This Data Asset is where you define _everything_ about how an item behaves once 
 3. Give it a descriptive name, often prefixed with `ED_` (e.g., `ED_Rifle`, `ED_Helmet`).
 
 {% file src="../../.gitbook/assets/create_equipment_definition.mp4" %}
-
-<figure><img src="../../.gitbook/assets/create_equipment_definition (1).gif" alt=""><figcaption><p>Creating Equipment Definition</p></figcaption></figure>
+Create Equipment Definition
+{% endfile %}
 
 ***
 

@@ -57,7 +57,9 @@ You typically create FragmentInjector by creating Blueprint Classes (you can thi
 4. **Name Asset:** Give your Blueprint class a descriptive name, often prefixed with `ID_FragmentInjector` (e.g., `BPID_Rifle_AK47`, `BPID_Consumable_HealthPotion`).
 5. **Configure Defaults:** Open the Blueprint class and edit its Class Defaults. This is where you'll set add/configure/remove `Fragments` and set their override index.
 
-<figure><img src="../../../.gitbook/assets/2025-05-2300-56-56-ezgif.com-video-to-gif-converter (1).gif" alt=""><figcaption><p>Creating a Fragment Injector</p></figcaption></figure>
+{% file src="../../../.gitbook/assets/create_fragment_injector.mp4" %}
+Create a Fragment Injector
+{% endfile %}
 
 ***
 
