@@ -35,7 +35,7 @@ The separation between `ULyraCombatSet` and `ULyraHealthSet` stems from the two 
 
 **Why the Separation?**
 
-Imagine calculating damage without this separation. If you only had a single "Damage" attribute on the `HealthSet`, how would you calculate it?
+Imagine calculating damage without this separation. If you only had a single "Damage" attribute on the `HealthSet`, and no `CombatSet`, how would you calculate it?
 
 * **Option 1: Target calculates damage based on source stats:** The target would need access to the source's stats (like Attack Power). This creates complex dependencies and coupling.
 * **Option 2: Source calculates damage and applies it directly to target's Health:** This bypasses the target's defenses (like armor or damage reduction buffs stored on the target's ASC/Attributes) and makes it hard for the target to react (e.g., trigger an "on damaged" effect before health changes).
@@ -83,7 +83,11 @@ Let's trace a simple Hitscan weapon damage event:
 * **Attributes:**
   * **`BaseDamage` (`FGameplayAttributeData`):** Input for damage executions. Replicates `COND_OwnerOnly` (only the owner needs to know their base damage potential for prediction/UI, the server calculates final damage).
   * **`BaseHeal` (`FGameplayAttributeData`):** Input for heal executions. Replicates `COND_OwnerOnly`.
-  * **`TotalDamage` (`FGameplayAttributeData`):** Seems unused in the provided damage flow. Intended as a meta attribute potentially modified by an execution to reflect the final calculated damage after all checks, possibly for UI feedback (damage numbers) or specific gameplay cues. Its `PostGameplayEffectExecute` just resets it. If you need precise damage numbers for UI, you might modify the Damage Execution to output to this as well as the `HealthSet::Damage` attribute.
+  *   **`TotalDamage` (`FGameplayAttributeData`):** `TotalDamage` may appear unused in the default damage application logic, but it plays an important **supporting role for UI feedback and gameplay cues**. It's intended as a **meta attribute** that can be set by a custom `ExecutionCalculation` (e.g., `ULyraShieldDamageExecution`) to represent the **final total damage dealt after all calculations and splits**, such as damage first absorbed by shields, then applied to health.
+
+      This is particularly useful in scenarios where damage is **distributed across multiple layers** (e.g., shield and health) but the game needs to **display a single unified damage number** to the player through damage popups or gameplay cues.
+
+      Although `TotalDamage` doesn't directly influence attribute values (its `PostGameplayEffectExecute` just resets it), you can modify your executions to assign the **final calculated damage** to this attribute alongside applying individual damage to `ShieldSet::Damage` and `HealthSet::Damage`.
 
 #### `ULyraHealthSet` - Deeper Dive
 

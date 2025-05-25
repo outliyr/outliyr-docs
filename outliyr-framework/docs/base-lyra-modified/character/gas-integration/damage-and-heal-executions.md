@@ -35,7 +35,7 @@ As outlined previously, Executions act as the central calculation hub:
    * **Final Calculation:** `DamageDone` = `BaseDamage * DistanceAttenuation * PhysicalMaterialAttenuation * DamageInteractionAllowedMultiplier`. Ensures the result is non-negative `(FMath::Max(..., 0.0f))`.
    * **Output:** If `DamageDone > 0.0f`, it adds an **output modifier** using `OutExecutionOutput.AddOutputModifier`. This modifier targets the Target's `ULyraHealthSet::GetDamageAttribute()` with an `EGameplayModOp::Additive` operation and the calculated `DamageDone` magnitude.
 
-**Important Flow Note:** `ULyraDamageExecution` does not directly change Health. It calculates the damage amount and outputs it to the temporary Damage meta attribute on the target's `ULyraHealthSet`. The ULyraHealthSet then processes this value in its `PostGameplayEffectExecute` function to actually modify the Health.
+**Important Flow Note:** `ULyraDamageExecution` does not directly change Health. It calculates the damage amount and outputs it to the temporary Damage meta attribute on the target's `ULyraHealthSet`. The `ULyraHealthSet` then processes this value in its `PostGameplayEffectExecute` function to actually modify the Health.
 
 #### `ULyraHealExecution`
 

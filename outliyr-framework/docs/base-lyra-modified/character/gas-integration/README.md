@@ -58,7 +58,11 @@ Attribute Sets hold the numerical data defining a character's state (like health
   * **`BaseDamage`:** Represents the base damage potential of an attack or effect. Captured by `ULyraDamageExecution` from the _Source_'s ASC. Replicates owner-only.
   * **`BaseHeal`:** Represents the base healing potential. Captured by `ULyraHealExecution` from the _Source_'s ASC. Replicates owner-only.
 * **Meta Attribute (`TotalDamage`):**
-  * A replicated attribute intended to track the total damage applied by an execution for feedback purposes. _However, based on the provided `ULyraDamageExecution` and `ULyraHealthSet`, the final damage application actually uses the `HealthSet::Damage` attribute. `CombatSet::TotalDamage` seems unused by the core damage flow in the provided code, but exists for potential future use or custom executions._ Its `PostGameplayEffectExecute` simply resets it if it was ever non-zero.
+  * Tracks the total damage dealt during a GameplayEffect execution. While `HealthSet::Damage` and `ShieldSet::Damage` are used to apply actual damage to respective attributes, `CombatSet::TotalDamage` is useful for consolidated feedback (e.g., damage number popups). This is especially relevant when damage is split across multiple layers, such as shield and health, allowing you to show a single, combined damage value in gameplay cues.
+
+{% hint style="info" %}
+Although not part of the actual damage application logic, `TotalDamage` is typically modified during executions like `ULyraShieldDamageExecution` in **ShooterBase** and is consumed by gameplay cues to present unified damage feedback to the player.
+{% endhint %}
 
 ### Gameplay Effect Executions (`ULyraDamageExecution`, `ULyraHealExecution`)
 

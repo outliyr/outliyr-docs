@@ -44,8 +44,16 @@ This is the primary base class intended for most humanoid characters, whether pl
    * Calls Blueprint-implementable events (`K2_OnDeathStarted`, `K2_OnDeathFinished`) for custom death visuals or logic.
    * Handles the technical aspects of death like disabling collision/movement (`DisableMovementAndCollision`) and initiating destruction (`UninitAndDestroy`, which also ensures ASC cleanup).
 
-**Example: Getting the Ability System Component**
+**Example: Getting the Lyra Ability System Component**
 
+{% tabs %}
+{% tab title="Blueprint" %}
+<figure><img src="../../.gitbook/assets/image (77).png" alt="" width="361"><figcaption><p>Getting the Lyra ASC in a Lyra Character</p></figcaption></figure>
+
+
+{% endtab %}
+
+{% tab title="C++" %}
 ```cpp
 // In ALyraCharacter.h
 virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
@@ -62,6 +70,10 @@ UAbilitySystemComponent* ALyraCharacter::GetAbilitySystemComponent() const
 	return PawnExtComponent->GetLyraAbilitySystemComponent();
 }
 ```
+
+
+{% endtab %}
+{% endtabs %}
 
 * **Use `ALyraCharacter` when:** You need a character with humanoid movement, collision, skeletal mesh, and tight integration with GAS, health, input, and camera systems as provided by the core Lyra components. This is the default choice for player characters and humanoid AI.
 
@@ -98,42 +110,6 @@ A specialized version of `ALyraCharacter` that directly includes and manages its
 2. **Direct ASC Access:** Overrides `GetAbilitySystemComponent()` to return its _own_, internally held ASC instance.
 3. **Self-Initialization:** Initializes its Ability Actor Info in `PostInitializeComponents`, setting itself as both the Owner and Avatar actor for its ASC.
 4. **Replication:** The ASC and its attributes replicate as part of this character actor directly.
-
-**Example: ASC Creation and Access**
-
-```cpp
-// In ALyraCharacterWithAbilities.h
-UPROPERTY(VisibleAnywhere, Category = "Lyra|PlayerState") // Category is slightly misleading here, it's owned by the Character
-TObjectPtr<ULyraAbilitySystemComponent> AbilitySystemComponent;
-
-// In ALyraCharacterWithAbilities.cpp
-ALyraCharacterWithAbilities::ALyraCharacterWithAbilities(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
-	// Create the ASC and Attribute Sets directly on this character
-	AbilitySystemComponent = ObjectInitializer.CreateDefaultSubobject<ULyraAbilitySystemComponent>(this, TEXT("AbilitySystemComponent"));
-	AbilitySystemComponent->SetIsReplicated(true);
-	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
-
-	HealthSet = CreateDefaultSubobject<ULyraHealthSet>(TEXT("HealthSet"));
-	CombatSet = CreateDefaultSubobject<ULyraCombatSet>(TEXT("CombatSet"));
-	// ...
-}
-
-void ALyraCharacterWithAbilities::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
-	// Initialize the ASC with this character as Owner and Avatar
-	check(AbilitySystemComponent);
-	AbilitySystemComponent->InitAbilityActorInfo(this, this);
-}
-
-UAbilitySystemComponent* ALyraCharacterWithAbilities::GetAbilitySystemComponent() const
-{
-	// Return the ASC owned directly by this character
-	return AbilitySystemComponent;
-}
-```
 
 * **Use `ALyraCharacterWithAbilities` when:**
   * Creating AI characters that don't have or need a `APlayerState`.

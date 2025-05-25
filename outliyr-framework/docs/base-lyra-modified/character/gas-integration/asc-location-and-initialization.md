@@ -2,7 +2,7 @@
 
 The **Ability System Component (ASC)** is the heart of GAS functionality for any actor. It manages attributes, active abilities, gameplay effects, and tags. In this character system, understanding where the ASC resides and how the character Pawn connects to it is crucial, as there are two primary patterns used.
 
-#### Pattern 1: ASC on Player State (Standard for Players)
+### Pattern 1: ASC on Player State (Standard for Players)
 
 This is the default and recommended pattern for player-controlled characters (ALyraCharacter derivatives).
 
@@ -40,7 +40,7 @@ From the `ALyraCharacter`'s perspective, accessing the ASC is seamless:
 * This function delegates the call to `ULyraPawnExtensionComponent::GetLyraAbilitySystemComponent()`.
 * The `PawnExtensionComponent` returns its cached pointer to the ASC (which originally came from the Player State).
 
-#### Pattern 2: ASC on Character (Self-Contained Entities)
+### Pattern 2: ASC on Character (Self-Contained Entities)
 
 This pattern is used by `ALyraCharacterWithAbilities` and is suitable for AI or other networked entities that don't have or need a separate Player State.
 
