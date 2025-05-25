@@ -2,69 +2,21 @@
 
 ### **Your First Gameplay Session**
 
-Welcome! This guide is designed to get you up and running quickly with the framework. It assumes you've already installed the asset and opened the project in Unreal Engine, as outlined in the "Installation & Setup" guide.
+This guide walks you through launching your first gameplay session with the framework. You’ll play a prebuilt game mode, explore its assets, and make a simple customization—all while learning how the modular system works.
+
+{% hint style="info" %}
+This guide assumes you've already completed the [Installing & Setup](installing-and-setup.md) steps and have the project open in Unreal Engine.
+{% endhint %}
 
 **By the end of this guide, you will have:**
 
-1. Understood the basic project and plugin structure.
-2. Launched and played one of the pre-built example game modes.
-3. Learned where to find the assets related to that game mode for initial exploration.
-4. Known where to go next for deeper learning and customization.
+1. Launch and play a prebuilt game mode
+2. Locate the assets responsible for that game mode
+3. Understand how Experiences and Game Features define gameplay
+4. Make a small gameplay tweak safely
+5. Know where to go next for deeper customization
 
 Let's get started!
-
-***
-
-### **Understanding the Project Structure**
-
-Before diving in, a quick look at where things are:
-
-* `📂 Content/`
-  * Contains core assets and any modified Lyra framework code. **Generally, avoid modifying these directly to ensure easier updates.**
-* `📂 Plugins/`
-  * This is a standard Unreal Engine plugins directory.
-* `📂 Plugins/GameFeatures/`
-  * **This is the primary location for modular content.** Each subdirectory here is a separate **Game Feature Plugin**.
-  * **Core Framework Plugins:** You'll find the foundational plugins of this asset here (e.g., `ShooterBase/`, `TetrisInventory/`, `TrueFirstPerson/`).
-  * **Example Game Mode Plugins:** The pre-built game modes (e.g., `TeamDeathmatch/`, `Arena/`, `BattleRoyale/`) also reside here as individual Game Feature Plugins.
-  * **Your Custom Plugins:** When you create new game modes or features, they will also become subdirectories in `Plugins/GameFeatures/`.
-
-**Core Philosophy:** This framework is built on modularity using **Game Feature Plugins** and **Experiences**.
-
-* **Game Feature Plugins:** Package distinct gameplay systems (core mechanics or specific game modes). Their dependencies on other plugins are defined in their respective `.uplugin` files.
-* **Experiences (`ULyraExperienceDefinition`):** Data Assets (usually found within a Game Feature Plugin's `Content` folder) that define _what_ game mode to run, _which_ Game Features to activate for that session, default player setups, and UI.
-
-{% hint style="success" %}
-### Best Practice: Working with the Framework
-
-If you're just getting started with Unreal Engine or aren't yet comfortable managing complex changes in large codebases (especially when it comes to using Git for merging and tracking changes), **please follow the recommended customization paths** below to keep your project clean and easy to update.
-
-#### Recommended Way to Customize
-
-* **Add Major Features / New Game Modes / Big Changes**\
-  Create a **new Game Feature Plugin** for your content. This keeps your work separate from the core framework and example content, making updates smoother and easier to manage.
-*   **Tweak Example Game Modes**\
-    If you want to build on an existing example:
-
-    1. Create a new Game Feature Plugin.
-    2. Copy any relevant assets (like `ULyraExperienceDefinition`, `ULyraPawnData`, `ULyraExperienceActionSets`) from the example plugin.
-    3. Modify those copies in your plugin.
-
-    This approach ensures the original examples stay untouched, making it easier to compare, learn from, or update them later.
-
-#### Modifying the Core Framework (ShooterBase, TetrisInventory, etc.)
-
-The core plugins are designed to be extended—not edited directly. If you modify them, you’re entering “merge conflict territory,” and future updates will be harder to apply.
-
-#### A Word to Experienced Developers
-
-If you're comfortable with Unreal's systems and Git workflows, and you truly need to change something deep in the core systems that can’t be handled through subclassing, configuration, or Game Features—go for it. But understand:
-
-* **You’re now responsible** for manually merging changes when updating this asset pack.
-* Modifying core systems is a valid choice for advanced use cases, but it requires a solid understanding of Unreal's architecture and version control workflows. If that’s not familiar territory, it’s best to stick with extension-based methods to avoid potential maintenance headaches
-
-In short: **extend, don’t edit—unless you know exactly what you're doing.**
-{% endhint %}
 
 ***
 
@@ -76,20 +28,29 @@ Let's jump into a pre-built game mode to see the framework in action. We'll use 
 
     * In the Content Browser, make sure "Show Plugin Content" is enabled (Settings cogwheel in the Content Browser).
     * Navigate to the TDM plugin's content folder: `Plugins/GameFeatures/TeamDeathmatch/Content/Maps/`
-    * Open a TDM map.
+    * Open the TDM map (`L_TeamDeatchmatch`)
 
     <figure><img src="../.gitbook/assets/image.png" alt="" width="273"><figcaption><p>Team Death match map file and file path</p></figcaption></figure>
 2.  **Check World Settings (Informational):**
 
-    * With the map open, go to Window > World Settings.
-    * You'll see `Default Gameplay Experience` is likely set to something like `B_TeamDeathmatch`. This Experience Definition asset would be located within the `TeamDeathmatch` plugin's content, in the `Experiences` subfolder.
+    * With the map open, go to **Window > World Settings**.
+    * You'll see **Default Gameplay Experience** it should be set to an asset like `B_TeamDeathmatch` which defines what systems and features are loaded for this map.
 
     <figure><img src="../.gitbook/assets/image (1).png" alt=""><figcaption><p><em>World Settings panel showing the TDM Experience selected for the map</em></p></figcaption></figure>
 3. **Play In Editor (PIE):**
-   * Click the "Play" button in the main editor toolbar.
-   * If prompted for the number of players, choose 1 or 2 for now. Set "Net Mode" to "Play As Listen Server" if you want to test server/client, or "Play Standalone" for a quick single-player test.
-4. **Experience Gameplay:**
-   * You should now be in the Team Deathmatch game mode. Observe the HUD, team assignments, and gameplay.
+   * Click the **Play** button in the main editor toolbar.
+   * If prompted for the number of players, choose **1 or 2**.&#x20;
+   * For multiplayer testing:
+     * Use **"Play As Client"** to simulate server/client
+     * Or use **"Play Standalone"** for a quick local test
+
+You’re now playing the **Team Deathmatch** mode, powered by the framework’s modular components.
+
+Observe:
+
+* Scoring and team logic
+* HUD behavior
+* Pawn movement and abilities
 
 ***
 
@@ -108,15 +69,34 @@ Now that you've played it, let's briefly see where the TDM setup lives:
        * **Action Sets / Actions:** Any `ULyraExperienceActionSet`s it references or direct `UGameFeatureAction`s it uses (e.g., to add TDM scoring components or UI).
 
        <figure><img src="../.gitbook/assets/image (3).png" alt="" width="563"><figcaption><p><em><code>B_TeamDeathmatch</code> asset open, highlighting key properties.</em></p></figcaption></figure>
-3. **Pawn Data, Mode-Specific Components/Widgets:** All other assets specific to TDM (like `PawnData_TDM_Default`, `GSC_TeamDeathmatchScore`, `WBP_TDM_Scoreboard`) will be within the `Content` folder of the `TeamDeathmatch` Game Feature Plugin.
 
-**Making a Small Tweak (Example):**
+#### Other Useful Assets in the Plugin
 
-* Try modifying the experience blueprint `B_Deathmatch` or `B_Scoring_TDM` in the Game folder for TDM rules.
+* `HeroData_TeamDeathmatch` – Player configuration
+* `B_Scoring_TeamDeathmatch` – Scoring logic
+* `WBP_ScoreWidget_TeamDeathmatch` – Scoreboard UI
+
+All TDM-specific logic and assets are contained in the TDM plugin.\
+It depends on shared systems like ShooterBase, but no other plugin depends on TDM. This makes it safe to modify or remove without impacting the rest of the framework.
+
+***
+
+### **Making a Small Tweak:**
+
+Let’s change a rule or component for learning purposes.
+
+Modify the `B_Scoring_TDM` or `W_ScoreWidget_TeamDeathmatch` blueprint in the TDM plugin’s `Game` folder.
+
+This lets you experiment without breaking core functionality. Feel free to adjust:
+
+* Score values
+* Win conditions
+* UI elements
 
 {% hint style="success" %}
-For the purposes of this quick start, it's okay to modify existing game mode assets directly to get a feel for how things work.\
-However, when you're ready to implement new features or systems in a real project, it's strongly recommended to create your own Game Feature Plugin and duplicate the relevant assets. This keeps your project clean, modular, and update-friendly.
+While it’s fine to experiment here, remember that the recommended way to make lasting changes is to duplicate assets into your own Game Feature Plugin.\
+This helps avoid conflicts and makes updates easier.\
+If you haven't already, see the [Installing & Setup](installing-and-setup.md) guide for how to set this up properly.
 {% endhint %}
 
 ***
@@ -127,7 +107,7 @@ You've now launched a game mode! This framework is extensive. Here’s where to 
 
 * **Understand the Foundation - Experiences & Game Features:**
   * This is how all game modes and modular content are structured. Mastering this is key.
-  * **➡️ See Full Documentation: Game Framework & Experiences** (This will cover Experience Definitions, Action Sets, User Facing Experiences, Game Feature Actions, and how core classes like GameMode/GameState integrate).
+  * **➡️** [**See Full Documentation: Game Framework & Experiences**](../base-lyra-modified/gameframework-and-experience/).
 * **Explore Core Gameplay Plugins:**
   * **ShooterBase:** For all things combat.
     * **Key Features:** Compositional weapon system, predictive recoil, diverse projectile types (hitscan, simulated bullet drop), lag compensation, aim assist, intelligent spawning, flexible scoring, spectator system, killcam, accolades.

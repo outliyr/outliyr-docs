@@ -6,6 +6,8 @@ This section ensures users understand how to properly install and set up the fra
 Unlike standard Unreal Engine plugins, this framework is designed as a **standalone project**, similar to Lyra. **It is not meant to be added to an existing project.** Instead, developers should start their game development within this framework and modify it to suit their needs.
 {% endhint %}
 
+***
+
 ### **Downloading the Project**
 
 You can obtain the framework via the **Unreal Engine Marketplace** (once released).
@@ -14,50 +16,124 @@ You can obtain the framework via the **Unreal Engine Marketplace** (once release
 This project would require at least **Unreal Engine 5.5**
 {% endhint %}
 
+***
+
 ### **Opening the Project**
 
-1. Open **Unreal Engine 5** (latest stable version recommended).
-2. Click **"Open Project"** and navigate to the downloaded project folder.
-3. Select the **`.uproject`** file and open it.
-4. (If prompted) Convert the project to the latest engine version.
+* Open Unreal Engine 5 (latest stable version recommended)
+* Select Open Project
+* Navigate to the downloaded folder and select the .uproject file
+* If prompted, convert the project to the latest engine version
+* Let Unreal compile and open the editor
 
-### **Getting Started**
-
-Once the project is open, you can immediately **playtest existing game modes**, inspect the included assets, and begin modifying the project to fit your game.
-
-{% hint style="info" %}
-To make **future updates easier**, it’s strongly recommended that you avoid modifying the core framework directly. Instead, follow the **best practices** below.&#x20;
+{% hint style="success" %}
+The first load may take a few minutes due to shader compilation and plugin initialization.
 {% endhint %}
 
-### **Best Practices for Working With This Framework**
+***
 
-**The best way to add custom content is by creating a Game Feature Plugin for your own core modules and game modes rather than modifying the base project.**
+### **Understanding the Project Structure**
 
-🔹 **Why?**
+Before diving in, a quick look at where things are:
 
-* Ensures **seamless future updates** without breaking core functionality.
-* Keeps your custom content **modular and independent**.
-* Maintains compatibility with the **Lyra architecture** and Unreal's Modular Gameplay System.
+* `📂 Content/`
+  * Contains core assets and any modified Lyra framework code. **Generally, avoid modifying these directly to ensure easier updates.**
+* `📂 Plugins/`
+  * This is a standard Unreal Engine plugins directory.
+* `📂 Plugins/GameFeatures/`
+  * **This is the primary location for modular content.** Each subdirectory here is a separate **Game Feature Plugin**.
+  * **Core Framework Plugins:** You'll find the foundational plugins of this asset here (e.g., `ShooterBase/`, `TetrisInventory/`, `TrueFirstPerson/`).
+  * **Example Game Mode Plugins:** The pre-built game modes (e.g., `TeamDeathmatch/`, `Arena/`, `BattleRoyale/`) also reside here as individual Game Feature Plugins.
+  * **Your Custom Plugins:** When you create new game modes or features, they will also become subdirectories in `Plugins/GameFeatures/`.
 
-#### How To Create a Game Feature Plugin
+**Core Philosophy:** This framework is built on modularity using **Game Feature Plugins** and **Experiences**.
+
+* **Game Feature Plugins:** Package distinct gameplay systems (core mechanics or specific game modes). Their dependencies on other plugins are defined in their respective `.uplugin` files.
+* **Experiences (`ULyraExperienceDefinition`):** Data Assets (usually found within a Game Feature Plugin's `Content` folder) that define _what_ game mode to run, _which_ Game Features to activate for that session, default player setups, and UI.
+
+{% hint style="success" %}
+### Best Practice: Working with the Framework
+
+If you're just getting started with Unreal Engine or aren't yet comfortable managing complex changes in large codebases (especially when it comes to using Git for merging and tracking changes), **please follow the recommended customization paths** below to keep your project clean and easy to update.
+
+#### Recommended Way to Customize
+
+* **Add Major Features / New Game Modes / Big Changes**\
+  Create a **new Game Feature Plugin** for your content. This keeps your work separate from the core framework and example content, making updates smoother and easier to manage.
+*   **Tweak Example Game Modes**\
+    If you want to build on an existing example:
+
+    1. Create a new Game Feature Plugin.
+    2. Copy any relevant assets (like `ULyraExperienceDefinition`, `ULyraPawnData`, `ULyraExperienceActionSets`) from the example plugin.
+    3. Modify those copies in your plugin.
+
+    This approach ensures the original examples stay untouched, making it easier to compare, learn from, or update them later.
+
+#### Modifying the Core Framework (ShooterBase, TetrisInventory, etc.)
+
+The core plugins are designed to be extended—not edited directly. If you modify them, you’re entering “merge conflict territory,” and future updates will be harder to apply.
+
+#### A Word to Experienced Developers
+
+If you're comfortable with Unreal's systems and Git workflows, and you truly need to change something deep in the core systems that can’t be handled through subclassing, configuration, or Game Features—go for it. But understand:
+
+* **You’re now responsible** for manually merging changes when updating this asset pack.
+* Modifying core systems is a valid choice for advanced use cases, but it requires a solid understanding of Unreal's architecture and version control workflows. If that’s not familiar territory, it’s best to stick with extension-based methods to avoid potential maintenance headaches
+
+In short: **extend, don’t edit—unless you know exactly what you're doing.**
+{% endhint %}
+
+***
+
+### How To Create a Game Feature Plugin
 
 1. In **Unreal Engine**, go to `Edit → Plugins`
 2. Click `Add`
-3. Select `Game Feature Plugin` and choose **C++** (even if you don’t use C++ initially, this keeps the option open for later).
-4. Name it something relevant to your game (e.g., "MyShooterExpansion")
-5. Setup dependant game features based on the features you want. (You would typically want, GameplayAbilities, ModularGameplay, GameplayMessageRouter, AsyncMixin, CommonUI, CommonGame, EnhancedInput, LyraExampleContent, then you can add the relevant core modules).
-6. Create a Lyra Experience set it to the map in that plugin (this will make sure the experience runs when playing from that map)
+3. Choose **Game Feature Plugin**
+4. Select **C++** as the base (even if you won’t use C++ yet—it allows expansion later)
+5. Name your plugin (e.g., `MyShooterExpansion`)
+6. Add necessary dependencies (see below)
+
+{% hint style="success" %}
+In the editor, the modified lyra code is inside the content folder, the game feature plugins (including the ones you create) are inside the plugin folder. If you want to add or modify c++ code of game features you can find them in `/Plugins/GameFeatures/ProjectName` .\
+\
+If you can't see any plugins in the editor, make sure you tick "Show Plugin Content", in the settings of your content browser.
+{% endhint %}
+
+#### Common Plugin Dependencies:
+
+* `GameplayAbilities`
+* `ModularGameplay`
+* `GameplayMessageRouter`
+* `AsyncMixin`
+* `CommonUI`, `CommonGame`
+* `EnhancedInput`
+* `LyraExampleContent`
+* Relevant core features like `ShooterBase`, `TetrisInventory`, etc.
+
+{% hint style="info" %}
+You can manage these dependencies manually in the `.uplugin` file or via the Game Feature Data Asset.
+{% endhint %}
 
 <figure><img src="../.gitbook/assets/GameFeature.png" alt=""><figcaption></figcaption></figure>
 
 {% hint style="info" %}
-If you don't like images and want a video (I don't blame you), this is a [good guide](https://www.youtube.com/watch?v=AaGxHtQ0okw). One thing to keep in mind is that is based on Lyra, not my plugin (will make a video later if necessary), so the plugin dependencies used in the video are not in this project, like ShooterCore.
+If you don't like images and want a video (I don't blame you), this is a [good guide](https://www.youtube.com/watch?v=AaGxHtQ0okw). One thing to keep in mind is that is based on Lyra, not my plugin (will make a video later if necessary), so the plugin dependencies used in the video are not in this project, like `ShooterCore`.
 {% endhint %}
 
-### Project Structure
+***
 
-In the editor, the modified lyra code is inside the content folder, the game feature plugins are inside the plugin folder. If you want to add or modify c++ code of game features you can find them in `/Plugins/GameFeatures/ProjectName` .
+### Important Note About Activation
 
-{% hint style="info" %}
-If you can't see any plugins, make sure you tick "Show Plugin Content", in the settings of your content browser.
-{% endhint %}
+After creating your plugin, **you won’t see any gameplay changes right away.** That’s expected.
+
+To make your plugin do anything, you must:
+
+* Create an **Experience Definition**
+* Assign it to a map or load it dynamically
+
+These concepts are explained fully in the next page, [Quick Start Guide](quick-start-guide.md),  and the [Game Framework & Experiences](../base-lyra-modified/gameframework-and-experience/) section.
+
+***
+
+Now that your project is set up and your workspace is ready, let’s launch a game mode and explore how Experiences and modular features come together.
