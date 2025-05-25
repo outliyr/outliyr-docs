@@ -1,10 +1,8 @@
 # Table of contents
 
-* [Welcome](README.md)
-
 ## Introduction
 
-* [Overview](introduction/overview.md)
+* [Welcome](README.md)
 * [Project Architecture](introduction/project-architecture.md)
 * [Installing & Setup](introduction/installing-and-setup.md)
 * [Quick Start Guide](introduction/quick-start-guide.md)
@@ -69,7 +67,7 @@
   * [Supporting Data Assets](base-lyra-modified/gameframework-and-experience/supporting-data-assets/README.md)
     * [World Settings](base-lyra-modified/gameframework-and-experience/supporting-data-assets/world-settings.md)
     * [Asset Manager](base-lyra-modified/gameframework-and-experience/supporting-data-assets/asset-manager.md)
-  * [Creating New Experiences & Game Features Plugins](base-lyra-modified/gameframework-and-experience/creating-new-experiences-and-game-features-plugins.md)
+  * [Creating New Experiences & Game Features Plugins](base-lyra-modified/gameframework-and-experience/integrating-with-experiences-and-game-features-a-practical-guide.md)
 * [Game Phase System](base-lyra-modified/game-phase-system/README.md)
   * [Core Concept](base-lyra-modified/game-phase-system/core-concept.md)
   * [Key Components](base-lyra-modified/game-phase-system/key-components.md)

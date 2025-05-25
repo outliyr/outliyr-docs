@@ -37,9 +37,9 @@ This framework takes a **hybrid approach**, using C++ for performance-critical s
 
 This framework is **layered**, meaning each level **depends only on the layers below it**.
 
-🔹 **Base Lyra (Standalone)**\
-🔹 **Core Modules (Depend on Base Lyra, they can also depend on each other if relevant)**\
-🔹 **Game Modes (Depend on Core Modules, but not on each other)**
+* **Base Lyra is standalone** – It has been modified, but it doesn’t require additional modules.
+* **Core Modules rely on Base Lyra** – They add mechanics like shooting, inventory, and true first-person controls.
+* **Game Modes rely on Core Modules and Base Lyra** – They determine the rules and gameplay experience and are completely isolated.
 
 {% tabs %}
 {% tab title="Diagram" %}
@@ -127,12 +127,6 @@ This shows a better understanding of the dependencies layers
 {% endtab %}
 {% endtabs %}
 
-💡 **Key Takeaways:**
-
-* **Base Lyra is standalone** – It has been modified, but it doesn’t require additional modules.
-* **Core Modules rely on Base Lyra** – They add mechanics like shooting, inventory, and true first-person controls.
-* **Game Modes rely on Core Modules** – They determine the rules and gameplay experience but do not depend on each other.
-
 #### **What This Means in Practice**
 
 * **You can delete any game mode** (TDM, BR, Extraction) without breaking anything.
@@ -163,34 +157,40 @@ Each major system is designed as a **Game Feature Plugin**, meaning:&#x20;
 
 ### **Experience System: The Core of Modularity**
 
-The [**Experience System**](../base-lyra-modified/gameframework-and-experience/experience-primary-assets/) determines **what features, abilities, UI, and game logic** should be loaded per game mode.
+The **Experience System** is the backbone of how game modes are defined and modular content is loaded in this framework. It determines what features, UI, inputs, abilities, and logic are activated for each gameplay session.
+
+{% hint style="info" %}
+This is a high-level summary for context. For a deep dive into how Experiences and Game Features work, including key data assets and interaction flow, [see the full Game Framework & Experiences documentation.](../base-lyra-modified/gameframework-and-experience/)
+{% endhint %}
 
 #### **What It Controls**
 
-🔹 **What abilities a character has**\
-🔹 **What UI elements are enabled**\
-🔹 **What components are spawned**\
-🔹 **What inputs are enabled and their bindings**\
-🔹 **Which plugins are active per game mode**
+* **What abilities a character has**
+* **What UI elements are enabled**
+* **What components are spawned**
+* **What inputs are enabled and their bindings**
+* **Which plugins are active per game mode**
 
 #### **Example Use Cases**
 
-**1️⃣ Battle Royale & Extraction & TDM Inventory**
+**Battle Royale & Extraction & TDM Inventory**
 
 * BR: Players spawn with a grid inventory (similar to Apex legends) that they can interact with
 * Extraction: Players spawn with a **full jigsaw inventory** (similar to Escape from Tarkov)
 * TDM: Players spawn with a **very simple inventory** that they can't interact with
 
-**2️⃣ Pawn-Specific Rules**
+**Pawn-Specific Rules**
 
 * Game mode defines **what pawn is used** (e.g., normal soldier vs. a prop in prop hunt).
 * A horror game mode could introduce **new movement abilities** dynamically.
 
-**3️⃣ Dynamic Spectating**
+**Dynamic Spectating**
 
 * A spectating system exists **only if a game mode enables it** (e.g., exists in BR but not in TDM).
 
-💡 **Key Takeaway:** The Experience System **removes hard dependencies**—gameplay mechanics are defined per mode, not hardcoded into the player class.
+{% hint style="info" %}
+The Experience System **removes hard dependencies. G**ameplay mechanics are defined per mode, instead of hardcoded into the player class with complex inheritance chains.
+{% endhint %}
 
 ***
 
