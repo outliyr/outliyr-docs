@@ -1,10 +1,10 @@
-# Integrating with Experiences & Game Features: A Practical Guide
+# Creating New Experiences & Game Features Plugins
 
 This guide provides a practical, recommended workflow for creating new game modes or significant gameplay features using this asset's Experience and Game Feature systems. The core philosophy is **modularity** and **data-driven configuration**, where base game features provide foundational logic, and specific game modes (often implemented as their own Game Features) customize and extend this foundation primarily through **Experience Definitions and Action Sets configured in Blueprints.**
 
 ### Guiding Principles
 
-* **Game Features for Modularity:** Encapsulate distinct game modes or major features within their own Game Feature Plugins. This promotes clean separation, allows for optional content, and simplifies dependency management. Your "Target Practice" mode, for example, will be its own Game Feature.
+* **Game Features for Modularity:** Encapsulate distinct game modes or major features within their own Game Feature Plugins. This promotes clean separation, allows for optional content, and simplifies dependency management. Your "Target Practice" mode, for example, will be its own Game Feature.m
 * **One-Way Dependencies:** Game Feature Plugins can depend on core framework plugins (like a `ShooterBase` or the base `LyraInventorySystem`) and the base Lyra game. Core plugins should _not_ depend on specific game mode plugins. Game modes sit "on top."
 * **Experience Definitions as the Primary Config Point:** The `ULyraExperienceDefinition` is where most game mode-specific configuration should occur. This includes:
   * Specifying the default `ULyraPawnData`.
