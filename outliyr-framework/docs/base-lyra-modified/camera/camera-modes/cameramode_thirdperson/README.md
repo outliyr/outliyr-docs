@@ -1,5 +1,9 @@
 # CameraMode\_ThirdPerson
 
+{% hint style="warning" %}
+**This page explains the inner workings of the C++ implementation of `CameraMode_ThirdPerson`.** While some variables are exposed and accessible in the corresponding Blueprint class, not all functionality is visible. The Blueprint is designed to abstract away the internal details, allowing you to focus on high-level customization when subclassing.
+{% endhint %}
+
 This class provides a concrete implementation of a third-person camera mode, inheriting from `ULyraCameraMode`. It serves as a robust starting point for games requiring a camera that follows the player character, dynamically adjusts its position based on view pitch, handles vertical changes like crouching, and incorporates sophisticated logic to prevent clipping into the environment.
 
 * **Inheritance:** `UObject` -> `ULyraCameraMode` -> `ULyraCameraMode_ThirdPerson`
@@ -9,7 +13,7 @@ This class provides a concrete implementation of a third-person camera mode, inh
   * Advanced penetration avoidance system using feeler rays.
   * Configurable blending and collision parameters.
 
-#### Basic Setup
+### Basic Setup
 
 This section describes how the camera positions itself relative to the target actor, assuming no obstructions.
 
@@ -49,7 +53,7 @@ When this mode becomes active, the `OnActivation` override ensures a smooth star
 * Calling the base implementation (`Super::OnActivation()`) which handles adding the `CameraTagToAddToPlayer`.
 * Initializing the `CurrentPivotLocation` and `CurrentPivotRotation` smoothed values to the target's _current_ pivot values, preventing the interpolation logic from starting with incorrect old values.
 
-#### Penetration Avoidance
+### Penetration Avoidance
 
 This is a critical feature for third-person cameras, preventing the camera from clipping into walls and other objects, which can obstruct the player's view.
 
@@ -101,4 +105,6 @@ The system uses multiple sphere traces (feelers) to detect collisions:
 
 ***
 
-This detailed breakdown shows how `ULyraCameraMode_ThirdPerson` builds upon the base `ULyraCameraMode` to provide a functional and robust third-person camera, complete with sophisticated penetration avoidance. Next, we'll look at the higher-level management classes: **Player Camera Management**.
+This deep dive into `ULyraCameraMode_ThirdPerson` highlights how it builds on `ULyraCameraMode` to create a responsive and feature-rich third-person camera experience, complete with smooth character tracking and intelligent collision handling.
+
+To support this functionality without tightly coupling to specific actors or controllers, the camera mode leverages interfaces. Next, we’ll explore how the `ILyraCameraAssistInterface` enables dynamic, context-aware behavior, letting actors influence or respond to the camera system without hard dependencies.

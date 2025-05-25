@@ -2,11 +2,15 @@
 
 The camera system, built around the `ULyraCameraModeStack`, is designed with modularity and extensibility in mind. Whether you need to tweak the existing third-person view, create entirely new camera perspectives, or dynamically change the camera based on gameplay events, this page provides guidance on common extension points.
 
+{% hint style="warning" %}
+You _can_ create new camera modes entirely in Blueprint by subclassing `ULyraCameraMode`, but for performance reasons — since camera logic runs every frame — I recommend using C++ for custom camera behavior.
+{% endhint %}
+
 ### Creating Custom Camera Modes
 
 The most powerful way to customize camera behavior is by creating new classes derived from `ULyraCameraMode`. This allows you to define entirely new perspectives or camera logic.
 
-**Steps (C++ Recommended):**
+**Steps (C++ recommended):**
 
 1. **Create a New Class:** Create a new C++ class inheriting from `ULyraCameraMode`. Let's call it `UMyCustomCameraMode`.
 2. **Override `UpdateView`:** This is the most critical step. Implement the logic inside `UpdateView(float DeltaTime)` to calculate the desired camera `Location`, `Rotation`, `ControlRotation`, and `FieldOfView` for your custom mode. Store the results in the inherited `View` member (type `FLyraCameraModeView`).
@@ -26,7 +30,8 @@ The most powerful way to customize camera behavior is by creating new classes de
 5. **Compile:** Build your C++ code.
 6. **Usage:** Your new `UMyCustomCameraMode` class can now be used like any other mode – assigned as a default, pushed onto the stack via code, or selected by the `DetermineCameraModeDelegate`.
 
-**(Example Idea: First-Person Mode)**\
+#### **Example Idea: First-Person Mode**&#xD;
+
 A first-person `ULyraCameraMode` might override `UpdateView` to position the camera directly at the result of `GetPivotLocation()` (which accounts for eye height) and set the `View.Rotation` directly from the pawn's `GetViewRotation()`. It might also have a shorter `BlendTime` and different `FieldOfView` compared to the third-person mode.
 
 ### Modifying Existing Modes
@@ -73,29 +78,44 @@ The primary camera mode (the one typically at the bottom of the stack) is usuall
        ```
 4. **Result:** When the context changes (player starts/stops aiming), the delegate returns a different class. The `ULyraCameraComponent` calls `PushCameraMode` with the new class, and the stack handles blending smoothly to the new perspective.
 
-### Pushing Temporary Modes (Overrides/Layers)
+***
 
-Gameplay Abilities, interaction systems, or cinematic sequences often need to temporarily override the base camera mode.
+### Temporary Camera Mode Overrides in Lyra
 
-1.  **Get Camera Component:** Obtain a pointer to the `ULyraCameraComponent` on the target Pawn.
+Gameplay systems such as abilities, interactions, or cinematics may need to temporarily override the active camera mode (e.g., switching to a scoped view or cinematic camera). In Lyra, this is **not done via direct calls to `PushCameraMode()`** on the camera component, because:
 
-    ```cpp
-    // Example from within a Gameplay Ability targeting the Pawn
-    ALyraCharacter* AvatarCharacter = Cast<ALyraCharacter>(GetAvatarActorFromActorInfo());
-    if (AvatarCharacter)
-    {
-        ULyraCameraComponent* CameraComponent = ULyraCameraComponent::FindCameraComponent(AvatarCharacter);
-        if (CameraComponent)
-        {
-            // Proceed to push mode
-        }
-    }
-    ```
-2. **Push the Mode:** Call `CameraComponent->PushCameraMode(MyTemporaryModeClass);` where `MyTemporaryModeClass` is the `TSubclassOf<>` for your temporary mode (e.g., a cinematic camera, a scope view).
-3. **Blending:** The stack automatically handles blending this new mode in over the existing modes based on its `BlendTime` and `BlendFunction`.
-4. **Removal:**
-   * **Implicit:** If the temporary mode has a `BlendTime` > 0 and eventually reaches a `BlendWeight` of 1.0, the stack will automatically remove all modes below it.
-   * **Explicit:** To explicitly remove the temporary mode and return to the previous state, you typically need to push the _desired underlying mode_ back onto the stack. For example, when a cinematic ability ends, it would get the Pawn's _current_ default mode (perhaps by querying the `DetermineCameraModeDelegate` itself or storing what it was before the cinematic) and push that mode back onto the stack. The temporary cinematic mode will then eventually be blended out or removed by the stack logic. _Note: The base system doesn't have an explicit `PopCameraMode` function._
+* The camera stack is updated every frame by `DetermineCameraModeDelegate`, which is **bound by default to the `ULyraHeroComponent`**.
+* Any manually pushed mode will be immediately replaced by whatever the delegate returns.
+
+#### Recommended Approach
+
+To temporarily override the camera mode in a Lyra-compatible way, use the built-in support provided by `ULyraHeroComponent`. This component maintains an internal `AbilityCameraMode` that the delegate will prioritize when present.
+
+#### How it Works
+
+* `DetermineCameraModeDelegate` is bound to `ULyraHeroComponent::DetermineCameraMode()`.
+* When an ability wants to change the camera mode, it should call:
+  * `SetCameraMode(CameraModeClass)` — sets a temporary override.
+  * `ClearCameraMode()` — restores the default mode set by the [PawnData](../gameframework-and-experience/experience-primary-assets/lyrapawndata.md).
+* These functions are available in both C++ and Blueprint via `ULyraGameplayAbility`.
+
+#### Setting a Temporary Camera Mode
+
+In your **Lyra Gameplay Ability** Blueprint:
+
+* Use the **Set Camera Mode** node to activate a specific camera mode
+
+<figure><img src="../../.gitbook/assets/image (3).png" alt="" width="375"><figcaption><p>Calling <code>Set Camera Mode</code> in an ability's ActivateAbility event</p></figcaption></figure>
+
+#### Clearing the Camera Mode
+
+At the end of your ability (Or when you want to go back to the default camera mode), clear the override:
+
+* Use the **Clear Camera Mode** node to go back to the default camera mode.
+
+<figure><img src="../../.gitbook/assets/image (4).png" alt="" width="375"><figcaption><p><em>Calling <code>Clear Camera Mode</code> in EndAbility</em></p></figcaption></figure>
+
+***
 
 ### Implementing `ILyraCameraAssistInterface`
 

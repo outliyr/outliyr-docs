@@ -7,7 +7,7 @@ To allow different actors and controllers to provide hints or specific data to t
 * **Type:** Unreal Engine Interface (`UInterface`). Actors or components can choose to implement this interface.
 * **Purpose:** To provide a standardized way for actors (especially the camera's view target or its controller) to communicate specific needs or information back to camera modes, particularly the `ULyraCameraMode_ThirdPerson`'s penetration avoidance logic.
 
-**Interface Functions:**
+#### **Interface Functions:**
 
 1. **`GetIgnoredActorsForCameraPentration(TArray<const AActor*>& OutActorsAllowPenetration) const`**
    * **Purpose:** Allows an implementing actor (like the possessed Pawn or a vehicle) to provide a list of other actors that the camera's penetration checks should _ignore_.
@@ -25,12 +25,16 @@ To allow different actors and controllers to provide hints or specific data to t
    * **Implementation:** An actor implementing this would typically trigger logic to hide relevant components (like the Skeletal Mesh) or start a fade-out effect.
    * **Caller:** `ULyraCameraMode_ThirdPerson::UpdatePreventPenetration` calls this on the `TargetControllerAssist`, `TargetActorAssist`, and `PPActorAssist` (if they implement the interface) when the calculated `AimLineToDesiredPosBlockedPct` falls below the `ReportPenetrationPercent` threshold.
 
-**How to Use:**
+#### **How to Use:**
 
 * Identify which actors or controllers need to influence camera behavior (e.g., the player character Blueprint, a vehicle Blueprint, potentially the Player Controller C++ class).
 * Add the `ILyraCameraAssistInterface` to the inheritance list of that class (in C++ or via "Class Settings" -> "Interfaces" in Blueprint).
 * Implement the required functions (in C++ or by adding the corresponding events in the Blueprint Event Graph).
 * The camera modes (specifically `ULyraCameraMode_ThirdPerson` in this case) will automatically check if their target actor or controller implements the interface and call the relevant functions.
 
-This interface provides a clean way to decouple the camera logic from specific actor classes, allowing actors to "assist" the camera system by providing necessary context or reacting to camera events.
+***
+
+By implementing `ILyraCameraAssistInterface`, actors can communicate critical information to the camera system in a clean, decoupled way. This ensures flexible and maintainable camera behavior across various gameplay scenarios.
+
+Next, we’ll look at how the `ALyraPlayerCameraManager` ties everything together at a higher level, managing view targets and integrating camera components like UI control.
 

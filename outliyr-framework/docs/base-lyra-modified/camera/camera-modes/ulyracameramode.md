@@ -5,11 +5,11 @@
 * **Inheritance:** `UObject` -> `ULyraCameraMode`
 * **Abstract Class:** You cannot use `ULyraCameraMode` directly; you must create a derived class (either in C++ or Blueprint, although the base is marked `NotBlueprintable` suggesting C++ derivation is expected for core logic) and implement the necessary logic.
 
-**Purpose:**
+### **Purpose:**
 
 To provide a standardized framework for defining a camera's desired perspective (location, rotation, FOV) and its blending characteristics when transitioning between different camera modes.
 
-**Key Properties (Configurable in Derived Classes):**
+### **Key Properties (Configurable in Derived Classes):**
 
 * **`FieldOfView` (float):**
   * The default horizontal field of view (in degrees) this camera mode aims for.
@@ -37,7 +37,7 @@ To provide a standardized framework for defining a camera's desired perspective 
   * A _specific_ tag that is added as a Loose Gameplay Tag directly to the target actor's Ability System Component when this camera mode becomes active (`OnActivation`) and removed when it becomes inactive (`OnDeactivation`).
   * Useful for systems like Animation Blueprints that need to know the exact camera perspective (e.g., `Camera.View.FirstPerson` to enable specific animations).
 
-**Core Functions (To Understand and Override):**
+### **Core Functions (To Understand and Override):**
 
 * **`UpdateCameraMode(float DeltaTime)`:**
   * Called every frame by the `ULyraCameraModeStack` for active modes.
@@ -62,13 +62,13 @@ To provide a standardized framework for defining a camera's desired perspective 
   * Base implementation handles adding/removing the `CameraTagToAddToPlayer` Gameplay Tag.
   * Derived classes can override these to perform specific setup or cleanup tasks when the mode starts or stops being relevant (e.g., initializing interpolation variables, cleaning up timers).
 
-**Helper Functions:**
+### **Helper Functions:**
 
 * `GetLyraCameraComponent() const`: Returns the owning `ULyraCameraComponent`.
 * `GetTargetActor() const`: Returns the actor the camera is focused on (obtained from the `ULyraCameraComponent`).
 * `GetWorld() const`: Standard `UObject` function to get the world context.
 
-**Internal State:**
+### **Internal State:**
 
 * **`View` (`FLyraCameraModeView`):** Stores the calculated view parameters for the current frame.
 * **`BlendAlpha` (float):** Internal linear blend progress (0-1).

@@ -71,6 +71,10 @@ graph TD
 4. The `ULyraCameraModeStack` blends the views from all active modes, starting from the bottom and working up, respecting blend weights.
 5. The `ULyraCameraComponent` takes the final blended view from the stack and applies it to itself, setting the actual camera position, rotation, and FOV used for rendering.
 
+{% hint style="info" %}
+`DetermineCameraModeDelegate`  is what determines the camera mode. Lyra uses the ULyraHeroComponent, so abilities can easily change the camera mode. The `SpectatorDataProxy` in the [Spectator System](../../core-modules/shooter-base/spectator-system/) for ShooterBase plugin is another example that uses `DetermineCamerModeDelegate`.
+{% endhint %}
+
 ### Benefits
 
 This stack-based camera system offers several advantages:

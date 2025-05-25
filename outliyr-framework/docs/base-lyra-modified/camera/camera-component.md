@@ -7,6 +7,8 @@ The `ULyraCameraComponent` is the central orchestrator for the camera system att
 * **Role:** To manage the active camera modes, calculate the final blended camera view based on those modes, and apply that view (location, rotation, FOV) to the underlying camera used for rendering.
 * **Placement:** This component should be added to the actor whose perspective the camera needs to follow or be relative to. In most cases, this will be the `ALyraCharacter` Blueprint. It functions as the actual camera actor in the scene whose properties are dynamically updated each frame by the camera mode stack.
 
+<figure><img src="../../.gitbook/assets/image (1).png" alt="" width="375"><figcaption><p><code>LyraCameraComponent</code>  placement in ALyraCharacter</p></figcaption></figure>
+
 ### Key Responsibilities & Features
 
 1. **Manages the Camera Mode Stack:**
@@ -26,7 +28,8 @@ The `ULyraCameraComponent` is the central orchestrator for the camera system att
    * Maintains a reference to the `TargetActor` (usually the component's owner). Camera modes use this via `GetTargetActor()` to know who they are following or basing calculations on.
    * Can be set explicitly via `SetTargetActor()`.
 5. **External Mode Pushing:**
-   * Provides `PushCameraMode(TSubclassOf<ULyraCameraMode> CameraModeClass)` to allow external systems (like Gameplay Abilities) to directly push a specific camera mode onto the stack, temporarily overriding or layering on top of the base mode.
+   * Provides `PushCameraMode(TSubclassOf<ULyraCameraMode> CameraModeClass)` to allow external systems (like Gameplay Abilities) to directly push a specific camera mode onto the stack, temporarily overriding or layering on top of the base mode.\
+     **Note:** If `DetermineCameraModeDelegate` is bound, it overrides all other camera mode logic, and calling `PushCameraMode` will have no effect.
 6. **Field of View Offsets:**
    * Allows for temporary, one-frame adjustments to the FOV via `AddFieldOfViewOffset(float FovOffset)`. This is useful for brief effects like a recoil kick impacting FOV. The offset is cleared after being applied in `GetCameraView`.
 7. **Debugging Support:**

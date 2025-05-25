@@ -2,13 +2,13 @@
 
 While individual `ULyraCameraMode` instances define specific camera behaviors, two key components work together to bring these behaviors into a cohesive final view: the `FLyraCameraModeView` struct and the `ULyraCameraModeStack` class.
 
-#### `FLyraCameraModeView` (The View Data)
+### `FLyraCameraModeView` (The View Data)
 
 The `FLyraCameraModeView` is a simple yet crucial `struct` that serves as the standardized output format for any `ULyraCameraMode`.
 
 * **Purpose:** To encapsulate the core visual parameters calculated by a camera mode for a single frame. This data is then used by the `ULyraCameraModeStack` for blending between different active modes.
 
-**Structure:**
+### **Structure:**
 
 The struct contains the following members:
 
@@ -17,7 +17,7 @@ The struct contains the following members:
 * **`ControlRotation` (FRotator):** The desired control rotation of the player/controller. This can be different from the `Rotation` of the camera itself (e.g., in true first-person systems where the camera might have procedural animations while the control rotation remains smooth). The base `ULyraCameraMode::UpdateView` sets this to be the same as `View.Rotation`, but derived modes can modify it.
 * **`FieldOfView` (float):** The desired horizontal field of view (in degrees) for the camera.
 
-**Key Functionality:**
+### **Key Functionality:**
 
 * **Initialization:** The default constructor initializes `Location` and `Rotation` to zero vectors/rotators and `FieldOfView` to `LYRA_CAMERA_DEFAULT_FOV`.
 * **Blending (`Blend(const FLyraCameraModeView& Other, float OtherWeight)`):**
@@ -33,7 +33,7 @@ The struct contains the following members:
 
 Each `ULyraCameraMode` instance calculates and populates its own `FLyraCameraModeView` member (named `View`) during its `UpdateView` call.
 
-#### `ULyraCameraModeStack` (The Manager)
+### `ULyraCameraModeStack` (The Manager)
 
 The `ULyraCameraModeStack` is a `UObject` class owned and managed by the `ULyraCameraComponent`. It is the engine that drives the camera mode system.
 
@@ -51,7 +51,7 @@ The `ULyraCameraModeStack` is a `UObject` class owned and managed by the `ULyraC
   * Index `0` is considered the "top" of the stack – the mode with the highest priority or the one most recently pushed.
   * The mode at the "bottom" of the stack (highest index) always has a blend weight of 1.0, serving as the base view if no other modes are significantly blended in.
 
-**Key Operations:**
+### **Key Operations:**
 
 1. **Pushing and Managing Modes:**
    * **`PushCameraMode(TSubclassOf<ULyraCameraMode> CameraModeClass)`:**
@@ -85,7 +85,7 @@ The `ULyraCameraModeStack` is a `UObject` class owned and managed by the `ULyraC
 6. **Instance Management (`GetCameraModeInstance(TSubclassOf<ULyraCameraMode> CameraModeClass)`):**
    * Helper function to retrieve an existing instance of a given `CameraModeClass` from the `CameraModeInstances` pool or create a new one if it doesn't exist. New instances are created as subobjects of the `ULyraCameraComponent` (the outer of the stack).
 
-**Interaction Summary:**
+### **Interaction Summary:**
 
 * `ULyraCameraComponent` uses its `DetermineCameraModeDelegate` (often bound to `ULyraHeroComponent`) to decide which base mode should be active. It then calls `ULyraCameraModeStack::PushCameraMode` with this mode.
 * Abilities or other gameplay systems can also call `ULyraCameraComponent::PushCameraMode` to temporarily add or override camera modes.

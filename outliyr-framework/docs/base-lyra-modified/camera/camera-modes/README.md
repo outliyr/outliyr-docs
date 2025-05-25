@@ -2,7 +2,7 @@
 
 The heart of this camera system lies in the concept of **Camera Modes**. Instead of having a single, monolithic camera controller trying to handle every possible scenario (third-person follow, aiming, cinematics, etc.), the system breaks down different camera behaviors into distinct, reusable units called Camera Modes.
 
-**What is a Camera Mode?**
+### **What is a Camera Mode?**
 
 A Camera Mode, represented by classes inheriting from `ULyraCameraMode`, is essentially a self-contained set of rules and logic that defines:
 
@@ -10,7 +10,9 @@ A Camera Mode, represented by classes inheriting from `ULyraCameraMode`, is esse
 2. **Blending Behavior:** How this mode should transition in and out when it becomes active or inactive, specifying duration (`BlendTime`) and interpolation style (`BlendFunction`, `BlendExponent`).
 3. **Gameplay Identification:** Optionally associates Gameplay Tags (`CameraTypeTag`, `CameraTagToAddToPlayer`) with its activation state, allowing other game systems (like animation or UI) to react to the current camera perspective.
 
-**Why Use Camera Modes?**
+<figure><img src="../../../.gitbook/assets/image (2).png" alt=""><figcaption><p>Camera Mode example of third person aiming</p></figcaption></figure>
+
+### **Why Use Camera Modes?**
 
 This approach offers significant advantages:
 
@@ -20,7 +22,7 @@ This approach offers significant advantages:
 * **Dynamic Blending:** The system can smoothly interpolate between different modes using a stack-based approach, allowing for seamless transitions (e.g., moving from a wide third-person view to a tight over-the-shoulder aiming view).
 * **Layering:** Temporary camera effects (like a brief camera shake or a cinematic override) can be implemented as modes pushed temporarily onto the stack.
 
-**How are Modes Managed?**
+### **How are Modes Managed?**
 
 The `ULyraCameraComponent`, which resides on the Pawn, utilizes a `ULyraCameraModeStack`. This stack:
 
@@ -29,7 +31,7 @@ The `ULyraCameraComponent`, which resides on the Pawn, utilizes a `ULyraCameraMo
 3. Updates each active mode every frame, allowing them to calculate their desired view and update their blend state.
 4. Performs the weighted blending calculation, combining the outputs of all active modes into a single, final camera view.
 
-**In Summary:**
+### **In Summary:**
 
 Camera Modes are the fundamental building blocks defining _how_ the camera behaves. They are managed by the `ULyraCameraModeStack` (within the `ULyraCameraComponent`) which blends their outputs to produce the final view seen by the player.
 
