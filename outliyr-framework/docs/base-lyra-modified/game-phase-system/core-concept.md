@@ -7,7 +7,7 @@ The defining characteristic and core strength of the Lyra Game Phase System lies
 The system relies on the standard Gameplay Tag convention where tags are structured using dots (`.`) to denote parent-child relationships.
 
 * **Example Hierarchy:**
-  * `GamePhase.Setup`
+  * `GamePhase.Warmup`
   * `GamePhase.Playing`
   * `GamePhase.Playing.Warmup`
   * `GamePhase.Playing.Standard`
@@ -36,12 +36,12 @@ The `ULyraGamePhaseSubsystem` enforces a specific rule when a new `ULyraGamePhas
 Let's trace the rule using the example hierarchy above:
 
 1. **Initial State:** No phases active.
-   * **Action:** `StartPhase(GamePhase.Setup)`
-   * **Result:** `GamePhase.Setup` becomes active. (No active phases to check against).
-2. **State:** `GamePhase.Setup` is active.
+   * **Action:** `StartPhase(GamePhase.Warmup)`
+   * **Result:** `GamePhase.Warmup` becomes active. (No active phases to check against).
+2. **State:** `GamePhase.Warmup` is active.
    * **Action:** `StartPhase(GamePhase.Playing)`
-   * **Check:** Is `GamePhase.Setup` an ancestor of `GamePhase.Playing`? **No.**
-   * **Result:** The `GamePhase.Setup` ability is cancelled. `GamePhase.Playing` becomes active.
+   * **Check:** Is `GamePhase.Warmup` an ancestor of `GamePhase.Playing`? **No.**
+   * **Result:** The `GamePhase.Warmup` ability is cancelled. `GamePhase.Playing` becomes active.
 3. **State:** `GamePhase.Playing` is active.
    * **Action:** `StartPhase(GamePhase.Playing.Warmup)`
    * **Check:** Is `GamePhase.Playing` an ancestor of `GamePhase.Playing.Warmup`? **Yes.**
@@ -67,9 +67,9 @@ Imagine the tags forming a tree structure:
 
 ```
 GamePhase
-  ├── Setup
+  ├── Warmup
   ├── Playing
-  │    ├── Warmup
+  │    ├── warmup
   │    ├── Standard
   │    └── SuddenDeath
   └── PostGame

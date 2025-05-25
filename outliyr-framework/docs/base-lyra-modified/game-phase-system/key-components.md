@@ -29,7 +29,7 @@ This class serves as the blueprint for any ability that represents a specific ga
 * **Type:** Inherits from `ULyraGameplayAbility`.
 * **Key Property: `GamePhaseTag` (FGameplayTag):**
   * This is the **single most critical property** to configure on your `ULyraGamePhaseAbility` subclasses.
-  * **Purpose:** You **must** set this in the ability's Class Defaults to the specific, unique Gameplay Tag that identifies the phase this ability represents (e.g., `GamePhase.Playing`, `GamePhase.Setup`).
+  * **Purpose:** You **must** set this in the ability's Class Defaults to the specific, unique Gameplay Tag that identifies the phase this ability represents (e.g., `GamePhase.Playing`, `GamePhase.Warmup`).
   * **Usage:** The `ULyraGamePhaseSubsystem` reads this tag via `GetGamePhaseTag()` during `OnBeginPhase` and `OnEndPhase` to perform hierarchy checks and notify the correct observers.
 * **Lifecycle Integration Hooks:**
   * **`ActivateAbility`:** Overridden to call `PhaseSubsystem->OnBeginPhase(this, Handle)` on the authority. This notifies the subsystem that this phase is starting, triggering the hierarchy check and cancellation logic for other phases.

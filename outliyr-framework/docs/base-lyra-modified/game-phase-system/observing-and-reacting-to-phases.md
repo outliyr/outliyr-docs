@@ -17,15 +17,21 @@ Various game systems often need to change their behavior based on the active pha
 
 The `ULyraGamePhaseSubsystem` provides functions to register callback delegates that are automatically invoked when phase changes occur. This event-driven approach is generally more efficient and cleaner than constantly checking (polling) the current phase.
 
-1. **`WhenPhaseStartsOrIsActive(FGameplayTag PhaseTag, EPhaseTagMatchType MatchType, const FLyraGamePhaseTagDelegate& WhenPhaseActive)`**
-   * **Purpose:** Registers a delegate (`WhenPhaseActive`) that will be called when a phase matching `PhaseTag` (according to `MatchType`) begins.
-   * **Immediate Execution:** Critically, if a matching phase is **already active** when this function is called, the delegate is executed **immediately**. This ensures systems initialize correctly even if they start up _after_ a relevant phase has already begun.
-   * **Later Execution:** The delegate will also be called whenever a _new_ phase starts that matches the criteria.
-   * **Delegate Signature:** The bound function receives the specific `FGameplayTag` of the phase that actually started (which might be a child tag if using `PartialMatch`).
-2. **`WhenPhaseEnds(FGameplayTag PhaseTag, EPhaseTagMatchType MatchType, const FLyraGamePhaseTagDelegate& WhenPhaseEnd)`**
-   * **Purpose:** Registers a delegate (`WhenPhaseEnd`) that will be called **only** when a phase matching `PhaseTag` (according to `MatchType`) **ends** (either naturally or due to cancellation by a new phase starting).
-   * **No Immediate Execution:** This delegate does _not_ fire immediately if a matching phase is already active. It only fires upon the phase's conclusion.
-   * **Delegate Signature:** The bound function receives the specific `FGameplayTag` of the phase that ended.
+1.  **`WhenPhaseStartsOrIsActive(FGameplayTag PhaseTag, EPhaseTagMatchType MatchType, const FLyraGamePhaseTagDelegate& WhenPhaseActive)`**
+
+    * **Purpose:** Registers a delegate (`WhenPhaseActive`) that will be called when a phase matching `PhaseTag` (according to `MatchType`) begins.
+    * **Immediate Execution:** Critically, if a matching phase is **already active** when this function is called, the delegate is executed **immediately**. This ensures systems initialize correctly even if they start up _after_ a relevant phase has already begun.
+    * **Later Execution:** The delegate will also be called whenever a _new_ phase starts that matches the criteria.
+    * **Delegate Signature:** The bound function receives the specific `FGameplayTag` of the phase that actually started (which might be a child tag if using `PartialMatch`).
+
+    <figure><img src="../../.gitbook/assets/image (130).png" alt=""><figcaption><p><code>B_Scoring_Headquarters</code> binding phases to functions</p></figcaption></figure>
+2.  **`WhenPhaseEnds(FGameplayTag PhaseTag, EPhaseTagMatchType MatchType, const FLyraGamePhaseTagDelegate& WhenPhaseEnd)`**
+
+    * **Purpose:** Registers a delegate (`WhenPhaseEnd`) that will be called **only** when a phase matching `PhaseTag` (according to `MatchType`) **ends** (either naturally or due to cancellation by a new phase starting).
+    * **No Immediate Execution:** This delegate does _not_ fire immediately if a matching phase is already active. It only fires upon the phase's conclusion.
+    * **Delegate Signature:** The bound function receives the specific `FGameplayTag` of the phase that ended.
+
+    <figure><img src="../../.gitbook/assets/image (131).png" alt=""><figcaption><p><code>B_Scoring_Headquarters</code> binds the end of the Headquarters Captured phase to a script that revives dead players after the objective is secured.</p></figcaption></figure>
 
 ### Understanding `EPhaseTagMatchType`
 
@@ -43,90 +49,11 @@ The `MatchType` parameter is crucial for controlling how broadly your observer r
     * `GamePhase.Playing.SuddenDeath`
   * This is extremely useful for reacting to broader states. For instance, enabling core player controls when _any_ sub-phase under `GamePhase.Playing` becomes active.
 
-### Binding Delegates
-
-You can bind functions to these observer notifications from C++ or Blueprint.
-
-**C++ Example (e.g., in an Actor Component's `BeginPlay`):**
-
-```cpp
-#include "LyraGamePhaseSubsystem.h"
-#include "GameplayTags/LyraGameplayTags.h" // Assuming your tags are defined here
-
-void UMyGameSystemComponent::BeginPlay()
-{
-    Super::BeginPlay();
-
-    UWorld* World = GetWorld();
-    if (ULyraGamePhaseSubsystem* PhaseSubsystem = UWorld::GetSubsystem<ULyraGamePhaseSubsystem>(World))
-    {
-        // --- Example: React when ANY playing phase starts ---
-        FLyraGamePhaseTagDelegate PlayingPhaseStartedDelegate =
-            FLyraGamePhaseTagDelegate::CreateUObject(this, &UMyGameSystemComponent::HandlePlayingPhaseStarted);
-
-        PhaseSubsystem->WhenPhaseStartsOrIsActive(
-            LyraGameplayTags::GamePhase_Playing, // The PARENT tag
-            EPhaseTagMatchType::PartialMatch,    // Match Playing OR its children
-            PlayingPhaseStartedDelegate
-        );
-
-        // --- Example: React ONLY when the Scoreboard phase ends ---
-        FLyraGamePhaseTagDelegate ScoreboardPhaseEndedDelegate =
-            FLyraGamePhaseTagDelegate::CreateUObject(this, &UMyGameSystemComponent::HandleScoreboardPhaseEnded);
-
-        PhaseSubsystem->WhenPhaseEnds(
-            LyraGameplayTags::GamePhase_PostGame_Scoreboard, // The EXACT tag
-            EPhaseTagMatchType::ExactMatch,                  // Only match this specific tag
-            ScoreboardPhaseEndedDelegate
-        );
-    }
-}
-
-void UMyGameSystemComponent::HandlePlayingPhaseStarted(const FGameplayTag& PhaseTag)
-{
-    // Enable player input, activate objectives, etc.
-    // PhaseTag will be GamePhase.Playing, GamePhase.Playing.Warmup, etc.
-    UE_LOG(LogTemp, Log, TEXT("Phase %s started (matched via GamePhase.Playing partial match). Enabling core gameplay."), *PhaseTag.ToString());
-    EnableGameplayFeatures();
-}
-
-void UMyGameSystemComponent::HandleScoreboardPhaseEnded(const FGameplayTag& PhaseTag)
-{
-    // Hide scoreboard UI, maybe trigger level transition...
-    // PhaseTag will be GamePhase.PostGame.Scoreboard
-    UE_LOG(LogTemp, Log, TEXT("Phase %s ended. Hiding scoreboard."), *PhaseTag.ToString());
-    HideScoreboard();
-}
-
-// Remember to implement EnableGameplayFeatures() and HideScoreboard()
-```
-
-**Blueprint Example:**
-
-1. Get a reference to the **Game Phase Subsystem**.
-2. Use the nodes:
-   * **When Phase Starts or Is Active:** Drag off the delegate pin (`When Phase Active`) and choose **"Bind Event to When Phase Active"** (or "Create Event"). Connect the red event node to your logic. Select the desired `Phase Tag` and `Match Type`.
-   * **When Phase Ends:** Similar process using the `When Phase End` delegate pin.
-3. Implement the logic within the bound custom events.
-
-{% hint style="success" %}
-_**Self/Weak Pointers**: When using `CreateUObject` or Blueprint binding, ensure the object instance (`this` in C++, `Self` in BP) will still be valid when the delegate fires. For longer-lived bindings or potential destruction scenarios, consider using `CreateWeakLambda` in C++ or carefully managing Blueprint object lifecycles._
-{% endhint %}
-
-### Polling (`IsPhaseActive`)
+### Query (`IsPhaseActive`)
 
 While observer delegates are preferred, you can directly check if a phase is currently active:
 
-```cpp
-// C++ Example
-if (PhaseSubsystem->IsPhaseActive(LyraGameplayTags::GamePhase_Playing))
-{
-    // Do something only if currently in the Playing phase (or any sub-phase like Playing.SuddenDeath)
-}
-
-// Blueprint Example
-Get Game Phase Subsystem -> Is Phase Active (Node) -> Branch
-```
+<figure><img src="../../.gitbook/assets/image (129).png" alt=""><figcaption><p>Example of preventing the player from respawning if they captured the control point</p></figcaption></figure>
 
 * **Functionality:** `IsPhaseActive(PhaseTag)` checks if _any_ currently active phase tag in the `ActivePhaseMap` matches the provided `PhaseTag` using `MatchesTag` (which inherently handles parent/child relationships, similar to `PartialMatch`).
 * **Use Case:** Useful for one-off checks within conditional logic or when initializing state based on the phase _at that specific moment_.

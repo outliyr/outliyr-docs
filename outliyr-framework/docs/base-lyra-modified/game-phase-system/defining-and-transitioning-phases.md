@@ -15,7 +15,7 @@ Follow these steps for each unique stage or state in your game flow:
 2. **Create the Phase Ability Class:**
    * In your Content Browser, right-click and choose **Blueprint Class**.
    * Search for and select **`LyraGamePhaseAbility`** as the parent class.
-   * Give it a descriptive name, often mirroring the tag (e.g., `BP_GamePhase_Warmup`, `BP_GamePhase_PlayingCTF`, `BP_GamePhase_Scoreboard`).
+   * Give it a descriptive name, often mirroring the tag (e.g., `Phase_Warmup`, `Phase_Playing`, `Phase_RoundEnd`).
 3. **Set the `GamePhaseTag`:**
    * Open the newly created Blueprint Ability asset.
    * Go to the **Class Defaults**.
@@ -27,52 +27,49 @@ Follow these steps for each unique stage or state in your game flow:
 
 Repeat these steps for every distinct phase required by your game mode or experience.
 
-### 2. Granting Phase Abilities to GameState
+### 2. How Phase Abilities Are Activated
 
-The `ULyraGamePhaseSubsystem` activates phase abilities on the **GameState's Ability System Component (ASC)**. Therefore, the GameState ASC must be granted all the potential phase abilities _before_ they can be activated.
+The `ULyraGamePhaseSubsystem` handles activation of phase abilities internally. When a phase transition is triggered via `StartPhase`, the subsystem:
 
-* **Recommended Method:** Use `GameFeatureAction_AddAbilities` within the relevant `ULyraExperienceDefinition` or a shared `ULyraExperienceActionSet`.
-  * **Target Actor:** Set the `ActorClass` in the `FGameFeatureAbilitiesEntry` to `GameState` (or your specific `AGameStateBase` subclass).
-  * **Granted Abilities:** Add entries for each of your `ULyraGamePhaseAbility` subclasses (`BP_GamePhase_Warmup`, `BP_GamePhase_Playing`, etc.) to the `GrantedAbilities` list.
-  * **Context:** Ensure this action runs on the server context where the GameState exists and has authority.
+* Grants the specified `ULyraGamePhaseAbility` class to the GameState’s Ability System Component (if not already granted).
+* Immediately activates the ability, which in turn notifies the subsystem that the phase has begun.
+* No manual setup or ability pre-granting is required in the experience or via `GameFeatureAction_AddAbilities`.
 
-This ensures that when the experience loads, the GameState is equipped with all the phase abilities it might need to transition between during the session.
+This on-demand approach ensures a clean and streamlined activation pipeline with minimal asset management overhead.
 
 ### 3. Initiating a Phase Transition
 
-Transitions don't happen automatically based on time (unless you build timer logic); they are **explicitly triggered** by your game logic when conditions are met (e.g., setup timer ends, score limit reached, objective completed).
+Transitions don't happen automatically based on time (unless you build timer logic); they are **explicitly triggered** by your game logic when conditions are met (e.g., warmup timer ends, score limit reached, objective completed).
 
-* **The Trigger:** Call the `StartPhase` function on the `ULyraGamePhaseSubsystem`.
-*   **Accessing the Subsystem:** Get a reference to the subsystem from the World:
+<figure><img src="../../.gitbook/assets/image (127).png" alt="" width="563"><figcaption><p>Example starting the warmup phase in Search And Destroy</p></figcaption></figure>
 
-    ```cpp
-    // C++ Example (e.g., inside your GameMode or another server-side actor)
-    UWorld* World = GetWorld();
-    if (ULyraGamePhaseSubsystem* PhaseSubsystem = UWorld::GetSubsystem<ULyraGamePhaseSubsystem>(World))
-    {
-        // ... call StartPhase ...
-    }
-    ```
+**Blueprint Execution Flow**
 
-    ```blueprint
-    # Blueprint Example
-    Get Game Phase Subsystem -> Start Phase (Node)
-    ```
-* **Calling `StartPhase` / `Start Phase` Node:**
-  * **Input:** Provide the **Class** of the `ULyraGamePhaseAbility` subclass corresponding to the phase you want to _enter_ (e.g., `BP_GamePhase_Playing::StaticClass()` in C++, or select `BP Game Phase Playing` in the Blueprint node's dropdown).
-  * **Optional Callback (`PhaseEndedCallback`):** You can provide a delegate (C++ `FLyraGamePhaseDelegate` or Blueprint `Lyra Game Phase Dynamic Delegate`) that will be executed specifically when the phase instance _you just started_ eventually ends (either naturally or by being cancelled by a later transition). This is useful for chaining phase transitions or performing cleanup tied to a specific phase instance ending.
-    * _Blueprint Note:_ Wire an event dispatcher or custom event to the `Phase Ended` output pin of the `Start Phase` node.
+1. Authority checks are made (this is crucial as modifying the current gameplay phase can only be run on the server)
+2. Wait for the experience to finish loading everything. (Only neccessary after BeginPlay)
+3. Then start the phase the initial phase for your specific game
 
-**Execution Flow:**
+<details>
 
-1. Your game logic calls `StartPhase(TargetPhaseAbilityClass)`.
-2. The subsystem finds or creates an ability spec for `TargetPhaseAbilityClass` on the GameState's ASC.
-3. It activates that ability spec (`GiveAbilityAndActivateOnce`).
-4. The `TargetPhaseAbilityClass`'s `ActivateAbility` function runs.
-5. It calls `Super::ActivateAbility`, which in turn calls `PhaseSubsystem->OnBeginPhase`.
-6. `OnBeginPhase` executes the core hierarchy cancellation logic, potentially ending other active phases.
-7. The `TargetPhaseAbilityClass` instance is now considered active, and the game is officially in the new phase.
-8. Phase start observers are notified.
+<summary>Advanced: Internal Execution Flow</summary>
+
+* Your game logic calls `StartPhase(TargetPhaseAbilityClass)`.
+
+- The subsystem finds or creates an ability spec for `TargetPhaseAbilityClass` on the GameState's ASC.
+
+* It activates that ability spec (`GiveAbilityAndActivateOnce`).
+
+- The `TargetPhaseAbilityClass`'s `ActivateAbility` function runs.
+
+* It calls `Super::ActivateAbility`, which in turn calls `PhaseSubsystem->OnBeginPhase`.
+
+- `OnBeginPhase` executes the core hierarchy cancellation logic, potentially ending other active phases.
+
+* The `TargetPhaseAbilityClass` instance is now considered active, and the game is officially in the new phase.
+
+- Phase start observers are notified.
+
+</details>
 
 By defining your phases as tagged abilities and triggering transitions via the subsystem, you establish a robust and manageable flow for your game's lifecycle, enabling other systems to react appropriately through the observer pattern discussed next.
 

@@ -42,7 +42,7 @@ The system revolves around these key ideas:
 
 Imagine a simple match flow:
 
-1. **Start `GamePhase.Setup`:** The game begins, `Setup` phase ability activates. Game systems listening for `GamePhase.Setup` might initialize spawn points or display pre-round UI.
+1. **Start `GamePhase.Warmup`:** The game begins, `Warmup` phase ability activates. Game systems listening for `GamePhase.Warmup` might initialize spawn points or display pre-round UI.
 2. **Start `GamePhase.Playing`:** When setup is complete, the `Playing` phase ability is activated.
    * The `ULyraGamePhaseSubsystem` sees that `GamePhase.Playing` is not an ancestor of the currently active `GamePhase.Setup`.
    * It automatically ends the `GamePhase.Setup` ability.
