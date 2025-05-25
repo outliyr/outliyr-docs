@@ -15,6 +15,12 @@ This system allows the base `USkeletalMesh` of the character (the one driving th
 
 **Data Structure:**
 
+{% tabs %}
+{% tab title="Blueprints" %}
+<figure><img src="../../.gitbook/assets/image (83).png" alt=""><figcaption><p>Body style selection in <code>B_MannequinPawnCosmetics</code></p></figcaption></figure>
+{% endtab %}
+
+{% tab title="C++" %}
 ```cpp
 // Defined in LyraCosmeticAnimationTypes.h
 
@@ -56,6 +62,12 @@ struct FLyraAnimBodyStyleSelectionSet
 };
 ```
 
+
+
+dd
+{% endtab %}
+{% endtabs %}
+
 **How it Works:**
 
 1. **Configuration:** You configure an instance of `FLyraAnimBodyStyleSelectionSet` within the `ULyraPawnComponent_CharacterParts` details panel (the BodyMeshes property). You define rules mapping required tag combinations to specific USkeletalMesh assets and set a DefaultMesh.
@@ -81,6 +93,12 @@ This system allows different Animation Blueprints (specifically, Animation Layer
 
 **Data Structure:**
 
+{% tabs %}
+{% tab title="Blueprints" %}
+<figure><img src="../../.gitbook/assets/image (84).png" alt=""><figcaption><p><code>B_RangeWeaponInstance_xxx</code> using Animation Layer Selection</p></figcaption></figure>
+{% endtab %}
+
+{% tab title="C++" %}
 ```cpp
 // Defined in LyraCosmeticAnimationTypes.h
 
@@ -116,6 +134,10 @@ struct FLyraAnimLayerSelectionSet
     TSubclassOf<UAnimInstance> SelectBestLayer(const FGameplayTagContainer& CosmeticTags) const;
 };
 ```
+
+
+{% endtab %}
+{% endtabs %}
 
 **How it Works (Integration):**
 

@@ -2,6 +2,8 @@
 
 The `ULyraPawnComponent_CharacterParts` component resides on the Pawn actor (e.g., `ALyraCharacter`) and acts as the **runtime executor** for the cosmetic system. It takes the authoritative list of desired character parts and translates it into visible, attached actors on all clients.
 
+<figure><img src="../../.gitbook/assets/image (79).png" alt=""><figcaption><p>Lyra's Default Cosmetic Manager <code>B_MannequinPawnCosmetics</code></p></figcaption></figure>
+
 ### Role
 
 The `ULyraPawnComponent_CharacterParts` is responsible for:
@@ -12,6 +14,8 @@ The `ULyraPawnComponent_CharacterParts` is responsible for:
 * Applying cosmetic-driven changes to the base Pawn, such as swapping the Skeletal Mesh based on applied part tags.
 * Broadcasting changes so other systems (like Animation Blueprints or material controllers) can react.
 
+<figure><img src="../../.gitbook/assets/image (81).png" alt="" width="375"><figcaption><p><code>B_MannequinPawnCosmetics</code> on the <code>B_Shooter_Mannequin</code></p></figcaption></figure>
+
 ### Core Responsibilities
 
 1. **Receiving Part Requests (Authority):**
@@ -20,9 +24,10 @@ The `ULyraPawnComponent_CharacterParts` is responsible for:
 2. **Managing the Replicated List:**
    * Contains the `FLyraCharacterPartList CharacterPartList` member, which is marked Replicated.
    * `FLyraCharacterPartList` uses Unreal Engine's `FFastArraySerializer` for efficient network replication of the list of applied parts (`FLyraAppliedCharacterPartEntry`).
-3. **Spawning/Destroying Actors (Client & Server):**
+3. **Spawning/Destroying Actors (Client & Listen Server):**
    * Reacts to changes in the `CharacterPartList` pushed by the replication system.
    * Uses `SpawnActorForEntry` and `DestroyActorForEntry` internally to manage the lifecycle of the visual representation of each part.
+   * **Note: `CharacterParts` are not spawned on the dedicated server**.
 4. **Actor Attachment:**
    * `GetSceneComponentToAttachTo()`: Determines the appropriate parent component for attachments. It prioritizes the Pawn's `USkeletalMeshComponent` (if the owner is an `ACharacter`) and falls back to the Pawn's Root Component otherwise.
    * `SpawnActorForEntry` attaches the newly created `UChildActorComponent` to the determined parent component at the `SocketName` specified in the `FLyraCharacterPart`.
@@ -39,6 +44,8 @@ The `ULyraPawnComponent_CharacterParts` is responsible for:
      * It broadcasts the `OnCharacterPartsChanged` delegate.
 8. **Delegate Broadcasting:**
    * `OnCharacterPartsChanged`: A multicast delegate fired by `BroadcastChanged` after parts have been spawned/destroyed and mesh changes applied. Other systems can bind to this to perform further cosmetic adjustments (e.g., applying material parameters based on team color, updating animation layers based on tags).
+
+<figure><img src="../../.gitbook/assets/image (78).png" alt=""><figcaption><p><code>B_Shooter_Mannequin</code> listening for broadcasts from <code>OnCharacterPartsChanged</code></p></figcaption></figure>
 
 ### Replication Deep Dive: `FLyraCharacterPartList`
 
@@ -71,6 +78,20 @@ The efficiency and correctness of the cosmetic system across the network rely he
   * Checks if `Entry.SpawnedComponent` is valid.
   * Calls `DestroyComponent()` on the `UChildActorComponent`. This automatically handles the destruction of the child Actor itself.
   * Clears the `Entry.SpawnedComponent` pointer.
+
+### **Dedicated Server Behavior**
+
+Cosmetic parts are **not spawned on dedicated servers**. This is handled explicitly inside `FLyraCharacterPartList::SpawnActorForEntry`, which includes a check to skip spawning cosmetic part actors on dedicated servers.
+
+This has several important implications:
+
+* **Performance Optimization:** No CPU or memory is spent managing cosmetic-only actors on a server nobody visually observes.
+* **Listen Server Exception:** If the server is also running a local player (i.e., it’s a _Listen Server_), cosmetics **are** spawned for that local player only.
+* **Empty Arrays on Server:** If you call `GetCharacterPartActors()` on a dedicated server, it will return an **empty array**, even if parts are technically “applied” in the replicated list. This is not a bug — it’s because no part actors exist on the server.
+
+{% hint style="success" %}
+Be cautious when writing logic that iterates over cosmetic part actors, always account for the possibility that no actors are spawned if running in a server-only context.
+{% endhint %}
 
 ### Visual Updates & Animation Integration
 

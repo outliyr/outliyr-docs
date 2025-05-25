@@ -21,6 +21,9 @@ The primary goals of the Cosmetic System are:
 3. **Data-Driven Parts:** Character parts are defined simply by the Actor class to spawn (`FLyraCharacterPart`). More complex interactions (like mesh swapping) are driven by Gameplay Tags associated with these parts.
 4. **Network Reliability:** Utilizes Unreal Engine's `FFastArraySerializer` for efficient replication of the list of applied parts, ensuring clients correctly reflect the server's state.
 
+**Client-Only Execution for Cosmetic Spawning:**\
+Cosmetic part Actors are **never spawned on dedicated servers**. Only clients (and listen servers with local players) will instantiate cosmetic parts visually. This is an intentional optimization: since no one is viewing the dedicated server's visuals, spawning purely aesthetic actors would be wasted processing. The system detects dedicated server context and bypasses all spawning logic for cosmetic parts accordingly.
+
 ### Key Components & Concepts
 
 * **`FLyraCharacterPart` (Data Struct):** The fundamental unit defining a cosmetic piece. It specifies the Actor class to spawn, the `SocketName` to attach it to, and the desired `CollisionMode`.

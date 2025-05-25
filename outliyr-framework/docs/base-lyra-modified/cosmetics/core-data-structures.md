@@ -100,6 +100,10 @@ private:
 * **`SpawnedComponent`:** Holds a pointer to the `UChildActorComponent` that was created locally (on clients and the server) to represent this part. Marked NotReplicated because components cannot be directly replicated this way; clients spawn their own based on the replicated Part data.
 * **Role:** This is the internal data unit within the replicated array on the Pawn component, tracking both the definition and the runtime state (spawned component pointer) of each applied cosmetic.
 
+{% hint style="danger" %}
+`SpawnedComponent` will be `nullptr` on dedicated servers, as cosmetic part actors are **not spawned in that context** for performance reasons.
+{% endhint %}
+
 ### `FLyraControllerCharacterPartEntry` (Internal to Controller Component)
 
 This structure represents a single desired character part within the list managed by the `ULyraControllerComponent_CharacterParts`.

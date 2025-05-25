@@ -2,6 +2,12 @@
 
 While the `ULyraPawnComponent_CharacterParts` handles the runtime application of cosmetics on the Pawn, the `ULyraControllerComponent_CharacterParts` is responsible for managing the persistent list of cosmetics that a specific Controller (representing a player or AI) wants to have applied.
 
+<figure><img src="../../.gitbook/assets/image (82).png" alt=""><figcaption><p><code>LyraControllerComponent_CharacterParts</code> randomly selecting the cosmetics for the player</p></figcaption></figure>
+
+{% hint style="success" %}
+**Arena Gamemode Plugin** has character selection logic, which serves as a more complex example of how this system can be used.
+{% endhint %}
+
 ### Role
 
 This component lives on the `AController` (e.g., `ALyraPlayerController`) and acts as the **authoritative source and persistent store** for cosmetic choices associated with that controller. Its key functions are:
