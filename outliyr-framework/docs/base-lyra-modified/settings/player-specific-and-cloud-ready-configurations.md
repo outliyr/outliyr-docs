@@ -4,7 +4,7 @@ At the heart of Lyra's ability to remember player-specific preferences across se
 
 ***
 
-#### **Purpose and Scope**
+### **Purpose and Scope**
 
 `ULyraSettingsShared` is the designated C++ backend for settings that define a player's personal experience. These are typically preferences that a player would expect to remain consistent, regardless of where or how they log into the game.
 
@@ -23,7 +23,7 @@ At the heart of Lyra's ability to remember player-specific preferences across se
 
 ***
 
-#### **Key Class Features**
+### **Key Class Features**
 
 `ULyraSettingsShared` is built upon `ULocalPlayerSaveGame`, a specialized version of `USaveGame` designed for local player data. This inheritance is fundamental to its role.
 
@@ -36,7 +36,7 @@ At the heart of Lyra's ability to remember player-specific preferences across se
 
 ***
 
-#### **Saving & Loading Mechanism**
+### **Saving & Loading Mechanism**
 
 Persistence for `ULyraSettingsShared` is handled by Unreal Engine's SaveGame system.
 
@@ -51,7 +51,7 @@ Persistence for `ULyraSettingsShared` is handled by Unreal Engine's SaveGame sys
 
 ***
 
-#### **Applying Settings**
+### **Applying Settings**
 
 Simply changing a property in `ULyraSettingsShared` doesn't always mean the game will immediately reflect that change in its behavior. The `ApplySettings()` method is responsible for taking the current values stored in the object and actively pushing them to the relevant engine or game subsystems.
 
@@ -67,7 +67,7 @@ This application step is vital and is usually called after settings are loaded o
 
 ***
 
-#### **Change Detection & Notification**
+### **Change Detection & Notification**
 
 To ensure responsiveness and efficient updates, `ULyraSettingsShared` uses a simple but effective change detection mechanism:
 

@@ -4,7 +4,7 @@ Lyra leverages Unreal Engine's **Enhanced Input System** for its input processin
 
 ***
 
-#### **Lyra's Approach to Keybindings**
+### **Lyra's Approach to Keybindings**
 
 Instead of implementing a completely bespoke keybinding system within `ULyraSettingsShared` or `ULyraSettingsLocal`, Lyra adopts the robust functionality provided by the Enhanced Input plugin.
 
@@ -23,7 +23,7 @@ Instead of implementing a completely bespoke keybinding system within `ULyraSett
 
 ***
 
-#### **Exposing Keybindings in the UI**
+### **Exposing Keybindings in the UI**
 
 To display and allow modification of these Enhanced Input keybindings within Lyra's settings menu, a specialized `UGameSettingValue` and corresponding UI widget are used.
 
@@ -48,7 +48,7 @@ To display and allow modification of these Enhanced Input keybindings within Lyr
 
 ***
 
-#### **Interaction with Player Mappable Key Profiles**
+### **Interaction with Player Mappable Key Profiles**
 
 Enhanced Input supports the concept of "Key Profiles" (`UEnhancedPlayerMappableKeyProfile`). These allow for different sets of default bindings or configurations.
 
@@ -58,25 +58,62 @@ Enhanced Input supports the concept of "Key Profiles" (`UEnhancedPlayerMappableK
 
 ***
 
-#### **Modifying & Adding Keybindable Actions in Lyra**
+### **Modifying & Adding Keybindable Actions in Lyra**
 
 To add a new action that players can rebind, or to modify an existing one, you generally need to work with the Enhanced Input assets directly:
 
+**Defining Mappable Setting for Input Action**
+
 1. **Create/Modify `InputAction` Asset:** Define the action itself (e.g., `IA_Interact`).
-2. **Add to `InputMappingContext` (IMC):**
-   * Add the `InputAction` to one or more IMCs.
-   * Assign one or more default keys to this action in the IMC.
-3. **Configure Player Mappable Settings:**
-   * In the IMC, for the specific mapping of your `InputAction`:
-     * Ensure **"Is Player Mappable"** is checked.
-     * Create and assign a **`PlayerMappableKeySettings`** Data Asset.
+2. **Configure Player Mappable Settings:**
+   *   Assign a **`PlayerMappableKeySettings`** Data Asset.
+
        * **Name:** Provide a unique `FName` (e.g., `Interact`). This name is crucial as it's used by the settings UI to identify this specific binding.
        * **Display Name:** Set the text that will appear in the settings menu (e.g., "Interact," "Use Item").
        * **Display Category:** Assign a category (e.g., "General," "Combat") to group it with other similar actions in the settings UI.
-4. **Ensure IMC is Active:** The `InputMappingContext` containing this new mappable action must be added to the `UEnhancedInputLocalPlayerSubsystem` at an appropriate time during gameplay for the action to be functional and for its bindings to be picked up by the settings UI.
-5. **Registry Population:**
-   * The `ULyraGameSettingRegistry` should automatically pick up this new mappable action during its initialization (specifically in `InitializeMouseAndKeyboardSettings` or `InitializeGamepadSettings`) provided it meets the filtering criteria (e.g., has default keys, matches the input type being populated).
-   * The `DisplayCategory` from `PlayerMappableKeySettings` will determine which section it appears in. If the category is new, a new section might be created.
+
+       <figure><img src="../../.gitbook/assets/image.png" alt=""><figcaption><p>Setting the Player Mappable Key Settings in an input action</p></figcaption></figure>
+
+**Overriding Mappable Setting for Input Mapping Context**
+
+By default, when you mark an **Input Action** as player-mappable, the associated **PlayerMappableKeySettings** asset defines its metadata, such as the mapping name, display name, and display category. These values determine how the action appears and is grouped in the settings UI.
+
+However, **Input Mapping Contexts (IMCs)** can **override these default settings** on a per-mapping basis. This allows you to define alternate metadata for the same input action depending on the context in which it's used.
+
+For example:
+
+* You might have a generic input action like `IA_Interact` used in multiple contexts (e.g., in-world interaction, UI interaction).
+* In one context (e.g., Gameplay), the action might be labeled “Use” and grouped under the “Gameplay” category.
+* In another context (e.g., when in a vehicle), the same action might be labeled “Horn” and placed under the “Vehicle” category.
+
+To override the default mappable settings in an IMC:
+
+1. **Add to `InputMappingContext` (IMC):**
+   * Add the `InputAction` to one or more IMCs.
+   * Assign one or more default keys to this action in the IMC.
+2.  **Configure Player Mappable Settings:**
+
+    * In the IMC, for the specific mapping of your `InputAction`:
+      * Set the `SettingBehaviour` field to either
+        * `OverrideSettings` – to override the default `PlayerMappableKeySettings` defined on the Input Action.
+        * `IgnoreSettings` – to disable all settings customization for this specific mapping (useful for internal or hidden mappings).
+      * **Assign a custom `PlayerMappableKeySettings` data asset** to the mapping if using `OverrideSettings`. This allows you to redefine how the action appears in the settings UI for this specific context.
+
+    <figure><img src="../../.gitbook/assets/image (3).png" alt=""><figcaption><p>Overriding IA_QuickSlot1 in ShooterBase IMC</p></figcaption></figure>
+
+#### Ensuring Actions Are Functional and Discoverable
+
+Regardless of how you've configured the Input Action or its associated PlayerMappableKeySettings, **an Input Mapping Context (IMC) must be actively applied** to the player for the input action to become functional and visible in the settings UI.
+
+In other words, because input actions are only processed when they're part of an active mapping context, you must ensure that the `InputMappingContext` **containing the mappable action is added to the** `UEnhancedInputLocalPlayerSubsystem` at the appropriate point during gameplay. If the context is not active, the action's bindings won’t be functional, and it won’t show up in the keybinding UI.
+
+#### Automatic Registry Population
+
+Once the relevant IMC is active and the mappable action has default keys configured:
+
+* The **ULyraGameSettingRegistry** will automatically detect and register the action during its initialization routines—specifically in `InitializeMouseAndKeyboardSettings()` or `InitializeGamepadSettings()`.
+* The **DisplayCategory** specified in the `PlayerMappableKeySettings` determines which section the action appears in within the settings UI.
+  * If the category is new or unique, a new section will be dynamically created in the UI.
 
 **Important Considerations for Keybindings:**
 

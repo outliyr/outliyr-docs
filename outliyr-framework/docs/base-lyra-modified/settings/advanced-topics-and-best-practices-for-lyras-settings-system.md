@@ -4,7 +4,7 @@ Once you're comfortable with the core mechanics of adding and modifying settings
 
 ***
 
-#### **Asynchronous Operations: Keeping it Smooth**
+### **Asynchronous Operations: Keeping it Smooth**
 
 Performance is critical, especially during game startup or when players are interacting with menus. Lyra's settings system, particularly for operations that might involve disk I/O, leverages asynchronous operations to prevent hitches and keep the game responsive.
 
@@ -21,25 +21,32 @@ Performance is critical, especially during game startup or when players are inte
 
 ***
 
-#### **Platform-Specific Considerations & Conditional Settings**
+#### Platform-Specific Considerations
 
-Games often need to behave differently or offer different settings based on the platform they are running on (PC, console, mobile). Lyra's settings system provides mechanisms for this:
+Lyra is designed to be adaptable across different platforms (PC, console, mobile). This often requires settings to behave differently or for certain options to only be available where supported. The settings system employs several mechanisms to achieve this:
 
-* **Gameplay Tags for Platform Traits:**
-  * Lyra extensively uses Gameplay Tags (e.g., `TAG_Platform_Trait_SupportsWindowedMode`, `TAG_Platform_Trait_NeedsBrightnessAdjustment`, `TAG_Platform_Trait_Input_SupportsGamepad`) to identify platform capabilities. These tags are typically defined in `ICommonUIModule::GetSettings().GetPlatformTraits()`.
-  * **`FWhenPlatformHasTrait` Edit Condition:** In `ULyraGameSettingRegistry`, this edit condition is used to show or hide settings based on whether the current platform possesses a specific trait tag. This allows you to, for example, only show "Window Mode" options on platforms that actually support windowing.
-* **CVars for Platform-Dependent Defaults or Behavior:**
-  * Console Variables (CVars) are frequently used in `ULyraSettingsLocal` and related systems to define default values or control features that might vary by platform.
-  * These CVars can be set per-platform in configuration files (e.g., `WindowsDeviceProfiles.ini`, `XboxOneDeviceProfiles.ini`).
-  * Examples include default mobile frame rates (`Lyra.DeviceProfile.Mobile.DefaultFrameRate`) or whether granular video quality settings are supported (`bSupportsGranularVideoQualitySettings` in `ULyraPlatformSpecificRenderingSettings`).
-* **`ULyraPlatformSpecificRenderingSettings`:**
-  * This class (usually accessed via `ULyraPlatformSpecificRenderingSettings::Get()`) holds platform-specific rendering configurations, like `FramePacingMode` (Console, Desktop, Mobile) or `bSupportsGranularVideoQualitySettings`. The settings system queries this class to adapt its behavior.
+* **Gameplay Tags for Platform Traits & UI Conditionality:**
+  * As detailed in the "[UI Integration](ui-integration.md)" section, Lyra extensively uses Gameplay Tags (e.g., `TAG_Platform_Trait_SupportsWindowedMode`) to identify platform capabilities. These traits, typically sourced from `ICommonUIModule::GetSettings().GetPlatformTraits()`, are consumed by the `FWhenPlatformHasTrait` edit condition in the `ULyraGameSettingRegistry` to dynamically control the visibility and interactivity of settings in the UI. This approach is favored over preprocessor directives for its flexibility and testability in PIE.
+* **CVars for Platform-Dependent Defaults and Behavior:**
+  * Beyond UI visibility, Console Variables (CVars) are heavily utilized, especially within `ULyraSettingsLocal`, to establish default values or enable/disable features based on the target platform.
+  * These CVars can be configured in platform-specific Device Profile `.ini` files (e.g., `WindowsDeviceProfiles.ini`, `AndroidDeviceProfiles.ini`). This allows, for example, mobile platforms to have different default frame rates or quality levels compared to high-end PCs.
+  * _Examples:_
+    * `Lyra.DeviceProfile.Mobile.DefaultFrameRate`: Sets the default FPS on mobile.
+    * Specific scalability group CVars (like `sg.ShadowQuality`) can have different baseline values per platform device profile.
+* **`ULyraPlatformSpecificRenderingSettings` for Queried Configurations:**
+  * For more complex or runtime-queried platform-specific configurations, Lyra uses the `ULyraPlatformSpecificRenderingSettings` class (accessible via `ULyraPlatformSpecificRenderingSettings::Get()`).
+  * This class holds critical information like the current `FramePacingMode` (e.g., ConsoleStyle, DesktopStyle, MobileStyle) or whether the platform `bSupportsGranularVideoQualitySettings`.
+  * The settings system (both backend logic and UI edit conditions) frequently queries this object to adapt its behavior. For instance, the availability of certain frame rate limit options or detailed quality sliders can depend on the values retrieved from these settings.
 
-**Best Practice:** Utilize Gameplay Tag based edit conditions in the `ULyraGameSettingRegistry` to cleanly manage UI visibility for platform-dependent settings. Use platform-specific configuration files and CVars to adjust default backend values.
+**Best Practice Summary:**
+
+* Utilize **Gameplay Tag based edit conditions** (`FWhenPlatformHasTrait`) in `ULyraGameSettingRegistry` for clean management of UI visibility and interactivity based on platform capabilities.
+* Employ **platform-specific configuration files (Device Profiles, `.ini` files) to set CVars** that adjust default backend values and behaviors.
+* Leverage **`ULyraPlatformSpecificRenderingSettings`** for runtime C++ queries about platform-specific modes and features that influence setting availability or application.
 
 ***
 
-#### **Debugging Settings: Troubleshooting Common Issues**
+### **Debugging Settings: Troubleshooting Common Issues**
 
 When settings aren't behaving as expected, here are some common areas to investigate and tips for debugging:
 
@@ -67,7 +74,7 @@ When settings aren't behaving as expected, here are some common areas to investi
 
 ***
 
-#### **Understanding the "Why": Appreciating Lyra's Design Choices**
+### **Understanding the "Why": Appreciating Lyra's Design Choices**
 
 It's worth reiterating why Lyra's settings system, despite its multiple layers, is structured the way it is. Understanding these design choices can help you appreciate its strengths and make more informed decisions when extending it:
 

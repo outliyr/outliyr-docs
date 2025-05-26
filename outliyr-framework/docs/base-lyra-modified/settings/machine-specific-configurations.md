@@ -4,7 +4,7 @@ Complementing `ULyraSettingsShared`, the `ULyraSettingsLocal` class is responsib
 
 ***
 
-#### **Purpose and Scope**
+### **Purpose and Scope**
 
 `ULyraSettingsLocal` handles configurations that affect how the game runs and presents itself on the current hardware. This includes performance-related adjustments, display settings, and audio output choices tied to the local setup.
 
@@ -14,7 +14,7 @@ Complementing `ULyraSettingsShared`, the `ULyraSettingsLocal` class is responsib
 * **Performance Tuning:** Many settings directly impact game performance and visual fidelity.
 * **Local Persistence:** Saved locally, typically not intended for cloud synchronization.
 * **Common Examples in Lyra:**
-  * **Graphics Quality:** Resolution, VSync, texture quality, shadow quality, anti-aliasing, view distance, post-processing effects, global illumination, etc. (often managed by Unreal's Scalability system).
+  * **Graphics Quality:** Resolution, VSync, texture quality, shadow quality, anti-aliasing, view distance, post-processing effects, global illumination, etc. (managed by Unreal's Scalability system).
   * **Frame Rate Limits:** Different limits for various scenarios (in-menu, on-battery, backgrounded, always).
   * **Audio Settings:** Master volume, music volume, SFX volume, dialogue volume, voice chat volume, selected audio output device, 3D headphone mode (HRTF), HDR audio mode.
   * **Display Settings:** Brightness/Gamma, UI Safe Zone.
@@ -24,7 +24,7 @@ Complementing `ULyraSettingsShared`, the `ULyraSettingsLocal` class is responsib
 
 ***
 
-#### **Key Class Features**
+### **Key Class Features**
 
 `ULyraSettingsLocal` is built upon `UGameUserSettings`, Unreal Engine's standard class for managing such machine-specific user configurations.
 
@@ -42,7 +42,7 @@ Complementing `ULyraSettingsShared`, the `ULyraSettingsLocal` class is responsib
 
 ***
 
-#### **Saving & Loading Mechanism**
+### **Saving & Loading Mechanism**
 
 Persistence for `ULyraSettingsLocal` leverages the `UGameUserSettings` framework.
 
@@ -56,7 +56,7 @@ Persistence for `ULyraSettingsLocal` leverages the `UGameUserSettings` framework
 
 ***
 
-#### **Scalability and Graphics Management**
+### **Scalability and Graphics Management**
 
 A significant portion of `ULyraSettingsLocal` is dedicated to managing graphics quality and performance.
 
@@ -75,7 +75,7 @@ A significant portion of `ULyraSettingsLocal` is dedicated to managing graphics 
 
 ***
 
-#### **Audio Configuration**
+### **Audio Configuration**
 
 `ULyraSettingsLocal` manages key audio settings that are often tied to the local machine's setup.
 
@@ -92,7 +92,7 @@ A significant portion of `ULyraSettingsLocal` is dedicated to managing graphics 
 
 ***
 
-#### **Other Notable Settings**
+### **Other Notable Settings**
 
 * **Display Gamma:** `DisplayGamma` property, applied via `GEngine->DisplayGamma`.
 * **Safe Zone:** `SafeZoneScale`, applied via `SSafeZone::SetGlobalSafeZoneScale()`.

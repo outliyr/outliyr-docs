@@ -99,7 +99,7 @@ IIf you're unfamiliar with custom thunks, don't worry.  You don't need to unders
 4. **Set Event Tag:** Provide the correct `FGameplayTag` that corresponds to the Gameplay Ability you want to trigger.
 5. **Execute Node:** Call the function node when the player performs the UI action (e.g., Inspect Item, Drop Item).
 
-<figure><img src="../../../.gitbook/assets/image (5) (1).png" alt=""><figcaption><p>Using <code>CallGameplayAbilityFromUI</code> to pass the equipment slot address into the <code>Ability.Inventory.InspectItem</code></p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (5) (1) (1).png" alt=""><figcaption><p>Using <code>CallGameplayAbilityFromUI</code> to pass the equipment slot address into the <code>Ability.Inventory.InspectItem</code></p></figcaption></figure>
 
 {% hint style="info" %}
 FEquipmentAbilityData\_SourceEquipment is inherited from FAbilityData\_SourceItem. The [Slot Address Page](slot-address.md) will cover FAbilityData\_SourceItem and it's child structs in more detail.

@@ -4,11 +4,11 @@ One of the strengths of Lyra's settings system is its extensibility. Whether you
 
 ***
 
-#### **Core Workflow: Adding a New Setting (Step-by-Step)**
+### **Core Workflow: Adding a New Setting (Step-by-Step)**
 
 Adding a new setting to Lyra generally involves touching both the backend C++ classes (`ULyraSettingsShared` or `ULyraSettingsLocal`) and the UI registration layer (`ULyraGameSettingRegistry`).
 
-**Step 1: Choose the Right Backend Storage**
+### **Step 1: Choose the Right Backend Storage**
 
 Before writing any code, decide where your new setting logically belongs:
 
@@ -19,7 +19,7 @@ Before writing any code, decide where your new setting logically belongs:
   * **Use if:** The setting is specific to the local machine's hardware or environment, or affects local performance.
   * **Examples:** A new specific graphics option (e.g., "Motion Blur Quality"), a hardware-specific toggle (e.g., "Enable DLSS Frame Generation"), a setting for a custom performance stat.
 
-**Step 2: Implement the Backend Logic in C++**
+### **Step 2: Implement the Backend Logic in C++**
 
 Once you've chosen the backend class:
 
@@ -107,71 +107,113 @@ Once you've chosen the backend class:
    * Ensure your property has a sensible default value either in its declaration or in the constructor of the settings class.
    * For `ULyraSettingsLocal`, also set this default in `ULyraSettingsLocal::SetToDefaults()`.
 
-**Step 3: Register the Setting in `ULyraGameSettingRegistry`**
+### **Step 3: Register the Setting in `ULyraGameSettingRegistry`**
 
 Now, make the setting visible and configurable in the UI:
 
 1. **Locate the Appropriate Registry File:**
    * Open the relevant `LyraGameSettingRegistry_*.cpp` file based on the category of your setting (e.g., `LyraGameSettingRegistry_Gameplay.cpp` for gameplay options, `LyraGameSettingRegistry_Video.cpp` for graphics).
-2. **Find or Create a `UGameSettingCollection`:**
-   * Decide which existing settings collection (UI page or section) your new setting should belong to.
-   * If necessary, you can create a new `UGameSettingCollection` for a new subsection.
-3. **Create the `UGameSettingValue*` Object:**
-   * Instantiate the appropriate `UGameSettingValue` derived class based on how you want the setting to be presented in the UI:
-     * `UGameSettingValueDiscreteDynamic_Bool`: For on/off toggles.
-     * `UGameSettingValueDiscreteDynamic_Enum` or `UGameSettingValueDiscreteDynamic_Number`: For dropdowns or lists of options.
-     * `UGameSettingValueScalarDynamic`: For sliders.
-     * Or a custom Lyra type if applicable.
-   *   Example (for `bEnableAutoReload` - a boolean):
+2. **Find or Create a `UGameSettingCollection` (UI Grouping):**
+   * Settings in Lyra's UI are organized into groups and subgroups. This visual structure is directly determined by how `UGameSettingCollection` objects are created and nested within the `Initialize[...]Settings` functions of `ULyraGameSettingRegistry`.
+   * **Identify Target Collection:**
+     * For our **"Auto-Reload Weapon"** setting (a gameplay preference), we'd look in `ULyraGameSettingRegistry_Gameplay.cpp`. We'd likely add it to an existing general gameplay `UGameSettingCollection`, perhaps one named `GameplayPreferencesCollection` or similar. If no suitable general collection exists, we might create one.
+     * For our **"Motion Blur Quality"** setting (a graphics option), we'd look in `ULyraGameSettingRegistry_Video.cpp`. This would likely go into a `UGameSettingCollection` representing "Graphics Quality" or perhaps "Advanced Graphics," depending on its nature.
+   *   **Creating New Subsections:** If you were adding several related gameplay mechanics (e.g., "Auto-Reload," "Auto-Equip Best Weapon," "Auto-Use Medkit"), you might create a new `UGameSettingCollection` for them:
 
        ```cpp
-       // In LyraGameSettingRegistry_Gameplay.cpp, inside InitializeGameplaySettings()
-       // Assume 'GameplaySubsection' is an existing UGameSettingCollection*
+       // In LyraGameSettingRegistry_Gameplay.cpp, assuming 'MainGameplayCollection' exists
+       UGameSettingCollection* AutoAssistCollection = NewObject<UGameSettingCollection>();
+       AutoAssistCollection->SetDevName(TEXT("AutoAssistFeatures"));
+       AutoAssistCollection->SetDisplayName(LOCTEXT("AutoAssist_Name", "Automatic Assists"));
+       MainGameplayCollection->AddSetting(AutoAssistCollection);
+       // Our "Auto-Reload Weapon" setting would then be added to AutoAssistCollection
+       ```
+   *   **Creating New Pages:** If "Motion Blur Quality" was part of a larger, detailed set of "Advanced Post-Processing Effects" that deserved its own screen:
 
+       ```cpp
+       // In LyraGameSettingRegistry_Video.cpp, assuming 'AdvancedGraphicsCollection' exists
+       UGameSettingCollectionPage* PostProcessingPage = NewObject<UGameSettingCollectionPage>();
+       PostProcessingPage->SetDevName(TEXT("PostProcessingPage"));
+       PostProcessingPage->SetDisplayName(LOCTEXT("PostProcessingPage_Name", "Post-Processing Effects"));
+       PostProcessingPage->SetNavigationText(LOCTEXT("PostProcessingPage_Nav", "Details"));
+       AdvancedGraphicsCollection->AddSetting(PostProcessingPage);
+       // Our "Motion Blur Quality" setting would then be added as a child to PostProcessingPage
+       // (often via another UGameSettingCollection that's a child of PostProcessingPage).
+       ```
+   * The `DisplayName` of the `UGameSettingCollection` is what users see as the section header or page title. The organization is purely based on these `AddSetting` calls creating a tree-like structure.
+3. **Create the `UGameSettingValue*` Object:**
+   * Instantiate the appropriate `UGameSettingValue` derived class for your setting.
+   * Set its `DevName`, `DisplayName` (what the user sees for _this specific setting_), and `DescriptionRichText`.
+   *   **For "Auto-Reload Weapon" (boolean):**
+
+       ```cpp
+       // In LyraGameSettingRegistry_Gameplay.cpp
        UGameSettingValueDiscreteDynamic_Bool* AutoReloadSetting = NewObject<UGameSettingValueDiscreteDynamic_Bool>();
        AutoReloadSetting->SetDevName(TEXT("EnableAutoReload"));
        AutoReloadSetting->SetDisplayName(LOCTEXT("EnableAutoReload_Name", "Auto-Reload Weapon"));
        AutoReloadSetting->SetDescriptionRichText(LOCTEXT("EnableAutoReload_Description", "Automatically reload your weapon when the magazine is empty and you are not firing."));
        ```
+   *   **For "Motion Blur Quality" (discrete number):**
+
+       ```cpp
+       // In LyraGameSettingRegistry_Video.cpp
+       UGameSettingValueDiscreteDynamic_Number* MotionBlurSetting = NewObject<UGameSettingValueDiscreteDynamic_Number>();
+       MotionBlurSetting->SetDevName(TEXT("MotionBlurQuality"));
+       MotionBlurSetting->SetDisplayName(LOCTEXT("MotionBlurQuality_Name", "Motion Blur"));
+       MotionBlurSetting->SetDescriptionRichText(LOCTEXT("MotionBlurQuality_Description", "Controls the quality of motion blur. Higher settings are more visually accurate but can impact performance."));
+       ```
 4. **Bind to Backend Getters/Setters:**
-   * Use `SetDynamicGetter()` and `SetDynamicSetter()` with the `GET_SHARED_SETTINGS_FUNCTION_PATH` or `GET_LOCAL_SETTINGS_FUNCTION_PATH` macros.
-   *   Example (continuing `bEnableAutoReload` which is in `ULyraSettingsShared`):
+   * Use `SetDynamicGetter()` and `SetDynamicSetter()` with the `GET_..._FUNCTION_PATH` macros, and set the UI's default value.
+   *   **For "Auto-Reload Weapon" (`ULyraSettingsShared`):**
 
        ```cpp
        AutoReloadSetting->SetDynamicGetter(GET_SHARED_SETTINGS_FUNCTION_PATH(GetEnableAutoReload));
        AutoReloadSetting->SetDynamicSetter(GET_SHARED_SETTINGS_FUNCTION_PATH(SetEnableAutoReload));
-       AutoReloadSetting->SetDefaultValue(GetDefault<ULyraSettingsShared>()->GetEnableAutoReload()); // Set UI default
+       AutoReloadSetting->SetDefaultValue(GetDefault<ULyraSettingsShared>()->GetEnableAutoReload());
        ```
-5. **Add Options (If Applicable):**
-   * For discrete settings (enums, numbers), use `AddOption()` or `AddEnumOption()` to define the choices available in the UI.
-   *   Example (for `MotionBlurQuality` - an int representing quality levels):
+   *   **For "Motion Blur Quality" (`ULyraSettingsLocal`):**
 
        ```cpp
-       // In LyraGameSettingRegistry_Video.cpp, inside the "Graphics Quality" or "Advanced Graphics" section
-       UGameSettingValueDiscreteDynamic_Number* MotionBlurSetting = NewObject<UGameSettingValueDiscreteDynamic_Number>();
-       MotionBlurSetting->SetDevName(TEXT("MotionBlurQuality"));
-       // ... SetDisplayName, SetDescriptionRichText ...
        MotionBlurSetting->SetDynamicGetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(GetMotionBlurQuality));
        MotionBlurSetting->SetDynamicSetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(SetMotionBlurQuality));
        MotionBlurSetting->SetDefaultValue(GetDefault<ULyraSettingsLocal>()->GetMotionBlurQuality());
+       ```
+5. **Add Options (If Applicable):**
+   * Define the choices available in the UI for discrete settings.
+   *   **For "Motion Blur Quality":**
+
+       ```cpp
        MotionBlurSetting->AddOption(0, LOCTEXT("MotionBlurQuality_Off", "Off"));
        MotionBlurSetting->AddOption(1, LOCTEXT("MotionBlurQuality_Low", "Low"));
        MotionBlurSetting->AddOption(2, LOCTEXT("MotionBlurQuality_Medium", "Medium"));
        MotionBlurSetting->AddOption(3, LOCTEXT("MotionBlurQuality_High", "High"));
        ```
-6. **Add to Collection:**
-   * Add your new `UGameSettingValue*` object to its parent `UGameSettingCollection`.
-   *   Example:
+   * ("Auto-Reload Weapon" is a boolean, so `UGameSettingValueDiscreteDynamic_Bool` handles its "On"/"Off" options automatically).
+6.  **Add to Target Collection:**
 
-       ```cpp
-       GameplaySubsection->AddSetting(AutoReloadSetting);
-       // or
-       GraphicsQualityCollection->AddSetting(MotionBlurSetting);
-       ```
+    * Add your new `UGameSettingValue*` object to the `UGameSettingCollection` (or `UGameSettingCollectionPage`) you identified or created in substep 2.
+    *   **For "Auto-Reload Weapon":**
+
+        ```cpp
+        // Assuming 'GameplayPreferencesCollection' is the target UGameSettingCollection*
+        GameplayPreferencesCollection->AddSetting(AutoReloadSetting);
+        // Or if we created 'AutoAssistCollection':
+        // AutoAssistCollection->AddSetting(AutoReloadSetting);
+        ```
+    *   **For "Motion Blur Quality":**
+
+        ```cpp
+        // Assuming 'AdvancedGraphicsCollection' is the target UGameSettingCollection*
+        AdvancedGraphicsCollection->AddSetting(MotionBlurSetting);
+        // Or if we created 'PostProcessingPage' and added a collection to it:
+        // PostProcessingPageChildCollection->AddSetting(MotionBlurSetting);
+        ```
+
+    This `AddSetting` call establishes the parent-child relationship that dictates the UI hierarchy.
 7. **Add Edit Conditions/Dependencies (Optional):**
    * If your setting should only be active or visible under certain conditions, use `AddEditCondition()`.
 
-**Step 4: (Optional) Create Custom UI Setting Widgets**
+### **Step 4: (Optional) Create Custom UI Setting Widgets**
 
 If your new setting requires a more complex UI than a simple toggle, slider, or dropdown (e.g., a color picker, a list with multi-select, a dedicated editor panel like `ULyraSafeZoneEditor`), you will need to:
 
@@ -180,7 +222,7 @@ If your new setting requires a more complex UI than a simple toggle, slider, or 
 3. In your UMG widget's C++ or Blueprint, implement the logic to display the setting's current value and to update the `UGameSettingValue` object when the user interacts with it.
 4. The `ULyraGameSettingRegistry` would then instantiate your custom `UGameSettingValue` type. The GameSettings system has mechanisms for associating specific UMG widget classes with `UGameSetting` types.
 
-**Step 5: Testing and Verification**
+### **Step 5: Testing and Verification**
 
 1. Compile your code.
 2. Run the game and navigate to the settings screen.
@@ -192,7 +234,7 @@ If your new setting requires a more complex UI than a simple toggle, slider, or 
 
 ***
 
-#### **Example Scenario: Adding a "Field of View (FOV)" Setting**
+### **Example Scenario: Adding a "Field of View (FOV)" Setting**
 
 Let's outline how you might add a player-configurable FOV setting:
 
@@ -215,7 +257,7 @@ Let's outline how you might add a player-configurable FOV setting:
 
 ***
 
-#### **Modifying Existing Settings**
+### **Modifying Existing Settings**
 
 Modifying existing settings follows a similar pattern but focuses on changing parts of the existing implementation:
 

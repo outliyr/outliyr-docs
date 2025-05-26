@@ -40,7 +40,7 @@ These concrete structs implement `FAbilityData_SourceItem` and provide specific 
   * `Index` (`int32`): The index of the item within the `InventoryManager`'s `InventoryList.Entries` array.
 * **`GetSourceItem` Logic:** Checks player's `FullAccess` and `RequiredPermission` for `InventoryManager`, then returns `InventoryManager->GetAllItems()[Index]` if valid.
 
-<figure><img src="../../../.gitbook/assets/image (6).png" alt="" width="316"><figcaption><p>Inventory Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (6) (1).png" alt="" width="316"><figcaption><p>Inventory Source Slot</p></figcaption></figure>
 
 **`FEquipmentAbilityData_SourceEquipment`**
 

@@ -4,7 +4,7 @@ While `ULyraSettingsShared` and `ULyraSettingsLocal` manage the actual storage a
 
 ***
 
-#### **Role of the GameSettings Plugin in Lyra**
+### **Role of the GameSettings Plugin in Lyra**
 
 Before diving into `ULyraGameSettingRegistry` itself, it's important to understand the GameSettings Plugin it's built upon. This plugin provides a framework for:
 
@@ -17,7 +17,7 @@ Lyra makes extensive use of this plugin to create its settings menus.
 
 ***
 
-#### **`ULyraGameSettingRegistry`: The Central Hub**
+### **`ULyraGameSettingRegistry`: The Central Hub**
 
 The `ULyraGameSettingRegistry` class, derived from the plugin's `UGameSettingRegistry`, acts as the primary point of contact for the UI when it needs to display game settings. Each local player in Lyra will have an instance of this registry.
 
@@ -50,7 +50,7 @@ The `ULyraGameSettingRegistry` class, derived from the plugin's `UGameSettingReg
 
 ***
 
-#### **Connecting UI to Backend C++: The Magic of Data Sources**
+### **Connecting UI to Backend C++: The Magic of Data Sources**
 
 The power of the GameSettings plugin, and Lyra's use of it, comes from how UI setting objects are linked to the C++ backend. This is primarily achieved through `FGameSettingDataSourceDynamic` and helper macros.
 
@@ -73,23 +73,97 @@ When the UI needs to display a setting's current value, the GameSettings system 
 
 ***
 
-#### **Edit Conditions & Dependencies**
+### Controlling Setting Interactivity: Edit Conditions & Dependencies
 
-Not all settings are relevant or editable in every context. `ULyraGameSettingRegistry` uses edit conditions to control the visibility and interactivity of settings:
+Not all settings are relevant or editable in every context. For instance, "Window Mode" options are meaningless on a platform that doesn't support windowing, or VSync might only be applicable in fullscreen mode. Lyra's settings system, through the GameSettings Plugin, uses **Edit Conditions** to dynamically control the state (enabled, disabled, hidden) of settings in the UI.
 
-* **`AddEditCondition(FGameSettingEditConditionRef Condition)`:**
-  * `UGameSetting` objects can have one or more edit conditions associated with them.
-  * An `FGameSettingEditCondition` is an object that can evaluate the current game state (e.g., platform, player status) and determine if a setting should be visible, enabled, or disabled.
-  * Lyra uses various conditions:
-    * `FWhenPlatformHasTrait`: Checks if the current platform has a specific gameplay tag (e.g., `TAG_Platform_Trait_SupportsWindowedMode`).
-    * `FWhenPlayingAsPrimaryPlayer`: Ensures a setting is only available to the primary local player.
-    * Custom conditions like `FGameSettingEditCondition_FramePacingMode` (checks the current frame pacing mode defined in `ULyraPlatformSpecificRenderingSettings`).
-* **`AddEditDependency(UGameSetting* OtherSetting)`:**
-  * Some settings can influence the state or available options of others (e.g., the "Overall Quality" preset affects individual graphics settings). Dependencies ensure that if a parent setting changes, dependent settings are re-evaluated or updated.
+An **Edit Condition** (subclass of `FGameSettingEditCondition`) is responsible for evaluating the current game state and modifying an `FGameSettingEditableState` object. This state object then tells the UI framework how to present the setting. You can add one or more edit conditions to any `UGameSetting` object using its `AddEditCondition()` method.
+
+**Common Responsibilities of Edit Conditions:**
+
+* **Disable:** Make a setting visible but not interactive, often with an explanatory message.
+* **Hide:** Completely remove a setting from the UI.
+* **Prevent Resetting:** Stop a setting from being reset to its default value under certain conditions.
+* **Exclude from Analytics:** Prevent a setting's state from being reported in analytics if it's not applicable.
+
+**Key Edit Condition Types Used in Lyra:**
+
+* **`FWhenCondition`:**
+  * **Purpose:** Provides maximum flexibility by allowing you to define the condition logic directly as an inline C++ lambda function.
+  * **Use Case:** Ideal for complex conditions that depend on the state of other settings or specific game logic not covered by more generic conditions.
+  *   **Example (from `ULyraGameSettingRegistry_Video.cpp` for the "Vertical Sync" setting):**
+
+      ```cpp
+      // VSyncSetting is a UGameSettingValueDiscreteDynamic_Bool*
+      // WindowModeSetting is a UGameSettingValueDiscreteDynamic_Enum* for the window mode
+
+      VSyncSetting->AddEditDependency(WindowModeSetting); // VSync depends on Window Mode
+      VSyncSetting->AddEditCondition(MakeShared<FWhenCondition>(
+          [WindowModeSetting](const ULocalPlayer*, FGameSettingEditableState& InOutEditState)
+          {
+              // VSync is typically only configurable and effective in true Fullscreen mode.
+              if (WindowModeSetting->GetValue<EWindowMode::Type>() != EWindowMode::Fullscreen)
+              {
+                  InOutEditState.Disable(LOCTEXT("FullscreenNeededForVSync", "This feature only works if 'Window Mode' is set to 'Fullscreen'."));
+              }
+          }
+      ));
+      ```
+
+      In this example, the "Vertical Sync" setting is disabled if "Window Mode" is not set to "Fullscreen," with a message explaining why.
+* **`FWhenPlatformHasTrait`:**
+  * **Purpose:** Used to enable, disable, or hide settings based on Gameplay Tags defining platform capabilities (platform traits).
+  * **Why Traits over `#if PLATFORM_...`?** Lyra favors platform traits because:
+    * They allow for testing other platform behaviors within the editor (Play In Editor with emulated platform traits).
+    * They can be dynamically re-evaluated if traits change during a session (less common, but possible).
+    * It centralizes platform capability checks rather than scattering preprocessor directives.
+  * **Example Traits:**
+    * `Platform.Trait.SupportsWindowedMode`
+    * `Platform.Trait.Input.SupportsGamepad`
+    * `Platform.Trait.NeedsBrightnessAdjustment`
+  *   **Example Usage (conceptual):**
+
+      ```cpp
+      // VSyncSetting is a UGameSettingValueDiscreteDynamic_Bool*
+      VSyncSetting->AddEditCondition(
+          FWhenPlatformHasTrait::KillIfMissing( // KillIfMissing implies Hide if trait is absent
+              TAG_Platform_Trait_SupportsVSync, // A hypothetical trait
+              TEXT("VSync is not supported or controllable on this platform.")
+          )
+      );
+      ```
+* **`FWhenPlayingAsPrimaryPlayer`:**
+  * **Purpose:** Restricts a setting to be editable only by the primary local player in a split-screen or multi-local-player scenario.
+  * **Use Case:** For settings that are global or system-wide and should not be configurable by secondary players (e.g., overall graphics quality, audio output device).
+  *   **Example Usage:**
+
+      ```cpp
+      // OverallVolumeSetting is a UGameSettingValueScalarDynamic*
+      OverallVolumeSetting->AddEditCondition(FWhenPlayingAsPrimaryPlayer::Get());
+      ```
+
+**How Edit Conditions Affect the UI:**
+
+When an edit condition determines that a setting should be disabled, it can provide a reason message (as seen in the `InOutEditState.Disable(Message)` call). The UI framework is responsible for displaying this message to the user, typically as a tooltip or an informative text block next to the disabled setting. This greatly improves user experience by explaining _why_ an option is not available.
+
+<figure><img src="../../.gitbook/assets/image (4).png" alt=""><figcaption></figcaption></figure>
+
+**Using Edit Conditions When Extending:**
+
+When adding your own settings:
+
+1. **Consider Context:** Think about whether your new setting is always applicable or if its availability/editability should change based on platform, other settings, or game state.
+2. **Choose the Right Condition:**
+   * For simple platform capability checks, use `FWhenPlatformHasTrait`.
+   * For logic dependent on other settings, `FWhenCondition` with a lambda is powerful.
+   * If it's a system-wide setting, consider `FWhenPlayingAsPrimaryPlayer`.
+3. **Provide Clear Messages:** If disabling a setting, use `InOutEditState.Disable(LOCTEXT("...", "Your clear explanation here"));` to inform the user.
+
+By effectively using Edit Conditions, you can create a more intelligent and user-friendly settings interface that adapts gracefully to different situations and clearly communicates limitations to the player.
 
 ***
 
-#### **Saving Changes from the UI**
+### **Saving Changes from the UI**
 
 When the player interacts with the settings UI and decides to apply their changes, the following typically occurs:
 
@@ -104,15 +178,57 @@ This comprehensive save process ensures that all modifications made through the 
 
 ***
 
-#### **Custom UI Setting Widgets & Display**
+### Visual Presentation and Custom UI for Settings
 
-While the GameSettings plugin promotes a data-driven approach, Lyra also employs custom UMG widgets for certain settings that require more specialized UI than what a generic slider or dropdown can provide.
+While `ULyraGameSettingRegistry` defines _what_ settings are available and their backend connections, the actual visual rendering and interaction in the UI are managed by features of the GameSettings Plugin and Lyra's specific UMG implementations.
 
-* **`ULyraSettingsListEntrySetting_KeyboardInput`:** A custom widget row designed to display and manage a single keybinding from the Enhanced Input system, providing buttons for primary key, secondary key, clear, and reset. It directly interacts with an `ULyraSettingKeyboardInput` object (which is a `UGameSettingValue` derivative).
-* **`ULyraSafeZoneEditor` & `ULyraBrightnessEditor`:** These are modal-like, activatable widgets that provide a dedicated, full-screen interface for adjusting safe zone boundaries and display brightness, respectively. They are launched as "actions" from simpler `UGameSettingAction` objects defined in the registry.
+**`UGameSettingPanel`: The Main Settings Display Area**
 
-These custom widgets still interface with the `UGameSetting` objects defined in the registry, ensuring that the underlying data flow and saving mechanisms remain consistent.
+* (Explain UGameSettingPanel as before - it takes a registry and populates itself)
+
+**`UGameSettingVisualData`: Mapping Settings to Widgets**
+
+* (Explain UGameSettingVisualData as before - it maps UGameSetting types to UMG widget classes)
+* Mention Lyra's default visual data asset (e.g., `GameSettingVisualData_Lyra`) and that developers usually don't need to touch this unless making broad UI style changes or adding entirely new setting widget types.
+
+<figure><img src="../../.gitbook/assets/image (5).png" alt="" width="563"><figcaption><p>The Game Settings Registry Visual Data contains details on how the panel should display.</p></figcaption></figure>
+
+**Customizing Setting Appearance and Interaction in Lyra**
+
+Lyra extends the basic GameSettings UI capabilities in several ways to provide a tailored experience:
+
+* **Specialized `UGameSettingListEntry` Widgets:** For certain setting types that require a more complex UI than a standard row, Lyra uses custom UMG widgets derived from `UGameSettingListEntryBase`.
+  * **Example: Keyboard Input:** The `ULyraSettingsListEntrySetting_KeyboardInput` widget provides the UI for a single keybinding, including buttons for primary/secondary keys, clear, and reset. This custom widget is then associated with the `ULyraSettingKeyboardInput` (a `UGameSettingValue` derivative) via mappings in Lyra's `UGameSettingVisualData`.
+* **Launching Dedicated Editors with `UGameSettingAction`:** For settings that benefit from a full-screen or modal editing experience, Lyra uses `UGameSettingAction`.
+  * A `UGameSettingAction` in the registry appears as a button in the settings list.
+  * When clicked, it can execute custom C++ or Blueprint logic, often to push a new UI layer or activate a dedicated widget.
+  * **Examples in Lyra:**
+    * `ULyraSafeZoneEditor`: Launched via an action to provide an interactive safe zone adjustment screen.
+    * `ULyraBrightnessEditor`: Similarly launched for a dedicated brightness calibration UI.
+* **Implementing Real-Time Previews (e.g., for Subtitles, Colorblindness):**
+  * To provide immediate visual feedback as a setting is changed (like in COD's graphics options), Lyra's settings screens often include a dedicated "preview" area.
+  * This preview UMG widget typically:
+    1. Becomes aware of the currently selected or focused `UGameSetting` in the list.
+    2. Subscribes to change notifications. This could be the `OnSettingChanged` delegate of the `UGameSetting` itself, or it might listen to the `OnSettingChanged` event from the backend `ULyraSettingsShared` or `ULyraSettingsLocal` objects if the change is applied there first.
+    3. When a change is detected, the preview widget updates its display accordingly (e.g., re-renders sample subtitle text with new size/color, applies a colorblind post-process filter to a sample image).
+  * This powerful feature enhances usability but is implemented as part of the settings screen's specific UMG logic rather than being a generic feature of every `UGameSetting`.
+
+**When to Consider These Advanced UI Techniques:**
+
+* **Modifying `UGameSettingVisualData`:** If you want to change the default UMG widget used for _all_ instances of a standard setting type (e.g., all boolean toggles should use your new custom widget).
+* **Creating Custom `UGameSettingListEntry` Widgets:** If you're introducing a new `UGameSettingValue` type that requires a unique list representation.
+* **Using `UGameSettingAction`:** If a setting is best configured through a dedicated, interactive UI panel rather than a simple list entry.
+* **Implementing Preview Panels:** If providing immediate visual feedback for a setting significantly improves the user's ability to configure it effectively.
+
+For many common scenarios of adding new settings using Lyra's existing `UGameSettingValue` types, you'll get a functional UI automatically. These advanced techniques are for when you need to go beyond that standard presentation.
 
 ***
 
-The `ULyraGameSettingRegistry` is the linchpin that connects the robust backend settings logic of `ULyraSettingsShared` and `ULyraSettingsLocal` with a flexible, data-driven UI system. Understanding its role is key to modifying existing settings or adding new ones to Lyra's menus. The next section will discuss how Lyra specifically handles input and keybindings through the Enhanced Input system.
+In essence, the ULyraGameSettingRegistry is pivotal for Lyra's settings UI, responsible for:
+
+* **Organizing:** Structuring all game settings into logical collections and pages.
+* **Binding:** Connecting UI representations to backend C++ data in `ULyraSettingsShared` and `ULyraSettingsLocal`.
+* **Controlling Interactivity:** Utilizing Edit Conditions to dynamically enable, disable, or hide settings.
+* **Facilitating Visual Presentation:** Working with GameSettings Plugin components like `UGameSettingPanel` and `UGameSettingVisualData` to render the UI, and enabling custom widgets or real-time previews for an enhanced user experience.
+
+Understanding these functions of the registry is key to modifying or extending Lyra's settings. We will now delve into how Lyra manages input and keybindings.

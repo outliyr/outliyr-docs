@@ -7,7 +7,7 @@ The `ULyraCameraComponent` is the central orchestrator for the camera system att
 * **Role:** To manage the active camera modes, calculate the final blended camera view based on those modes, and apply that view (location, rotation, FOV) to the underlying camera used for rendering.
 * **Placement:** This component should be added to the actor whose perspective the camera needs to follow or be relative to. In most cases, this will be the `ALyraCharacter` Blueprint. It functions as the actual camera actor in the scene whose properties are dynamically updated each frame by the camera mode stack.
 
-<figure><img src="../../.gitbook/assets/image (1).png" alt="" width="375"><figcaption><p><code>LyraCameraComponent</code>  placement in ALyraCharacter</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (1) (1).png" alt="" width="375"><figcaption><p><code>LyraCameraComponent</code>  placement in ALyraCharacter</p></figcaption></figure>
 
 ### Key Responsibilities & Features
 
