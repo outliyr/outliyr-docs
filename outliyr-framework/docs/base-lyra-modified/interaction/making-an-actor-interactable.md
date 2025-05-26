@@ -1,14 +1,12 @@
 # Making an Actor Interactable
 
-## Making an Actor Interactable
-
 This guide shows you how to turn any actor (or component) into something the player can interact with using the Lyra Interaction System. We’ll cover the minimum setup and point out key areas where you can customize behavior and visuals.
 
-Whether you're building a lootable item, a door, or a console — the process is the same.
+Whether you're building a lootable item, a door, or a console, the process is the same.
 
 ***
 
-### 1. Implement the `IInteractableTarget` Interface
+### Implement the `IInteractableTarget` Interface
 
 First, your actor or component must implement the `IInteractableTarget` interface. This marks it as something the interaction system can detect and query.
 
@@ -18,12 +16,11 @@ First, your actor or component must implement the `IInteractableTarget` interfac
 2. Go to **Class Settings**.
 3. In the **Interfaces** section, add `InteractableTarget`.
 
-> **\[Screenshot Placeholder #1: Add Interface in Blueprint]**\
-> Show the Blueprint Class Settings panel with the interface added.
+<figure><img src="../../.gitbook/assets/image (133).png" alt="" width="563"><figcaption><p><strong>Add Interface in Blueprint</strong></p></figcaption></figure>
 
 ***
 
-### 2. Override `GatherInteractionOptions`
+### Override `GatherInteractionOptions`
 
 This function tells the system what the player can do when they detect your object.
 
@@ -35,19 +32,113 @@ After adding the interface, you’ll see a new function:
 GatherInteractionOptions
 ```
 
-You should:
-
-* Add a new `FInteractionOption` to the output array.
-* Fill in at least the `Text`, and either:
-  * `InteractionAbilityToGrant` (if player triggers the logic), or
-  * `TargetAbilitySystem` and `TargetInteractionAbilityHandle` (if target runs the logic)
-
-> **\[Screenshot Placeholder #2: GatherInteractionOptions implementation in BP]**\
-> Show a simple setup with a single interaction option returning “Open” with a granted ability.
+<figure><img src="../../.gitbook/assets/image (134).png" alt="" width="563"><figcaption><p><strong>GatherInteractionOptions implementation exmple</strong></p></figcaption></figure>
 
 ***
 
-### 3. Use the Default Interaction Widget (Optional, Recommended)
+### Choose the Interaction Behavior
+
+Every `FInteractionOption` needs to define **how the interaction is triggered**, either on the player or on the interactable itself.\
+There are two valid ways to configure this:
+
+**Option A: Player Executes the Ability (Most Common)**
+
+* Use this when the interaction logic lives on the **player**, like opening a chest, picking up loot, or triggering UI.
+* **Steps:**
+  * Create a Gameplay Ability (e.g., `GA_PickupItem`)
+  * In your actor, expose a `TSubclassOf<UGameplayAbility>` variable for that ability
+  * In `GatherInteractionOptions`, set `InteractionAbilityToGrant` on the option
+
+{% tabs %}
+{% tab title="Blueprint Example" %}
+<figure><img src="../../.gitbook/assets/image (137).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+
+{% tab title="C++ Example" %}
+```cpp
+void AMyCollectableActor::GatherInteractionOptions_Implementation(
+    const FInteractionQuery& InteractQuery,
+    TArray<FInteractionOption>& OutOptions)
+{
+    FInteractionOption Option;
+
+    // Set the label that will be shown in the interaction widget
+    Option.Text = FText::FromString(TEXT("Pick up Gold Coin"));
+
+    // Reference to the ability this interaction will trigger
+    // (assumed to be set in Blueprint defaults)
+    Option.InteractionAbilityToGrant = PickupAbility;
+
+    OutOptions.Add(Option);
+}
+```
+{% endtab %}
+{% endtabs %}
+
+* **Why use this:**
+  * Ability logic stays on the player
+  * No need for an ASC on the interactable
+  * Simpler to manage and test
+
+**Option B: Interactable Executes the Ability (Advanced)**
+
+* Use this when the interactable has **its own state, logic, or cooldowns**, and should run the ability itself, not the player.
+* **Setup requirements:**
+  * The actor must have an **Ability System Component**
+  * You must **grant the desired ability** to that ASC (using `GiveAbility`) at runtime or during construction
+  * Store the resulting `FGameplayAbilitySpecHandle` for later use
+
+{% tabs %}
+{% tab title="Blueprint Example" %}
+**Grant the ability** to the target actor (e.g., in `BeginPlay` or construction). You must store the resulting `GameplayAbilitySpecHandle`, as it’s required to trigger the ability later.
+
+<figure><img src="../../.gitbook/assets/image (140).png" alt=""><figcaption><p>Setting the interaction ability spec handle</p></figcaption></figure>
+
+**Populate the Interaction Option** by assigning:
+
+* `TargetAbilitySystem` = the target’s ASC
+* `TargetInteractionAbilityHandle` = the stored spec handle
+
+Then add the option to `OutOptions`.
+
+<figure><img src="../../.gitbook/assets/image (139).png" alt=""><figcaption><p>Populate Interaction Option</p></figcaption></figure>
+{% endtab %}
+
+{% tab title="C++ Example" %}
+Grant the ability (e.g., `BeginPlay` or setup method)
+
+```cpp
+if (HasAuthority() && TerminalAbility)
+{
+	FGameplayAbilitySpec Spec(TerminalAbility, 1);
+	StoredAbilityHandle = AbilitySystem->GiveAbility(Spec);
+}
+```
+
+Add to `OutOptions` in `GatherInteractionOptions`
+
+```cpp
+FInteractionOption Option;
+Option.Text = FText::FromString("Activate Console");
+Option.TargetAbilitySystem = AbilitySystem;
+Option.TargetInteractionAbilityHandle = StoredAbilityHandle;
+
+OutOptions.Add(Option);
+```
+{% endtab %}
+{% endtabs %}
+
+* **Why use this:**
+  * The object owns the cooldowns, timers, and replication
+  * Good for shared-world logic (e.g., terminals, generators, puzzle switches)
+
+{% hint style="info" %}
+If both fields are set (`InteractionAbilityToGrant` **and** `TargetAbilitySystem`/`Handle`), the system uses the **target ability path**.&#x20;
+{% endhint %}
+
+***
+
+### Use the Interaction Widget Class (Optional)
 
 Each `FInteractionOption` supports a custom widget via `InteractionWidgetClass`, but if you leave this blank, the system uses a powerful **default prompt widget**.
 
@@ -59,12 +150,9 @@ Each `FInteractionOption` supports a custom widget via `InteractionWidgetClass`,
 
 You can provide your own widget if you need specialized visuals, but the default covers most use cases elegantly.
 
-> **\[Screenshot Placeholder #3: Default prompt in action in-game]**\
-> Show an in-game shot of the default prompt above an object, e.g., “Hold E to Open”.
-
 ***
 
-### 4. Customize Focus & Proximity (Optional)
+### Customize Focus & Proximity (Optional)
 
 You can implement these interface functions for cosmetic feedback:
 
@@ -77,33 +165,21 @@ Example use cases:
 * Show an outline when nearby
 * Play a sound or animation
 
-> These functions do **not** affect functionality — they are purely visual.
-
-***
-
-### 5. Advanced: Use a Target Ability
-
-If you want the interaction to trigger a specific ability on another object (e.g., a console activating a door), use these properties in your `FInteractionOption`:
-
-* `TargetAbilitySystem` — The ASC that owns the logic.
-* `TargetInteractionAbilityHandle` — The ability spec to trigger.
-
-You can use the `CustomizeInteractionEventData` function to redirect the target in the payload, allowing full flexibility.
-
-> Example: The console is the interactable, but it uses `CustomizeInteractionEventData` to redirect the payload to a door actor and trigger the door-opening ability.
+{% hint style="info" %}
+These functions do **not** affect functionality, they are purely visual.
+{% endhint %}
 
 ***
 
 ### Summary Checklist
 
-| Step                                  | Required?                  | Description                           |
-| ------------------------------------- | -------------------------- | ------------------------------------- |
-| Add `IInteractableTarget`             | Yes                        | Marks actor as interactable           |
-| Implement `GatherInteractionOptions`  | Yes                        | Define what the interaction does      |
-| Set `Text` and ability options        | Yes                        | Provide UI text and interaction logic |
-| Use default prompt                    | Optional (but recommended) | Great-looking and flexible            |
-| Add visuals in `SetFocused`, `Nearby` | Optional                   | Cosmetic enhancements                 |
-| Use ability redirection               | Advanced                   | For complex world-driven logic        |
+* [ ] Added `IInteractableTarget` to your actor or component
+* [ ] Implemented `GatherInteractionOptions`
+* [ ] Chose one of:
+  * [ ] Set `InteractionAbilityToGrant` to grant ability to the player
+  * [ ] **OR** set `TargetAbilitySystem` + `TargetInteractionAbilityHandle` to trigger logic on the object
+* [ ] (Optional) Implemented visual feedback (`Nearby`, `SetFocused`, etc.)
+* [ ] (Optional) Customized prompt with widget class and/or anchor
 
 ***
 

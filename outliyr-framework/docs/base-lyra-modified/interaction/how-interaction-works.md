@@ -4,33 +4,70 @@ This section explains the full flow of the Lyra Interaction System — how it de
 
 ***
 
-### 1. Detection: Finding Interactable Objects
+### Detection: Finding Interactable Objects
 
-The system uses one of two scanning methods to find nearby or focused interactables:
+The system uses  two scanning methods to find nearby or focused interactables:
 
-#### a. Proximity-Based (Overlap Sphere)
+* **`UAbilityTask_GrantNearbyInteraction`**
+  * **Scan type:** Sphere overlap using `Lyra_TraceChannel_Interaction`, run every `InteractionScanRate` seconds
+  * **Runs on:** Server and owning client
+  * **Purpose:**
+    * Grants interaction abilities to the player when nearby actors request them
+    * Triggers cosmetic events (`Nearby` / `NoLongerNearby`) on those actors
+* **`UAbilityTask_WaitForInteractableTargets_SingleLineTrace`** (a subclass of `WaitForInteractableTargets`)
+  * **Scan type:** Camera-based line trace using a collision profile (not an object channel)
+  * **Runs on:** Owning client only
+  * **Purpose:**
+    * Identifies which interactable the player is currently looking at
+    * Gathers and filters available interaction options
+    * Pushes valid options to the UI or to an interaction-choosing system
 
-Handled by `UAbilityTask_GrantNearbyInteraction`. It continuously performs a sphere overlap around the player to detect actors implementing `IInteractableTarget`.
+#### How the scans work together:
 
-* Ideal for ambient interactables like loot, terminals, or pickup zones.
-
-#### b. Line Trace-Based (Raycast)
-
-Handled by `UAbilityTask_WaitForInteractableTargets_SingleLineTrace`. It uses a trace from the player’s camera to detect objects directly in front of them.
-
-* Useful for more intentional or directed interactions like aiming at a door.
-
-Both methods search for actors or components that implement the `IInteractableTarget` interface.
+* The **overlap scan is a core part of the interaction system** — it is responsible for granting abilities to the player so they can interact. If it doesn't run (or fails to detect something), the player won’t receive the ability, and the trace system won’t consider that interaction valid.
+* The **line trace is responsible for determining the current focus target** — it decides what the player is trying to interact with when pressing the interaction input.
+* In some cases, an interaction may be set up to **trigger an ability directly on the target actor’s Ability System**. In that case, no ability is granted to the player, and the overlap scan doesn’t play a functional role, but it’s still active and part of the system's design. _(See “_[_Ability Assignment_](how-interaction-works.md#ability-assignment-two-approaches)_” below for how this works in detail.)_
+* **Key takeaway:** Both scans are part of the complete interaction pipeline. The overlap grants interaction capabilities; the trace resolves the current target. If either is disabled or misconfigured, interactions will fail.
 
 ***
 
-### 2. Option Gathering
+### Option Gathering
 
-Once interactables are detected, the system queries them using:
+Once interactables are detected, the system queries them using the interface(`IInteractableTarget`) function:
 
 ```cpp
 void GatherInteractionOptions(const FInteractionQuery& InteractQuery, TArray<FInteractionOption>& OutOptions);
 ```
+
+{% tabs %}
+{% tab title="Blueprint" %}
+<figure><img src="../../.gitbook/assets/image (132).png" alt=""><figcaption><p>B_ExtractionHero Lootable Dead Body Example</p></figcaption></figure>
+{% endtab %}
+
+{% tab title="C++" %}
+```cpp
+void AMyCollectableActor::GatherInteractionOptions_Implementation(
+    const FInteractionQuery& InteractQuery,
+    TArray<FInteractionOption>& OutOptions)
+{
+    FInteractionOption Option;
+
+    // Set the label that will be shown in the interaction widget
+    Option.Text = FText::FromString(TEXT("Pick up Gold Coin"));
+
+    // Reference to the ability this interaction will trigger
+    // (assumed to be set in Blueprint defaults)
+    Option.InteractionAbilityToGrant = PickupAbility;
+
+    // Optional: specify a widget class or anchor component
+    Option.InteractionWidgetClass = InteractionWidgetClass;
+    Option.InteractionWidgetComponent = WidgetAnchor;
+
+    OutOptions.Add(Option);
+}
+```
+{% endtab %}
+{% endtabs %}
 
 Each interactable can return multiple `FInteractionOption`s that describe what interactions are available and how they behave.
 
@@ -43,43 +80,37 @@ These options contain:
 
 ***
 
-### 3. Ability Assignment: Two Approaches
+### Ability Execution Paths
 
-The `FInteractionOption` struct supports **two distinct modes** of triggering an interaction:
+When an interaction option is triggered, the ability runs in **one** of two places:
 
-#### **Option 1: Grant Ability to Player**
+**Player ASC (ability granted to the player)**
 
-* Set `InteractionAbilityToGrant` to a valid `UGameplayAbility` class.
-* This ability is **granted to the player** temporarily while they are near the interactable.
-* When the player activates the interaction input (e.g., presses "E"), the granted ability runs on the **player’s** Ability System Component.
+* If `InteractionAbilityToGrant` is set, the ability is temporarily granted to the player via the overlap scanner. When the player interacts, that ability is activated on their Ability System Component.
+* **Use this when:**
+  * The logic should run on the player (inventory, UI, pickups)
+  * Each player has their own context for the interaction
+* **Common examples:**
+  * Loot pickups
+  * UI popups
+  * Inventory actions
+  * “Press E to interact” doors or triggers
 
-**Use case:**\
-Player loots an item, opens a UI, or interacts with an object using their own logic.
+**Target ASC (ability lives on the interactable)**
 
-***
-
-#### **Option 2: Trigger Ability on Target Actor**
-
-* Set both:
-  * `TargetAbilitySystem` to the **target’s ASC** (e.g., a door or machine).
-  * `TargetInteractionAbilityHandle` to the **specific ability spec handle** on that ASC.
-
-When the player interacts, the system uses `TriggerAbilityFromGameplayEvent()` to activate the ability directly on the **target**, not the player.
-
-**Use case:**\
-Player presses a wall switch that triggers an ability on a separate actor (e.g., opening a distant gate).
-
-> This pattern supports flexible interactions where the interactable object isn’t the thing performing the logic — a common need in level scripting or puzzle mechanics.
-
-***
-
-#### Important:
-
-If neither of these two pathways is properly configured, the interaction **won’t do anything**. The system does **not guess** what ability to trigger — it relies entirely on what is explicitly defined in the `FInteractionOption`.
+* If `TargetAbilitySystem` and `TargetInteractionAbilityHandle` are set, the system sends a gameplay event directly to the interactable’s ASC, activating the specified ability handle.
+* **Use this when:**
+  * The object owns persistent gameplay state
+  * The effect needs to be shared or centralized
+* **Common examples:**
+  * Turrets with power states or cooldowns
+  * Terminals with shared timers
+  * Generators that apply team-wide buffs
+  * Puzzle nodes or boss triggers
 
 ***
 
-### 4. Event Payload Customization
+### Event Payload Customization
 
 Before triggering the ability, the system constructs an `FGameplayEventData` payload. This includes:
 
@@ -100,18 +131,18 @@ This enables powerful behaviors like:
 
 ***
 
-### 5. Triggering the Interaction
+### Triggering the Interaction
 
-When the player chooses to interact:
+When the player chooses to interact, the system executes the selected interaction option in one of two ways:
 
-* If using **Option 1**: The granted ability is activated on the player.
-* If using **Option 2**: The system sends the event to the defined `TargetAbilitySystem` and triggers the ability using the `TargetInteractionAbilityHandle`.
+* If the option specifies an ability that was granted to the player (via the overlap scan), that ability is activated on the player’s Ability System Component.
+* If the option is configured to trigger an ability on the interactable itself, the system sends a gameplay event to the target’s Ability System Component and activates the specified ability handle.
 
-This interaction can now run its own logic, trigger animations, modify state, or anything else a GAS ability would typically do.
+In both cases, the interaction runs using standard Gameplay Ability System (GAS) logic — enabling animations, state changes, effects, UI updates, or any other gameplay behavior defined by the ability.
 
 ***
 
-### 6. Visual Feedback
+### Visual Feedback
 
 As a final layer, the system provides cosmetic interaction feedback:
 
@@ -128,17 +159,30 @@ This UI is client-side only and purely cosmetic, ensuring no unintended replicat
 ```mermaid fullWidth="false"
 flowchart TD
     A[Player]
-    B["Detect Interactables (Overlap or Trace)"]
-    C["Gather Interaction Options from IInteractableTarget"]
-    D1["Grant Ability to Player"]
-    D2["Use Target ASC and Ability Handle"]
-    E1["Player Activates Ability"]
-    E2["System Triggers Ability via Gameplay Event"]
-    F["Run Logic on Player or Target"]
+    
+    subgraph Detection
+        B1["Overlap Scan (GrantNearbyInteraction)"]
+        B2["Line Trace (WaitForInteractableTargets)"]
+    end
 
-    A --> B --> C
-    C --> D1 --> E1 --> F
-    C --> D2 --> E2 --> F
+    B1 --> C1["Grant Abilities to Player"]
+    B1 --> C2["Call Nearby/NoLongerNearby (cosmetics)"]
+
+    B2 --> D["Hit Detection"]
+    D --> E["Gather Interaction Options from IInteractableTarget"]
+    E --> F["Filter Valid Options"]
+
+    A -->|Player presses interact input| G["Trigger Selected Interaction Option"]
+
+    G --> H1["If Player Has Ability → Activate on Player ASC"]
+    G --> H2["If Option Targets External ASC → Trigger via Event"]
+
+    H1 --> I["Gameplay Logic Executes"]
+    H2 --> I
+
+    style A fill:#f9f,stroke:#333,stroke-width:1px
+    style Detection fill:#eee,stroke:#aaa,stroke-width:1px
+
 ```
 
 ***

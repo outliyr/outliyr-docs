@@ -16,61 +16,15 @@ The interaction system is entirely opt-in and driven by gameplay tags, interface
 
 ### How the Interaction System Works
 
-#### Core Concept
+The interaction system enables players to interact with world objects through a coordinated series of steps:
 
-At its core, this system allows the player to interact with objects in the world by:
-
-1. **Detecting nearby or focused interactable objects**
-2. **Querying those objects for available interactions**
-3. **Optionally granting abilities to the player for those interactions**
-4. **Triggering the interaction, activating an ability on either the player or the object**
-
-***
-
-### Interaction Flow
-
-#### 1. **Detection**
-
-Detection happens through two approaches:
-
-* **Proximity Scan:** Using sphere overlaps (handled by `UAbilityTask_GrantNearbyInteraction`)
-* **Line Trace Scan:** Using ray tracing (handled by `UAbilityTask_WaitForInteractableTargets_SingleLineTrace`)
-
-Both tasks search for actors or components that implement the `IInteractableTarget` interface.
-
-#### 2. **Option Querying**
-
-Once an interactable is detected, the system queries it using `GatherInteractionOptions`, passing in an `FInteractionQuery` that contains contextual info like the player, controller, etc.
-
-Each interactable can return one or more `FInteractionOption`s, which define:
-
-* The ability to trigger
-* Display text and widgets
-* Target ability systems
-* Hold duration
-* location to spawn the widget
-
-These options are then filtered and passed to the interaction UI system.
-
-#### 3. **Ability Granting**
-
-If the `FInteractionOption` includes an `InteractionAbilityToGrant`, that ability is granted to the player temporarily while they remain nearby.
-
-This is done via GAS and allows the player to press an input (e.g. "Interact") to trigger the granted ability.
-
-**Key point:**
-
-* If the interaction is **initiated by the player**, the granted ability is activated by the player’s own Ability System Component.
-* If the interaction is **owned by the target**, the ability is triggered on the target’s Ability System Component instead.
-
-#### 4. **Triggering the Interaction**
-
-When the player chooses to interact (via input), the granted ability (typically `ULyraGameplayAbility_Interact`) performs the following:
-
-* Takes the current focused interaction option
-* Sends a `FGameplayEventData` with the tag `TAG_Ability_Interaction_Activate`
-* Triggers the target ability (on the player or target) using GAS
-* Optionally allows the interactable to modify the event payload using `CustomizeInteractionEventData`
+* **Detect interactable objects**, using both:
+  * A sphere overlap (for nearby objects that may grant abilities)
+  * A line trace (for focused/aimed-at objects that determine current options)
+* **Query detected objects** for available interaction options via the `IInteractableTarget` interface
+* **Grant abilities to the player**, if required by the interaction (e.g., proximity-based loot or terminals)
+* **Filter and display valid interaction options** based on current focus and ability availability
+* **Trigger the selected interaction**, activating an ability either on the player or on the target object
 
 ***
 

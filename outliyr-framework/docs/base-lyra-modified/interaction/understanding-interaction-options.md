@@ -4,44 +4,40 @@
 
 This page breaks down how to use `FInteractionOption` effectively and how each property contributes to your interaction's behavior or appearance.
 
+<figure><img src="../../.gitbook/assets/image (141).png" alt="" width="335"><figcaption></figcaption></figure>
+
 ***
 
-### 1. Choosing the Interaction Behavior
+### Choosing the Interaction Behavior
 
-Each `FInteractionOption` must define **how** the interaction is executed. There are two distinct approaches — **you only need one**, not both.
+Each `FInteractionOption` must define **how** the interaction is executed. There are two distinct approaches, **you only need one**, not both.
 
-#### Option A: Grant Ability to Player
+#### Option A: Run Ability on the Player
 
 ```cpp
 InteractionAbilityToGrant = YourGameplayAbilityClass;
 ```
 
-* This grants the ability to the player’s Ability System when they are near the object.
-* The player activates the ability using input (e.g., pressing "E").
-* The ability runs on the **player** and can contain logic like opening UI, modifying inventory, or triggering animations.
+**What happens:**
 
-**When to use:**
-
-* The player is doing the interaction directly (e.g., picking up an item).
-* You want the logic to live on the player.
+* The ability is granted to the player’s ASC via the overlap scanner
+* When the player presses the interact input, the ability is activated on their own ASC
+* Logic, effects, and UI run on the player
 
 ***
 
-#### Option B: Trigger Ability on Target
+#### Option B: Run Ability on the Interactable
 
 ```cpp
-TargetAbilitySystem = DoorActor->GetAbilitySystemComponent();
-TargetInteractionAbilityHandle = HandleYouStoredElsewhere;
+TargetAbilitySystem = Interactable->GetAbilitySystemComponent();
+TargetInteractionAbilityHandle = AbilitySpecHandleYouStored;
 ```
 
-* This triggers an ability that already exists on another actor’s ASC.
-* You must provide both the ASC and a valid ability handle.
-* The system uses `TriggerAbilityFromGameplayEvent` to activate the ability on the **target**, not the player.
+**What happens:**
 
-**When to use:**
-
-* You want the interaction to control external logic (e.g., a switch activating a door).
-* The logic lives outside the player (in the world).
+* The player triggers an ability that already exists on the target's ASC
+* The system uses `TriggerAbilityFromGameplayEvent` to run the ability on the target
+* The logic executes on the interactable object's ASC, not the player
 
 {% hint style="warning" %}
 If neither of these is set correctly, the interaction will appear but do nothing.
@@ -63,8 +59,6 @@ These fields define what the interaction prompt says:
 
 These are displayed in the **default prompt UI**, or can be shown in custom widgets.
 
-> **\[Screenshot Placeholder #1: Default interaction prompt with text + subtext]**
-
 ***
 
 ### 3. Hold Duration
@@ -85,8 +79,6 @@ The default prompt UI shows a radial timer when a hold is required.
 * Looting long items
 * Interacting with heavy machinery
 * Progress-based interactions
-
-> **\[Screenshot Placeholder #2: In-game hold-to-interact prompt with timer filling]**
 
 ***
 
@@ -121,29 +113,50 @@ This determines **where in the world** the widget is attached.
 
 This is helpful when the interactable is a small part of a large actor (e.g., a lever on a wall).
 
-> **\[Screenshot Placeholder #3: UI prompt anchored to a specific scene component]**
-
 ***
 
 ### 5. Example Use Case (Full Setup)
 
 Here’s an example `FInteractionOption` configured for a lootable chest:
 
+{% tabs %}
+{% tab title="Interaction run on player" %}
 ```cpp
 FInteractionOption ChestOption;
 ChestOption.Text = FText::FromString("Open Chest");
-ChestOption.SubText = FText::FromString("Hold to Search");
 ChestOption.InteractionTime = 2.5f;
 ChestOption.InteractionAbilityToGrant = UGA_OpenChest::StaticClass();
-ChestOption.InteractionWidgetComponent = ChestLidComponent;
+// scene component
+ChestOption.InteractionWidgetComponent = InteractionWidgetComponent;
 ```
 
 This will:
 
-* Show “Hold E to Open Chest”
+* Show “Open Chest”
 * Require the player to hold for 2.5 seconds
 * Trigger a gameplay ability on the player
-* Display the prompt at the chest lid
+* Display the prompt at the same location of the `InteractionWidgetComponent` in the viewport
+{% endtab %}
+
+{% tab title="Interaction run on interactable" %}
+```cpp
+FInteractionOption LargeMachineBossOption;
+LargeMachineBossOption.Text = FText::FromString("Scramble Systems");
+LargeMachineBossOption.InteractionTime = 6.5f;
+LargeMachineBossOption.TargetAbilitySystem = GetAbilitySystemComponent();
+LargeMachineBossOption.TargetInteractionAbilityHandle = ScrambleInteractionAbilityHandle;
+// scene component
+LargeMachineBossOption.InteractionWidgetComponent = TerminalInteractionWidgetComponent;
+```
+
+This will:
+
+* Show “Scramble Systems”
+* Require the player to hold for 6.5 seconds
+* Trigger a gameplay ability on the LargeMachineBoss
+* Display the prompt at the same location of the `TerminalInteractionWidgetComponent` in the viewport
+{% endtab %}
+{% endtabs %}
 
 ***
 

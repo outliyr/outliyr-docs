@@ -1,12 +1,12 @@
 # Extending the Lyra Interaction System
 
-The Lyra Interaction System is built to be modular and opt-in. Once you're comfortable using `FInteractionOption`, creating interactables, and customizing UI prompts, you may want to go further — adding new interaction types, altering the behavior pipeline, or integrating other systems.
+The Lyra Interaction System is built to be modular and opt-in. Once you're comfortable using `FInteractionOption`, creating interactables, and customizing UI prompts, you may want to go further, adding new interaction types, altering the behavior pipeline, or integrating other systems.
 
 This page outlines key extension points and examples of how to push the system further without breaking its modularity.
 
 ***
 
-### 1. Adding New Interaction Types
+### Adding New Interaction Types
 
 Instead of returning a single `FInteractionOption` from `GatherInteractionOptions`, an actor can return **multiple distinct options**, each representing a different type of interaction.
 
@@ -20,7 +20,7 @@ You can use gameplay tags or gameplay state to conditionally enable/disable cert
 
 ***
 
-### 2. Conditional Logic in `GatherInteractionOptions`
+### Conditional Logic in `GatherInteractionOptions`
 
 You can dynamically generate interaction options based on:
 
@@ -40,12 +40,12 @@ You can also omit returning any options if the actor shouldn’t be interactable
 
 ***
 
-### 3. Customizing the Event Payload
+### Customizing the Event Payload
 
-To modify what happens during the interaction — or redirect it to another actor — override:
+To modify what happens during the interaction, or redirect it to another actor, override:
 
 ```cpp
-cppCopyEditvoid CustomizeInteractionEventData(const FGameplayTag& EventTag, FGameplayEventData& InOutEventData)
+void CustomizeInteractionEventData(const FGameplayTag& EventTag, FGameplayEventData& InOutEventData)
 ```
 
 #### Use cases:
@@ -58,7 +58,7 @@ This is your hook to customize GAS behavior at runtime.
 
 ***
 
-### 4. Creating Specialized Interaction Widgets
+### Creating Specialized Interaction Widgets
 
 You can create unique UMG widgets for different interaction types or categories. These widgets:
 
@@ -72,11 +72,13 @@ You can create unique UMG widgets for different interaction types or categories.
 * Widgets that show durability or fuel levels
 * Contextual button prompts based on platform or input device
 
-> **Tip:** Use gameplay tags on the interaction option or actor to select different widget classes dynamically.
+{% hint style="success" %}
+Use gameplay tags on the interaction option or actor to select different widget classes dynamically.
+{% endhint %}
 
 ***
 
-### 5. Integrating With Other Systems
+### Integrating With Other Systems
 
 Because interactions use GAS and gameplay events, they integrate well with:
 
@@ -89,12 +91,12 @@ You can build your own `UGameplayAbility` subclasses that encapsulate the specif
 
 ***
 
-### 6. Creating Interaction Menus
+### Creating Interaction Menus
 
 In cases where multiple interactions are possible, you can present the options in a **custom menu**. To support this, implement the `IInteractionInstigator` interface on your pawn or controller:
 
 ```cpp
-cppCopyEditFInteractionOption ChooseBestInteractionOption(const FInteractionQuery& Query, const TArray<FInteractionOption>& Options);
+FInteractionOption ChooseBestInteractionOption(const FInteractionQuery& Query, const TArray<FInteractionOption>& Options);
 ```
 
 This allows you to:
@@ -103,11 +105,13 @@ This allows you to:
 * Select the most contextually relevant option
 * Filter based on custom rules
 
-> This approach is ideal for multi-purpose terminals, NPCs, or densely interactive areas.
+{% hint style="info" %}
+This approach is ideal for multi-purpose terminals, NPCs, or densely interactive areas.
+{% endhint %}
 
 ***
 
-### 7. Using Transient Gameplay Tags
+### Using Gameplay Tags
 
 If your interaction options need to react to gameplay state or other temporary data, consider attaching gameplay tags to:
 
@@ -115,11 +119,11 @@ If your interaction options need to react to gameplay state or other temporary d
 * The interactable’s ASC
 * The `FGameplayEventData` payload
 
-This allows your GAS abilities to branch and react cleanly to context (e.g., “Player.HasHackingTool” or “Interaction.RequiresClearanceLevel.2”).
+This allows your GAS abilities to branch and react cleanly to context (e.g., “`Player.HasHackingToo`l” or “`Interaction.RequiresClearanceLevel.2`”).
 
 ***
 
-### 8. Replacing the Core Ability
+### Replacing the Core Ability
 
 The system uses `ULyraGameplayAbility_Interact` by default to:
 

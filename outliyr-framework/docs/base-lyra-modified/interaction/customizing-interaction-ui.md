@@ -1,6 +1,6 @@
 # Customizing Interaction UI
 
-The interaction system supports powerful and flexible UI prompts for showing interaction options to the player. These UI prompts — whether the default or custom — are **spawned dynamically** based on the data provided by each interaction option.
+The interaction system supports powerful and flexible UI prompts for showing interaction options to the player. These UI prompts, whether the default or custom, are **spawned dynamically** based on the data provided by each interaction option.
 
 This page walks through how the interaction prompt widgets are created, what data they receive, and how you can create your own custom widget for unique visual styles or logic.
 
@@ -21,8 +21,6 @@ If no custom widget is provided, the system will use a **default interaction pro
 * Hold progress (for delayed interactions)
 
 This widget appears at a 3D world location (typically above the object or a specified component) and follows the camera using screen projection.
-
-> **\[Screenshot Placeholder #1: Default interaction prompt with key icon and progress fill]**
 
 ***
 
@@ -68,8 +66,7 @@ IIndicatorWidgetInterface
 
 This interface allows the widget to **bind and extract information** from the provided data object.
 
-> **\[Screenshot Placeholder #2: Blueprint of a widget implementing IIndicatorWidgetInterface]**\
-> (e.g., showing how it extracts the `Text` from the `InteractionOption`)
+<figure><img src="../../.gitbook/assets/image (143).png" alt=""><figcaption><p><strong>Blueprint of a widget implementing IIndicatorWidgetInterface and extracting information from InteractionDataObject</strong></p></figcaption></figure>
 
 ***
 
@@ -83,13 +80,11 @@ InteractionWidgetComponent
 
 If this is set in the `FInteractionOption`, the UI will anchor to that specific component. If not, it defaults to the root component of the interactable actor.
 
-This allows for precise control — for example:
+This allows for precise control, for example:
 
 * Attach to a button on a panel
 * Attach to a loot crate lid
 * Attach to a specific point on an NPC
-
-> **\[Screenshot Placeholder #3: Widget appearing over a component like a lever or button]**
 
 ***
 
