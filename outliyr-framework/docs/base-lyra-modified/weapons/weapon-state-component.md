@@ -71,60 +71,6 @@ This is the most complex feature of this component, handling the confirmation lo
 * **Logic:** It finds the owning Pawn's `ULyraEquipmentManagerComponent` and checks if the currently held item is a `ULyraRangedWeaponInstance`. If so, it calls `CurrentWeapon->Tick(DeltaTime)`.
 * **Purpose:** Provides a reliable place to ensure the held ranged weapon's `Tick` logic (for spread/heat updates) is executed while it's active.
 
-### Code Definition Reference
-
-```cpp
-// Structs for hit marker data (ScreenSpace, Unconfirmed, Batch) ...
-
-UCLASS(MinimalAPI)
-class ULyraWeaponStateComponent : public UControllerComponent
-{
-	GENERATED_BODY()
-public:
-	// ... Constructor ...
-
-	// Main Tick driving weapon updates and potentially UI polling
-	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	// RPC called by server to confirm hits to the originating client
-	UFUNCTION(Client, Reliable)
-	void ClientConfirmTargetData(uint16 UniqueId, bool bSuccess, const TArray<uint8>& HitReplaces);
-
-	// Called by server-side abilities to register potential hits
-	void AddUnconfirmedServerSideHitMarkers(const FGameplayAbilityTargetDataHandle& InTargetData, const TArray<FHitResult>& FoundHits);
-
-	// Called by damage application logic to update timing
-	void UpdateDamageInstigatedTime(const FGameplayEffectContextHandle& EffectContext);
-
-	// Called by UI to get confirmed hit locations for display
-	void GetLastWeaponDamageScreenLocations(TArray<FLyraScreenSpaceHitLocation>& WeaponDamageScreenLocations);
-
-	// Called by UI to time hit marker fading
-	double GetTimeSinceLastHitNotification() const;
-
-	// For debugging or info
-	int32 GetUnconfirmedServerSideHitMarkerCount() const;
-
-protected:
-	// Virtual hooks for customizing hit success logic
-	virtual bool ShouldShowHitAsSuccess(const FHitResult& Hit) const;
-	virtual bool ShouldUpdateDamageInstigatedTime(const FGameplayEffectContextHandle& EffectContext) const;
-
-	// Internal time update function
-	void ActuallyUpdateDamageInstigatedTime();
-
-protected:
-	// Timestamp for last confirmed damaging hit
-	double LastWeaponDamageInstigatedTime;
-
-	// Confirmed hits ready for UI display
-	TArray<FLyraScreenSpaceHitLocation> LastWeaponDamageScreenLocations;
-
-	// Server-side list of hits waiting for confirmation RPC
-	TArray<FLyraServerSideHitMarkerBatch> UnconfirmedServerSideHitMarkers;
-};
-```
-
 ***
 
 The `ULyraWeaponStateComponent` plays a crucial role in providing accurate client-side feedback like hit markers by managing the confirmation process between server-side actions and client display. It also serves as a potential driver for the held weapon's continuous updates.

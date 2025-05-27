@@ -175,7 +175,7 @@
   * [Weapon Instance](base-lyra-modified/weapons/weapon-instance.md)
   * [Range Weapon Instance](base-lyra-modified/weapons/range-weapon-instance.md)
   * [Weapon State Component](base-lyra-modified/weapons/weapon-state-component.md)
-  * [Reticle Configuration](base-lyra-modified/weapons/reticle-configuration.md)
+  * [Reticle Fragment](base-lyra-modified/weapons/reticle-fragment.md)
 * [UI](base-lyra-modified/ui/README.md)
   * [Lyra Indicator System](base-lyra-modified/ui/lyra-indicator-system/README.md)
     * [Core Concepts & Architecture](base-lyra-modified/ui/lyra-indicator-system/core-concepts-and-architecture.md)

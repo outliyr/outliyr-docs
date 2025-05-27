@@ -20,6 +20,8 @@ UObject
 
 It also implements the `ILyraAbilitySourceInterface`. Remember to set the `Instance Type` in the weapon's `ULyraEquipmentDefinition` to this class (or a Blueprint derived from it) for ranged weapons.
 
+<figure><img src="../../.gitbook/assets/image (144).png" alt=""><figcaption><p>Example of a Pistol Range Weapon Instance</p></figcaption></figure>
+
 ### Spread & Heat Mechanics
 
 This is a core feature of the ranged instance, simulating dynamic accuracy changes based on firing rate and player actions.
@@ -77,99 +79,6 @@ This instance implements `ILyraAbilitySourceInterface` to allow damage-applying 
   * Returns the combined damage multiplier based on the physical material hit.
 
 **Usage:** A Gameplay Effect used for dealing weapon damage would typically have calculations (like `GameplayEffectExecutionCalculation`) that get the `SourceObje ct` from the Effect Context, cast it to `ILyraAbilitySourceInterface`, call these functions with hit result data, and apply the returned multipliers to the base damage.
-
-### Code Definition Reference
-
-```cpp
-UCLASS(MinimalAPI)
-class ULyraRangedWeaponInstance : public ULyraWeaponInstance, public ILyraAbilitySourceInterface
-{
-	GENERATED_BODY()
-public:
-	// ... Constructor, Editor/Load functions ...
-
-	// --- Accessors for Firing Logic ---
-	UFUNCTION(BlueprintPure) int32 GetBulletsPerCartridge() const;
-	UFUNCTION(BlueprintPure) float GetCalculatedSpreadAngle() const;
-	UFUNCTION(BlueprintPure) float GetCalculatedSpreadAngleMultiplier() const;
-	UFUNCTION(BlueprintPure) bool HasFirstShotAccuracy() const;
-	UFUNCTION(BlueprintPure) float GetSpreadExponent() const;
-	UFUNCTION(BlueprintCallable) float GetMaxDamageRange() const;
-	UFUNCTION(BlueprintPure) float GetBulletTraceSweepRadius() const;
-	// --- End Accessors ---
-
-	// --- Spread / Heat Properties ---
-	UPROPERTY(EditAnywhere, Category = "Spread|Fire Params")
-	FRuntimeFloatCurve HeatToSpreadCurve;
-	UPROPERTY(EditAnywhere, Category="Spread|Fire Params")
-	FRuntimeFloatCurve HeatToHeatPerShotCurve;
-	UPROPERTY(EditAnywhere, Category="Spread|Fire Params")
-	FRuntimeFloatCurve HeatToCoolDownPerSecondCurve;
-	UPROPERTY(EditAnywhere, Category="Spread|Fire Params", meta=(ForceUnits=s))
-	float SpreadRecoveryCooldownDelay;
-	UPROPERTY(EditAnywhere, Category="Spread|Fire Params")
-	bool bAllowFirstShotAccuracy;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(ClampMin=0.1), Category="Spread|Fire Params")
-	float SpreadExponent;
-	// --- End Spread / Heat Properties ---
-
-	// --- Spread Multiplier Properties ---
-	UPROPERTY(EditAnywhere, Category="Spread|Player Params", meta=(ForceUnits=x))
-	float SpreadAngleMultiplier_Aiming;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Spread|Player Params", meta=(ForceUnits=x))
-	float SpreadAngleMultiplier_StandingStill;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Spread|Player Params")
-	float TransitionRate_StandingStill;
-	// ... other multipliers (Crouching, JumpingOrFalling) and thresholds ...
-	// --- End Spread Multiplier Properties ---
-
-	// --- Damage & Trace Config ---
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Weapon Config")
-	int32 BulletsPerCartridge;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Weapon Config", meta=(ForceUnits=cm))
-	float MaxDamageRange;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Weapon Config", meta=(ForceUnits=cm))
-	float BulletTraceSweepRadius;
-	UPROPERTY(EditAnywhere, Category = "Weapon Config")
-	FRuntimeFloatCurve DistanceDamageFalloff;
-	UPROPERTY(EditAnywhere, Category = "Weapon Config")
-	TMap<FGameplayTag, float> MaterialDamageMultiplier;
-	// --- End Damage & Trace Config ---
-
-private:
-	// --- Runtime State Variables ---
-	double LastFireTime;
-	float CurrentHeat;
-	float CurrentSpreadAngle;
-	bool bHasFirstShotAccuracy;
-	float CurrentSpreadAngleMultiplier;
-	float StandingStillMultiplier;
-	float JumpFallMultiplier;
-	float CrouchingMultiplier;
-	// --- End Runtime State ---
-
-public:
-	// --- Runtime Logic ---
-	virtual void Tick(float DeltaSeconds) override;
-	virtual void OnEquipped() override; // Initializes heat/spread
-	virtual void OnUnequipped() override;
-	UFUNCTION(BlueprintCallable) void AddSpread(); // Called by firing ability
-	// --- End Runtime Logic ---
-
-	//~ ILyraAbilitySourceInterface Implementation ~
-	virtual float GetDistanceAttenuation(...) const override;
-	virtual float GetPhysicalMaterialAttenuation(...) const override;
-	//~ End ILyraAbilitySourceInterface ~
-
-private:
-	// Internal helper functions for calculating ranges and updating state
-	void ComputeSpreadRange(...);
-	void ComputeHeatRange(...);
-	bool UpdateSpread(float DeltaSeconds);
-	bool UpdateMultipliers(float DeltaSeconds);
-	// ... Debug visualization properties/functions ...
-};
-```
 
 ***
 

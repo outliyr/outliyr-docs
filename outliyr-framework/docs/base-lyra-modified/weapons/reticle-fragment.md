@@ -1,4 +1,4 @@
-# Reticle Configuration
+# Reticle Fragment
 
 To provide appropriate aiming feedback to the player, weapons often require different User Interface **reticles** (crosshairs) depending on the weapon type and potentially its current state (hip fire vs. aiming down sights). The `UInventoryFragment_ReticleConfig` provides a simple, data-driven way to associate specific reticle widget classes with a weapon's definition.
 
@@ -59,23 +59,6 @@ This fragment primarily serves as a data source for a UI system responsible for 
 * Provides a clear, data-driven link between weapon definitions and their corresponding UI reticles.
 * Decouples specific reticle widget choices from the core UI framework code.
 * Allows designers to easily assign and change reticles by modifying Data Assets.
-
-### Code Definition Reference
-
-```cpp
-// Inventory Fragment used to configure the reticle used by a weapon.
-UCLASS()
-class UInventoryFragment_ReticleConfig : public ULyraInventoryItemFragment
-{
-	GENERATED_BODY()
-
-public:
-	// The list of reticle widgets associated with this weapon.
-	// UI systems can select from this list based on game state (e.g., aiming, hip-fire).
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Reticle)
-	TArray<TSubclassOf<ULyraReticleWidgetBase>> ReticleWidgets;
-};
-```
 
 ***
 

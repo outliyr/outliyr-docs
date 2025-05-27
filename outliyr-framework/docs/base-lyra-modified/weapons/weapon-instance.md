@@ -54,63 +54,6 @@ Compared to the base `ULyraEquipmentInstance`, `ULyraWeaponInstance` adds:
 * **Blueprint Subclassing:** Create Blueprints derived from `ULyraWeaponInstance` for specific weapon types that don't need complex C++ logic but might require unique configurations of `ApplicableDeviceProperties` or simple Blueprint logic in the `K2_` lifecycle events. Remember to set the `Instance Type` in the `ULyraEquipmentDefinition`.
 * **C++ Subclassing:** Create C++ classes derived from `ULyraWeaponInstance` (like `ULyraRangedWeaponInstance`) for weapons requiring more complex state management, custom C++ functions, or specific interfaces.
 
-### Code Definition Reference
-
-```cpp
-UCLASS(MinimalAPI)
-class ULyraWeaponInstance : public ULyraEquipmentInstance
-{
-	GENERATED_BODY()
-public:
-	// ... Constructor ...
-
-	//~ ULyraEquipmentInstance Overrides ~
-	virtual void OnEquipped() override;
-	virtual void OnUnequipped() override;
-	//~ End Overrides ~
-
-	// Interaction Timing
-	UFUNCTION(BlueprintCallable) void UpdateFiringTime();
-	UFUNCTION(BlueprintPure) float GetTimeSinceLastInteractedWith() const;
-
-	// Optional Tick for derived classes
-	UFUNCTION(BlueprintCallable) virtual void Tick(float DeltaSeconds);
-
-protected:
-	// Animation Layer Selection Data
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Animation)
-	FLyraAnimLayerSelectionSet EquippedAnimSet;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Animation)
-	FLyraAnimLayerSelectionSet UneuippedAnimSet;
-
-	// Input Device Properties to apply when held
-	UPROPERTY(EditDefaultsOnly, Instanced, BlueprintReadOnly, Category = "Input Devices")
-	TArray<TObjectPtr<UInputDeviceProperty>> ApplicableDeviceProperties;
-
-	// Animation Layer Selection Logic
-	UFUNCTION(BlueprintCallable, BlueprintPure=false, Category=Animation)
-	TSubclassOf<UAnimInstance> PickBestAnimLayer(bool bEquipped, const FGameplayTagContainer& CosmeticTags) const;
-
-	// Helper for Input Devices
-	UFUNCTION(BlueprintCallable) const FPlatformUserId GetOwningUserId() const;
-
-	// Death Delegate Handler
-	UFUNCTION() void OnDeathStarted(AActor* OwningActor);
-
-	// Internal Input Device Logic
-	void ApplyDeviceProperties();
-	void RemoveDeviceProperties();
-
-private:
-	// Handles for active device properties
-	UPROPERTY(Transient) TSet<FInputDevicePropertyHandle> DevicePropertyHandles;
-
-	// Timestamps for interaction tracking
-	double TimeLastEquipped = 0.0;
-	double TimeLastFired = 0.0;
-};
-```
-
 ***
 
 `ULyraWeaponInstance` provides essential weapon-centric extensions to the base equipment instance, handling animations, input device feedback, and basic interaction timing. It serves as the direct parent for more specialized weapon types like `ULyraRangedWeaponInstance`.
