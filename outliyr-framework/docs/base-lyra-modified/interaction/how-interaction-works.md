@@ -29,6 +29,10 @@ The system uses  two scanning methods to find nearby or focused interactables:
 * In some cases, an interaction may be set up to **trigger an ability directly on the target actor’s Ability System**. In that case, no ability is granted to the player, and the overlap scan doesn’t play a functional role, but it’s still active and part of the system's design. _(See “_[_Ability Assignment_](how-interaction-works.md#ability-assignment-two-approaches)_” below for how this works in detail.)_
 * **Key takeaway:** Both scans are part of the complete interaction pipeline. The overlap grants interaction capabilities; the trace resolves the current target. If either is disabled or misconfigured, interactions will fail.
 
+{% hint style="info" %}
+The interaction&#x20;
+{% endhint %}
+
 ***
 
 ### Option Gathering

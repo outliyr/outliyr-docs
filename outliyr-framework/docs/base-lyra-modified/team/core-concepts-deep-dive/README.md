@@ -1,4 +1,4 @@
-# Core Concepts
+# Core Concepts - Deep Dive
 
 Before diving into the managers and setup components, it's essential to understand the core building blocks that represent teams and team affiliation within the system. These concepts define how teams are identified, how actors belong to them, and how their visual identity is managed.
 
@@ -13,9 +13,9 @@ Before diving into the managers and setup components, it's essential to understa
    * While a simple ID identifies a team, replicated **`AInfo` actors** derived from `ALyraTeamInfoBase` represent the _existence_ and _shared state_ of a team within the game world.
    * These actors are spawned by the `ULyraTeamCreationComponent` (one set per team) and register themselves with the `ULyraTeamSubsystem`.
    * They typically hold team-wide replicated data, like:
-     * `TeamTags`: A `FGameplayTagStackContainer` for storing team-level state or flags.
+     * `TeamTags`: A `FGameplayTagStackContainer` for storing team-level state or flags.&#x20;
      * Display Assets (on the `ALyraTeamPublicInfo` subclass).
-   * Splitting into `ALyraTeamPublicInfo` and `ALyraTeamPrivateInfo` allows for potential future separation of publicly visible vs. privately replicated team data (though the current implementation might primarily use the public variant).
+   * Splitting into `ALyraTeamPublicInfo` and `ALyraTeamPrivateInfo` allows for potential future separation of publicly visible vs. privately replicated team data (though the current implementation primarily uses the public variant).
 3. **Team Membership (`ILyraTeamAgentInterface`):**
    * Actors that can _belong_ to a team (like `ALyraPlayerState`, potentially Pawns or Controllers) implement the `ILyraTeamAgentInterface`.
    * This interface (which extends the engine's `IGenericTeamAgentInterface`) provides the standard functions `SetGenericTeamId(FGenericTeamId ID)` and `GetGenericTeamId() const`.
@@ -29,8 +29,8 @@ Before diving into the managers and setup components, it's essential to understa
 
 * The `ULyraTeamCreationComponent` spawns `ALyraTeamInfoBase` actors based on configuration, assigning them unique **Team IDs**.
 * These Team Info actors register with the `ULyraTeamSubsystem`, making the team "exist" within the subsystem's registry.
-* The `ULyraTeamCreationComponent` (or other game logic) assigns a **Team ID** to actors implementing the **`ILyraTeamAgentInterface`**.
-* Gameplay systems query the **`ULyraTeamSubsystem`** using an actor reference. The subsystem uses the **Team Agent Interface** (or other means) to find the actor's **Team ID**.
+* The `ULyraTeamCreationComponent` assigns a **Team ID** to actors implementing the **`ILyraTeamAgentInterface`**.
+* Gameplay systems query the **`ULyraTeamSubsystem`** using an actor reference. The subsystem uses the **Team Agent Interface** to find the actor's **Team ID**.
 * The subsystem then uses the **Team ID** to look up the corresponding **`ALyraTeamInfoBase`** actor (specifically the Public info) to retrieve the associated **`ULyraTeamDisplayAsset`**.
 * Visual systems then use the **Team Display Asset** to apply colors and textures.
 

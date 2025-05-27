@@ -14,6 +14,8 @@ While the `ULyraTeamSubsystem` manages team information at runtime, the `ULyraTe
 
 This component is configured primarily through its properties, usually set within a Blueprint subclass or directly if added via a Game Feature Action's defaults.
 
+<figure><img src="../../.gitbook/assets/image (22).png" alt=""><figcaption><p>Setting up two teams with perspective colour mode on</p></figcaption></figure>
+
 * **`PerspectiveColorConfig` (`FLyraPerspectiveColorConfig`)**:
   * `bPerspectiveColorMode` (`bool`): If true, enables the Ally/Enemy color override system in the `ULyraTeamSubsystem`.
   * `AllyTeamDisplayAsset` (`TObjectPtr<ULyraTeamDisplayAsset>`): The display asset used for teammates when perspective mode is active.
@@ -26,6 +28,7 @@ This component is configured primarily through its properties, usually set withi
   * Optional map to assign specific `ULyraPawnData` to players based on their assigned team ID.
   * **Key (`uint8`):** The Team ID.
   * **Value (`TObjectPtr<ULyraPawnData>`):** The Pawn Data asset players on this team should use by default. If a team ID is not present in this map, players assigned to that team will use the `DefaultPawnData` from the `ULyraExperienceDefinition`.
+  * For more information on `ULyraPawnData`, see the [dedicated documentation page](../gameframework-and-experience/experience-primary-assets/lyrapawndata.md).
 * **`PublicTeamInfoClass` / `PrivateTeamInfoClass` (`TSubclassOf<...>`)**:
   * Specifies the exact classes to spawn for the team representation actors (defaults to `ALyraTeamPublicInfo` and `ALyraTeamPrivateInfo`). Allows customization if needed.
 
@@ -70,69 +73,6 @@ The component leverages the Experience loading lifecycle.
 * **Asymmetric Modes:** Configure teams and optionally assign different `ULyraPawnData` assets via the `TeamPawnData` map (e.g., Team 0 uses `PawnData_Attackers`, Team 1 uses `PawnData_Defenders`).
 * **Custom Assignment:** Subclass `ULyraTeamCreationComponent`, override `ServerAssignPlayerTeam`, and implement logic to assign teams based on party/squad information, player skill, or specific mode requirements.
 * **Perspective Colors:** Configure the `PerspectiveColorConfig` to enable Ally/Enemy visuals for competitive clarity.
-
-### Code Definition Reference
-
-```cpp
-// Config struct for perspective colors
-USTRUCT(BlueprintType) struct FLyraPerspectiveColorConfig { /* bool bPerspectiveColorMode; ULyraTeamDisplayAsset* Ally/Enemy Assets; */ };
-
-// Delegate for player assignment notification
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLyraPlayerTeamAssigned, AController*, NewPlayer);
-
-// GameState Component for team setup
-UCLASS(MinimalAPI, BlueprintType, Blueprintable)
-class ULyraTeamCreationComponent : public UGameStateComponent
-{
-	GENERATED_BODY()
-public:
-	// ... Constructor, IsDataValid, BeginPlay ...
-
-	// Delegate broadcast after a player is assigned a team by this component
-	UPROPERTY(BlueprintAssignable)
-	FOnLyraPlayerTeamAssigned OnPlayerTeamAssigned;
-
-private:
-	// Callback when experience is ready
-	void OnExperienceLoaded(const ULyraExperienceDefinition* Experience);
-
-protected:
-	// --- Configuration Properties ---
-	UPROPERTY(EditDefaultsOnly, Category = "Team Display")
-	FLyraPerspectiveColorConfig PerspectiveColorConfig;
-
-	UPROPERTY(EditDefaultsOnly, Category = Teams)
-	TMap<uint8, TObjectPtr<ULyraTeamDisplayAsset>> TeamsToCreate;
-
-	UPROPERTY(EditDefaultsOnly, Category = Teams)
-	TMap<uint8, TObjectPtr<ULyraPawnData>> TeamPawnData;
-
-	UPROPERTY(EditDefaultsOnly, Category=Teams)
-	TSubclassOf<ALyraTeamPublicInfo> PublicTeamInfoClass;
-	UPROPERTY(EditDefaultsOnly, Category=Teams)
-	TSubclassOf<ALyraTeamPrivateInfo> PrivateTeamInfoClass;
-	// --- End Configuration Properties ---
-
-#if WITH_SERVER_CODE
-protected:
-	// Core server-side logic for creation and assignment
-	virtual void ServerCreateTeams();
-	virtual void ServerAssignPlayersToTeams();
-	virtual void ServerChooseTeamForPlayer(ALyraPlayerState* PS);
-
-	// Customizable assignment logic (override this!)
-	virtual int32 ServerAssignPlayerTeam();
-
-private:
-	// Callback for newly initialized players
-	void OnPlayerInitialized(AGameModeBase* GameMode, AController* NewPlayer);
-	// Spawns TeamInfo actors for a single team
-	void ServerCreateTeam(int32 TeamId, ULyraTeamDisplayAsset* DisplayAsset);
-	// Helper for default balancing
-	int32 GetLeastPopulatedTeamID() const;
-#endif
-};
-```
 
 ***
 

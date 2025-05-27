@@ -18,10 +18,13 @@ In many game scenarios, especially those involving spectating, killcams, or repl
   * If `nullptr` or invalid, it implies the local user is viewing their own perspective.
 * **`SetCurrentViewer(APlayerState* NewViewer)`:**
   * **Action:** Updates the `CurrentViewer` pointer. Meant to be called by systems that change the player's viewpoint (e.g., starting/stopping spectating, entering/exiting a killcam).
-  * **Logic:**
-    1. Compares `NewViewer` with the current `CurrentViewer`.
-    2. If they are different, updates the `CurrentViewer` weak pointer.
-    3. Broadcasts the `OnViewerChanged` delegate.
+  *   **Logic:**
+
+      1. Compares `NewViewer` with the current `CurrentViewer`.
+      2. If they are different, updates the `CurrentViewer` weak pointer.
+      3. Broadcasts the `OnViewerChanged` delegate.
+
+      <figure><img src="../../../.gitbook/assets/image (17).png" alt="" width="375"><figcaption></figcaption></figure>
 * **`GetCurrentViewer()`:**
   * **Action:** Returns the currently tracked viewer `APlayerState`.
   * **Logic:**
@@ -34,10 +37,14 @@ In many game scenarios, especially those involving spectating, killcams, or repl
   * A multicast delegate (`DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnViewerChangedDelegate, APlayerState*, NewViewer)`) broadcast by `SetCurrentViewer` whenever the viewed player state changes.
   * **Purpose:** Allows other systems (especially UI) to subscribe and react immediately when the viewing perspective shifts. This could trigger UI layout changes, update information displays, or re-evaluate team colors/relationships.
 
+{% hint style="info" %}
+Directly binding to `OnViewerChanged` in Blueprints is discouraged. Instead, use the dedicated Async Action (`UAsyncAction_ObserveViewerTeam`) which provides a more Blueprint-friendly and reliable way to track perspective changes.
+{% endhint %}
+
 ### Usage Scenario (Spectating)
 
 1. **Start Spectating:** The local player activates spectator mode, targeting `Player B`.
-2. **Spectator System Calls:** The spectator system code (potentially a UI handler or a dedicated manager) gets the `ULyraTeamSubsystem` and calls `SetCurrentViewer(PlayerB_PlayerState)`.
+2. **Spectator System Calls:** The spectator system code gets the `ULyraTeamSubsystem` and calls `SetCurrentViewer(PlayerB_PlayerState)`.
 3. **Subsystem Updates:** The subsystem updates its internal `CurrentViewer` pointer to `PlayerB_PlayerState` and broadcasts `OnViewerChanged` with `PlayerB_PlayerState` as the parameter.
 4. **UI Reacts:** HUD elements listening to `OnViewerChanged` update to show Player B's health, ammo, name, etc.
 5. **Visual System Reacts:** Systems responsible for applying team colors call `GetEffectiveTeamDisplayAsset`. Inside this function:
@@ -52,7 +59,12 @@ In many game scenarios, especially those involving spectating, killcams, or repl
 ### Blueprint Access (`ULyraTeamStatics`)
 
 * **`GetCurrentViewer(WorldContextObject)`:** Blueprint wrapper for `ULyraTeamSubsystem::GetCurrentViewer()`.
+
+<figure><img src="../../../.gitbook/assets/image (19).png" alt="" width="201"><figcaption></figcaption></figure>
+
 * **`GetCurrentViewerTeam(WorldContextObject, ...)`:** Blueprint wrapper that calls `GetCurrentViewer` and then feeds the result into `FindTeamFromObject` to get the viewer's team ID and display asset easily.
+
+<figure><img src="../../../.gitbook/assets/image (20).png" alt="" width="240"><figcaption></figcaption></figure>
 
 ### Async Action (`UAsyncAction_ObserveViewerTeam`)
 
@@ -60,39 +72,7 @@ In many game scenarios, especially those involving spectating, killcams, or repl
 * Listens to both `ULyraTeamSubsystem::OnViewerChanged` and the `ILyraTeamAgentInterface::GetOnTeamIndexChangedDelegate()` of the _currently viewed_ PlayerState.
 * Outputs `OnViewerTeamChanged(bTeamSet, ObservedPS, TeamId)`. Includes logic to handle cases where the PlayerState might exist before its TeamID is assigned (briefly polling).
 
-### Code Definition Reference (Relevant Parts)
-
-```cpp
-// In ULyraTeamSubsystem:
-public:
-	/** Sets or clears who the local viewer is */
-	UFUNCTION(BlueprintCallable, Category = "Teams|Viewer")
-	UE_API void SetCurrentViewer(APlayerState* NewViewer);
-
-	/** Gets the current local viewer, falling back to local player if none set */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Teams|Viewer")
-	UE_API APlayerState* GetCurrentViewer();
-
-	/** Delegate called whenever the viewer changes. */
-	UPROPERTY(BlueprintAssignable, Category = "Teams|Viewer")
-	FOnViewerChangedDelegate OnViewerChanged;
-
-protected:
-	/** Who is currently being viewed by the local player? */
-	UPROPERTY() // Not replicated
-	TWeakObjectPtr<APlayerState> CurrentViewer;
-
-	// Helper to get local player state
-	UE_API APlayerState* GetLocalPlayerState() const;
-
-// In ULyraTeamStatics:
-public:
-	UFUNCTION(BlueprintCallable, Category="Teams|Viewer", meta=(WorldContext="WorldContextObject"))
-	static UE_API APlayerState* GetCurrentViewer(const UObject* WorldContextObject);
-
-	UFUNCTION(BlueprintCallable, Category="Teams|Viewer", meta=(WorldContext="WorldContextObject"))
-	static UE_API void GetCurrentViewerTeam(const UObject* WorldContextObject, bool& bIsPartOfTeam, int32& TeamId, ULyraTeamDisplayAsset*& DisplayAsset);
-```
+<figure><img src="../../../.gitbook/assets/image (21).png" alt="" width="287"><figcaption></figcaption></figure>
 
 ***
 

@@ -66,7 +66,7 @@ graph TD
 
 **Explanation:**
 
-1. The active Experience typically adds the `ULyraTeamCreationComponent` to the Game State.
+1. The active Experience typically adds a subclassed `ULyraTeamCreationComponent` to the Game State.
 2. The Creation Component reads its configuration (which teams to create, display assets, perspective settings).
 3. On the server, it spawns `ALyraTeamInfoBase` actors for each team and registers them with the `ULyraTeamSubsystem`.
 4. It assigns initial Team IDs to players/AI implementing `ILyraTeamAgentInterface`.
@@ -78,7 +78,7 @@ graph TD
 
 This documentation section explores the team systems in detail:
 
-1. **Core Concepts:** Delving into Team IDs, the Team Agent Interface, Team Info Actors, and Team Display Assets.
+1. **Core Concepts - Deep Dive:** Delving into Team IDs, the Team Agent Interface, Team Info Actors, and Team Display Assets.
 2. **Team Management (`ULyraTeamSubsystem`):** Explaining the subsystem's role in tracking teams, managing agents, handling queries, and managing perspective colors.
 3. **Team Creation & Assignment (`ULyraTeamCreationComponent`):** How teams are initially set up and players are assigned based on Experience configuration.
 4. **Utilities & Blueprint Integration:** Covering the `ULyraTeamStatics` library and the Async Action nodes for observing team changes in Blueprints.

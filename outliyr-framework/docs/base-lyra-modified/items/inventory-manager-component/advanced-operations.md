@@ -11,7 +11,7 @@ These functions help you find items or check quantities without necessarily modi
   * **Use Case:** Quickly checking if at least one item of a specific type exists, getting a reference to _an_ instance of that type (useful if instance-specific data isn't critical for the check).
   * **Returns:** The `ULyraInventoryItemInstance*` or `nullptr` if no match is found.
 
-<figure><img src="../../../.gitbook/assets/image (35).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (35) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 * `GetTotalItemCountByDefinition(TSubclassOf<ULyraInventoryItemDefinition> ItemDef) const`
   * **Action:** Iterates through the entire `InventoryList` and sums the `StackCount` of all entries whose `Instance` matches the provided `ItemDef`.
@@ -30,7 +30,7 @@ The [Item Query System](../item-query-system/) is preferred for tracking the amo
   * **Use Case:** Prerequisite checks for crafting, abilities, or quests ("Do I have at least 10 Iron Ore?").
   * **Returns:** `true` if the total count is met or exceeded, `false` otherwise. `OutItemInstances` is populated on success.
 
-<figure><img src="../../../.gitbook/assets/image (36).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (36) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 * `SearchForItems(TArray<FPickupTemplate> RequestedItems, TArray<ULyraInventoryItemInstance*>& OutItemInstances)`
   * **Action:** Checks if the inventory contains sufficient quantities of _multiple different item types_ as specified in the `RequestedItems` array (which contains `ItemDef` and required `StackCount` pairs).

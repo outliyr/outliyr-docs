@@ -51,64 +51,6 @@ The base class is subclassed to potentially separate replicated information base
 
 **Runtime Structure:** Typically, for each Team ID created by the `ULyraTeamCreationComponent`, _both_ a `ALyraTeamPublicInfo` and an `ALyraTeamPrivateInfo` actor are spawned and assigned the same `TeamId`. The `ULyraTeamSubsystem` stores pointers to both in its internal `FLyraTeamTrackingInfo` struct for that Team ID.
 
-### Code Definition Reference
-
-```cpp
-// Base class for replicated team information actors
-UCLASS(Abstract)
-class ALyraTeamInfoBase : public AInfo
-{
-	GENERATED_BODY()
-public:
-	ALyraTeamInfoBase(...);
-	int32 GetTeamId() const; // Returns TeamId
-
-	// Lifecycle & Registration
-	virtual void BeginPlay() override;
-	virtual void EndPlay(...) override;
-protected:
-	virtual void RegisterWithTeamSubsystem(ULyraTeamSubsystem* Subsystem);
-	void TryRegisterWithTeamSubsystem();
-private:
-	void SetTeamId(int32 NewTeamId); // Private, called by TeamCreationComponent
-	UFUNCTION() void OnRep_TeamId(); // Calls TryRegisterWithTeamSubsystem on clients
-
-public:
-	// Replicated container for team-wide tags/state
-	UPROPERTY(Replicated)
-	FGameplayTagStackContainer TeamTags;
-private:
-	// The unique ID for this team
-	UPROPERTY(ReplicatedUsing=OnRep_TeamId, meta=(AllowPrivateAccess=true))
-	int32 TeamId;
-};
-
-// Publicly replicated team info
-UCLASS()
-class ALyraTeamPublicInfo : public ALyraTeamInfoBase
-{
-	GENERATED_BODY()
-	// ... Constructor ...
-	ULyraTeamDisplayAsset* GetTeamDisplayAsset() const; // Accessor
-private:
-	UFUNCTION() void OnRep_TeamDisplayAsset(); // Calls TryRegisterWithTeamSubsystem
-	void SetTeamDisplayAsset(...); // Private, called by TeamCreationComponent
-
-	// Asset defining team visuals
-	UPROPERTY(ReplicatedUsing=OnRep_TeamDisplayAsset, meta=(AllowPrivateAccess=true))
-	TObjectPtr<ULyraTeamDisplayAsset> TeamDisplayAsset;
-};
-
-// Potentially privately replicated team info
-UCLASS()
-class ALyraTeamPrivateInfo : public ALyraTeamInfoBase
-{
-	GENERATED_BODY()
-	// ... Constructor ...
-	// Currently no additional members shown, pending Replication Graph implementation for privacy.
-};
-```
-
 ***
 
 Team IDs provide the simple numerical identification, while the `ALyraTeamInfoBase` derived actors provide the replicated world presence and state storage (like Team Tags and Display Assets) necessary for the team system to function within the networked environment. These actors act as the registration point and data source queried by the `ULyraTeamSubsystem`.

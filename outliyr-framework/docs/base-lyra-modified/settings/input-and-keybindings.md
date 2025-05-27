@@ -72,7 +72,7 @@ To add a new action that players can rebind, or to modify an existing one, you g
        * **Display Name:** Set the text that will appear in the settings menu (e.g., "Interact," "Use Item").
        * **Display Category:** Assign a category (e.g., "General," "Combat") to group it with other similar actions in the settings UI.
 
-       <figure><img src="../../.gitbook/assets/image.png" alt=""><figcaption><p>Setting the Player Mappable Key Settings in an input action</p></figcaption></figure>
+       <figure><img src="../../.gitbook/assets/image (36).png" alt=""><figcaption><p>Setting the Player Mappable Key Settings in an input action</p></figcaption></figure>
 
 **Overriding Mappable Setting for Input Mapping Context**
 
@@ -99,7 +99,7 @@ To override the default mappable settings in an IMC:
         * `IgnoreSettings` – to disable all settings customization for this specific mapping (useful for internal or hidden mappings).
       * **Assign a custom `PlayerMappableKeySettings` data asset** to the mapping if using `OverrideSettings`. This allows you to redefine how the action appears in the settings UI for this specific context.
 
-    <figure><img src="../../.gitbook/assets/image (3).png" alt=""><figcaption><p>Overriding IA_QuickSlot1 in ShooterBase IMC</p></figcaption></figure>
+    <figure><img src="../../.gitbook/assets/image (3) (1).png" alt=""><figcaption><p>Overriding IA_QuickSlot1 in ShooterBase IMC</p></figcaption></figure>
 
 #### Ensuring Actions Are Functional and Discoverable
 

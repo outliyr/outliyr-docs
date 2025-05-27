@@ -51,7 +51,7 @@ These functions are the main entry points for modifying inventory contents and s
   * **Use Case:** Picking up world items defined by templates, crafting, granting items.
   * **Returns:** The number of items that _could not_ be added (0 if all were added successfully).
 
-<figure><img src="../../../.gitbook/assets/image (28).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (28) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 * `TryAddItemInstance(ULyraInventoryItemInstance* ItemInstance, TArray<ULyraInventoryItemInstance*>& OutStackedItems, TArray<ULyraInventoryItemInstance*>& OutNewItems)`
   * **Action:** The **primary way to add an existing item instance**. Attempts to add the `ItemInstance` (and its current stack count) to the inventory.
@@ -62,21 +62,21 @@ These functions are the main entry points for modifying inventory contents and s
   * **Use Case:** Moving items between inventories where the instance should ideally merge or be added directly.
   * **Returns:** The number of items from the original `ItemInstance`'s stack that _could not_ be added. Returns -1 if the input `ItemInstance` was invalid.
 
-<figure><img src="../../../.gitbook/assets/image (30).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (30) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 * `RemoveItemInstance(ULyraInventoryItemInstance* ItemInstance)`
   * **Action:** Removes the `FLyraInventoryEntry` associated with the given ItemInstance from the `InventoryList`. Updates total weight and item count. Calls RemovedFromInventory on the item's transient fragments. **Does NOT destroy the `ItemInstance` UObject itself.**
   * **Use Case:** Moving an item out of this inventory to another location (another inventory, the world, equipment slot) where the instance needs to persist.
   * **Returns:** The `ULyraInventoryItemInstance*` that was removed, or nullptr if not found.
 
-<figure><img src="../../../.gitbook/assets/image (31).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (31) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 * `DestroyItemInstance(ULyraInventoryItemInstance* ItemInstance)`
   * **Action:** Similar to `RemoveItemInstance`, but additionally calls `DestroyTransientFragment` on the item's transient fragments before removing the entry. This signifies the item is being consumed or permanently deleted. **It still does NOT destroy the UObject immediately** (garbage collection handles that), but it signals final cleanup for fragment data.
   * **Use Case:** Consuming a potion, firing the last bullet from a non-reusable magazine item, deleting items via UI.
   * **Returns:** The `ULyraInventoryItemInstance*` that was processed for destruction, or nullptr if not found.
 
-<figure><img src="../../../.gitbook/assets/image (33).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (33) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 * `RemoveItem(ULyraInventoryItemInstance* ItemInstance, int32 Amount, bool bRemoveEntireStack, bool bDestroy = false)`
   * **Action:** More granular removal. Removes a specific Amount from the stack associated with `ItemInstance`.
@@ -86,12 +86,12 @@ These functions are the main entry points for modifying inventory contents and s
   * **Use Case:** Splitting stacks, consuming partial amounts.
   * **Returns:** A new temporary/duplicate instance representing the removed amount if `bDestroy` is false and only a partial amount was removed. Returns the original instance if the entire stack was removed and bDestroy is false. Returns nullptr if bDestroy is true or the item wasn't found.
 
-<figure><img src="../../../.gitbook/assets/image (32).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (32) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 * `EmptyInventory(bool bDestroyItems = true)`
   * **Action:** Removes all entries from the InventoryList. If `bDestroyItems` is true, it calls `DestroyTransientFragment` on all items before clearing; otherwise, it just clears the list (leaving the instances intact for potential transfer). Resets total Weight and ItemCount to 0. Stops subobject replication for removed items.
 
-<figure><img src="../../../.gitbook/assets/image (34).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (34) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 {% hint style="danger" %}
 _(**Do not confuse**_ _`AddItemDefinition` and `AddItemInstance` with the `TryAdd...` functions. The former functions are internal functions that directly add the items to the inventories with any checks. They are called by the `TryAdd...` functions but are generally not the primary external entry points for adding items due to lack of stacking/limit checks)._

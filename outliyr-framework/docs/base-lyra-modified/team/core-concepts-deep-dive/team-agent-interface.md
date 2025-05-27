@@ -111,38 +111,6 @@ Actors that directly participate in teams should implement this interface. Commo
 * **Async Actions:** `UAsyncAction_ObserveTeam` and `UAsyncAction_ObserveTeamColors` bind to the `GetOnTeamIndexChangedDelegate()` to react to team changes on specific agents.
 * **Gameplay Logic:** Any system needing to know an actor's team can query the interface.
 
-### Code Definition Reference
-
-```cpp
-// Delegate signature for team changes
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnLyraTeamIndexChangedDelegate, UObject*, ObjectChangingTeam, int32, OldTeamID, int32, NewTeamID);
-
-// Helper functions for ID conversion
-inline int32 GenericTeamIdToInteger(FGenericTeamId ID);
-inline FGenericTeamId IntegerToGenericTeamId(int32 ID);
-
-/** Interface for actors which can be associated with teams */
-UINTERFACE(MinimalAPI, meta=(CannotImplementInterfaceInBlueprint))
-class ULyraTeamAgentInterface : public UGenericTeamAgentInterface
-{
-	GENERATED_UINTERFACE_BODY()
-};
-
-class ILyraTeamAgentInterface : public IGenericTeamAgentInterface
-{
-	GENERATED_IINTERFACE_BODY()
-
-	/** Retrieve the multicast delegate that is broadcast when the team index changes */
-	virtual FOnLyraTeamIndexChangedDelegate* GetOnTeamIndexChangedDelegate() { return nullptr; }
-
-	/** Static helper function to broadcast the delegate only if the team ID actually changed. */
-	static UE_API void ConditionalBroadcastTeamChanged(TScriptInterface<ILyraTeamAgentInterface> This, FGenericTeamId OldTeamID, FGenericTeamId NewTeamID);
-
-	/** Helper to get the delegate pointer, checking for null. */
-	FOnLyraTeamIndexChangedDelegate& GetTeamChangedDelegateChecked();
-};
-```
-
 ***
 
 The `ILyraTeamAgentInterface` provides the essential link between an Actor and the Team System. By implementing this interface and correctly broadcasting the change delegate, actors can reliably report their team affiliation to the `ULyraTeamSubsystem` and other interested gameplay systems.

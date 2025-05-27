@@ -9,7 +9,9 @@ A key function of the `ULyraTeamSubsystem` is managing how teams are visually re
   * **Logic:**
     1. Finds the `FLyraTeamTrackingInfo` struct for `TeamId` in the internal `TeamMap`.
     2. If found, returns the `DisplayAsset` pointer stored within that tracking struct (this pointer is originally set when the `ALyraTeamPublicInfo` actor registers itself).
-  * **`ViewerTeamId` Parameter:** The base function signature includes `ViewerTeamId`, but the current implementation comment notes it's ignored in this specific function. The _effective_ display asset considering the viewer is handled by `GetEffectiveTeamDisplayAsset`.
+  * **Note on `ViewerTeamId`:**\
+    Although the function signature includes a `ViewerTeamId` parameter, it is not used in the current Lyra implementation. This function always returns the display asset directly associated with the given `TeamId`, without applying any viewer-based perspective logic.\
+    For viewer-dependent visuals (such as Ally/Enemy differentiation), use `GetEffectiveTeamDisplayAsset`, which fully supports `ViewerTeamId` and the Perspective Color Mode system.
   * **Returns:** The `ULyraTeamDisplayAsset*` for the team, or `nullptr` if the team ID is invalid or the team info/display asset hasn't been registered yet.
 
 ### Perspective Color Mode
@@ -19,6 +21,7 @@ This optional mode changes how team visuals are determined, prioritizing immedia
 * **Enabling/Disabling:**
   * Controlled by the `bPerspectiveColorMode` boolean flag within the subsystem.
   * Set via `SetPerspectiveColourMode(bool bInPerspectiveColorMode)`, typically called once during initialization by the `ULyraTeamCreationComponent` based on its `PerspectiveColorConfig` settings.
+  * The process of enabling this functionality is explained in more detail on the [**Team Creation & Assignment**](../team-creation-and-assignment.md) page.
 * **Perspective Display Assets:**
   * The system defines two special IDs: `PERSPECTIVE_ALLY_ID` (-254) and `PERSPECTIVE_ENEMY_ID` (-255).
   * Specific `ULyraTeamDisplayAsset`s representing the "Ally" look and the "Enemy" look are registered with the subsystem using these IDs via `RegisterPerspectiveDisplayAsset(int32 AssetId, ULyraTeamDisplayAsset* DisplayAsset)`. This registration is also typically done by the `ULyraTeamCreationComponent` based on its config.
