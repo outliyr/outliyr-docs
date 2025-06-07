@@ -1,6 +1,6 @@
 # Item Fragments
 
-Item Fragments are the cornerstone of the inventory system's **modularity and composition**. Instead of relying on deep, complex class inheritance hierarchies to define item behaviors, functionality is broken down into smaller, reusable components called Fragments.
+Item Fragments are the cornerstone of the item system's **modularity and composition**. Instead of relying on deep, complex class inheritance hierarchies to define item behaviors, functionality is broken down into smaller, reusable components called Fragments.
 
 An `ULyraInventoryItemDefinition` achieves its complete set of features by including an array of different `ULyraInventoryItemFragment` instances.
 
@@ -28,11 +28,11 @@ All specific fragments inherit from the base `ULyraInventoryItemFragment` class.
 * `CreateNewTransientFragment(AActor* ItemOwner, ULyraInventoryItemInstance* ItemInstance, FInstancedStruct& NewInstancedStruct)`
   * Override this function if your fragment needs associated **struct-based** transient data (`FTransientFragmentData`).
   * **Implementation:** Should create an instance of your specific `FTransientFragmentData`-derived struct, initialize it if necessary, wrap it in the `FInstancedStruct` output parameter, and return `true`. Return `false` if no transient struct data is needed.
-  * _(See "Transient Data Fragments (`FTransientFragmentData`)" page for details)_.
+  * _(See "_[_Transient Data Fragments_](transient-data-fragments.md)_" page for details)_.
 * `CreateNewRuntimeTransientFragment(AActor* ItemOwner, ULyraInventoryItemInstance* ItemInstance, UTransientRuntimeFragment*& OutFragment)`
   * Override this function if your fragment needs associated **UObject-based** transient data/logic (`UTransientRuntimeFragment`).
   * **Implementation:** Should create an instance of your specific `UTransientRuntimeFragment`-derived class (using `NewObject`, typically with `ItemInstance` as the Outer), initialize it, assign it to the `OutFragment` pointer, and return `true`. Return `false` if no transient UObject is needed.
-  * _(See "Transient Runtime Fragments (`UTransientRuntimeFragment`)" page for details)_.
+  * _(See "_[_Transient Runtime Fragments_](transient-runtime-fragments.md)_" page for details)_.
 * `CanAddItemToInventory(UActorComponent* Inventory, int32 StackCount, int32& AllowedAmount, FText& OutMessage, const ULyraInventoryItemDefinition* ItemDef = nullptr, ULyraInventoryItemInstance* ItemInstance = nullptr)`
   * Allows a fragment to impose custom restrictions on whether an item can be added to a specific inventory.
   * Called by `ULyraInventoryManagerComponent::CanAddItem_Implementation`.
@@ -100,47 +100,6 @@ void ExampleClass::ItemDefExample(ULyraInventoryItemInstance* ItemInstance)
 </code></pre>
 {% endtab %}
 {% endtabs %}
-
-***
-
-### Code Definition Reference
-
-```cpp
-// Represents a fragment of an item definition (Only store static data)
-UCLASS(MinimalAPI, DefaultToInstanced, EditInlineNew, Abstract)
-class ULyraInventoryItemFragment : public UObject
-{
-    GENERATED_BODY()
-
-public:
-    // Called when an instance is created
-    UE_API virtual void OnInstanceCreated(ULyraInventoryItemInstance* Instance) const {}
-
-    // Create associated transient struct data (override if needed)
-    UE_API virtual bool CreateNewTransientFragment(AActor* ItemOwner, ULyraInventoryItemInstance* ItemInstance, FInstancedStruct& NewInstancedStruct) { return false; }
-    // Create associated transient UObject data (override if needed)
-    UE_API virtual bool CreateNewRuntimeTransientFragment(AActor* ItemOwner, ULyraInventoryItemInstance* ItemInstance, UTransientRuntimeFragment*& OutFragment) { return false; }
-
-    // Custom check if item can be added (override if needed)
-    UE_API virtual void CanAddItemToInventory(UActorComponent* Inventory, int32 StackCount, int32& AllowedAmount, FText& OutMessage, const ULyraInventoryItemDefinition* ItemDef = nullptr, ULyraInventoryItemInstance* ItemInstance = nullptr) {}
-    // Get weight contribution (override if needed)
-    UE_API virtual float GetWeightContribution(UActorComponent* Inventory, const ULyraInventoryItemDefinition* ItemDef = nullptr, ULyraInventoryItemInstance* ItemInstance = nullptr) { return 0.0f; }
-    // Get item count contribution (override if needed)
-    UE_API virtual int32 GetItemCountContribution(UActorComponent* Inventory, const ULyraInventoryItemDefinition* ItemDef = nullptr, ULyraInventoryItemInstance* ItemInstance = nullptr) { return 0; }
-
-    // Handle combining items (override if needed)
-    UE_API virtual bool CombineItems(ULyraInventoryManagerComponent* SourceInventory, ULyraInventoryItemInstance* SourceInstance, ULyraInventoryManagerComponent* DestinationInventory, ULyraInventoryItemInstance* DestinationInstance) { return false; }
-
-    // Return type of associated transient struct (override if needed)
-    UE_API virtual UScriptStruct* GetTransientFragmentDataStruct() const { return nullptr; }
-    // Return type of associated transient UObject (override if needed)
-    UE_API virtual TSubclassOf<UTransientRuntimeFragment> GetTransientRuntimeFragment() const { return nullptr; }
-
-    // Internal index for Fragment Injector priority
-    int32 OverrideIndex = 0;
-    UE_API void SetOverrideIndex(int32 Index) { OverrideIndex = Index; }
-};
-```
 
 ***
 

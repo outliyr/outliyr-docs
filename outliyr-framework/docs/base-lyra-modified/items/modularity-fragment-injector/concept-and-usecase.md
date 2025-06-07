@@ -7,8 +7,8 @@ Understanding _why_ the Fragment Injector system exists is key to using it effec
 Imagine your project structure:
 
 * **Core Engine/Lyra:** Base systems.
-* **Core Gameplay Plugins (e.g., ShooterBase, InventorySystem):** Define fundamental mechanics and base asset types like `ID_Rifle_Standard`. These plugins generally shouldn't know about specific game modes.
-* **Game Mode Plugins (e.g., ArenaMode, BattleRoyaleMode, OneHitKillMode):** Define specific rulesets and experiences, potentially needing to alter how base items behave _within that mode_.
+* **Core Gameplay Plugins (e.g., `ShooterBase`, `TetrisInventory`):** Define fundamental mechanics and base asset types like `ID_Rifle_Standard`. These plugins generally shouldn't know about specific game modes.
+* **Game Mode Plugins (e.g., `Arena`, `BattleRoyale`, `OneHitKill`):** Define specific rulesets and experiences, potentially needing to alter how base items behave _within that mode_.
 
 **The Challenge:** How does `ArenaMode` add a "shop price" to `ID_Rifle_Standard` (defined in `ShooterBase`) without forcing `ShooterBase` to know about shops, or without creating a duplicate `ID_Rifle_Standard_Arena` item? How does `BattleRoyaleMode` make the _same_ `ID_Rifle_Standard` consume ammo, while in another mode it might have infinite ammo?
 
@@ -27,7 +27,7 @@ The Fragment Injector system flips the responsibility. Instead of the base item 
 1. **Base Item (`ID_Rifle_Standard`):** Enters the line defined in `ShooterBase` with its core fragments.
 2. **Plugin/Feature Activation (e.g., `ArenaMode` Loads, `HardcoreMode` Loads):**
    * `ArenaMode` defines `UInventoryFragment_ArenaShopInfo`. It provides an `UFragmentInjector` asset: "Inject `ArenaShopInfo` fragment into `ID_Rifle_Standard`."
-   * `HardcoreMode` might provide an `UFragmentInjector` asset: "**Remove** `InventoryFragment_InfiniteAmmoHelper` (if it exists) from `ID_Rifle_Standard`."
+   * `HardcoreMode` might provide an `UFragmentInjector` asset: "**Remove** `InventoryFragment_InfiniteAmmoHelper` from `ID_Rifle_Standard`."
    * The `UFragmentInjectorManager` finds these injectors.
    * It **temporarily modifies the in-memory Class Default Object (CDO)** of `ID_Rifle_Standard`, adding the `ArenaShopInfo` fragment and/or removing the `InfiniteAmmoHelper` fragment for the duration that the respective mode is active.
 3. **Item Creation (During Active Mode):** Any `ULyraInventoryItemInstance` of `ID_Rifle_Standard` created _now_ will be based on the modified CDO.

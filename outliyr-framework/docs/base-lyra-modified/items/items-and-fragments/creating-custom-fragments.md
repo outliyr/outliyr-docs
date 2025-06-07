@@ -84,11 +84,45 @@ This is the base requirement for any new fragment type.
 
 ### Step 2: Choose and Define Instance Data (Optional)
 
-Decide if instances of items using this fragment need unique, persistent data.
+Most fragments don’t just define static behavior, they often need to store data **unique to each item instance** (like durability, charges, or contained items).\
+There are two main ways to do that, depending on complexity and access needs:
 
-* **If NO instance data needed:** You are done with the C++ definition part of the fragment itself. Proceed to Step 4.
-* **If YES, and it's simple struct data:** Choose **Option A**.
-* **If YES, and it requires UObject features (complex networking, BP access, ticking):** Choose **Option B**.
+* Use a **replicated struct** (`FTransientFragmentData`) for lightweight, simple data.
+* Use a **replicated UObject** (`UTransientRuntimeFragment`) when you need advanced logic or Blueprint interop.
+
+{% hint style="info" %}
+**Not sure which one to pick?**\
+Use the comparison table below to choose the right mechanism for your fragment.
+{% endhint %}
+
+#### Comparison Table: Selecting the Right Instance-Data Mechanism
+
+| Decision Criterion                                                  | <p><strong>Stat Tags</strong></p><p>(tag + stack)</p>    | <p><strong><code>FTransientFragmentData</code></strong></p><p>(replicated struct)</p> | <p><strong><code>UTransientRuntimeFragment</code></strong></p><p>(replicated <code>UObject</code>)</p> |
+| ------------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Data shape**                                                      | Single tag + int stack                                   | Any USTRUCT fields                                                                    | Full UObject (vars + functions)                                                                        |
+| **Replicates automatically?¹**                                      | ✔ built-in                                               | ✔ whole struct                                                                        | ✔ but you implement `GetLifetimeReplicatedProps`                                                       |
+| **Per-field `OnRep` / fine-grained hooks?**                         | ✖                                                        | ✖ (whole-struct only)                                                                 | ✔ (`OnRep` per property, `ReplicateSubobjects`)                                                        |
+| **Editable in Blueprints?²**                                        | Read only (functions exposed by item to manipulate tags) | Read & write values                                                                   | Read & write + call functions                                                                          |
+| **Custom per-frame / timer logic?**                                 | ✖                                                        | ✖                                                                                     | ✔ (`Tick`, timers, delegates)                                                                          |
+| **Performance,** **memory & network overhead**<sup>**3**</sup>**?** | Minimal                                                  | Low                                                                                   | Highest (full UObject headers + per-property deltas)                                                   |
+| **Use when you need …**                                             | Lightweight counters / flags queried via GameplayTags    | Small, structured per-instance data (durability, seeds, cached refs)                  | Complex state _plus_ behavior (attachment manager, charge meters, etc.)                                |
+
+* **Replicates automatically?**\
+  &#xNAN;_&#x53;tat Tags_ and _`FTransientFragmentData`_ live inside arrays already replicated by Lyra. Runtime fragments replicate like any custom sub-object: you must list properties in `GetLifetimeReplicatedProps`.
+* **Editable in Blueprints?**
+  * GameplayTags arrays are exposed but _read-only_ (stacks can be modified via C++/BP helper functions, not by editing fields).
+  * Struct members are `UPROPERTY` values, so you can read/write them in BP, however you cannot access the functions inside a struct from blueprints only c++.
+  * Runtime fragments are full UObjects: you can call methods, bind events, etc.
+* **Performance, memory & network overhead**
+  * Runtime fragments scale poorly if used carelessly; prefer struct fragments for common lightweight needs.
+
+#### Choosing a Path
+
+Once you've reviewed the table:
+
+* If you **don’t need any instance-specific data**, you’re done. Skip to Step 4.
+* If your data is **simple and structured**, go to Option A – Struct-Based.
+* If your data requires **blueprint exposed functions, replication hooks, or Blueprint logic**, skip to Option B – UObject-Based.
 
 #### Option A: Struct-Based Instance Data (`FTransientFragmentData`)
 

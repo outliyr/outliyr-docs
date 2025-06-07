@@ -67,7 +67,7 @@ The permission system sits **in front** of subobject replication. If a client la
 * Any `UTransientRuntimeFragment`s they own
 
 {% hint style="info" %}
-This keeps secret‑inventories and fog‑of‑war data private without extra bandwidth or teardown logic.
+This keeps secret‑inventories and fog‑of‑war data private without extra bandwidth or teardown logic. For more detail on the access & permissions documentaion check this [page](../access-rights-and-permissions/).
 {% endhint %}
 
 #### What actually replicates

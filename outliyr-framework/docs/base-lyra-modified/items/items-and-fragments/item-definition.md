@@ -9,12 +9,6 @@ The `ULyraInventoryItemDefinition` serves as the static **blueprint** or **templ
 * **Fragment Container:** Its most crucial role is to hold an array of `ULyraInventoryItemFragment` objects. These fragments are `Instanced` UObjects within the definition and define the actual capabilities, properties, and behaviors associated with this item type.
 * **Read-Only at Runtime:** Generally, you treat the properties of the definition (accessed via its CDO) as read-only once the game is running. Item instances hold the mutable state.
 
-{% hint style="info" %}
-### **Why not a `UDataAsset`?**
-
-`ULyraInventoryItemDefinition` contains an array of `UPROPERTY(Instanced)` `ULyraInventoryItemFragment` UObjects. `UDataAsset`s are generally not designed to directly own instanced UObjects in this manner, as they are meant for simpler, cookable data. By using a regular `UObject` subclass, we gain the flexibility to have these instanced fragments.
-{% endhint %}
-
 ***
 
 ### Creation
@@ -46,7 +40,7 @@ When you open an Item Definition asset, you'll primarily configure these propert
    * **Adding Fragments:** Click the `+` icon next to the `Fragments` array in the Class Defaults, then select the desired Fragment class from the dropdown list. An instance of that fragment will be created, and you can then configure its specific properties directly.
    * **Order:** The order of fragments generally doesn't matter unless one fragment's initialization depends on another (which is rare).
 
-<figure><img src="../../../.gitbook/assets/image (16) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (16) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ***
 
@@ -79,49 +73,6 @@ You typically don't interact directly with the definition at runtime often, but 
     }
     ```
 * **Helper Function:** The `UInventoryFunctionLibrary::FindItemDefinitionFragment` provides a convenient Blueprint-callable wrapper for finding fragments on a definition CDO.
-
-***
-
-### Code Definition Reference
-
-```cpp
-// Represents a fragment of an item definition (Only store static data)
-UCLASS(MinimalAPI, DefaultToInstanced, EditInlineNew, Abstract)
-class ULyraInventoryItemFragment : public UObject
-{
-    // ... (Fragment base class members)
-};
-
-/**
- * ULyraInventoryItemDefinition
- */
-UCLASS(MinimalAPI, Blueprintable, Const, Abstract)
-class ULyraInventoryItemDefinition : public UObject
-{
-    GENERATED_BODY()
-
-public:
-    UE_API ULyraInventoryItemDefinition(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
-    // The user-facing name for the item
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Display)
-    FText DisplayName;
-
-    // List of fragments defining the item's behavior and properties
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Display, Instanced)
-    TArray<TObjectPtr<ULyraInventoryItemFragment>> Fragments;
-
-public:
-    // Finds the first fragment of a given class
-    UE_API const ULyraInventoryItemFragment* FindFragmentByClass(TSubclassOf<ULyraInventoryItemFragment> FragmentClass) const;
-
-    template<typename T> // Templated version for C++
-    const T* FindFragmentByClass() const;
-
-private:
-    UE_API const ULyraInventoryItemFragment* FindFragmentByClassInternal(const UClass* FragmentClass) const;
-};
-```
 
 ***
 

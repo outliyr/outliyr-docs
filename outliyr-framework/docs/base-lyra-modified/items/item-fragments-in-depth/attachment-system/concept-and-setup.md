@@ -51,7 +51,7 @@ The `FAttachmentDetails` struct, found as the value in the `AttachmentDetailsMap
 * **`FAttachmentBehaviour` Properties (for both Holstered and Held settings):**
   * **`Ability Sets To Grant` (`TArray<TObjectPtr<const ULyraAbilitySet>>`)**: An array of `ULyraAbilitySet` assets. When the host item enters the corresponding state (Holstered/Held) with this attachment active, these ability sets are granted to the host item's owner (via the `UTransientRuntimeFragment_Attachment`).
     * _Use Case (Held):_ A scope granting a zoom ability, a grip granting a passive recoil reduction effect (via a Gameplay Effect in the set).
-    * _Use Case (Holstered):_ Rarely used for abilities, but could apply passive visual effects or very subtle buffs if needed.
+    * _Use Case (Holstered):_ Rocket jump ability from rocket shoes, or a jetpack ability from wearing a jetpack as these equipment typically wouldn't be held just holstered.
   * **`Actor Spawn Info` (`FLyraEquipmentActorToSpawn`)**: Defines a visual actor to spawn and attach to the host item's corresponding spawned actor.
     * `ActorToSpawn` (`TSubclassOf<AActor>`): The Blueprint or C++ Actor class for the attachment's visual mesh (e.g., `BP_ScopeMesh_MainViewModel`).
     * `AttachSocket` (`FName`): The socket name on the _host item's spawned actor_ where this attachment actor should be attached.

@@ -1,17 +1,19 @@
 # Item Query System
 
-In many gameplay scenarios, systems outside of the core inventory UI need to know about the presence or quantity of specific items within an inventory. For example:
+In many gameplay systems, it's not enough to do a one-time check for an item in a player's inventory—you often need to continuously track the presence or quantity of specific items as they change in real-time. Examples include:
 
-* A weapon system needs to know how much compatible ammo the player is carrying.
-* A crafting UI needs to update available recipes based on the player's current resources.
-* An objective system might track whether the player has collected specific quest items.
-* A HUD element might display the count of a particular consumable.
+* A **weapon system** tracking compatible ammo as the player picks up or uses it.
+* A **crafting system** dynamically updating available recipes as the player's resources change.
+* A **quest system** monitoring whether required objective items have been acquired or consumed.
+* A **HUD** reflecting the current count of consumables or power-ups.
 
-Constantly polling the `ULyraInventoryManagerComponent` by iterating through its `GetAllItems()` list every frame or every few seconds is inefficient and doesn't react instantly to changes.
+While one-time queries can be handled directly using functions from `ULyraInventoryManagerComponent`, which can discussed in more detail [here](../inventory-manager-component/advanced-operations.md#searching-and-querying), doing this repeatedly (e.g., polling every frame or on a timer) is inefficient and error-prone. It also fails to react instantly to inventory changes.
 
-The **Item Query System** provides a more efficient, **reactive** solution for tracking specific item types within a given inventory.
+### Enter the Item Query System
 
-### Purpose: Efficient & Reactive Tracking
+The **Item Query System** is designed to solve this problem by providing an efficient, reactive mechanism to **subscribe to and track specific item types** within a given inventory. Instead of polling, it automatically notifies you when relevant changes occur.
+
+#### Purpose: Efficient & Reactive Tracking
 
 The core goals of the Item Query system are:
 
@@ -19,7 +21,7 @@ The core goals of the Item Query system are:
 * **Reactivity:** Automatically notify interested listeners _when_ the status of the tracked items changes (added, removed, stack count modified), rather than requiring constant polling.
 * **Simplicity:** Provide easy-to-use C++ and Blueprint interfaces for setting up and listening to these tracked queries.
 
-### Core Concept: Listening for Changes
+#### Core Concept: Listening for Changes
 
 Instead of active polling, the Item Query system works by:
 

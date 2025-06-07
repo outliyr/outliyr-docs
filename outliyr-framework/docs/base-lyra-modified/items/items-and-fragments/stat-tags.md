@@ -28,7 +28,6 @@ It's important to understand when to use Stat Tags versus the Transient Fragment
 | **Primary Use**    | Integer counts, charges, durability points, simple flags | Complex state, non-integer data, related data groups, UObject logic              |
 | **Initialization** | Can be initialized via `InventoryFragment_SetStats`      | Initialized via `CreateNewTransientFragment`/`CreateNewRuntimeTransientFragment` |
 | **Flexibility**    | Good for simple integer tracking                         | Very high - allows arbitrary data structures and UObject features                |
-| **Origin**         | Base Lyra System                                         | Your Custom Enhancement                                                          |
 
 **Rule of Thumb:**
 
@@ -45,13 +44,13 @@ These functions operate on the `StatTags` container within the item instance:
   * **Authority Only.**
   * Adds the specified `StackCount` to the existing count for the `Tag`. If the tag doesn't exist, it's added with the given count. Does nothing if `StackCount` <= 0.
 
-<figure><img src="../../../.gitbook/assets/image (18) (1).png" alt="" width="334"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (18) (1) (1).png" alt="" width="334"><figcaption></figcaption></figure>
 
 * `SetStatTagStack(FGameplayTag Tag, int32 StackCount)`
   * **Authority Only.**
   * Sets the count for the `Tag` directly to `StackCount`. If `StackCount` <= 0, the tag is effectively removed. If the tag doesn't exist and `StackCount` > 0, it's added.
 
-<figure><img src="../../../.gitbook/assets/image (19) (1).png" alt="" width="332"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (19) (1) (1).png" alt="" width="332"><figcaption></figcaption></figure>
 
 * `RemoveStatTagStack(FGameplayTag Tag, int32 StackCount)`
   * **Authority Only.**
@@ -97,69 +96,6 @@ The `StatTags` property (`FGameplayTagStackContainer`) on `ULyraInventoryItemIns
 * **Efficiency:** Changes to stack counts are replicated efficiently.
 * **Client Access:** Clients can safely call `GetStatTagStackCount` and `HasStatTag` to query the replicated state.
 * **Authority:** Modification functions (`Add`, `Set`, `Remove`) are authority-only to maintain network consistency.
-
-***
-
-### Code Definition Reference
-
-```cpp
-// Represents one stack of a gameplay tag (tag + count)
-USTRUCT(BlueprintType)
-struct FGameplayTagStack : public FFastArraySerializerItem
-{
-    GENERATED_BODY()
-    // ... Tag, StackCount ...
-};
-
-// Container of gameplay tag stacks
-USTRUCT(BlueprintType)
-struct FGameplayTagStackContainer : public FFastArraySerializer
-{
-    GENERATED_BODY()
-public:
-    // Adds a specified number of stacks to the tag
-    void AddStack(FGameplayTag Tag, int32 StackCount);
-    // Sets the tags to the specified number of stacks
-    void SetStack(FGameplayTag Tag, int32 StackCount);
-    // Removes a specified number of stacks from the tag
-    void RemoveStack(FGameplayTag Tag, int32 StackCount);
-    // Returns the stack count of the specified tag (or 0 if the tag is not present)
-    int32 GetStackCount(FGameplayTag Tag) const;
-    // Returns true if there is at least one stack of the specified tag
-    bool ContainsTag(FGameplayTag Tag) const;
-    // ... Other helper and replication functions ...
-private:
-    UPROPERTY() // Replicated array
-    TArray<FGameplayTagStack> Stacks;
-    // Accelerated map for queries (not replicated directly)
-    TMap<FGameplayTag, int32> TagToCountMap;
-    // ... Owner pointer ...
-};
-
-// Item Instance Property
-UCLASS()
-class ULyraInventoryItemInstance : public UObject
-{
-    // ... other properties ...
-private:
-    UPROPERTY(Replicated)
-    FGameplayTagStackContainer StatTags;
-    // ...
-};
-
-// Initializer Fragment
-UCLASS()
-class UInventoryFragment_SetStats : public ULyraInventoryItemFragment
-{
-    // ...
-protected:
-    UPROPERTY(EditDefaultsOnly, Category=Equipment)
-    TMap<FGameplayTag, int32> InitialItemStats;
-public:
-    virtual void OnInstanceCreated(ULyraInventoryItemInstance* Instance) const override;
-    // ...
-};
-```
 
 ***
 

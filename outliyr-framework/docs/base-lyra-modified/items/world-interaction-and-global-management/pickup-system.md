@@ -77,13 +77,10 @@ While not strictly enforced by the `IPickupable` interface itself, the `Inventor
    * It gets the `InventoryFragment_PickupItem` data (mesh, offset) and configures the actor's visual component.
    * It creates an `FInventoryPickup` containing an `FPickupInstance` pointing to `DroppedItemInstance`.
    * It calls `WorldCollectable->SetPickupInventory()` to populate the actor and register the item instance for replication via the collectable actor.
-2. **Player Approaches (Client/Server):**
-   * Player Pawn overlaps the `ALyraWorldCollectable`'s collision (if using the sphere pattern).
-   * Server grants `ReadOnly` access to the player for the _player's own inventory_ (if applicable for UI feedback) and potentially for the collectable's internal data if needed (though usually interaction handles pickup).
-3. **Interaction (Client -> Server):**
+2. **Interaction (Client -> Server):**
    * Player looks at the `ALyraWorldCollectable` and presses the interact key.
    * Interaction system triggers a Gameplay Event/Ability on the server.
-4. **Pickup Logic (Server):**
+3. **Pickup Logic (Server):**
    * The server-side pickup ability gets the `ALyraWorldCollectable` actor that was interacted with.
    * It gets the `IPickupable` interface from the actor.
    * It gets the interacting player's `ULyraInventoryManagerComponent` (`PlayerInventory`).

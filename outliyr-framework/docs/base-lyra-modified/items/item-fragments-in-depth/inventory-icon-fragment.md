@@ -21,7 +21,7 @@ Add this fragment to an `ULyraInventoryItemDefinition` and configure its propert
 2. **Key Properties:**
    * **`Name` (`FText`)**: The primary display name used within inventory contexts (can differ from the Item Definition's main `DisplayName` if needed, though often they are the same). Supports localization.
    * **`Description` (`FText`)**: A description of the item, often shown in tooltips or detail views. Supports localization.
-   * **`InventoryIcon` (`TObjectPtr<UTexture2D>`)**: A direct pointer to the `UTexture2D` asset used for the item's icon in inventory slots. (Note: Unlike the previous incorrect example, this uses a direct pointer, not a soft pointer).
+   * **`InventoryIcon` (`TObjectPtr<UTexture2D>`)**: A direct pointer to the `UTexture2D` asset used for the item's icon in inventory slots.
    * **`BackgroundColour` (`FLinearColor`)**: A color value that UI can use to tint the background of the inventory slot containing this item (e.g., for rarity or item type indication).
    * **`Weight` (`float`, Default: 1.0)**: The weight contribution (in arbitrary units, often KG) of _one unit_ of this item.
    * **`MaxStackSize` (`int32`, Default: 1)**: The maximum number of units that can fit into a single inventory entry/slot.
@@ -64,60 +64,6 @@ This fragment is **highly recommended** for nearly all items intended to be mana
 * Items generally won't stack using the standard `TryAddItem...` logic.
 * Items won't contribute correctly to weight or item count limits.
 * Inventory UI systems will lack the necessary data (icon, name, description, stack info) to display the item meaningfully.
-
-### Code Definition Reference
-
-```cpp
-// Provides core data for inventory display, stacking, weight, and count limits.
-UCLASS(MinimalAPI)
-class UInventoryFragment_InventoryIcon : public ULyraInventoryItemFragment
-{
-	GENERATED_BODY()
-
-public:
-	// Overrides to contribute to inventory limits based on configured properties
-	UE_API virtual float GetWeightContribution(UActorComponent* Inventory, const ULyraInventoryItemDefinition* ItemDef = nullptr, ULyraInventoryItemInstance* ItemInstance = nullptr) override;
-	UE_API virtual int32 GetItemCountContribution(UActorComponent* Inventory, const ULyraInventoryItemDefinition* ItemDef = nullptr, ULyraInventoryItemInstance* ItemInstance = nullptr) override;
-
-public:
-	// Name displayed in inventory UI
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Item)
-	FText Name = FText::FromString(TEXT("Name"));
-
-	// Description displayed in inventory UI (e.g., tooltips)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Item)
-	FText Description = FText::FromString(TEXT("Description"));
-
-	// Icon texture used in inventory slots
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Appearance)
-	TObjectPtr<UTexture2D> InventoryIcon;
-
-	// Optional background color for UI styling
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Item)
-	FLinearColor BackgroundColour = FColor(0.01183, 0.01215, 0.011346, 1.0f); // Default dark color
-
-	// Weight of a single unit of this item
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Item, meta=(ForceUnits="KG"))
-	float Weight = 1.0f;
-
-	// Maximum stack size per inventory entry
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Item, meta=(ClampMin=1, UIMin=1))
-	int32 MaxStackSize = 1;
-};
-
-// Implementation Snippets (.cpp)
-float UInventoryFragment_InventoryIcon::GetWeightContribution(...)
-{
-	// Directly return the configured static weight
-	return Weight;
-}
-
-int32 UInventoryFragment_InventoryIcon::GetItemCountContribution(...)
-{
-	// This item stack/instance contributes 1 towards the ItemCountLimit
-	return 1;
-}
-```
 
 ***
 

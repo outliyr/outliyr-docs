@@ -135,18 +135,7 @@ If you need Blueprint workflows, create a minimal C++ parent class that implemen
 ### Using the system at runtime – **always call the interface**
 
 Never poke `PermissionComp` directly.\
-Interact through the functions defined on **IItemPermissionOwner** – the macro already declared them for you.
-
-```cpp
-// C++ usage
-SetContainerAccessRight(SomePC, EItemContainerAccessRights::ReadOnly);
-AddContainerPermission  (SomePC, EItemContainerPermissions::TakeOutItems);
-```
-
-```blueprint
-Set Container Access Right   ← Blueprint node generated from the interface
-Add Container Permission
-```
+Instead onteract through the functions defined on **IItemPermissionOwner**.
 
 * **Encapsulation** – keeps the underlying storage private; future refactors won’t break callers.
 * **Authority safety** – mutating functions are tagged `BlueprintAuthorityOnly`; they simply do nothing when called on a non-authoritative client.
@@ -173,17 +162,18 @@ Widgets and gameplay scripts subscribe to those tags to open/close or enable/dis
 
 ***
 
-#### Quick checklist
+### Quick checklist
 
 * [ ] Include LyraItemPermissionComponen&#x74;**.h**
 * [ ] Make sure the class _implements_ **IItemPermissionOwner**
 * [ ] **override the IItemPermissionOwner interface function `GetPermissionComponent_Implementation()`** and return the PermissionComponent
+* [ ] Ensure there is a `PermissionComponent` variable in the container
 * [ ] Ensure that the `UObject` is instantiated and `PermissionOwner` is set at runtime, preferably before `BeginPlay`. In this guide, the object is initialized in `InitializeComponent`, which is a suitable place as it runs during runtime and not on the class default object (CDO).
 * [ ] Set `SetIsReplicatedByDefault(true)` in constructor
 * [ ] Set `bWantsInitializeComponent = true` in the constructor
 * [ ] Set `bReplicateUsingRegisteredSubObjectList = false` in the constructor
-* [ ] Make sure PermissionComponent is replicating in `GetLifetimeReplicatedProps`
-* [ ] Make the PermissionComponent replicate in **`ReplicateSubobjects`** functio&#x6E;**.**
+* [ ] Make sure `PermissionComponent` is replicating in `GetLifetimeReplicatedProps`
+* [ ] Replicate  `PermissionComponent` in **`ReplicateSubobjects`** functio&#x6E;**.**
 * [ ] Use the **interface**, not the raw pointer to `PermissionComponent`
 
 Follow these steps and your container is now fully governed by the Access-Rights & Permissions system while keeping all of its original item replication logic untouched.

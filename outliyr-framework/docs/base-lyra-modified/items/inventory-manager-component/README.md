@@ -18,7 +18,6 @@ At its heart, the Inventory Manager Component provides the functionality to:
   * Maximum number of distinct item stacks/slots (`LimitItemInstancesStacks`).
   * Allowed/Disallowed Item Types (`AllowedItems`/`DisallowedItems`).
   * Specific limits on the quantity of certain item types (`SpecificItemCountLimits`).
-* **Manage Access & Permissions:** Controls _who_ can view (Access Rights) and _what_ they can do (Permissions) with the items in this specific inventory instance.
 * **Facilitate Item Interactions:** Includes logic for querying items (`FindFirstItemStackByDefinition`, `SearchForItem`, etc.) and combining items (by delegating to the `CombineItems` function on item fragments).
 * **Replicate State:** Ensures the inventory contents, item instance subobjects, and access/permission states are synchronized across the network according to defined access rights.
 * **Broadcast Changes:** Uses Gameplay Messages to notify other systems (like UI) about changes within the inventory (items added/removed, weight changes, etc.) without requiring direct coupling.
@@ -34,15 +33,6 @@ A key aspect of this component's design is its interaction with the **Item Fragm
 * **Combination:** The `CombineDifferentItems` function delegates the actual combination logic to the `CombineItems` function on the _destination item's_ fragments.
 
 This delegation **reduces bloat** within the `ULyraInventoryManagerComponent` itself. It doesn't need massive switch statements or complex logic to handle every possible item type's specific rules; it focuses on managing the container and relies on the fragments for item-specific behaviors.
-
-***
-
-### Core Sub-Systems
-
-This component integrates several key internal systems, which will be detailed on subsequent pages/sections:
-
-1. **Item Storage (`FLyraInventoryList`):** The replicated list holding the `FLyraInventoryEntry` structs.
-2. **Permission Control (`UItemPermissionComponent`, `IItemPermissionOwner`):** Managing who can see the inventory and how they can interact with the inventory.
 
 ***
 

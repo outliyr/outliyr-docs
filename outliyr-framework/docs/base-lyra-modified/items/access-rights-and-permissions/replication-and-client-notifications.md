@@ -43,7 +43,7 @@ This page explains how your permission data actually travels from the server to 
 
 When any permission or access‐right value changes, whether default or specific, the component broadcasts:
 
-#### `TAG_ItemPermission_Message_AccessChanged`
+#### `TAG_ItemPermission_Message_AccessChanged`&#x20;
 
 ```cpp
 USTRUCT(BlueprintType)
@@ -82,17 +82,13 @@ Unlike delegates, messages let _any_ subsystem—UI, AI, abilities—listen with
 
 To make your UI or gameplay logic respond to permission changes:
 
-1.  **Register your listener** (e.g. in your widget’s Construct):
+1. **Register your listener** (e.g. in your widget’s Construct):
 
-    ```blueprint
-    // Blueprint pseudo-nodes
-    Get GameInstance
-      → Get Subsystem: GameplayMessageSubsystem
-      → Register Listener
-          • Tag: TAG_ItemPermission_Message_AccessChanged
-          • Callback: OnAccessChanged
-    ```
-2.  **Handle the message**:
+<figure><img src="../../../.gitbook/assets/image (6).png" alt="" width="563"><figcaption></figcaption></figure>
+
+(FLyraInventoryChangeMessage)
+
+1.  **Handle the message**:
 
     ```blueprint
     OnAccessChanged(FItemAccessRightsChangedMessage Msg)
@@ -104,7 +100,7 @@ To make your UI or gameplay logic respond to permission changes:
     ```
 
     And similarly for `TAG_ItemPermission_Message_PermissionsChanged` to gray-out or enable individual buttons (e.g. “Take Out” only if `NewPermission & TakeOutItems != 0`).
-3.  **Unregister on teardown** (e.g. Destruct):
+2.  **Unregister on teardown** (e.g. Destruct):
 
     ```blueprint
     GameplayMessageSubsystem → Unregister Listener (Handle)

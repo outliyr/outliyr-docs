@@ -1,7 +1,3 @@
----
-description: 'World Interaction: Global Inventory Manager (UGlobalInventoryManager)'
----
-
 # Global Inventory manager
 
 The `UGlobalInventoryManager` acts as a centralized, singleton-like manager operating at the Game State level. Its primary responsibilities revolve around the standardized creation of item instances and the potential management of "world" inventories not directly tied to a specific player or Pawn.
@@ -58,53 +54,13 @@ This might be replaced with an ItemSubSystem instead.
 
 ### Setup and Usage
 
-1. **Add to Game State:** Ensure the `UGlobalInventoryManager` component is added to your project's `AGameStateBase` derived class (usually in the Blueprint editor).
+1. **Add to Game State:** Ensure the `UGlobalInventoryManager` component is added to your project's `AGameStateBase` derived class through the Lyra experience system.
 2. **Item Creation:** Whenever you need to create a _new_ item instance from a definition (e.g., granting a reward, spawning loot from a template), get the `UGlobalInventoryManager` using `UGlobalInventoryManager::Get(WorldContextObject)` and call `CreateNewItem()`.
 3. **World Containers (Optional):** If you have persistent world containers:
    * Have the container Actor create its own `ULyraInventoryManagerComponent`.
    * Initialize the component's properties (limits, permissions, etc.).
    * On the server, get the `UGlobalInventoryManager` and call `AddNewInventory()` passing the container's inventory component.
    * When the container is destroyed, call `DestroyItemInventory()` on the server.
-
-### Code Definition Reference
-
-```cpp
-UCLASS(MinimalAPI, Blueprintable)
-class UGlobalInventoryManager : public UGameStateComponent
-{
-	GENERATED_BODY()
-public:
-    // ... Lifecycle (BeginPlay, EndPlay, OnExperienceLoaded) ...
-
-    // Get the singleton instance
-    static UE_API UGlobalInventoryManager* Get(const UObject* WorldContextObject);
-
-    // Create a new, fully initialized item instance
-    UFUNCTION(BlueprintCallable)
-    UE_API ULyraInventoryItemInstance* CreateNewItem(TSubclassOf<ULyraInventoryItemDefinition> ItemDef, int32 Amount = 1);
-
-    // Register a world inventory component
-    UFUNCTION(BlueprintCallable)
-    UE_API void AddNewInventory(ULyraInventoryManagerComponent* InventoryManagerComponent);
-
-    // Unregister and destroy a world inventory component
-    UFUNCTION(BlueprintCallable)
-    UE_API void DestroyItemInventory(ULyraInventoryManagerComponent* InventoryManagerComponent);
-
-private:
-    // Internal initialization and cleanup
-    UFUNCTION(BlueprintCallable)
-    UE_API void InitializeGlobalInventory();
-    UFUNCTION(BlueprintCallable)
-    UE_API void ClearContainerInventories();
-
-protected:
-    // Array to track world inventories (optional use)
-    UPROPERTY(EditDefaultsOnly, AdvancedDisplay, BlueprintReadWrite)
-    TArray<TObjectPtr<ULyraInventoryManagerComponent>> ContainerInventories;
-    // ... Default Scene Root (if needed for component attachment) ...
-};
-```
 
 ***
 

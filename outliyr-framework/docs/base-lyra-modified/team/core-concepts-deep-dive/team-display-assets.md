@@ -26,7 +26,7 @@ Create a team display asset
 
 Configure these properties within the Team Display Asset's Details panel:
 
-<figure><img src="../../../.gitbook/assets/image.png" alt="" width="563"><figcaption><p>Blue Team Display Asset</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (19).png" alt="" width="563"><figcaption><p>Blue Team Display Asset</p></figcaption></figure>
 
 * **`Scalar Parameters` (`TMap<FName, float>`)**:
   * A map associating parameter **Names** (which should match scalar parameter names used in your Materials or Niagara Systems) with **float** values.
@@ -48,19 +48,19 @@ The `ULyraTeamDisplayAsset` provides several Blueprint-callable helper functions
 
 * `ApplyToMaterial(UMaterialInstanceDynamic* Material)`: Sets scalar, vector (color), and texture parameters directly on a specific Dynamic Material Instance.
 
-<figure><img src="../../../.gitbook/assets/image (2).png" alt="" width="363"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1).png" alt="" width="363"><figcaption></figcaption></figure>
 
 * `ApplyToMeshComponent(UMeshComponent* MeshComponent)`: Iterates through the materials on the mesh component. For scalar and vector parameters, it calls `SetScalar/VectorParameterValueOnMaterials`. For texture parameters, it creates Dynamic Material Instances if needed and sets the texture parameters on them individually.
 
-<figure><img src="../../../.gitbook/assets/image (1).png" alt="" width="321"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1).png" alt="" width="321"><figcaption></figcaption></figure>
 
 * `ApplyToNiagaraComponent(UNiagaraComponent* NiagaraComponent)`: Sets corresponding User Exposed variables (float, LinearColor, Texture Object) on the Niagara component. Parameter names must match the Niagara variable names.
 
-<figure><img src="../../../.gitbook/assets/image (3).png" alt="" width="357"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (3) (1).png" alt="" width="357"><figcaption></figcaption></figure>
 
 * `ApplyToActor(AActor* TargetActor, bool bIncludeChildActors = true)`: A convenience function that iterates through all components (optionally including children) on the target actor and calls `ApplyToMeshComponent` or `ApplyToNiagaraComponent` as appropriate for each Mesh or Niagara component found.
 
-<figure><img src="../../../.gitbook/assets/image (4).png" alt="" width="371"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (4) (1).png" alt="" width="371"><figcaption></figcaption></figure>
 
 **Typical Usage Flow:**
 
@@ -70,7 +70,7 @@ The `ULyraTeamDisplayAsset` provides several Blueprint-callable helper functions
    * Calling `ULyraTeamSubsystem::GetEffectiveTeamDisplayAsset(ActorTeamID, ViewerTeamID)` to get the final asset, respecting perspective color mode.
 2. **Apply to Target:** If a valid display asset is retrieved, call the appropriate `ApplyTo...` function on it, passing the target Actor or Component. This is often done when the character spawns, respawns, or potentially when the team/viewer perspective changes.
 
-<figure><img src="../../../.gitbook/assets/image (5).png" alt=""><figcaption><p>Example of setting the player character mesh colour based on the display asset</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (5) (1).png" alt=""><figcaption><p>Example of setting the player character mesh colour based on the display asset</p></figcaption></figure>
 
 ### Editor Integration
 

@@ -16,10 +16,10 @@ This section serves as a reference guide for the various concrete `ULyraInventor
 
 ### Available Fragment Types (Examples)
 
-This asset provides several fragment types to handle common inventory and item functionalities. The following pages will cover (but are not necessarily limited to):
+This asset provides several fragment types to handle common inventory and item functionalities. Here are some examples of fragments:
 
-* **Attachment System (`UInventoryFragment_Attachment`):** Enables items to host attachments or be attached to others. Involves a complex `UTransientRuntimeFragment_Attachment` for managing attached items.
-* **Consume Fragment (`UInventoryFragment_Consume`):** Defines behavior for consumable items, typically granting a Gameplay Ability upon use and interacting with a `UTransientRuntimeFragment_Consume` to manage ability grants based on permissions.
+* **Attachment System (`UInventoryFragment_Attachment`):** Enables items to host other item instances. Involves a complex `UTransientRuntimeFragment_Attachment` for managing attached items.
+* **Consume Fragment (`UInventoryFragment_Consume`):** Defines behavior for consumable items by granting and activating the specified Gameplay Ability upon use.
 * **Inventory Icon Fragment (`UInventoryFragment_InventoryIcon`):** Crucial for basic inventory interaction. Defines UI appearance (Icon), stacking behavior (`MaxStackSize`), base weight (`Weight`), and grid size (if applicable).
 * **Category Fragment (`UInventoryFragment_Category`):** Assigns Gameplay Tags to items for categorization, filtering, and sorting.
 * **Pickup Item Fragment (`UInventoryFragment_PickupItem`):** Defines the item's visual representation (mesh, display name) when it exists as a physical object in the world (`ALyraWorldCollectable`).
@@ -27,6 +27,10 @@ This asset provides several fragment types to handle common inventory and item f
 * **Container Fragment (`UInventoryFragment_Container`):** Allows an item instance to possess its _own_ internal inventory component (`FTransientFragmentData_Container`).
 * **Combine Fragment (`UInventoryFragment_Combine`):** Defines rules for combining this item with other specific item types when dropped onto each other.
 * _(Others as applicable, e.g., EquippableItem fragment covered in Equipment System docs but relevant here)_
+
+{% hint style="danger" %}
+Note: The [Container](../../../core-modules/tetris-inventory/item-fragments-tetris-specific/inventoryfragment_container.md) and [Combine](../../../core-modules/tetris-inventory/item-fragments-tetris-specific/inventoryfragment_combine.md) Fragment belong in the Tetris Inventory Plugin and **will not** be covered in this page. For more details on TetrisInventory fragments read this [page](../../../core-modules/tetris-inventory/item-fragments-tetris-specific/).
+{% endhint %}
 
 ### Finding the Right Fragment
 
@@ -36,15 +40,11 @@ When designing a new item, consider the features it needs and select the appropr
 * Can it be equipped as a weapon or armor? -> Add `InventoryFragment_EquippableItem` (Covered in Equipment System).
 * Can it be used/consumed? -> Add `InventoryFragment_Consume` and define the ability.
 * Can it be dropped in the world? -> Add `InventoryFragment_PickupItem` and configure meshes.
-* Does it start with specific ammo or charges? -> Add `InventoryFragment_SetStats`.
+* Does it item have simple data that can be represented as an integer? -> Add `InventoryFragment_SetStats`.
 * Can it hold other items inside it? -> Add `InventoryFragment_Container`.
 * Can it attach to other items, or have items attach to it? -> Add `InventoryFragment_Attachment`.
 * Does it belong to specific categories for sorting? -> Add `InventoryFragment_Category`.
 * Can it be crafted by combining with another item? -> Add `InventoryFragment_Combine` to the _target_ item.
-
-{% hint style="danger" %}
-Note: The [Container](../../../core-modules/tetris-inventory/item-fragments-tetris-specific/inventoryfragment_container.md) and [Combine](../../../core-modules/tetris-inventory/item-fragments-tetris-specific/inventoryfragment_combine.md) Fragment belong in the Tetris Inventory Plugin.
-{% endhint %}
 
 You can combine multiple fragments on a single Item Definition to create items with rich, multifaceted behaviors.
 
@@ -52,7 +52,7 @@ You can combine multiple fragments on a single Item Definition to create items w
 
 Explore the following sub-pages for detailed information on each fragment type:
 
-1. **Attachment System (`UInventoryFragment_Attachment`)** _(Likely requires further sub-sub-pages)_
+1. **Attachment System (`UInventoryFragment_Attachment`)**
 2. **Consume Fragment (`UInventoryFragment_Consume`)**
 3. **Inventory Icon Fragment (`UInventoryFragment_InventoryIcon`)**
 4. **Category Fragment (`UInventoryFragment_Category`)**

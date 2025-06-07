@@ -63,40 +63,6 @@ This fragment primarily stores static data. Its main interaction happens when an
 * **Visual Representation:** Without this fragment (or a similar custom solution), items dropped or placed in the world won't have a defined mesh or appearance.
 * **Droppability:** As mentioned, game logic often uses the presence of this fragment as a prerequisite for allowing an item to be dropped from an inventory.
 
-### Code Definition Reference
-
-```cpp
-// This fragment is used if an item can exist outside the inventory, defining its world appearance.
-UCLASS(MinimalAPI)
-class UInventoryFragment_PickupItem : public ULyraInventoryItemFragment
-{
-	GENERATED_BODY()
-
-public:
-	UInventoryFragment_PickupItem(); // Constructor likely sets defaults
-
-	// Mesh to use if skeletal
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Appearance)
-	TObjectPtr<USkeletalMesh> SkeletalMesh;
-
-	// Mesh to use if static
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Appearance)
-	TObjectPtr<UStaticMesh> StaticMesh;
-
-	// Relative offset for the mesh when attached to the pickup actor
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Appearance)
-	FTransform MeshOffset;
-
-	// Name potentially used in interaction prompts
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Appearance)
-	FText DisplayName;
-
-	// Color potentially used by interaction UI / highlighting
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Appearance)
-	FLinearColor PadColor;
-};
-```
-
 ***
 
 The `InventoryFragment_PickupItem` provides the essential link between an abstract inventory item definition and its tangible, visual representation when present as an interactable object within the game world. Configure it for any item that needs to be seen and picked up from the level.

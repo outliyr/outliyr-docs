@@ -32,7 +32,6 @@ Here's how the solution works:
 
     The **server-side** ability receives the event payload containing the `FInstancedStruct` which holds the `FAbilityData_SourceItem` derivative. It then calls the struct's virtual `GetSourceItem` function. **Crucially, this function:**
 
-    * Runs **only on the server** (or where authority resides).
     * Performs necessary **Access Right and Permission checks** using the requesting player controller against the inventory component referenced within the struct.
     * If checks pass, it resolves the struct data (e.g., index, tags) into an actual, validated `ULyraInventoryItemInstance*` pointer on the server.
     * If checks fail, it returns `nullptr`.

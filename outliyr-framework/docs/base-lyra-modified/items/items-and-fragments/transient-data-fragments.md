@@ -24,17 +24,21 @@ Use this system when you need instance-specific data that:
 
 **Good Examples:**
 
-* **Container Data (`FTransientFragmentData_Container`):** Storing a pointer (`TObjectPtr`) to the unique `ULyraInventoryManagerComponent` created specifically for _this_ container item instance. (As per your example).
 * **Unique ID/Seed:** Storing a generated unique ID or random seed for procedural aspects specific to this instance.
-* **Simple State:** Storing basic state flags or configuration specific to this instance (though `StatTags` might be better for simple integer flags/counts).
-* **Cached References:** Storing temporary, non-replicated pointers related to the item's current state (use with caution regarding replication and lifecycle).
+*   **Simple State:** For tracking small flags or toggles specific to the instance (e.g., toggled on/off, selected state).
+
+    > _Note:_ `StatTags` were originally introduced in Lyra as a workaround for the lack of instance data. While `FTransientFragmentData` now fills that role more robustly, `StatTags` remain useful for lightweight counters or gameplay-relevant flags that benefit from tag-based systems and built-in networking support. Use `StatTags` if the value is an integer or should be part of tag-based queries.
+* **Cached References:** Storing temporary, non-replicated pointers related to the item's current state (use with caution regarding replication and lifecycle). **Make sure to destroy the reference when the item is destroyed using the `DestroyTransientFragment(ULyraInventoryItemInstance* ItemInstance)`  callback.**
 
 **When to Consider `UTransientRuntimeFragment` Instead:**
 
 * You need `UPROPERTY(ReplicatedUsing=...)` on specific data members within the payload.
 * You need complex UObject lifecycle functions (`BeginPlay`, `EndPlay`, Ticking).
 * You need to replicate nested UObjects owned by the transient payload.
-* You want to easily expose functions from the transient payload to Blueprints.
+
+{% hint style="success" %}
+Still unsure? Jump to the [instance-data comparison](creating-custom-fragments.md#step-2-choose-and-define-instance-data-optional).
+{% endhint %}
 
 ***
 

@@ -1,97 +1,71 @@
 # UI Updates via Gameplay Message
 
-While the Gameplay Ability System (GAS) integration handles requests flowing _from_ the UI _to_ the inventory system, **Gameplay Messages** handle communication in the other direction: informing the UI and other interested systems about authoritative changes _within_ the inventory.
+While the GAS integration layer handles requests flowing _from_ the UI _to_ the system, **Gameplay Messages** handle communication in the reverse direction: informing the UI and other interested systems about authoritative state changes _within any item container_.
 
-This decouples the UI from the Inventory Manager, preventing the need for the UI to constantly poll the inventory for changes or maintain direct references beyond the local player's components.
+This creates a robust, decoupled architecture that is essential for a scalable and maintainable UI system.
 
 ### The Problem: Keeping UI Synchronized
 
-When the state of an inventory changes on the server (e.g., an item is added, removed, stacked, moved, or its properties change), clients need to be notified so their UI can reflect the correct information. Relying solely on `OnRep` functions within the UI widget itself can lead to complex logic and tight coupling.
+When the state of an item container (an inventory, equipment component, attachment slot, etc.) changes on the server, clients need to be notified so their UI can reflect the correct information. Common but problematic approaches include:
 
-### The Solution: Broadcasting State Changes
+* **Ticking/Polling:** The UI constantly checks the container's state for changes. This is inefficient and performs a lot of unnecessary work.
+* **Direct-Coupling:** The container component holds a direct reference to the UI widget and calls functions on it. This tightly couples the backend logic to a specific UI implementation, making both systems brittle and hard to change.
+* **Complex `OnRep` Logic:** Relying solely on `OnRep` functions within UI widgets can lead to tangled logic, especially when a single UI needs to respond to changes from multiple sources.
 
-The `ULyraInventoryManagerComponent` and related systems broadcast specific Gameplay Messages via the `UGameplayMessageSubsystem` whenever a relevant state change occurs _after_ it has been processed authoritatively (either directly on the server or via replication callbacks on the client).
+### The Solution: A Decoupled Broadcast System
 
-**Key Principles:**
+This asset uses the **`UGameplayMessageSubsystem`** as a central bus for communication. Item containers broadcast messages about their state changes without needing to know who, if anyone, is listening. UI widgets listen for these messages to reactively update themselves.
 
-* **Decoupling:** The Inventory Manager broadcasts messages without knowing _who_ is listening. The UI listens without needing a direct function call from the Manager.
-* **Event-Driven:** UI updates happen in response to specific event messages, rather than continuous polling.
-* **Targeted Listening:** UI widgets typically listen for messages relevant only to the inventory components they are currently displaying (often filtered by the component pointer or an owning Actor).
+**The Pattern:**
 
-### Core Inventory Messages
+1. **State Change:** An item container's state changes authoritatively (e.g., an item is added to an inventory, an item is equipped, an attachment is modified).
+2. **Broadcast:** After the change is confirmed (typically on the server or in a client-side `OnRep` callback), the container component broadcasts a specific Gameplay Message with a descriptive tag (e.g., `Inventory.Message.StackChanged`) and a data payload (a struct containing relevant info like the item instance and new count).
+3. **Listen:** A UI widget, upon being created, registers with the `UGameplayMessageSubsystem` to listen for one or more message tags. It can filter these messages to only act on those relevant to the specific container it is displaying.
+4. **React:** When a relevant message is received, the widget's callback function is executed. It unpacks the message payload and uses the data to update its visual state (e.g., re-drawing an item slot, updating a weight bar, enabling/disabling a button).
 
-These are the main messages broadcast by `ULyraInventoryManagerComponent` and related classes:
+**Key Benefits of this Pattern:**
 
-* **`TAG_Lyra_Inventory_Message_StackChanged` (`FLyraInventoryChangeMessage`)**
-  * **Broadcast By:** `FLyraInventoryList`'s replication callbacks (`PreReplicatedRemove`, `PostReplicatedAdd`, `PostReplicatedChange`) and functions that modify stack counts directly (`UpdateItemCount`, etc.).
-  * **Payload:**
-    * `InventoryOwner`: The `ULyraInventoryManagerComponent*` whose list changed.
-    * `Instance`: The `ULyraInventoryItemInstance*` affected.
-    * `NewCount`: The final stack count for the `Instance` in its entry.
-    * `Delta`: The change in stack count (`NewCount` - OldCount).
-  * **Purpose:** The primary message indicating that the contents or stack size within the `InventoryList` have changed. This is the most common message UI will listen for to trigger a general refresh of the displayed inventory slots.
+* **Decoupling:** Item containers have no knowledge of the UI. You can add, remove, or completely change the UI without ever touching the container's code.
+* **Efficiency:** UI updates are event-driven, not polled. Code only runs when a relevant change actually happens.
+* **Scalability:** New types of item containers can be easily integrated into the system. As long as they broadcast the standard messages, existing UI will work with them automatically. Likewise, new UI widgets can be created to listen for messages from any container.
+* **Clarity:** The responsibility is clear. Containers announce their state. UI listens and reflects that state.
 
-<figure><img src="../../../.gitbook/assets/image (57).png" alt="" width="563"><figcaption></figcaption></figure>
+#### Example Workflow: Listening for an Inventory Change
 
-* **`TAG_Lyra_Inventory_Message_WeightChanged` (`FLyraInventoryWeightChangeMessage`)**
-  * **Broadcast By:** `ULyraInventoryManagerComponent::OnRep_Weight`.
-  * **Payload:**
-    * `InventoryComponent`: The inventory whose weight changed.
-    * `NewWeight`: The updated total weight.
-  * **Purpose:** Notifies listeners about changes to the inventory's total calculated weight. Useful for updating weight display indicators in the UI.
+A typical inventory panel widget would implement the following logic in its Blueprint `EventGraph`:
 
-<figure><img src="../../../.gitbook/assets/image (58).png" alt="" width="563"><figcaption></figcaption></figure>
+1. **On Initialized:**
+   * Get the `GameplayMessageSubsystem`.
+   * Call `Begin Reregistering` and `End Reregistering` to manage listener handles.
+   * Inside, call `Listen for Message` with the tag `Inventory.Message.StackChanged`.
+   * Bind a custom event (e.g., `OnInventoryStackChanged`) to the message delegate.
+   * In the "Options" for the listener, set the `Match Any` payload struct to the `ULyraInventoryManagerComponent` it cares about, ensuring it only gets messages for its specific inventory.
+2. **In the `OnInventoryStackChanged` Event:**
+   * The event receives the message payload (`FLyraInventoryChangeMessage`).
+   * From the payload, get the `ItemInstance`, `NewCount`, and `Delta`.
+   * Call a function to refresh the entire inventory display or, more efficiently, find the specific slot widget for that `ItemInstance` and update its count.
 
-* **`TAG_Lyra_Inventory_Message_ItemCountChanged` (`FLyraInventoryItemCountChangeMessage`)**
-  * **Broadcast By:** `ULyraInventoryManagerComponent::OnRep_ItemCount`.
-  * **Payload:**
-    * `InventoryComponent`: The inventory whose item count changed.
-    * `NewItemCount`: The updated total item count.
-  * **Purpose:** Notifies listeners about changes to the inventory's total item count (based on fragment contributions). Useful for UI indicators showing slots used/total.
+```mermaid
+sequenceDiagram
+    participant Container as Item Container<br>(e.g., Inventory, Equipment)
+    participant GMS as GameplayMessageSubsystem
+    participant UI as UI Widget
 
-<figure><img src="../../../.gitbook/assets/image (65).png" alt="" width="563"><figcaption></figcaption></figure>
+    Note over Container, UI: Initial Setup
+    UI->>GMS: ListenForMessage(Tag: "Inventory.Message.StackChanged")
 
-* **`TAG_Lyra_ItemPermission_Message_AccessRightChanged` (`FItemAccessRightsChangedMessage`)**
-  * **Broadcast By:** `UItemPermissionComponent::BroadcastAccessChanged` (called directly on the server or by replication callbacks for default/specific rights on clients).
-  * **Payload:**
-    * `Container` (`UObject*`): The container (e.g., `ULyraInventoryManagerComponent`)
-    * `PlayerController`: The `APlayerController*` whose access right changed.
-    * `AccessRight`: The new `EItemContainerAccessRights`.
-  * **Purpose:** Crucial for UI to react to changes in visibility/interactability based on `EItemContainerAccessRights`.
+    Note over Container, UI: Later, during gameplay...
+    Container->>Container: Item stack changes (e.g., item added)
+    Container->>GMS: BroadcastMessage(Tag, Payload)
 
-<figure><img src="../../../.gitbook/assets/image (60).png" alt="" width="563"><figcaption></figcaption></figure>
+    GMS-->>UI: OnMessageReceived(Tag, Payload)
+    UI->>UI: Unpack payload & Refresh display
+```
 
-* **`TAG_Lyra_ItemPermission_Message_PermissionsChanged` (`FItemPermissionsChangedMessage`)**
-  * **Broadcast By:** `UItemPermissionComponent::BroadcastPermissionChanged` (called directly on the server or by replication callbacks for default/specific permissions on clients).
-  * **Payload:**
-    * `Container` (`UObject*`): The container.
-    * `PlayerController`: The `APlayerController*` whose permissions changed.
-    * `Permissions`: The new `EItemContainerPermissions` bitmask.
-  * **Purpose:** Allows UI to enable/disable specific actions based on the player's current `EItemContainerPermissions`&#x20;
+#### Finding Specific Messages
 
-<figure><img src="../../../.gitbook/assets/image (61).png" alt="" width="563"><figcaption></figcaption></figure>
+Each type of item container broadcasts its own set of messages. For a detailed list of what messages a specific component sends, please refer to its dedicated documentation page.
 
-* **`TAG_Lyra_Inventory_Message_Notification` (`FLyraInventoryNotificationMessage`)**
-  * **Broadcast By:** `ULyraInventoryManagerComponent::ClientBroadcastNotification_Implementation` (called via server RPC, usually from `CanAddItem` failures).
-  * **Payload:** `InventoryOwner`, `Message` (`FText`), `MessageIcon`, `MessageColor`.
-  * **Purpose:** Provides a way for the inventory system (specifically server-side logic like add checks) to send user-facing feedback messages (e.g., "Inventory Full", "Max Weight Reached") directly to the client for display in the UI.
-
-<figure><img src="../../../.gitbook/assets/image (62).png" alt="" width="563"><figcaption></figcaption></figure>
-
-* **`TAG_Lyra_Inventory_Message_ItemObtained` (`FLyraVerbMessage`)**
-  * **Broadcast By:** `ULyraInventoryManagerComponent::BroadcastItemObtained_Implementation` (called via server RPC after successfully adding items via `TryAddItemDefinition` or `TryAddItemInstance`).
-  * **Payload:** Standard `FLyraVerbMessage` (`Instigator`, `Target`=`ItemInstance`, `Magnitude`=`AmountAdded`).
-  * **Purpose:** Specifically signals that new items were successfully added, often used for "Item Acquired" popups or feedback distinct from general inventory changes.
-
-<figure><img src="../../../.gitbook/assets/image (63).png" alt="" width="563"><figcaption></figcaption></figure>
-
-* **`TAG_Lyra_Inventory_Message_ItemVisualChange` (`FItemInstanceVisualChangeMessage`)**
-  * **Broadcast By:** `ULyraInventoryManagerComponent::BroadcastItemInstanceVisuallyChanged`. Can be called by other systems (like the Attachment fragment) when an item's appearance needs updating but its core stack count hasn't changed.
-  * **Payload:** `ItemInstance`.
-  * **Purpose:** A generic hint that something about the item instance has changed that might require a visual refresh in the UI (e.g., an attachment was added/removed, durability changed appearance tiers). UI listening for this should re-render the specific item slot associated with the `ItemInstance`.
-
-<figure><img src="../../../.gitbook/assets/image (64).png" alt="" width="563"><figcaption></figcaption></figure>
-
-***
-
-Using Gameplay Messages provides a clean, decoupled way for the Inventory System to communicate authoritative state changes back to the UI and other interested gameplay systems, enabling reactive and synchronized user experiences without tight dependencies.
+* **Inventory Manager Component** -> [Broadcasted Gameplay Messages](../inventory-manager-component/broadcasted-gameplay-messages.md)
+* **Equipment** -> **Advanced Concepts & Integration** -> [Gameplay Messaging](../../equipment/advanced-concepts-and-integration.md#gameplay-messaging)
+* **Attachment System -> GAS & API** -> [Gameplay Messages](../item-fragments-in-depth/attachment-system/gas-and-api.md#gameplay-messages)

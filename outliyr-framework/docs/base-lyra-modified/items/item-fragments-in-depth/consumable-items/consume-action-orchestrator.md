@@ -46,13 +46,12 @@ When triggered, it:
 5. **Ends** itself automatically, no further logic needed in the orchestrator.
 
 {% hint style="info" %}
-**Note:**\
 The orchestrator ability itself never removes items, applies buffs, plays montages, etc. That’s all handled by the effect ability (the `FromConsume` subclass). The orchestrator is purely for **standardization and flow control**.
 {% endhint %}
 
 ***
 
-#### The hidden conductor: ActivateConsumeEffectAndWait
+### The hidden conductor: ActivateConsumeEffectAndWait
 
 The orchestrator delegates actual ability activation to an **internal Ability Task**. You won’t see it in your Blueprints. it’s used behind the scenes.
 
@@ -67,7 +66,7 @@ Its job:
 
 ***
 
-#### Finish Policy: choosing how long to wait
+### Finish Policy: choosing how long to wait
 
 The behavior of both the **task** and the **orchestrator** depends on the **FinishPolicy** enum, which is set inside the `ConsumeFragment`.
 
@@ -79,18 +78,18 @@ The behavior of both the **task** and the **orchestrator** depends on the **Fini
 
 ***
 
-#### Why this structure exists
+### Why this structure exists
 
 You might wonder: why not just activate the item’s effect ability directly?
 
 The answer is **control and consistency**:
 
 * You only need one entry-point: `Ability.Inventory.UseItem`
-* You can manage blocking behavior without touching Blueprints.
+* You can manage blocking behavior without touching Blueprints or C++.
 * Developers implement just the **effect**, not the orchestration.
 * Complex behavior (stack checks, server prediction, lifetime management) happens internally.
 
-This keeps your ability code clean and decoupled—every item just needs its `FromConsume` logic and a single tag.
+This keeps your ability code clean and decoupled, every item just needs its `FromConsume` logic and a single tag.
 
 {% hint style="info" %}
 **Developer-facing Blueprint customization lives entirely in `FromConsume`.**

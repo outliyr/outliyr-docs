@@ -4,7 +4,7 @@ The `UInventoryFragment_SetStats` fragment provides a convenient, data-driven wa
 
 ### Purpose
 
-* **Initial State:** Set default integer values for Stat Tags when an item instance first comes into existence (e.g., setting starting ammo, initial charges, default stack size).
+* **Initial State:** Set default integer values for Stat Tags when an item instance first comes into existence.
 * **Data-Driven Configuration:** Allows designers to define these initial Stat Tag values directly within the `ULyraInventoryItemDefinition` asset, without needing custom code for simple initialization.
 * **Complements Stat Tags:** Works directly with the `StatTags` system inherent to `ULyraInventoryItemInstance`.
 
@@ -17,7 +17,7 @@ This fragment holds the initialization data configured in the Item Definition.
 1. **Add Fragment:** Add `InventoryFragment_SetStats` to the `ULyraInventoryItemDefinition`'s `Fragments` array.
 2. **Key Property:**
    * **`Initial Item Stats` (`TMap<FGameplayTag, int32>`)**: This map defines the core initialization data.
-     * **Key (`FGameplayTag`):** The specific Stat Tag you want to initialize (e.g., `Inventory.Item.Count`, `Weapon.Ammo.Magazine`, `Item.Charges.Current`).
+     * **Key (`FGameplayTag`):** The specific Stat Tag you want to initialize (e.g., `Item.Charges.Current`).
      * **Value (`int32`):** The initial integer value (stack count) to assign to that Stat Tag when an instance is created.
 
 _Example Configuration (`ID_Rifle_Standard`):_
@@ -51,54 +51,9 @@ The fragment's primary interaction happens during item instance creation:
 
 ### Why Use This?
 
-* **Convenience:** Avoids the need for custom `OnInstanceCreated` logic in other fragments or separate initialization code just for setting default Stat Tag values.
+* **Convenience:** Avoids the need for custom `OnInstanceCreated` logic in other fragments or separate initialization code just for setting default Stat Tag values. (Though I would recommond setting default stat tag values in other fragment's initialization functions).
 * **Clarity:** Clearly defines the starting state of an item's key counts within its definition asset.
 * **Consistency:** Ensures all instances created from a definition start with the same base Stat Tag values.
-
-### Code Definition Reference
-
-```cpp
-// Initializes specific Stat Tags on an item instance upon creation.
-UCLASS(MinimalAPI)
-class UInventoryFragment_SetStats : public ULyraInventoryItemFragment
-{
-	GENERATED_BODY()
-
-protected:
-	// Map of Gameplay Tags to their initial integer stack count values.
-	UPROPERTY(EditDefaultsOnly, Category=Equipment)
-	TMap<FGameplayTag, int32> InitialItemStats;
-
-public:
-	// Called when an item instance is created based on a definition containing this fragment.
-	// Iterates through InitialItemStats and applies them to the instance's StatTags.
-	virtual void OnInstanceCreated(ULyraInventoryItemInstance* Instance) const override;
-
-	// Helper to get a specific stat value directly from the fragment's configuration
-	// (less common than letting OnInstanceCreated handle it).
-	int32 GetItemStatByTag(FGameplayTag Tag) const;
-};
-
-// Implementation Snippet (.cpp)
-void UInventoryFragment_SetStats::OnInstanceCreated(ULyraInventoryItemInstance* Instance) const
-{
-	Super::OnInstanceCreated(Instance); // Call base implementation if any
-
-	if (!Instance)
-	{
-		return;
-	}
-
-	// Apply all configured initial stats to the new instance
-	for (const auto& KVP : InitialItemStats)
-	{
-		if (KVP.Key.IsValid() && KVP.Value != 0) // Check for valid tag and non-zero value
-		{
-			Instance->AddStatTagStack(KVP.Key, KVP.Value);
-		}
-	}
-}
-```
 
 ***
 

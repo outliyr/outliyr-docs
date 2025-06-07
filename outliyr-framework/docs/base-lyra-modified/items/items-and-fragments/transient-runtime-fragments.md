@@ -21,7 +21,18 @@ While `FTransientFragmentData` provides a way to store instance-specific **struc
 
 ### When to Use `UTransientRuntimeFragment`
 
-Choose this approach over `FTransientFragmentData` when your instance-specific needs involve:
+Use a `UTransientRuntimeFragment` when your instance-specific needs **go beyond simple data storage** and require **full UObject behavior** — such as fine-grained replication, timers, ticking, or complex Blueprint integration.
+
+Before choosing this path, consider the cost:
+
+> Each runtime fragment is a full `UObject`.\
+> So if you have 5 fragment types marked as runtime fragments, every item instance using them will create **6 UObjects** —\
+> 1 for the `ULyraInventoryItemInstance`, and 5 more for the fragments.
+
+This overhead **adds up quickly** in inventory-heavy games (e.g., hundreds of items per player).\
+That’s exactly why Lyra uses **static fragments (shared, per-class)** and why `FTransientFragmentData` exists — it’s a **lightweight**, stack-allocated alternative with no GC cost, stored inside a replicated `FInstancedStruct` array.
+
+Use `UTransientRuntimeFragment` when:
 
 * **Complex Networking:** You need `OnRep` notifications for specific variables within the instance payload, or you need to replicate owned UObjects (e.g., an internal component list).
 * **Blueprint Interaction:** You want Blueprints (like abilities or UI widgets) to directly call functions or easily read properties on the instance-specific data object.
@@ -33,6 +44,23 @@ Choose this approach over `FTransientFragmentData` when your instance-specific n
 * **Attachment Container (`UTransientRuntimeFragment_Attachment`):** Manages the list (`FAppliedAttachmentArray`) of attached items, handles activation/deactivation logic triggered by `OnEquipped`/`OnHolster`, and needs to replicate the array and potentially the attached item instances as subobjects. (As per your example).
 * **Procedural Effects:** A fragment managing a complex, ongoing procedural effect on the item might use a UObject to handle ticking, state transitions, and potentially replicate visual parameters.
 * **Resource Generation:** An item that passively generates a resource over time could use a ticking UObject fragment to manage the generation logic and current resource level.
+
+#### Don't use runtime fragments **just** for Blueprint exposure
+
+If you're only trying to expose a function like:
+
+```cpp
+UFUNCTION(BlueprintCallable)
+float GetDamageMultiplier(const ULyraInventoryItemInstance* ItemInstance) const;
+```
+
+...you can do that directly on the **static fragment** — just pass the `ItemInstance` as a parameter. Static fragments are shared, so they can’t access per-instance state unless you give it to them via arguments — but that’s often enough.
+
+Only use a runtime fragment if your logic truly **depends on internal state** stored inside the UObject itself.
+
+{% hint style="success" %}
+Still unsure? Jump to the [instance-data comparison](creating-custom-fragments.md#step-2-choose-and-define-instance-data-optional).
+{% endhint %}
 
 ***
 
@@ -189,6 +217,42 @@ Similar to `FTransientFragmentData`, the `UTransientRuntimeFragment` base class 
 * **Crucially:** For the UObject instances themselves and their internal properties to replicate, the owning component (`ULyraInventoryManagerComponent`, `ULyraEquipmentManagerComponent`, etc.) **must** implement `ReplicateSubobjects` correctly and add these `UTransientRuntimeFragment` instances to the list of replicated subobjects (using `AddReplicatedSubObject`). The provided `ULyraInventoryManagerComponent` and `ULyraEquipmentManagerComponent` code already handles this.
 * Internal replication within your `UTransientRuntimeFragment` subclass follows standard UObject replication rules (implement `GetLifetimeReplicatedProps`, use `DOREPLIFETIME` macros, handle `OnRep` functions).
 * If your runtime fragment owns _other_ UObjects that need replicating, you must also override `ReplicateSubobjects` within your runtime fragment class itself to handle those nested subobjects.
+
+***
+
+<details>
+
+<summary>Why not just use UObjects for everything?</summary>
+
+It’s tempting to always use `UTransientRuntimeFragment` when you need custom logic or instance data, but there’s a **real performance and memory cost** to that approach, especially at scale.
+
+#### Here's what happens:
+
+If you define 5 different fragment types as runtime fragments, then:
+
+* Every `ULyraInventoryItemInstance` spawns 5 additional `UObject`s (1 per fragment).
+* These `UObject`s:
+  * Live on the heap
+  * Are tracked by the garbage collector (GC)
+  * May be replicated as subobjects
+* Multiply that by hundreds of item instances per player or per game world, and you can quickly create thousands of persistent UObjects.
+
+This is **why this asset architecture prefers**:
+
+* **Static fragments** (`ULyraInventoryItemFragment`) — shared, instanced once per asset, not per instance.
+* **Struct-based fragments** (`FTransientFragmentData`) — stack-allocated, replicated via `FInstancedStruct`, **lightweight** and GC-free.
+
+#### When are runtime fragments worth it?
+
+Use `UTransientRuntimeFragment` **only when**:
+
+* You need complex `OnRep` behavior or per-property replication.
+* You require timers, ticking, or other UObject features.
+* You need to expose internal state directly to Blueprints (and passing an `ItemInstance` isn’t enough).
+
+For everything else — durability, charge levels, internal IDs, flags — a simple struct is faster, lighter, and easier to maintain.
+
+</details>
 
 ***
 

@@ -75,7 +75,7 @@ The system supports nesting:
 
 * When `ActivateAttachment` is called on an attachment (`Attachment A`), it checks if `Attachment A`'s item instance also has a `UTransientRuntimeFragment_Attachment`.
 * If it does, it recursively calls `ActivateAttachment` on _all_ attachments (`Attachment B`) listed in `Attachment A`'s runtime fragment. `Attachment B`'s actor will be attached to `Attachment A`'s spawned actor (`AttachActor` on `Attachment A`'s runtime fragment is set during its own `SpawnAttachmentActor` call).
-* Abilities granted by `Attachment B` will likely have `Attachment A`'s item instance as their `SourceObject`.
+* Abilities granted by `Attachment B` should have `Attachment A`'s item instance as their `SourceObject`.
 * Deactivation follows the same recursive pattern.
 
 ### Replication of Attached Items

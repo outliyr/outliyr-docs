@@ -41,18 +41,6 @@ The core goal is to provide a standardized and flexible way to:
 
 ***
 
-### Finish Policy – designer-controlled blocking
-
-Inside the fragment you’ll see:
-
-| Option                       | Designer tooltip                                 | Typical item types                         |
-| ---------------------------- | ------------------------------------------------ | ------------------------------------------ |
-| **End Immediately**          | “Use item and allow the next item instantly.”    | Food buffs, quick-cast potions, etc.       |
-| **Wait for OnConsume**       | “Block until the item confirms it was consumed.” | Short-wind-up grenades, swap-out magazines |
-| **Block Until Ability Ends** | “Block until the whole effect ability finishes.” | Bandages, large shield potions, revives    |
-
-***
-
 ## Life-of-a-consumable
 
 1. **UI** sends `Ability.Item.UseItem` event with the inventory slot.

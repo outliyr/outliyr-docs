@@ -83,10 +83,6 @@ You typically **do not create Item Instances directly** in the editor. They are 
   * Implicitly when its owning container/actor is destroyed (standard UObject garbage collection).
   * `BeginDestroy()`: Overridden to broadcast a `TAG_Lyra_Inventory_Message_ItemDestroyed` gameplay message when the instance UObject is being garbage collected.
 
-{% hint style="danger" %}
-**Important Distinction:** `RemoveItemInstance` simply takes the instance reference out of an inventory list (e.g., moving it), while `DestroyItemInstance` performs cleanup via `DestroyTransientFragment` _before_ removing it, signifying permanent consumption.
-{% endhint %}
-
 ***
 
 ### Networking
@@ -94,71 +90,6 @@ You typically **do not create Item Instances directly** in the editor. They are 
 * `IsSupportedForNetworking()`: Returns true.
 * **Replication:** As mentioned, Item Instances are replicated as **subobjects** of their containing component (`ULyraInventoryManagerComponent`, `ULyraEquipmentManagerComponent`, or potentially `ALyraWorldCollectable` if configured). This requires the owning component/actor to correctly handle subobject replication (overriding `ReplicateSubobjects`, using `AddReplicatedSubObject`, etc.).
 * **Properties:** Key properties like `ItemDef`, `StatTags`, `TransientFragments`, `RuntimeFragments`, and `CurrentSlot` are marked `UPROPERTY(Replicated)`. Runtime Fragments themselves need internal replication setup if they contain replicated properties.
-
-### Code Definition Reference
-
-```cpp
-UCLASS(MinimalAPI, BlueprintType)
-class ULyraInventoryItemInstance : public UObject
-{
-    GENERATED_BODY()
-public:
-    // ... Constructor, Networking Support ...
-
-    // Stat Tag Accessors (Add/Set/Remove/Get/Has) ...
-
-    // Item Definition Access
-    UFUNCTION(BlueprintCallable, Category=Inventory)
-    TSubclassOf<ULyraInventoryItemDefinition> GetItemDef() const;
-    void SetItemDef(TSubclassOf<ULyraInventoryItemDefinition> InDef);
-
-    // Static Fragment Access from Definition
-    UFUNCTION(BlueprintCallable, BlueprintPure=false, meta=(DeterminesOutputType=FragmentClass))
-    const ULyraInventoryItemFragment* FindFragmentByClass(TSubclassOf<ULyraInventoryItemFragment> FragmentClass) const;
-
-    // Transient Data Accessors
-    template<typename T, typename ResolvedType = typename T::TransientFragmentDataType> // C++ Template Helper
-    ResolvedType* ResolveTransientFragment();
-    UFUNCTION(BlueprintCallable, meta = (DisplayName = "Resolve Struct Transient Fragment"))
-    FInstancedStruct ResolveStructTransientFragment(TSubclassOf<ULyraInventoryItemFragment> FragmentClass);
-    UFUNCTION(BlueprintCallable, meta = (DisplayName = "Resolve Runtime Transient Fragment"))
-    UTransientRuntimeFragment* ResolveRuntimeTransientFragment(TSubclassOf<ULyraInventoryItemFragment> FragmentClass);
-    UFUNCTION(BlueprintCallable, Category = Inventory, meta = (DisplayName = "Set Transient Fragment Data"))
-    void SetTransientFragmentData(const FInstancedStruct& FragmentData); // Authority likely needed
-
-    // Location Tracking
-    UFUNCTION(BlueprintAuthorityOnly)
-    void SetCurrentSlot(const FInstancedStruct& NewSlot);
-    UFUNCTION(BlueprintCallable)
-    FInstancedStruct GetCurrentSlot() const;
-    UFUNCTION() // Replication callback
-    void OnRep_CurrentSlot(const FInstancedStruct& OldSlot);
-
-    // Duplication
-    ULyraInventoryItemInstance* DuplicateItemInstance(UObject* NewOuter);
-
-    // ... BeginDestroy ...
-
-public: // Replicated Properties
-    UPROPERTY(ReplicatedUsing=OnRep_CurrentSlot)
-    FInstancedStruct CurrentSlot;
-
-    UPROPERTY(EditAnywhere, Replicated, meta = (BaseStruct = "FTransientFragmentData"))
-    TArray<FInstancedStruct> TransientFragments;
-
-    UPROPERTY(Replicated)
-    TArray<TObjectPtr<UTransientRuntimeFragment>> RuntimeFragments;
-
-private:
-    UPROPERTY(Replicated)
-    FGameplayTagStackContainer StatTags;
-
-    UPROPERTY(Replicated)
-    TSubclassOf<ULyraInventoryItemDefinition> ItemDef;
-
-    // ... other private members, friend structs ...
-};
-```
 
 ***
 

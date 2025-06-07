@@ -114,45 +114,6 @@ void UMyWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
    * If a change occurred (`Message.Delta != 0`), it broadcasts the `OnUpdated` and `OnUpdatedWithTrackedDefs` delegates with the _updated_ `CachedItems` list.
 3. **`StopListening` / `BeginDestroy`:** Calls `ListenerHandle.Unregister()` to stop listening to the message subsystem, preventing further updates and potential issues after the query or its owner is no longer valid.
 
-### Code Definition Reference
-
-```cpp
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryQueryUpdated, const TArray<ULyraInventoryItemInstance*>&, Items);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInventoryQueryUpdatedWithTrackedDefs, const TSet<TSubclassOf<ULyraInventoryItemDefinition>>&, TrackedItemDefs, const TArray<ULyraInventoryItemInstance*>&, Items);
-
-UCLASS(MinimalAPI)
-class ULyraInventoryQuery : public UObject
-{
-	GENERATED_BODY()
-public:
-	// Delegates for updates
-	UPROPERTY(BlueprintAssignable) FOnInventoryQueryUpdated OnUpdated;
-	UPROPERTY(BlueprintAssignable) FOnInventoryQueryUpdatedWithTrackedDefs OnUpdatedWithTrackedDefs;
-
-	// Setup the query
-	UE_API void Initialize(const TArray<TSubclassOf<ULyraInventoryItemDefinition>>& InItemDefs, const TObjectPtr<ULyraInventoryManagerComponent>& InInventory);
-
-	// Accessors
-	UE_API const TArray<ULyraInventoryItemInstance*>& GetItems() const;
-	UE_API ULyraInventoryManagerComponent* GetInventory() const;
-	UE_API TSet<TSubclassOf<ULyraInventoryItemDefinition>> GetTrackedItemDefs() const;
-
-	// Cleanup
-	UE_API void StopListening();
-
-protected:
-	// Internal message handler and cleanup
-	UE_API void HandleInventoryChanged(FGameplayTag Channel, const FLyraInventoryChangeMessage& Message);
-	UE_API virtual void BeginDestroy() override;
-
-private:
-	UPROPERTY() TObjectPtr<ULyraInventoryManagerComponent> Inventory;
-	TSet<TSubclassOf<ULyraInventoryItemDefinition>> TrackedItemDefs;
-	TArray<ULyraInventoryItemInstance*> CachedItems;
-	FGameplayMessageListenerHandle ListenerHandle;
-};
-```
-
 ***
 
 Using `ULyraInventoryQuery` directly in C++ provides an efficient, reactive way for your game systems to stay synchronized with specific parts of an inventory's state without resorting to inefficient polling. Remember to manage its lifecycle appropriately within its owning C++ object.

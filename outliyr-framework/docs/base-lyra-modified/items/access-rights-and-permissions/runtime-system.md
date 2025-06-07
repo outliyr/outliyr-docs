@@ -24,7 +24,7 @@ This page therefore focuses on the moving parts under the hood and on the life-c
 
 * **Authority change**\
   &#xNAN;_&#x53;ome gameplay rule fires:_\
-  `Inventory->SetContainerAccessRight(TargetPC, ReadOnly);`
+  `IItemPermissionOwner::Execute_SetContainerAccessRight(Inventory, TargetPC, ReadOnly)`
 * **Fast-array marks dirty**\
   `FItemAccessRightsContainer::Set` edits or adds an entry → `MarkItemDirty`/`MarkArrayDirty`.
 * **UObject replication pass (same frame)**\

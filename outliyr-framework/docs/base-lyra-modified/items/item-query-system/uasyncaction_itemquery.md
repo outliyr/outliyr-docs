@@ -41,7 +41,7 @@ This is the primary node you'll use in your Blueprints.
 ### Example: Monitoring Spare Inventory Ammo for a Weapon HUD
 
 {% hint style="info" %}
-This example uses the [`InventoryFragment_Gun`](../../../core-modules/shooter-base/weapons/gun-fragment/) which is from the **ShooterBase Plulgin**, but this is just serves as an example, there is the **InventoryQuery** is not dependant on the **ShooterBase plugin**.
+This example uses the [`InventoryFragment_Gun`](../../../core-modules/shooter-base/weapons/gun-fragment/) which is from the **ShooterBase Plulgin**. The **InventoryQuery** is not dependant on the **ShooterBase plugin**.
 {% endhint %}
 
 Imagine a HUD widget that needs to display the player's total count of specific ammo types available in their inventory that a currently equipped weapon can use. This is different from magazine ammo, which is typically tracked on the weapon instance itself.

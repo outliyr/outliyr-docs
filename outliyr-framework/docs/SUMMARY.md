@@ -111,6 +111,7 @@
     * [Core Functionality](base-lyra-modified/items/inventory-manager-component/core-functionality.md)
     * [Replication & Networking](base-lyra-modified/items/inventory-manager-component/replication-and-networking.md)
     * [Advanced Operations](base-lyra-modified/items/inventory-manager-component/advanced-operations.md)
+    * [Broadcasted Gameplay Messages](base-lyra-modified/items/inventory-manager-component/broadcasted-gameplay-messages.md)
   * [Access Rights & Permissions](base-lyra-modified/items/access-rights-and-permissions/README.md)
     * [Access rights](base-lyra-modified/items/access-rights-and-permissions/access-rights.md)
     * [Permissions](base-lyra-modified/items/access-rights-and-permissions/permissions.md)

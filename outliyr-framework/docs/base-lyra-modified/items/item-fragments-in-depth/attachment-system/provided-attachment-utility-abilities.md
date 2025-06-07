@@ -34,11 +34,14 @@ All these utility abilities inherit from `ULyraGameplayAbility_FromAttachment`, 
     1. Uses `GetAssociatedEquipmentInstance()` again.
     2. If found, iterates through its internally stored `FFloatStatModification` handles (from the grant phase).
     3. For each stored handle, calls `EquipmentInstance->ReverseTagAttributeModification(StoredModInfo)`, which uses the `OldValue` to correctly revert the change.
-* **Use Case Example:**
-  * An `ID_Attachment_VerticalGrip` is configured (via its entry in the rifle's `CompatibleAttachments`) to grant an `ULyraAbilitySet` containing `GA_Grip_RecoilReduction` (a subclass of `GA_EquipmentAttributeModifier`).
-  * `GA_Grip_RecoilReduction` has `FloatStatModifications` configured to: `Tag=Weapon.Stat.RecoilVertical, ModificationValue=0.8, ModOp=Multiply`.
-  * When the grip is attached to a held rifle, the ability activates, finds the rifle's `ULyraEquipmentInstance`, and multiplies its `Weapon.Stat.RecoilVertical` attribute by 0.8.
-  * When the grip is removed, the ability ends, and the modification is reversed, restoring the original recoil value.
+*   **Use Case Example:**
+
+    * An `ID_Attachment_VerticalGrip` is configured (via its entry in the rifle's `CompatibleAttachments`) to grant an `ULyraAbilitySet` containing `GA_Grip_RecoilReduction` (a subclass of `GA_EquipmentAttributeModifier`).
+    * `GA_Grip_RecoilReduction` has `FloatStatModifications` configured to: `Tag=Weapon.Stat.RecoilVertical, ModificationValue=0.8, ModOp=Multiply`.
+    * When the grip is attached to a held rifle, the ability activates, finds the rifle's `ULyraEquipmentInstance`, and multiplies its `Weapon.Stat.RecoilVertical` attribute by 0.8.
+    * When the grip is removed, the ability ends, and the modification is reversed, restoring the original recoil value.
+
+    <figure><img src="../../../../.gitbook/assets/image (16).png" alt="" width="563"><figcaption><p>Subclassed <code>GA_EquipmentAttributeModifier</code> modifying equipment tag attributes</p></figcaption></figure>
 
 ### 2. Modifying Item Instance Magazine Stats (`GA_MagazineStatModifier`)
 
@@ -61,11 +64,14 @@ All these utility abilities inherit from `ULyraGameplayAbility_FromAttachment`, 
        * It might revert to a default "no magazine" capacity.
        * If another magazine is immediately swapped in, that magazine's `GA_MagazineStatModifier` would then set the new capacity.
        * Needs to handle ammo again: if the capacity is _reduced_, current ammo might need to be clamped and excess moved/dropped.
-* **Use Case Example:**
-  * An `ID_Attachment_ExtendedMagazine` is configured to grant an `ULyraAbilitySet` containing `GA_ExtendedMag_Set50RndCapacity` (a subclass of `GA_MagazineStatModifier`).
-  * `GA_ExtendedMag_Set50RndCapacity` is configured to set `Weapon.Ammo.MagazineCapacity` to 50.
-  * When attached to a held rifle, the ability activates and changes the rifle's item instance `MagazineCapacity` Stat Tag to 50, adjusting current ammo as needed.
-  * When removed, the rifle's capacity reverts (e.g., to a default 20 if no other magazine is present).
+*   **Use Case Example:**
+
+    * An `ID_Attachment_ExtendedMagazine` is configured to grant an `ULyraAbilitySet` containing `GA_ExtendedMag_Set50RndCapacity` (a subclass of `GA_MagazineStatModifier`).
+    * `GA_ExtendedMag_Set50RndCapacity` is configured to set `Weapon.Ammo.MagazineCapacity` to 50.
+    * When attached to a held rifle, the ability activates and changes the rifle's item instance `MagazineCapacity` Stat Tag to 50, adjusting current ammo as needed.
+    * When removed, the rifle's capacity reverts (e.g., to a default 20 if no other magazine is present).
+
+    <figure><img src="../../../../.gitbook/assets/image (18).png" alt=""><figcaption><p> Subclassed <code>GA_MagazineStatModifier</code> extending magazine by 40</p></figcaption></figure>
 
 ### How to Use These Utility Abilities
 

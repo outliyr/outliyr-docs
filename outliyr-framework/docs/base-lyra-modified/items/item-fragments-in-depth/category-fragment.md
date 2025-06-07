@@ -63,22 +63,6 @@ This fragment doesn't typically have complex runtime logic associated with it di
 * Decouples category logic from item class inheritance.
 * Enables powerful filtering and querying capabilities for UI and gameplay systems.
 
-### Code Definition Reference
-
-```cpp
-// This fragment is used to give items categories using Gameplay Tags.
-UCLASS(MinimalAPI)
-class UInventoryFragment_Category : public ULyraInventoryItemFragment
-{
-	GENERATED_BODY()
-
-public:
-	// The container holding all category tags associated with this item type.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Category")
-	FGameplayTagContainer ItemCategories;
-};
-```
-
 ***
 
 The `InventoryFragment_Category` is a simple yet effective fragment for adding semantic meaning to your items through Gameplay Tags, facilitating better organization, filtering, and category-based gameplay logic.

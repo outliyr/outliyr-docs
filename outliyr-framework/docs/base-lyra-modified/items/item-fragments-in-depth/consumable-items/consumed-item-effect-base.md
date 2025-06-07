@@ -1,7 +1,5 @@
 # Consumed Item Effect Base
 
-### Your playground: `ULyraGameplayAbility_FromConsume`
-
 All the previous pages were about plumbing.\
 **This page is about creativity**, the Gameplay Ability that defines _what actually happens_ when the player uses an item.
 
@@ -67,7 +65,7 @@ e.g.
 
 You are free to run whatever logic you want.
 
-**✅ 2. Call `ConsumeItem()` when the cost should apply**
+**2. Call `ConsumeItem()` when the cost should apply**
 
 When you’re confident the use should “go through,” you **must** call:
 
@@ -81,7 +79,7 @@ What this does:
 * Calls your Blueprint-implementable `OnConsumeItem(Item, Quantity)`
 * Broadcasts the internal delegate (unblocks the AbilityTask if needed)
 
-**✅ 3. Override `OnConsumeItem()` to implement cost logic**
+**3. Override `OnConsumeItem()` to implement cost logic**
 
 This is the only required override in Blueprint.
 
@@ -113,9 +111,9 @@ It reduces boilerplate, avoids mistakes, and makes your effect Blueprints cleane
 _Optional:_ You can add your own Blueprint Function Library functions for custom logic, such as playing sound cues, triggering effects, or combining multiple checks before removal.
 {% endhint %}
 
-**✅ 4. Call `EndAbility()` to finish**
+**4. Call `EndAbility()` to finish**
 
-Every FromConsume ability must end itself when its effect is done.\
+Every “FromConsume” ability must end itself when its effect is done.\
 This lets the task/consume system clean up and allows new consumables to be triggered.
 
 <details>

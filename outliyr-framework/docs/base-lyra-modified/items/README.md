@@ -186,4 +186,4 @@ This inventory system is extensive. Use the following sections to dive into spec
 
 ***
 
-This overview sets the stage for the deep dive into the Inventory System's components and features. Let me know if you'd like any adjustments before we proceed to the next page on "Core Concepts: Items & Fragments".
+This overview sets the stage for the deep dive into the Inventory System's components and features. Let's proceed to the next page on "Core Concepts: Items & Fragments".
