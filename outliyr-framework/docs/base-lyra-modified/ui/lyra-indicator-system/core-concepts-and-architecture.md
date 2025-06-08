@@ -17,10 +17,10 @@ At its heart, a single UI indicator is comprised of a few key elements working i
   * It defines _what_ the indicator is tracking (the `SceneComponent`), _how_ its screen position should be calculated (`ProjectionMode`, offsets, alignment), _what_ UMG widget should represent it visually (`IndicatorWidgetClass`), and _how_ it should behave under various conditions (e.g., clamping, visibility, priority, 2D screen-lock behavior).
   * It also holds a reference to the actual UMG widget instance once created (`IndicatorWidget`) and any arbitrary associated data (`DataObject`).
   * Think of the Descriptor as the "blueprint" or "specification" for a live indicator.
-* **The "Indicator Widget" (UMG Widget implementing `IActorIndicatorWidget`): The Visual Representation**
+* **The "Indicator Widget" (UMG Widget implementing `IIndicatorWidgetInterface`): The Visual Representation**
   * This is the UMG `UUserWidget` that the player actually sees on their screen.
   * It is responsible for the indicator's visual appearance (e.g., an icon, text, an arrow).
-  * To interact correctly with the system, it's highly recommended (and often necessary) for this widget to implement the `IActorIndicatorWidget` interface. This interface provides functions for:
+  * To interact correctly with the system, it's highly recommended (and often necessary) for this widget to implement the `IIndicatorWidgetInterface` interface. This interface provides functions for:
     * `BindIndicator()`: Called when the widget is associated with a `UIndicatorDescriptor`, allowing it to access and display data from the descriptor.
     * `UnbindIndicator()`: Called when the widget is being disassociated or destroyed.
     * `OnIndicatorClamped()`: Notifies the widget if its screen position is being clamped to the edge of the viewport.
@@ -41,7 +41,7 @@ The journey of an indicator from a concept to a visible element on screen involv
    * The `SActorCanvas` (the Slate widget responsible for rendering indicators, hosted within a `UIndicatorLayer`) observes the `ULyraIndicatorManagerComponent`.
    * When a new `UIndicatorDescriptor` is added, `SActorCanvas` asynchronously loads the specified `IndicatorWidgetClass`.
    * Once loaded, an instance of the UMG widget is created (often from a `FUserWidgetPool` for efficiency).
-   * The `IActorIndicatorWidget::BindIndicator()` event is called on this new widget, passing it the `UIndicatorDescriptor`. This allows the widget to initialize itself based on the descriptor's data. The `UIndicatorDescriptor` also stores a weak pointer to this widget.
+   * The `IIndicatorWidgetInterface::BindIndicator()` event is called on this new widget, passing it the `UIndicatorDescriptor`. This allows the widget to initialize itself based on the descriptor's data. The `UIndicatorDescriptor` also stores a weak pointer to this widget.
 3. **Projection & Positioning (The Tick/Update Loop):**
    * On its tick (managed by `SActorCanvas` via an active timer), the system iterates through all active and visible `UIndicatorDescriptor`s.
    * For each descriptor not in `ScreenLocked` mode:
@@ -52,19 +52,19 @@ The journey of an indicator from a concept to a visible element on screen involv
 4. **Clamping & Arrow Display:**
    * If an indicator is configured to `bClampToScreen` and its projected 3D position is off-screen (or behind the camera), `SActorCanvas` calculates a new position along the screen edge.
    * If `bShowClampToScreenArrow` is true and the indicator is clamped, `SActorCanvas` will manage and display an `SActorCanvasArrowWidget` pointing from the clamped position towards the off-screen target.
-   * The `IActorIndicatorWidget::OnIndicatorClamped()` event is fired to inform the UMG widget of its clamped status.
+   * The `IIndicatorWidgetInterface::OnIndicatorClamped()` event is fired to inform the UMG widget of its clamped status.
 5. **Arrangement & Rendering:**
    * `SActorCanvas` takes all the calculated screen positions, considers indicator priorities (`Priority` on the descriptor), and desired sizes of the UMG widgets.
    * It then arranges these widgets as children within its Slate layout. The actual UMG widgets (or rather, their Slate representations obtained via `TakeWidget()`) are added as slots to the `SActorCanvas`.
    * Slate handles the final rendering of these widgets onto the viewport.
 6. **State Changes & Communication:**
    * **Visibility:** The `bVisible` property on `UIndicatorDescriptor` controls whether the system attempts to project and display the indicator.
-   * **2D/3D Mode Switching:** Functions like `SwitchTo2DMode()` and `SwitchTo3DMode()` on `UIndicatorDescriptor` allow an indicator to toggle between tracking a 3D world point and being fixed to a 2D screen location. This triggers the `IActorIndicatorWidget::OnIndicatorDisplayModeChanged()` event.
+   * **2D/3D Mode Switching:** Functions like `SwitchTo2DMode()` and `SwitchTo3DMode()` on `UIndicatorDescriptor` allow an indicator to toggle between tracking a 3D world point and being fixed to a 2D screen location. This triggers the `IIndicatorWidgetInterface::OnIndicatorDisplayModeChanged()` event.
    * **Data Updates:** If data within the `UIndicatorDescriptor` (or its associated `DataObject`) changes, the UMG widget, having been bound, can be designed to reflect these changes (though this often requires custom logic within the widget's `Tick` or in response to specific events).
 7. **Removal & Cleanup:**
    * An indicator can be explicitly removed by calling `UnregisterIndicator()` on its `UIndicatorDescriptor` or `RemoveIndicator()` on the `ULyraIndicatorManagerComponent`.
    * Indicators can also be configured for `bAutoRemoveWhenIndicatorComponentIsNull`, automatically cleaning themselves up if their target component becomes invalid.
-   * When an indicator is removed, `SActorCanvas` calls `IActorIndicatorWidget::UnbindIndicator()` on the UMG widget, releases the widget back to the pool (if applicable), and removes it from its layout.
+   * When an indicator is removed, `SActorCanvas` calls `IIndicatorWidgetInterface::UnbindIndicator()` on the UMG widget, releases the widget back to the pool (if applicable), and removes it from its layout.
 
 ***
 
@@ -79,7 +79,7 @@ The system can be conceptualized in distinct layers, each with specific responsi
   * Attached to a controller, it maintains a collection of all active `UIndicatorDescriptor`s for that player.
   * Handles the registration and unregistration of indicators.
   * Broadcasts events when indicators are added or removed, which other systems (like `SActorCanvas`) can subscribe to.
-* **Interface Layer (`IActorIndicatorWidget`): The "Contract" for Visuals**
+* **Interface Layer (`IIndicatorWidgetInterface`): The "Contract" for Visuals**
   * Defines a standard interface that UMG widgets must implement to participate in the indicator system.
   * Ensures that `SActorCanvas` and `UIndicatorDescriptor` can communicate with any indicator widget in a consistent way (binding data, notifying of state changes).
 * **Presentation & Projection Layer (`UIndicatorLayer`, `SActorCanvas`, `FIndicatorProjection`): The "Renderer" and "Calculator"**
@@ -113,7 +113,7 @@ graph LR
             direction TB
             SAC_Reads_Desc["6\. Reads UIndicatorDescriptor from Event"] --> SAC_Load_Widget["7\. Async Loads UMG Widget Class"];
             SAC_Load_Widget --> SAC_Create_Widget["8\. Creates/Pools UMG Widget Instance"];
-            SAC_Create_Widget -- Instance of --> WIDGET_INSTANCE["\IActorIndicatorWidget (UMG Widget)/"];
+            SAC_Create_Widget -- Instance of --> WIDGET_INSTANCE["\IIndicatorWidgetInterface (UMG Widget)/"];
             WIDGET_INSTANCE -- 9\. BindIndicator(Descriptor) Called --> DESC_Data;
             WIDGET_INSTANCE -- Can Access --> DESC_Data;
             

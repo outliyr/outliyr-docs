@@ -6,16 +6,60 @@ This section explores more advanced ways to customize Lyra's UI Indicator System
 
 ### **Extending `UIndicatorDescriptor`**
 
-While the base `UIndicatorDescriptor` provides a rich set of properties, you might encounter scenarios where you need to store additional, indicator-specific data or logic.
+While the base `UIndicatorDescriptor` provides a rich set of properties, you might encounter scenarios where your indicator UMG widget needs to access more specific data or trigger custom logic on the game object it represents.
 
-* **Using `DataObject` for Custom Data:**
-  * The simplest way to associate custom data is by using the `DataObject` property (`UObject*`) on `UIndicatorDescriptor`.
-  * **Process:**
-    1. Create a new `UObject` C++ class or Blueprint (derived from `UObject`). This class will hold your custom data fields (e.g., `QuestID`, `EnemyThreatLevel`, `InteractionType`).
-    2. Optionally, create a Blueprint Interface (e.g., `BPI_IndicatorCustomData`) that your custom data object class implements. This allows your UMG widget to interact with the data object via interface calls without needing to cast to a specific concrete class.
-    3. When creating and configuring your `UIndicatorDescriptor`, also create an instance of your custom data object and assign it using `SetDataObject()`.
-    4. In your UMG widget's `BindIndicator` event, get the `DataObject` from the `UIndicatorDescriptor`, cast it to your custom class or interface, and store/use it.
-  * **Benefits:** Keeps `UIndicatorDescriptor` clean, good for purely data-centric extensions.
+* **Using `DataObject` for Rich Interaction and Custom Data:**
+  * The `DataObject` property (`UObject*`) on `UIndicatorDescriptor` is a powerful way to link your indicator UMG widget directly to the underlying game entity or a dedicated data payload. This allows the widget to query data or even send messages back to the game object.
+  * **Common Pattern: The `DataObject` is the Game Entity Itself (e.g., an Actor):**
+    1. **Define an Interface (Optional but Recommended for Decoupling):**
+       * Create a Blueprint Interface (e.g., `BPI_IndicatorDataSource`) with functions that your UMG widget might need to call on the `DataObject`. Examples: `GetDisplayName()`, `GetCurrentHealth()`, `GetInteractionPromptText()`, or even event-like functions like `NotifyIndicatorClicked()`.
+    2. **Implement the Interface:** The Actor class (or other `UObject` class) that will serve as the `DataObject` should implement this interface and provide logic for its functions. For instance, an "Objective" actor might implement `BPI_IndicatorDataSource` to return its current status or name.
+    3.  **Set the `DataObject`:** When creating the `UIndicatorDescriptor`, set the instance of your Actor (or other relevant `UObject`) as the `DataObject`.
+
+        ```c++
+        // In C++ when setting up the descriptor
+        MyObjectiveActor* Objective = /* ... get your objective actor ... */;
+        IndicatorDescriptor->SetDataObject(Objective); 
+        ```
+
+        ```blueprint
+        // In Blueprint
+        // Assuming 'MyObjectiveActor' is a variable holding your objective actor instance
+        NewDescriptor -> Set Data Object (DataObject: MyObjectiveActor)
+        ```
+    4.  **Interact from the UMG Widget:**
+
+        * In your UMG widget's `Event Bind Indicator`, get the `DataObject` from the `UIndicatorDescriptor`.
+        * Attempt to call interface messages on this `DataObject`. If the object implements the interface, the messages will be executed.
+        * You can also cast the `DataObject` to its known class if you need to access properties or functions not exposed via an interface, though using interfaces promotes better decoupling.
+
+        ```cpp
+        // In WBP_MyIndicator's Event Bind Indicator
+        Set MyIndicatorDescriptor (From Event Parameter)
+        LocalDataObject = MyIndicatorDescriptor -> GetDataObject
+
+        if (IsValid(LocalDataObject)) {
+            // Option 1: Using an Interface (Preferred for decoupling)
+            // Assuming BPI_IndicatorDataSource has a function 'GetIndicatorDisplayName'
+            if (LocalDataObject -> DoesImplementInterface (BPI_IndicatorDataSource)) {
+                DisplayName = BPI_IndicatorDataSource::GetIndicatorDisplayName (Target: LocalDataObject)
+                MyTextBlock_Name -> SetText (DisplayName)
+            }
+
+            // Option 2: Direct Casting (If you know the specific type and need direct access)
+            // MyObjectiveActorReference = Cast To MyObjectiveActor (Object: LocalDataObject)
+            // if (IsValid(MyObjectiveActorReference)) {
+            //    SomeValue = MyObjectiveActorReference.ObjectiveSpecificProperty
+            // }
+        }
+        ```
+    5. **Benefits:** Allows the UMG widget to directly query live game state from the relevant actor or send events back to it without hard-coding dependencies on specific actor classes in the widget (if using interfaces). The game entity remains the source of truth for its data.
+  * **Alternative Pattern: The `DataObject` is a Dedicated Data Payload `UObject`:**
+    1. Create a custom `UObject` C++ class or Blueprint (e.g., `MyIndicatorDataPayload`) specifically designed to hold all the static or snapshot data your indicator widget needs.
+    2. When creating the `UIndicatorDescriptor`, instantiate this payload object, populate it with the necessary data, and then assign it via `SetDataObject()`.
+    3. In your UMG widget's `Event Bind Indicator`, get the `DataObject`, cast it to `MyIndicatorDataPayload`, and then access its properties.
+    4. **Benefits:** Useful when the data for the indicator is a snapshot at the time of creation or doesn't need to be live from an actor. Can be simpler if you don't need two-way communication or interface calls.
+  * **Key Idea:** The `DataObject` is flexible. It can be the actual game world entity (like an Actor) that the indicator represents, allowing for rich, dynamic interaction through interfaces, or it can be a more passive UObject just carrying data. The choice depends on the needs of your specific indicator.
 * **Subclassing `UIndicatorDescriptor` (C++):**
   * For more complex behavior or if you need to add new functions directly to the descriptor itself, you can create a C++ subclass of `UIndicatorDescriptor`.
   * **Process:**

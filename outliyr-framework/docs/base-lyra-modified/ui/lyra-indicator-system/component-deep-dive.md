@@ -18,7 +18,7 @@ The `UIndicatorDescriptor` is a `UObject` that acts as the central data containe
     * `Component` (`USceneComponent*`): The primary scene component in the world that this indicator is tracking.
     * `ComponentSocketName` (`FName`): If specified, the indicator tracks this specific socket on the `Component` rather than the component's origin.
   * **Visuals:**
-    * `IndicatorWidgetClass` (`TSoftClassPtr<UUserWidget>`): A soft class pointer to the UMG `UUserWidget` class that should be instantiated to visually represent this indicator. This widget should ideally implement `IActorIndicatorWidget`.
+    * `IndicatorWidgetClass` (`TSoftClassPtr<UUserWidget>`): A soft class pointer to the UMG `UUserWidget` class that should be instantiated to visually represent this indicator. This widget should ideally implement `IIndicatorWidgetInterface`.
     * `IndicatorWidget` (`TWeakObjectPtr<UUserWidget>`): A weak pointer to the actual instantiated UMG widget. This is populated by `SActorCanvas` after the widget is created.
   * **Visibility & Lifetime:**
     * `bVisible` (`bool`): Controls the desired visibility of the indicator. If false, the indicator won't be processed or drawn.
@@ -42,7 +42,7 @@ The `UIndicatorDescriptor` is a `UObject` that acts as the central data containe
 * **Key Functions:**
   * `SetIndicatorManagerComponent(ULyraIndicatorManagerComponent* InManager)`: Internal function called by the manager when an indicator is added.
   * `UnregisterIndicator()`: Tells the associated `ULyraIndicatorManagerComponent` to remove this indicator.
-  * `SwitchTo3DMode()`: Changes the `ProjectionMode` back to its `OriginalProjectionMode` and notifies the bound widget via `IActorIndicatorWidget::OnIndicatorDisplayModeChanged`.
+  * `SwitchTo3DMode()`: Changes the `ProjectionMode` back to its `OriginalProjectionMode` and notifies the bound widget via `IIndicatorWidgetInterface::OnIndicatorDisplayModeChanged`.
   * `SwitchTo2DMode()`: Sets the `ProjectionMode` to `EActorCanvasProjectionMode::ScreenLocked`, stores the current mode in `OriginalProjectionMode`, and notifies the bound widget.
   * Various Getters/Setters for its properties.
 
@@ -77,7 +77,7 @@ This `UControllerComponent` is responsible for the centralized management of all
 
 ***
 
-### **`IActorIndicatorWidget` - The Widget Contract**
+### **`UIndicatorWidgetInterface` - The Widget Contract**
 
 This `UInterface` defines the standard set of functions that a UMG widget should implement to properly interact with the UI Indicator System.
 
@@ -128,7 +128,7 @@ This `SPanel` derivative is the core workhorse for rendering, positioning, and m
     * Subscribes to `OnIndicatorAdded` and `OnIndicatorRemoved` events from the `ULyraIndicatorManagerComponent`.
     * When an indicator is added, it asynchronously loads the `UIndicatorDescriptor::IndicatorWidgetClass`.
     * Manages a `FUserWidgetPool` to efficiently create, reuse, and release UMG widget instances.
-    * Calls `IActorIndicatorWidget::BindIndicator` and `UnbindIndicator` on the UMG widgets.
+    * Calls `IIndicatorWidgetInterface::BindIndicator` and `UnbindIndicator` on the UMG widgets.
   * **Per-Frame Update (`UpdateCanvas` active timer):**
     * Retrieves the local player's view projection data.
     * Iterates through all active `UIndicatorDescriptor`s.
@@ -141,7 +141,7 @@ This `SPanel` derivative is the core workhorse for rendering, positioning, and m
     * Calculates the final screen position for each UMG widget, applying alignment and offsets from the descriptor.
     * Handles clamping logic: If an indicator is off-screen and `bClampToScreen` is true, it repositions the indicator to the screen edge.
     * Manages a pool of `SActorCanvasArrowWidget` instances and positions/rotates them appropriately if `bShowClampToScreenArrow` is true for clamped indicators.
-    * Notifies UMG widgets about their clamped status via `IActorIndicatorWidget::OnIndicatorClamped`.
+    * Notifies UMG widgets about their clamped status via `IIndicatorWidgetInterface::OnIndicatorClamped`.
     * Arranges all the UMG widgets (and arrow widgets) as child Slate widgets.
   * **Painting (`OnPaint`):**
     * Orchestrates the painting of its child widgets (the indicators and arrows).

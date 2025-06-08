@@ -146,7 +146,7 @@ An **Edit Condition** (subclass of `FGameSettingEditCondition`) is responsible f
 
 When an edit condition determines that a setting should be disabled, it can provide a reason message (as seen in the `InOutEditState.Disable(Message)` call). The UI framework is responsible for displaying this message to the user, typically as a tooltip or an informative text block next to the disabled setting. This greatly improves user experience by explaining _why_ an option is not available.
 
-<figure><img src="../../.gitbook/assets/image (4) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (4) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 **Using Edit Conditions When Extending:**
 
