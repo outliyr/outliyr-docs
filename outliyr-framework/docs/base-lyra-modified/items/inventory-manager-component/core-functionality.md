@@ -51,7 +51,7 @@ These functions are the main entry points for modifying inventory contents and s
   * **Use Case:** Picking up world items defined by templates, crafting, granting items.
   * **Returns:** The number of items that _could not_ be added (0 if all were added successfully).
 
-<figure><img src="../../../.gitbook/assets/image (28) (1).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (28) (1) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 * `TryAddItemInstance(ULyraInventoryItemInstance* ItemInstance, TArray<ULyraInventoryItemInstance*>& OutStackedItems, TArray<ULyraInventoryItemInstance*>& OutNewItems)`
   * **Action:** The **primary way to add an existing item instance**. Attempts to add the `ItemInstance` (and its current stack count) to the inventory.

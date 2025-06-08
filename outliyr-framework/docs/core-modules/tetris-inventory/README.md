@@ -29,11 +29,11 @@ Integrating the Tetris Inventory System offers several advantages:
 This plugin builds directly upon the **Modified Base Lyra Game Core** provided with this asset package. It relies heavily on the core concepts and systems established there, including:
 
 * The enhanced `ULyraInventoryManagerComponent`.
-* The Item Definition (`ULyraInventoryItemDefinition`) and Item Instance (`ULyraInventoryItemInstance`) system.
-* The Item Fragment system (including Transient Fragments).
-* The Gameplay Ability System (GAS) integration layer (`UInventoryAbilityFunctionLibrary`, `FAbilityData_SourceItem`).
+* The [Item Definition](../../base-lyra-modified/items/items-and-fragments/item-definition.md) (`ULyraInventoryItemDefinition`) and [Item Instance ](../../base-lyra-modified/items/items-and-fragments/item-instance.md)(`ULyraInventoryItemInstance`) system.
+* The [Item Fragment](../../base-lyra-modified/items/items-and-fragments/item-fragments.md) system (including Transient Fragments).
+* The [Gameplay Ability System (GAS) integration layer](../../base-lyra-modified/items/gas-and-ui-integration-layer/) (`UInventoryAbilityFunctionLibrary`, `FAbilityData_SourceItem`).
 
-**It is highly recommended to have a solid understanding of the concepts within the** [**Modified Base Lyra Inventory Documentation**](../../base-lyra-modified/items/) **before diving into the Tetris-specific features.** This documentation will assume familiarity with those base systems and will focus primarily on the additions and modifications introduced by the Tetris Inventory Plugin.
+**It is highly recommended to have a solid understanding of the concepts within the** [**Modified Base Lyra Item Documentation**](../../base-lyra-modified/items/) **before diving into the Tetris-specific features.** This documentation will assume familiarity with those base systems and will focus primarily on the additions and modifications introduced by the Tetris Inventory Plugin.
 
 ### Key Concepts Added
 
@@ -54,7 +54,7 @@ The Tetris Inventory Plugin is designed as an **extension**, not a replacement, 
 * **Inheritance:** The `ULyraTetrisInventoryManagerComponent` inherits from the base `ULyraInventoryManagerComponent`, gaining all its core functionality (item list management, weight/count limits, access rights, permissions) and adding grid-specific logic on top.
 * **Fragments:** Introduces new fragments (like `InventoryFragment_Tetris`, `InventoryFragment_Container`) that work alongside existing base fragments (like `InventoryFragment_InventoryIcon`, `InventoryFragment_SetStats`). An item typically needs both base and Tetris fragments to function correctly in this system.
 * **GAS Integration:** Leverages the _same_ `UInventoryAbilityFunctionLibrary` and GAS workflow established in the base system. It introduces a new data payload struct (`FInventoryAbilityData_SourceTetrisItem`) derived from `FAbilityData_SourceItem` to represent item locations within the grid context.
-* **Core Objects:** Relies on the fundamental `ULyraInventoryItemDefinition` and `ULyraInventoryItemInstance` objects defined in the base system. (\[Link to Base Item Definition Docs], \[Link to Base Item Instance Docs]).
+* **Core Objects:** Relies on the fundamental `ULyraInventoryItemDefinition` and `ULyraInventoryItemInstance` objects defined in the base system.
 
 ### Documentation Structure
 

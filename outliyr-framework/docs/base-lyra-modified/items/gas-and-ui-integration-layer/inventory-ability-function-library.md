@@ -23,7 +23,7 @@ The library offers several functions, primarily focused on sending Gameplay Even
 * **Action:** Creates a `FGameplayEffectContextHandle` containing the provided struct (wrapped in an `FInstancedStruct`) and sends the specified `Event Tag` along with the `GameplayEventData` (including the context handle) to the Player State's ASC.
 * **Use Case:** Triggering _any_ custom inventory ability where you need to pass a single, specific data struct as context (e.g., dropping an item, inspecting an item, using a specific consumable action defined by a struct).
 
-<figure><img src="../../../.gitbook/assets/image (11) (1) (1).png" alt="" width="261"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (11) (1) (1) (1).png" alt="" width="261"><figcaption></figcaption></figure>
 
 `Call Gameplay Ability From UI (Move Item)`
 
@@ -37,7 +37,7 @@ The library offers several functions, primarily focused on sending Gameplay Even
 * **Action:** This node specifically packages the `Source Slot` and `Destination Slot` structs into a single `FAbilityData_MoveItem` struct. This `FAbilityData_MoveItem` struct is then wrapped in an `FInstancedStruct` and sent via a Gameplay Event like the generic node.
 * **Use Case:** The standard way to trigger an ability designed to handle moving items between different slots (inventory-to-inventory, inventory-to-equipment, equipment-to-attachment, etc.). The receiving ability unpacks the `FAbilityData_MoveItem` struct.
 
-<figure><img src="../../../.gitbook/assets/image (12) (1) (1).png" alt="" width="263"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (12) (1) (1) (1).png" alt="" width="263"><figcaption></figcaption></figure>
 
 `Get Item From Ability Source Item Struct`
 
@@ -50,7 +50,7 @@ The library offers several functions, primarily focused on sending Gameplay Even
 * **Use Case:** Used within server-side Gameplay Abilities to safely resolve the source data struct back into a validated `ULyraInventoryItemInstance*` pointer before performing actions on it.
 * **Returns:** The validated `ULyraInventoryItemInstance*` if checks pass, otherwise `nullptr`.
 
-<figure><img src="../../../.gitbook/assets/image (13) (1) (1).png" alt="" width="295"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (13) (1) (1) (1).png" alt="" width="295"><figcaption></figcaption></figure>
 
 `Get Custom Ability Data (from GE Context)`
 
@@ -60,7 +60,7 @@ The library offers several functions, primarily focused on sending Gameplay Even
 * **Use Case:** Used within Gameplay Abilities or Gameplay Effect Execution Calculations to retrieve the custom data struct sent with the triggering event.
 * **Returns:** The `FInstancedStruct` containing the custom data payload.
 
-<figure><img src="../../../.gitbook/assets/image (14) (1) (1).png" alt=""><figcaption><p>Example of getting <code>CustomAbilityData</code> from the <code>GA_EquipTetrisItem</code></p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (14) (1) (1) (1).png" alt=""><figcaption><p>Example of getting <code>CustomAbilityData</code> from the <code>GA_EquipTetrisItem</code></p></figcaption></figure>
 
 `Is Null Slot`
 
@@ -68,7 +68,7 @@ The library offers several functions, primarily focused on sending Gameplay Even
 * **Action:** Checks if the provided `FInstancedStruct` contains the specific `FNullSourceSlot` struct type.
 * **Use Case:** Determining if a source/destination slot represents an invalid or non-specific location.
 
-<figure><img src="../../../.gitbook/assets/image (15) (1) (1).png" alt="" width="151"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (15) (1) (1) (1).png" alt="" width="151"><figcaption></figcaption></figure>
 
 ### How it Works (Custom Thunks)
 
@@ -99,7 +99,7 @@ IIf you're unfamiliar with custom thunks, don't worry.  You don't need to unders
 4. **Set Event Tag:** Provide the correct `FGameplayTag` that corresponds to the Gameplay Ability you want to trigger.
 5. **Execute Node:** Call the function node when the player performs the UI action (e.g., Inspect Item, Drop Item).
 
-<figure><img src="../../../.gitbook/assets/image (5) (1) (1) (1) (1).png" alt=""><figcaption><p>Using <code>CallGameplayAbilityFromUI</code> to pass the equipment slot address into the <code>Ability.Inventory.InspectItem</code></p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (5) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>Using <code>CallGameplayAbilityFromUI</code> to pass the equipment slot address into the <code>Ability.Inventory.InspectItem</code></p></figcaption></figure>
 
 {% hint style="info" %}
 FEquipmentAbilityData\_SourceEquipment is inherited from FAbilityData\_SourceItem. The [Slot Address Page](slot-address.md) will cover FAbilityData\_SourceItem and it's child structs in more detail.

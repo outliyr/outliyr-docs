@@ -2,6 +2,8 @@
 
 This fragment is the key to creating nested inventories. By adding `InventoryFragment_Container` to an item definition, you allow instances of that item (like backpacks, chests, weapon cases) to possess and manage their own internal `ULyraTetrisInventoryManagerComponent`.
 
+<figure><img src="../../../.gitbook/assets/image (12).png" alt="" width="563"><figcaption></figcaption></figure>
+
 ### Purpose
 
 * **Nested Inventories:** Enables items to function as containers holding other items.
@@ -14,46 +16,73 @@ This fragment is the key to creating nested inventories. By adding `InventoryFra
 
 This fragment utilizes struct-based transient data to store the reference to the unique child inventory component created for each container item instance.
 
-```cpp
-// Transient payload holding the reference to the child inventory component.
-USTRUCT(BlueprintType)
-struct FTransientFragmentData_Container : public FTransientFragmentData
-{
-    GENERATED_BODY()
-public:
-    // Constructor, etc...
-
-    // --- FTransientFragmentData Overrides ---
-    // Called when the container item instance is permanently destroyed.
-    virtual void DestroyTransientFragment(ULyraInventoryItemInstance* ItemInstance) override;
-    // Called when the container item instance is added to a parent inventory.
-    virtual void AddedToInventory(UActorComponent* Inventory, ULyraInventoryItemInstance* ItemInstance) override;
-    // Called when the container item instance is removed from a parent inventory.
-    virtual void RemovedFromInventory(UActorComponent* Inventory, ULyraInventoryItemInstance* ItemInstance) override;
-    // --- End Overrides ---
-
-    // Pointer to the actual child Tetris inventory component managed by this container instance.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly) // EditAnywhere typically not needed here, just Visible/ReadOnly usually
-    TObjectPtr<ULyraTetrisInventoryManagerComponent> ChildInventory;
-};
-```
-
 * **`ChildInventory`:** The crucial pointer to the dynamically created `ULyraTetrisInventoryManagerComponent` associated _only_ with this specific container item instance.
 
-### Configuration (on `InventoryFragment_Container`)
+### How to Configure
 
-When adding this fragment to an item definition, you configure the properties of the child inventory it will create:
+To turn an item into a functioning container (e.g., backpack, crate, pouch), add the `InventoryFragment_Container` to its `ULyraInventoryItemDefinition` and configure the following properties:
 
-* **`ContainerName` (FText):** Name for the child inventory (e.g., "Backpack Interior").
-* **`InventoryLayout` (`TArray<FInventoryLayoutCreator>`):** **Required.** Defines the grid layout _inside_ this container.
-* **`StartingItems` (`TArray<FInventoryStartItemDetails>`):** Items that automatically appear inside the container when it's first created.
-* **`MaxWeight` (float):** Weight limit _for the child inventory_.
-* **`bIgnoreChildInventoryWeights` (bool):** Does _this child inventory_ ignore the weight of items within _its own_ child containers? (Relevant for containers within containers).
-* **`ItemCountLimit` (int32):** Item count limit _for the child inventory_.
-* **`bIgnoreChildInventoryItemCounts` (bool):** Does _this child inventory_ ignore the item count of _its own_ child containers?
-* **`AllowedItems` / `DisallowedItems` (TSet):** Item type restrictions _for the child inventory_.
-* **`SpecificItemCountLimits` (`TArray<FPickupTemplate>`):** Specific item limits _for the child inventory_.
-* **`bIgnoreChildInventoryItemLimits` (bool):** Does _this child inventory_ ignore specific limits within _its own_ child containers?
+**1. Set Container Identity and Layout**
+
+* **`ContainerName`**:\
+  A user-facing label for the container's internal inventory (e.g., `"Backpack Interior"`). Appears in UI titles.
+*   **`InventoryLayout`** (Required):\
+    Defines the internal grid layout of the container. Use one or more `FInventoryLayoutCreator` entries to configure rows, columns, and layout groups.
+
+    > This must be set; a container without layout will not function correctly.
+
+{% hint style="success" %}
+There is a Blueprint editor Utility Widget that can be used to easily create an inventory layout. This is the preferred way rather than trying to visualise the layout in your head and translating that to a 3D array. [Read this page](../tetris-inventory-manager-component/grid-layout.md#best-practice-using-the-layout-editor-utility-widget) to see how it works
+{% endhint %}
+
+**2. Prepopulate the Container (Optional)**
+
+* **`StartingItems`**:\
+  An array of `FInventoryStartItemDetails` defining which items should spawn inside the container when it's first created.
+
+**3. Set Storage Rules**
+
+* **`MaxWeight`**:\
+  Total weight capacity of this container. Set to `0` to disable weight limits.
+* **`ItemCountLimit`**:\
+  Maximum number of item stacks allowed. Set to `0` to disable count limits.
+
+**4. Control Child Inventory Contribution**
+
+These options determine how this container's **contents** affect its **parent inventory** (the one this container is stored in).
+
+* **`bIgnoreChildInventoryWeights`**:\
+  If `true`, items inside this container won’t add to the parent inventory’s total weight.
+* **`bIgnoreChildInventoryItemCounts`**:\
+  If `true`, items inside this container won’t count toward the parent’s item stack limit.
+* **`bIgnoreChildInventoryItemLimits`**:\
+  If `true`, the container will not enforce specific per-item stack limits on its child containers.
+
+**5. Restrict Allowed Items (Optional)**
+
+Use these to define what _can_ or _cannot_ go inside the container:
+
+* **`AllowedItems`**:\
+  Only these item definitions are allowed. If non-empty, acts as a whitelist.
+* **`DisallowedItems`**:\
+  These item definitions are blocked. Acts as a blacklist (useful even when `AllowedItems` is empty).
+
+**6. Set Per-Item Limits (Optional)**
+
+*   **`SpecificItemCountLimits`**:\
+    Define item-specific stack limits for contents. Use `FPickupTemplate` entries for granular control.
+
+    > 💡 Don't set an item to 0 here — use `DisallowedItems` instead.
+
+**7. Test Container Interactions**
+
+After configuring:
+
+* Try dragging an item onto the container to confirm it accepts and stores the item.
+* Ensure constraints like weight, allowed items, and layout are respected.
+* Verify items cannot be placed into themselves or recursive loops (e.g., a backpack inside itself).
+
+***
 
 ### Runtime Logic & Lifecycle
 

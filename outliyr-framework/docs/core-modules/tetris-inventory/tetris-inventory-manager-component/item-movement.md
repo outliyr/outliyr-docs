@@ -6,6 +6,8 @@ Moving items is a fundamental interaction in any inventory system. The `ULyraTet
 
 This function handles the logic when a player drags and drops an item from one slot to another _within the same_ inventory grid.
 
+{% tabs %}
+{% tab title="C++" %}
 ```cpp
 /**
  * Moves an item from a source slot to a destination slot within the same inventory grid.
@@ -27,6 +29,12 @@ bool MoveItemInternally(
     EItemRotation NewRotation
 );
 ```
+{% endtab %}
+
+{% tab title="Blueprint" %}
+<figure><img src="../../../.gitbook/assets/image (27).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+{% endtabs %}
 
 **Logic Breakdown:**
 
@@ -55,6 +63,8 @@ bool MoveItemInternally(
 
 This function handles moving an item from this inventory grid to a slot in a _different_ `ULyraTetrisInventoryManagerComponent`.
 
+{% tabs %}
+{% tab title="C++" %}
 ```cpp
 /**
  * Moves an item from this inventory to a destination slot in another Tetris inventory.
@@ -78,6 +88,12 @@ bool MoveItemExternally(
     ULyraTetrisInventoryManagerComponent* DestinationInventory
 );
 ```
+{% endtab %}
+
+{% tab title="Blueprints" %}
+<figure><img src="../../../.gitbook/assets/image (28).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+{% endtabs %}
 
 **Logic Breakdown:**
 

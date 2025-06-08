@@ -28,7 +28,7 @@ The relevant nodes in `UInventoryAbilityFunctionLibrary` that accept item source
 
 Here's how you would typically wire up a drag-and-drop move operation within a Tetris inventory UI widget:
 
-**(Assume you have variables: `MyPlayerStateRef`, `MyTetrisInventoryRef`, `SourceSlotInfo` (FInventoryAbilityData\_SourceTetrisItem), `DestinationSlotInfo` (FInventoryAbilityData\_SourceTetrisItem))**
+**Assume you have variables: `MyPlayerStateRef`, `MyTetrisInventoryRef`, `SourceSlotInfo` (`FInventoryAbilityData_SourceTetrisItem`), `DestinationSlotInfo` (`FInventoryAbilityData_SourceTetrisItem`)**
 
 1. **OnDrop Event:** When the player drops the item:
    * Populate `SourceSlotInfo` with the details of where the drag started (Inventory Ref, ClumpID, Position, Rotation).
@@ -41,7 +41,7 @@ Here's how you would typically wire up a drag-and-drop move operation within a T
    * Connect `DestinationSlotInfo` directly to the `Destination Slot` wildcard pin.
    * Connect the execution pins.
 
-**(Imagine a Blueprint screenshot showing these connections)**
+<figure><img src="../../../.gitbook/assets/image (168).png" alt="" width="563"><figcaption><p>Move icon being dropped on tetris inventory cell</p></figcaption></figure>
 
 That's it! The base function library node handles the necessary packaging. You don't need separate nodes for handling `FInventoryAbilityData_SourceTetrisItem` versus the base `FInventoryAbilityData_SourceItem` or other derived types like `FEquipmentAbilityData_SourceEquipment`.
 

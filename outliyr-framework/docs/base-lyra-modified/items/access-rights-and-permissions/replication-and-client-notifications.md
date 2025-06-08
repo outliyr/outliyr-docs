@@ -84,7 +84,7 @@ To make your UI or gameplay logic respond to permission changes:
 
 1. **Register your listener** (e.g. in your widget’s Construct):
 
-<figure><img src="../../../.gitbook/assets/image (6).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (6) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 (FLyraInventoryChangeMessage)
 

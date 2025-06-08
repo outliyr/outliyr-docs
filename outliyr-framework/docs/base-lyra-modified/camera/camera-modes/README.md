@@ -10,7 +10,7 @@ A Camera Mode, represented by classes inheriting from `ULyraCameraMode`, is esse
 2. **Blending Behavior:** How this mode should transition in and out when it becomes active or inactive, specifying duration (`BlendTime`) and interpolation style (`BlendFunction`, `BlendExponent`).
 3. **Gameplay Identification:** Optionally associates Gameplay Tags (`CameraTypeTag`, `CameraTagToAddToPlayer`) with its activation state, allowing other game systems (like animation or UI) to react to the current camera perspective.
 
-<figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1) (1).png" alt=""><figcaption><p>Camera Mode example of third person aiming</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>Camera Mode example of third person aiming</p></figcaption></figure>
 
 ### **Why Use Camera Modes?**
 

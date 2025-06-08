@@ -40,7 +40,7 @@ These concrete structs implement `FAbilityData_SourceItem` and provide specific 
   * `Index` (`int32`): The index of the item within the `InventoryManager`'s `InventoryList.Entries` array.
 * **`GetSourceItem` Logic:** Checks player's `FullAccess` and `RequiredPermission` for `InventoryManager`, then returns `InventoryManager->GetAllItems()[Index]` if valid.
 
-<figure><img src="../../../.gitbook/assets/image (6) (1) (1) (1).png" alt="" width="316"><figcaption><p>Inventory Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (6) (1) (1) (1) (1).png" alt="" width="316"><figcaption><p>Inventory Source Slot</p></figcaption></figure>
 
 **`FEquipmentAbilityData_SourceEquipment`**
 
@@ -50,7 +50,7 @@ These concrete structs implement `FAbilityData_SourceItem` and provide specific 
   * `EquipmentSlot` (`FGameplayTag`): The Gameplay Tag identifying the equipment slot.
 * **`GetSourceItem` Logic:** Checks if the `PlayerController`'s Pawn owns the `EquipmentManager`. Calls `EquipmentManager->GetInstanceFromSlot(EquipmentSlot)`. If an `EquipmentInstance` is found, it returns its `Instigator` (the `ULyraInventoryItemInstance*`).
 
-<figure><img src="../../../.gitbook/assets/image (7) (1) (1).png" alt="" width="375"><figcaption><p>Equiupment Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (7) (1) (1) (1).png" alt="" width="375"><figcaption><p>Equiupment Source Slot</p></figcaption></figure>
 
 **`FAttachmentAbilityData_SourceAttachment`**
 
@@ -61,7 +61,7 @@ These concrete structs implement `FAbilityData_SourceItem` and provide specific 
   * `AttachmentSlot` (`FGameplayTag`): The _final_ slot tag on the container item that holds the target attached item instance. If empty, refers to the container itself.
 * **`GetSourceItem` Logic:** Resolves the `RootAttachmentSlot` to get the starting item instance. Then, it traverses the `ContainerAttachmentPath`, resolving each tag to the next `ULyraInventoryItemInstance` in the attachment chain (typically via an attachment fragment). Finally, it uses the `AttachmentSlot` on the last found container to get the target item. Permission checks are typically based on the root item's container.
 
-<figure><img src="../../../.gitbook/assets/image (8) (1) (1).png" alt="" width="375"><figcaption><p>Attachment Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (8) (1) (1) (1).png" alt="" width="375"><figcaption><p>Attachment Source Slot</p></figcaption></figure>
 
 **`FNullSourceSlot`**
 
@@ -70,7 +70,7 @@ These concrete structs implement `FAbilityData_SourceItem` and provide specific 
 * **`GetSourceItem` Logic:** Always returns `nullptr`.
 * **Use Case:** Represents dropping an item into the world, or an invalid slot in UI interactions.
 
-<figure><img src="../../../.gitbook/assets/image (9) (1) (1).png" alt="" width="181"><figcaption><p>Null Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (9) (1) (1) (1).png" alt="" width="181"><figcaption><p>Null Source Slot</p></figcaption></figure>
 
 ***
 

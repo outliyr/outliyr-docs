@@ -6,6 +6,8 @@ While the base inventory system handles the concept of item stacks via StatTags 
 
 This function attempts to merge two separate stacks of the _same item type_ when one is dropped onto the other within the grid.
 
+{% tabs %}
+{% tab title="C++" %}
 ```cpp
 /**
  * Attempts to combine two item stacks of the SAME item definition within the grid.
@@ -21,6 +23,12 @@ UPARAM(DisplayName = "SuccessfullyCombined") bool CombineItemStack(
     ULyraInventoryItemInstance* SourceInstance
 );
 ```
+{% endtab %}
+
+{% tab title="Blueprints" %}
+<figure><img src="../../../.gitbook/assets/image (146).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+{% endtabs %}
 
 **Logic Breakdown:**
 
@@ -44,6 +52,8 @@ UPARAM(DisplayName = "SuccessfullyCombined") bool CombineItemStack(
 
 This function allows taking a portion of an existing item stack and placing it into a new, empty slot within the same inventory grid.
 
+{% tabs %}
+{% tab title="C++" %}
 ```cpp
 /**
  * Attempts to split a specified amount from an item stack into a new, empty slot in the inventory.
@@ -58,6 +68,12 @@ UPARAM(DisplayName = "SuccessfullySplit") bool SplitItemStack(
     int32 AmountToSplit
 );
 ```
+{% endtab %}
+
+{% tab title="Blueprints" %}
+<figure><img src="../../../.gitbook/assets/image (147).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+{% endtabs %}
 
 **Logic Breakdown:**
 

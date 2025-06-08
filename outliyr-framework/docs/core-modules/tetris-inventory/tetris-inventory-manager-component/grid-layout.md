@@ -14,46 +14,6 @@ Instead of forcing inventories into a single rectangular grid, this system defin
 
 Each Clump in the inventory layout is defined by an instance of the `FInventoryLayoutCreator` struct.
 
-```csharp
-// Represents a single "clump" or section of the inventory grid layout.
-USTRUCT(BlueprintType)
-struct FInventoryLayoutCreator
-{
-    GENERATED_BODY()
-
-public:
-    // The X-coordinate of the top-left corner of this clump within the overall inventory space.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 ClumpX;
-
-    // The Y-coordinate of the top-left corner of this clump within the overall inventory space.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 ClumpY;
-
-    // The shape/layout of the clump as a boolean grid.
-    // 'true' indicates an accessible cell within this clump's rectangle.
-    // 'false' indicates an inaccessible/non-existent cell within this clump's rectangle.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TArray<F1DBooleanRow> ClumpGrid;
-
-    // Helper operator for accessing rows
-    F1DBooleanRow operator[](int32 i) const;
-    F1DBooleanRow& operator[](int32 i);
-    // ... other helper functions/operators ...
-};
-
-// Helper struct representing a single row in the boolean grid.
-USTRUCT(BlueprintType)
-struct F1DBooleanRow
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<bool> BooleanRow;
-    // ... helper functions/operators ...
-};
-```
-
 **Members Explained:**
 
 * **`ClumpX`, `ClumpY` (int32):** These define the **origin (top-left corner)** of this specific Clump relative to the overall inventory's coordinate space (which implicitly starts at 0,0). For example, a `ClumpX` of 5 and `ClumpY` of 0 would place this clump starting 5 cells to the right of the inventory's left edge.
@@ -66,11 +26,6 @@ public:
 ### Defining the Inventory Layout
 
 The final layout for an inventory is configured on the `ULyraTetrisInventoryManagerComponent` using its `InventoryLayout` property:
-
-```cpp
-UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Inventory, Replicated)
-TArray<FInventoryLayoutCreator> InventoryLayout;
-```
 
 This is simply an **array of `FInventoryLayoutCreator` structs**. By adding multiple entries to this array, you define multiple clumps, which combine to form the complete inventory space.
 
@@ -124,9 +79,27 @@ You configure the `InventoryLayout` directly on your `ULyraTetrisInventoryManage
    * Repeat steps 5b-5e to define all rows and cells for the Clump.
 6. **Repeat:** Repeat steps 3-5 for every Clump needed to create your desired inventory shape.
 
-{% hint style="success" %}
-There is a Blueprint editor Utility Widget that can be used to easily create an inventory layout. This is the preferred way rather than trying to visualise the layout in your head and translating that to a 3D array.
+### **Best Practice: Using the Layout Editor Utility Widget**
+
+Manually editing nested `TArray` properties in the Unreal Details panel can be tedious and error-prone. This asset includes a dedicated **Layout Creator Editor Utility Widget** designed to simplify this process.
+
+<figure><img src="../../../.gitbook/assets/image (14).png" alt="" width="563"><figcaption></figcaption></figure>
+
+#### **Recommended Workflow:**
+
+1. **Launch the Shape Editor:** Right click utility widget (`EUW_InventoryLayoutCreator`) -> Run Editior Utility Widget
+2. **Define Clumps**: Add or remove clumps using the buttons provided. You can drag and drop clumps around to place them however you want in the grid.
+3. **Define Clump Dimensions:** Right click on a clump, to select it, then add or remove rows and columns to the clump using the buttons provided.
+4. **Click to Design:** Click on the grid cells in the widget to toggle them between occupied (`true`) and empty (`false`), visually creating the clump's shape. **Green** cell will be cells that can be occupied while r**ed** cells will be inaccessible cells.
+5. **Copy Shape Data:** Once satisfied, use the widget's "Generate Shape" button. This internally calls `UInventoryUtilityLibrary::CopyInventoryLayoutToClipboard`, which generates a string representation of the inventory layout data.
+6. **Paste into Fragment:** Navigate to any asset or component that includes the `InventoryLayout` property — such as an `InventoryFragment_Container` in a `ULyraInventoryItemDefinition`, or directly on a `ULyraTetrisInventoryManagerComponent`.\
+   Paste the copied string into the `InventoryLayout` field in the Details panel. Unreal Engine will parse the string and automatically populate the layout data.
+
+{% hint style="info" %}
+Make sure the window is big enough to fit the editor widget into the screen
 {% endhint %}
+
+<figure><img src="../../../.gitbook/assets/image (15).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ### Runtime Representation (`FGridCellInfoList` & `GridCellIndexMap`)
 

@@ -8,7 +8,7 @@ These properties are typically set in the Details panel of the component or its 
 
 * **`InventoryLayout` (`TArray<FInventoryLayoutCreator>`)**:
   * **Crucial:** Defines the grid structure using Clumps. This array **must not be empty** for the Tetris inventory to function correctly.
-  * See the Grid Layout Core Concept page for details on configuring this.
+  * See the [Grid Layout](grid-layout.md) page for details on configuring this.
 * **`StartingItems` (`TArray<FInventoryStartItemDetails>`)**:
   * An array defining items that should be automatically added to the inventory when it's initialized (specifically, after the game Experience loads).
   * Each `FInventoryStartItemDetails` struct specifies:
@@ -34,8 +34,6 @@ These properties are typically set in the Details panel of the component or its 
   * `AllowedItems`
   * `DisallowedItems`
   * `SpecificItemCountLimits`
-  * `DefaultAccessRights` / `SpecificAccessRights`
-  * `DefaultPermissions` / `SpecificPermissions`
 
 ### Initialization Flow
 

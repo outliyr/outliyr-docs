@@ -2,6 +2,8 @@
 
 This fragment allows you to define rules for combining the item it's attached to (the "target" item) with other specific items (the "incoming" item) when the incoming item is dropped onto the target item within a Tetris inventory grid. It facilitates crafting or transformation interactions directly within the inventory interface.
 
+<figure><img src="../../../.gitbook/assets/image (10).png" alt="" width="563"><figcaption></figcaption></figure>
+
 ### Purpose
 
 * **Item Combination Recipes:** Define specific pairings of items that can be combined.
@@ -11,78 +13,39 @@ This fragment allows you to define rules for combining the item it's attached to
 
 ### Configuration (`CombinationList`)
 
-The core configuration happens within the `CombinationList` property of the fragment, added to the target item's `ULyraInventoryItemDefinition`.
+To define item combination rules, you'll configure the `CombinationList` property inside the `InventoryFragment_Combine`, which is added to the item that will **receive** the drop (the _target item_).
 
-```cpp
-/**
- * Defines which item types this item can combine with when another item is dropped onto it.
- *
- * Key: Incoming item definition (the item being dropped)
- * Value: Combination rule for creating a new resulting item.
- *
- * Note: Items will NOT combine with themselves — items of the same definition will stack instead.
- */
-UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=CombinationDetails)
-TMap<TSubclassOf<ULyraInventoryItemDefinition>, FItemCombinationDetails> CombinationList;
+1. **Add the Fragment to the Target Item:**\
+   Attach `InventoryFragment_Combine` to the `ULyraInventoryItemDefinition` of the item that acts as the base or container in the combination (i.e., the item another item will be dropped onto).
+2. **Access the Combination List:**\
+   In the Details panel, expand the `CombinationList` property to view or add combinations.
+3. **Add a New Combination Entry:**\
+   Click the **+** button to add a new entry to the `TMap`.
+4. **Set the Incoming Item (Key):**\
+   For the **Key**, select the `ULyraInventoryItemDefinition` of the item that will be dropped onto this one — this is the _incoming ingredient_.
+5. **Define the Combination Details (Value):**\
+   Fill out the `FItemCombinationDetails` for this item pairing:
+   * **Target Item Required Quantity**: Number of units of the target item (the one owning the fragment) needed per combination.
+   * **Incoming Item Required Quantity**: Number of units of the incoming item needed per combination.
+   * **Resulting Item Definition**: The `ULyraInventoryItemDefinition` of the item to create when this combination occurs.
+   * **Resulting Item Quantity**: How many units of the resulting item are produced from the combination.
+6. **Repeat for Additional Combinations:**\
+   Add additional entries to support other incoming items that can combine with this target item.
 
-// --- Details for a specific combination rule ---
-USTRUCT(BlueprintType)
-struct FItemCombinationDetails
-{
-    GENERATED_BODY()
-public:
-    /**
-     * The minimum quantity of this item (the one owning the Combine Fragment, i.e. the *target item*)
-     * required per combination action.
-     */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 TargetItemRequiredQuantity; // e.g., Need 1 Empty Bottle
-
-    /**
-     * The minimum quantity of the *incoming* item (the one being dragged/dropped)
-     * required per combination action.
-     */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 IncomingItemRequiredQuantity; // e.g., Need 5 Berries
-
-    /**
-     * The item that will be created as a result of the combination.
-     */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSubclassOf<ULyraInventoryItemDefinition> ResultingItemDefinition; // e.g., Creates 1 Health Potion
-
-    /**
-     * The number of resulting items created per valid combination action.
-     */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 ResultingItemQuantity = 0; // e.g., Produces 1 Potion per combination
-};
-```
-
-**How to Configure:**
-
-1. Add the `InventoryFragment_Combine` to the `ULyraInventoryItemDefinition` of the item that _will be dropped onto_ (the target/base ingredient).
-2. Expand the `Combination List` property.
-3. Click `+` to add a new element to the TMap.
-4. **Key:** In the "Key" dropdown, select the `ULyraInventoryItemDefinition` of the item that will be _dropped onto_ this item (the incoming ingredient).
-5. **Value:** Configure the `FItemCombinationDetails` for this specific pairing:
-   * `Target Item Required Quantity`: How many units of _this_ item (owning the fragment) are consumed per combination.
-   * `Incoming Item Required Quantity`: How many units of the _incoming_ item (selected in the Key) are consumed per combination.
-   * `Resulting Item Definition`: Select the `ULyraInventoryItemDefinition` of the item produced by the combination.
-   * `Resulting Item Quantity`: How many units of the resulting item are produced.
-6. Repeat steps 3-5 for every different item type that can combine with this target item.
-
-**Example:** Making a Health Potion (ID\_Potion\_Health) by dropping 5 Berries (ID\_Resource\_Berry) onto an Empty Bottle (ID\_Misc\_EmptyBottle).
+**Example:** Making a Health Potion (`ID_Potion_Health`) by dropping 5 Berries (`ID_Resource_Berry`) onto an Empty Bottle (`ID_Misc_EmptyBottle`).
 
 * Add `InventoryFragment_Combine` to `ID_Misc_EmptyBottle`.
-* Configure `CombinationList`:
-  * Add Entry:
-    * Key: `ID_Resource_Berry`
-    * Value (`FItemCombinationDetails`):
-      * `Target Item Required Quantity`: 1 (Need 1 Empty Bottle)
-      * `Incoming Item Required Quantity`: 5 (Need 5 Berries)
-      * `Resulting Item Definition`: `ID_Potion_Health`
-      * `Resulting Item Quantity`: 1 (Produces 1 Health Potion)
+*   Configure `CombinationList`:
+
+    * Add Entry:
+      * Key: `ID_Resource_Berry`
+      * Value (`FItemCombinationDetails`):
+        * `Target Item Required Quantity`: 1 (Need 1 Empty Bottle)
+        * `Incoming Item Required Quantity`: 5 (Need 5 Berries)
+        * `Resulting Item Definition`: `ID_Potion_Health`
+        * `Resulting Item Quantity`: 1 (Produces 1 Health Potion)
+
+    <figure><img src="../../../.gitbook/assets/image (11).png" alt="" width="563"><figcaption><p>Example making a health potion</p></figcaption></figure>
 
 ### Runtime Logic (`CombineItems` Override)
 

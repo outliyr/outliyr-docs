@@ -6,6 +6,8 @@ In some scenarios, you might want to dynamically change the layout of a Tetris i
 
 This is the primary function for initiating a layout change.
 
+{% tabs %}
+{% tab title="C++" %}
 ```cpp
 /**
  * Attempts to resize the inventory grid based on a new layout definition.
@@ -23,6 +25,12 @@ bool ResizeInventory(
     TArray<ULyraInventoryItemInstance*>& OutUnplacedItems
 );
 ```
+{% endtab %}
+
+{% tab title="Blueprints" %}
+<figure><img src="../../../.gitbook/assets/image (151).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+{% endtabs %}
 
 **Key Parameters:**
 

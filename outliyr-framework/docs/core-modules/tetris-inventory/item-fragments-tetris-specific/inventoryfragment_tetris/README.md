@@ -2,6 +2,8 @@
 
 The `InventoryFragment_Tetris` is the cornerstone fragment for enabling items to interact spatially within the Tetris Inventory system. Any item definition that needs to occupy grid cells, be rotated, and visually represented within a grid layout _must_ include this fragment.
 
+<figure><img src="../../../../.gitbook/assets/image.png" alt="" width="563"><figcaption></figcaption></figure>
+
 **Purpose and Role**
 
 At its core, this fragment defines the two-dimensional **Shape** of an item on the inventory grid. It dictates which cells the item occupies relative to its root position. This shape information is fundamental for:
@@ -24,7 +26,7 @@ This fragment introduces two primary concepts, detailed further in the sub-pages
 
 When adding this fragment to an `ULyraInventoryItemDefinition`, the primary configuration involves:
 
-* **`Shape` (TArray):** The crucial property defining the item's layout. (Detailed on sub-page).
+* **`Shape` (TArray):** The crucial property defining the item's layout.
 
 Note that the `AllowedRotations` property, while visible, is automatically calculated based on the `Shape` and is **read-only** in the editor.
 
@@ -34,7 +36,7 @@ During gameplay, various systems query this fragment:
 
 * **`ULyraTetrisInventoryManagerComponent`:** Uses the `Shape` and `AllowedRotations` for placement validation, move operations, and checking overlaps.
 * **UI Widgets:** May use the `Shape` to render the item's visual representation in the grid and `AllowedRotations` to constrain user rotation input.
-* **`GetArea()`:** A simple function returning the number of `true` cells in the `Shape`, useful for quick size checks or potentially gameplay logic.
+* **`GetArea()`:** A simple function returning the number of `true` cells in the `Shape`.
 * **`GetAllowedRotations()`:** Returns the pre-calculated array of valid rotations for this item's shape.
 
 **Editor Integration**
@@ -44,13 +46,7 @@ To streamline the process of defining item shapes, this fragment features a cust
 * **Shape Preview Grid:** Directly below the `Shape` property array editor, a visual grid preview is rendered, showing the currently defined shape. This provides immediate visual feedback as you edit the `Shape` array data.
 * **Read-Only Allowed Rotations:** The `AllowedRotations` property is displayed but marked as non-editable, reinforcing that it's derived data.
 
-It is highly recommended to use the provided **Shape Editor Utility Widget** to visually design shapes and copy the resulting data string for pasting into the `Shape` property, leveraging the editor preview for confirmation.
-
-**Prerequisites**
-
-A solid understanding of the base Lyra Item Fragment system is essential before working with this fragment. Please review:
-
-* Base Lyra Item Fragments Documentation (Link to your base docs)
+It is highly recommended to use the provided **Shape Editor Utility Widget** to visually design shapes and copy the resulting data string for pasting into the `Shape` property, leveraging the editor preview for confirmation. You can find this in the utilities folder of TetrisInventoryPlugin.
 
 **Next Steps**
 

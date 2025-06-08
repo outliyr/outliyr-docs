@@ -14,7 +14,7 @@ An item becomes a container by including the `UInventoryFragment_Container` in i
   * Managing the lifecycle of the child inventory component.
   * Contributing (or ignoring) the child inventory's weight/item count to the parent inventory based on configuration flags.
 
-**(-> See the Item Fragments -> `InventoryFragment_Container` page for full configuration details.)**
+**(See the** [**Item Fragments -> `InventoryFragment_Container` page**](../item-fragments-tetris-specific/inventoryfragment_container.md) **for full configuration details.)**
 
 ### Parent-Child Relationship
 
@@ -29,8 +29,16 @@ When a container item (with `InventoryFragment_Container`) is placed within anot
 ### Hierarchy Traversal Functions
 
 * **`GetParentInventory() const`:** Returns the direct parent inventory component, or `nullptr` if this is a root inventory (e.g., directly on the player state or a world actor).
+
+<figure><img src="../../../.gitbook/assets/image (148).png" alt="" width="375"><figcaption></figcaption></figure>
+
 * **`GetBaseInventory()`:** Traverses up the `ParentInventory` chain until it finds the topmost `ULyraTetrisInventoryManagerComponent` (the one with no parent). This is useful for identifying the root container (e.g., the player's main inventory).
+
+<figure><img src="../../../.gitbook/assets/image (149).png" alt="" width="375"><figcaption></figcaption></figure>
+
 * **`IsInParentInventory(ULyraTetrisInventoryManagerComponent* PotentialParentInventory)`:** Checks if the provided `PotentialParentInventory` exists anywhere _above_ this inventory in the hierarchy chain (including itself). Useful for preventing items from being placed inside themselves or their own children.
+
+<figure><img src="../../../.gitbook/assets/image (150).png" alt="" width="375"><figcaption></figcaption></figure>
 
 ### Constraint Propagation (`CanAddItemInParent`)
 

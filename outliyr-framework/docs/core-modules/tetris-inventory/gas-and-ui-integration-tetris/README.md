@@ -1,4 +1,4 @@
-# GAS & UI Integration
+# GAS & UI Integration (Tetris)
 
 Integrating the User Interface (UI) with the `ULyraTetrisInventoryManagerComponent` follows the same secure and decoupled pattern established by the base Lyra inventory system, utilizing the Gameplay Ability System (GAS) as the intermediary. Client-side UI actions trigger Gameplay Events, which activate server-side Gameplay Abilities to perform authoritative actions on the inventory component.
 
@@ -13,7 +13,7 @@ It is crucial to understand the fundamental GAS & UI integration workflow establ
 * **Key Components:** The role of `UInventoryAbilityFunctionLibrary`, `FAbilityData_SourceItem`, Gameplay Abilities, Event Tags, and Gameplay Messages.
 * **Basic Workflow:** The step-by-step process of a UI action triggering a server ability.
 
-**(-> Please review the Base Lyra GAS & UI Integration Documentation for a full explanation of these concepts.)**
+**(Please review the** [**Base Lyra GAS & UI Integration Documentation**](../../../base-lyra-modified/items/gas-and-ui-integration-layer/) **for a full explanation of these concepts.)**
 
 ### Tetris-Specific Additions
 

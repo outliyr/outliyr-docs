@@ -14,78 +14,12 @@ For easy integration with Blueprints (like UI Widgets or Actor Components), the 
 
 This is the primary node for initiating hierarchical queries in Blueprints.
 
-```cpp
-// Blueprint Async Action Node Definition
-UCLASS(MinimalAPI)
-class UAsyncAction_TetrisItemQuery : public UCancellableAsyncAction
-{
-    GENERATED_BODY()
-public:
-    // --- Delegates & Output Pins ---
-    // Fires whenever tracked items change in the hierarchy.
-    UPROPERTY(BlueprintAssignable)
-    FTetrisInventoryAsyncQueryResult OnUpdated;
-    // Delegate Signature: DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTetrisInventoryAsyncQueryResult, const TArray<FLyraTetrisInventoryQueryResult>&, ItemsByInventory);
-
-    // Fires once with the initial results when the query starts.
-    UPROPERTY(BlueprintAssignable)
-    FTetrisInventoryAsyncQueryResult OnFirstResult;
-
-    // Fires if the query fails to initialize (e.g., invalid input inventory).
-    UPROPERTY(BlueprintAssignable)
-    FTetrisInventoryAsyncQueryFailed OnFailed;
-    // Delegate Signature: DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTetrisInventoryAsyncQueryFailed);
-    // --- End Delegates ---
-
-    /**
-     * Starts an asynchronous query to track specified items within an inventory
-     * and all inventories nested inside its container items.
-     *
-     * @param WorldContextObject Typically 'Self'.
-     * @param InventoryComponent The root inventory component to start tracking from.
-     * @param ItemDefinitions The list of item definition classes to track.
-     */
-    UFUNCTION(BlueprintCallable, meta=(BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"))
-    static UAsyncAction_TetrisItemQuery* QueryTetrisInventoryAsync(
-        UObject* WorldContextObject,
-        ULyraInventoryManagerComponent* InventoryComponent, // Accepts base type, works with Tetris type
-        const TArray<TSubclassOf<ULyraInventoryItemDefinition>>& ItemDefinitions
-    );
-
-    // Internal Async Action methods (Activate, SetReadyToDestroy)
-    // ...
-
-private:
-    // Internal handler bound to the C++ query's delegate.
-    UFUNCTION()
-    void HandleQueryUpdated(const TArray<FLyraTetrisInventoryQueryResult>& ItemsByInventory);
-
-    // The underlying C++ query object managed by this action.
-    UPROPERTY()
-    TObjectPtr<ULyraTetrisInventoryQuery> TetrisInventoryQuery;
-};
-
-// Result Struct (Payload for Delegates)
-USTRUCT(BlueprintType)
-struct FLyraTetrisInventoryQueryResult
-{
-    GENERATED_BODY()
-
-    // The specific inventory component (root or child) where these items were found.
-    UPROPERTY(BlueprintReadOnly)
-    TObjectPtr<ULyraInventoryManagerComponent> Inventory; // Returns base type, cast if needed
-
-    // The list of tracked item instances found within this specific Inventory.
-    UPROPERTY(BlueprintReadOnly)
-    TArray<TObjectPtr<ULyraInventoryItemInstance>> Items;
-};
-
-```
+<figure><img src="../../../.gitbook/assets/image (179).png" alt="" width="312"><figcaption></figcaption></figure>
 
 **Node Inputs:**
 
 * **In (Exec):** Standard execution input.
-* **World Context Object:** Typically `Self`.
+* **World Context Object:** Typically `Self`. (**Blueprint automatically assigns this**)
 * **Inventory Component (`ULyraInventoryManagerComponent*`):** The root inventory component to monitor (can be the base type, but functionally needs to be or contain Tetris inventories for hierarchical tracking).
 * **Item Definitions (`TArray<TSubclassOf<ULyraInventoryItemDefinition>>`):** The item types to track across the hierarchy.
 
@@ -103,7 +37,7 @@ Imagine a crafting UI that needs to display the total count of Wood and Metal av
 
 1. **Event Graph (e.g., On Initialized):**
    * Get Player's Root Inventory: Get the `ULyraTetrisInventoryManagerComponent` from the player state/pawn. Store it (`PlayerRootInventory`).
-   * Create Item Def Array: Use `Make Array`, add your `ID_Resource_Wood` and `ID_Resource_Metal` classes. Store it (`TrackedResourceDefs`).
+   * Create Item Def Array: Use `Make Array`, add your `ID_Wood` and `ID_Metal` classes. Store it (`TrackedResourceDefs`).
    * Call Async Node: Add the `Query Tetris Inventory Async` node.
      * Connect `World Context Object` to `Self`.
      * Connect `Inventory Component` to `PlayerRootInventory`.
@@ -128,7 +62,7 @@ Imagine a crafting UI that needs to display the total count of Wood and Metal av
    * Check `Is Valid`.
    * If valid, call `Cancel` on it.
 
-**(Imagine a Blueprint graph screenshot illustrating steps 1-3)**
+<figure><img src="../../../.gitbook/assets/image (180).png" alt=""><figcaption><p>Simple example counting total resource item in inventory and children inventory</p></figcaption></figure>
 
 ### How it Works Internally
 

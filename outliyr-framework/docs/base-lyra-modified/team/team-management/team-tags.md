@@ -27,12 +27,12 @@ These functions find the appropriate `ALyraTeamInfoBase` actor for the given `Te
 
     * Adds `StackCount` to the specified `Tag` for the given `TeamId`. Creates the tag if it doesn't exist.
 
-    <figure><img src="../../../.gitbook/assets/image (10) (1).png" alt="" width="375"><figcaption></figcaption></figure>
+    <figure><img src="../../../.gitbook/assets/image (10) (1) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 *   `RemoveTeamTagStack(int32 TeamId, FGameplayTag Tag, int32 StackCount)`
 
     * Removes `StackCount` from the specified `Tag` for the given `TeamId`. Removes the tag entirely if the count reaches zero or less.
 
-    <figure><img src="../../../.gitbook/assets/image (12) (1).png" alt="" width="375"><figcaption></figcaption></figure>
+    <figure><img src="../../../.gitbook/assets/image (12) (1) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 **Query Functions (Client & Server):**
 
@@ -43,13 +43,13 @@ These functions find the relevant `ALyraTeamInfoBase` actor(s) and query their `
     * Returns the total stack count for the `Tag` on the specified `TeamId`.
     * **Important:** It sums the counts from _both_ the Public and Private Team Info actors if they exist for that `TeamId`. This allows different systems to potentially write to either public or private state while queries get the combined result.
 
-    <figure><img src="../../../.gitbook/assets/image (13) (1).png" alt="" width="375"><figcaption></figcaption></figure>
+    <figure><img src="../../../.gitbook/assets/image (13) (1) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 *   `TeamHasTag(int32 TeamId, FGameplayTag Tag) const`
 
     * Checks if the `GetTeamTagStackCount` for the `Tag` on the specified `TeamId` is greater than 0.
     * Returns `true` if the team has at least one stack of the tag, `false` otherwise.
 
-    <figure><img src="../../../.gitbook/assets/image (14) (1).png" alt="" width="375"><figcaption></figcaption></figure>
+    <figure><img src="../../../.gitbook/assets/image (14) (1) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 ### Use Cases
 
@@ -70,7 +70,7 @@ These functions find the relevant `ALyraTeamInfoBase` actor(s) and query their `
 {% tab title="Blueprint" %}
 Update the the number of bombs defused for the player and the team in search and destroy game mode.
 
-<figure><img src="../../../.gitbook/assets/image (15) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (15) (1) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 
 {% tab title="C++" %}

@@ -152,7 +152,7 @@ Use Tag Attributes to manage ability-specific or modifiable parameters on the eq
     * Get the `ULyraEquipmentInstance` again.
     * Call `EquipmentInstance->ReverseTagAttributeModification(StoredModInfo)`.
 
-    <figure><img src="../../.gitbook/assets/image (15).png" alt=""><figcaption><p>Generalized Equipment Stat Modifier ability primarily used by attachments</p></figcaption></figure>
+    <figure><img src="../../.gitbook/assets/image (15) (1).png" alt=""><figcaption><p>Generalized Equipment Stat Modifier ability primarily used by attachments</p></figcaption></figure>
 
 {% hint style="info" %}
 See the [Attachment fragment documentation ](../items/item-fragments-in-depth/attachment-system/)for more details on the attachment ability

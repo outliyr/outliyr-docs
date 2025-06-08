@@ -53,7 +53,7 @@ This object encapsulates the configuration and execution of a single scene captu
 2. The Stage Manager configures the `UPocketCapture` instance (sets render target size, sets itself as the `CaptureTarget`).
 3. When a render is needed (e.g., initial view, after rotation/zoom, for icon snapshot):
    * The requesting system (e.g., `UInventoryRepresentationWidget`, `UItemIconGeneratorComponent`) gets the `UPocketCapture` instance from the Stage Manager (`GetPocketCapture()`).
-   * For alpha masks, the Stage Manager might call `SetAlphaMaskedActors` on the `UPocketCapture` instance with the relevant actors (base mesh + attachments).
+   * For alpha masks, the Stage Manager calls `SetAlphaMaskedActors` on the `UPocketCapture` instance with the relevant actors (base mesh + attachments).
    * The requesting system calls `CaptureDiffuse()` and/or `CaptureAlphaMask()` on the `UPocketCapture` instance.
    * These calls trigger the internal `CaptureScene` logic, rendering the view from the Stage Manager's camera onto the appropriate `UTextureRenderTarget2D`.
    * The requesting system then accesses the updated render targets using `GetOrCreateDiffuseRenderTarget()` / `GetOrCreateAlphaMaskRenderTarget()` for display (UMG) or readback (Icon Generator).

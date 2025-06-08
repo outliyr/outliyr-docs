@@ -22,13 +22,13 @@ The primary function for determining affiliation is `FindTeamFromObject`.
   * **Action:** Blueprint-callable wrapper around `FindTeamFromObject`.
   * **Output:** Sets `bIsPartOfTeam` (true if `TeamId != INDEX_NONE`) and `TeamId`.
 
-<figure><img src="../../../.gitbook/assets/image (7) (1).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (7) (1) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 {% hint style="success" %}
 Majority of the time you will use the `FindTeamFromObject`  static function below (which internally calls `FindTeamFromObject` form the `TeamSubSystem`) and passing in actor or object that has has the `ILyraTeamAgentInterface`
 {% endhint %}
 
-<figure><img src="../../../.gitbook/assets/image (6) (1).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (6) (1) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 ### Comparing Team Affiliations
 
@@ -42,7 +42,7 @@ Majority of the time you will use the `FindTeamFromObject`  static function belo
       4. Otherwise (valid IDs but different), returns `ELyraTeamComparison::DifferentTeams`.
     * **Output:** Returns the `ELyraTeamComparison` enum value and provides the resolved Team IDs via output parameters.
 
-    <figure><img src="../../../.gitbook/assets/image (8) (1).png" alt="" width="375"><figcaption></figcaption></figure>
+    <figure><img src="../../../.gitbook/assets/image (8) (1) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 * `CompareTeams(const UObject* A, const UObject* B) const`  (**C++ Only**)
   * **Action:** Simpler version that doesn't return the specific IDs.
   * **Returns:** The `ELyraTeamComparison` enum value.
@@ -59,7 +59,7 @@ Majority of the time you will use the `FindTeamFromObject`  static function belo
   * **Returns:** `true` if a team was successfully set on either the Player State or directly on the actor via the interface, `false` otherwise (e.g., the actor doesn't represent a team agent).
   * **Notification:** The actual `SetGenericTeamId` implementation within the Player State or other agent class is responsible for replicating the change and broadcasting the `OnTeamChangedDelegate` (using `ConditionalBroadcastTeamChanged`).
 
-<figure><img src="../../../.gitbook/assets/image (9) (1).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (9) (1) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 ### Damage Application Logic
 

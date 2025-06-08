@@ -34,8 +34,6 @@ It's crucial to understand that the Tetris component **augments, not replaces,**
 * **Base Fragments Needed:** Items intended for the Tetris grid generally still require base fragments like `InventoryFragment_InventoryIcon` (for stacking rules, base weight/count contribution) alongside the `InventoryFragment_Tetris` (for shape).
 * **GAS Integration:** Uses the same GAS layer and `UInventoryAbilityFunctionLibrary` as the base system. The key difference is the use of `FInventoryAbilityData_SourceTetrisItem` to specify grid locations in GAS event payloads.
 
-**(-> See Base Lyra Inventory Manager Component Docs for details on inherited functionalities.)**
-
 ### Structure of this Section
 
 This section dives deep into the `ULyraTetrisInventoryManagerComponent`. The following subpages provide detailed explanations:

@@ -19,14 +19,11 @@ The following subpages provide details on the specific utilities included in thi
 
 1. **Data Types (`InventoryDataLibrary`):**
    * Defines fundamental enums and helper structs used throughout the Tetris system. This includes `EItemRotation`, structures for representing boolean/integer rows (`F1DBooleanRow`, `F1DIntegerRow`), the inventory layout definition (`FInventoryLayoutCreator`), and data carriers like `FFoundCells`.
-   * **(-> See Data Types Details...)** _\[Link to the `Data Types (InventoryDataLibrary)` subpage]_
 2. **Inventory Utility Library (`UInventoryUtilityLibrary`):**
    * A Blueprint Function Library containing static functions primarily focused on **shape manipulation, coordinate transformations, and UI-related calculations** for the Tetris grid.
    * Includes functions for rotating shapes, calculating shape/layout dimensions, generating masked icons, handling mouse interactions relative to grid cells, and converting coordinate systems during rotation.
-   * **(-> See Inventory Utility Library Details...)** _\[Link to the `Inventory Utility Library (UInventoryUtilityLibrary)` subpage]_
 3. **Item Utility Library (`UItemUtilityLibrary`):**
    * A Blueprint Function Library containing more general item-related utilities that might be used alongside the inventory system, though not strictly limited to it.
    * Currently includes functions like `GetRandomPointsInSplineArea` for finding spawn locations within an area, which could be useful for procedural item spawning near containers or in defined loot zones.
-   * **(-> See Item Utility Library Details...)** _\[Link to the `Item Utility Library (UItemUtilityLibrary)` subpage]_
 
 By familiarizing yourself with these utilities, you can often save development time and implement Tetris inventory features more efficiently and robustly. Refer to the specific subpages for detailed descriptions and usage examples of the functions and data structures provided.

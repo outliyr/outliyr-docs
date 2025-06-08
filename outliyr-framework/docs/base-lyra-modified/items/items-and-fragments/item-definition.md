@@ -40,7 +40,7 @@ When you open an Item Definition asset, you'll primarily configure these propert
    * **Adding Fragments:** Click the `+` icon next to the `Fragments` array in the Class Defaults, then select the desired Fragment class from the dropdown list. An instance of that fragment will be created, and you can then configure its specific properties directly.
    * **Order:** The order of fragments generally doesn't matter unless one fragment's initialization depends on another (which is rare).
 
-<figure><img src="../../../.gitbook/assets/image (16) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (16) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ***
 

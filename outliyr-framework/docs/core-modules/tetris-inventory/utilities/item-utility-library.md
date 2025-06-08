@@ -6,6 +6,8 @@ This Blueprint Function Library provides more general-purpose utility functions 
 
 This function is designed to find random locations within a 2D area defined by a closed `USplineComponent`.
 
+{% tabs %}
+{% tab title="C++" %}
 ```cpp
 /**
  * Sample random points inside a closed spline using triangulation.
@@ -23,6 +25,12 @@ static UE_API bool GetRandomPointsInSplineArea(
     TArray<FVector>& RandomPoints
 );
 ```
+{% endtab %}
+
+{% tab title="Blueprint" %}
+<figure><img src="../../../.gitbook/assets/image (165).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+{% endtabs %}
 
 **Logic Breakdown:**
 

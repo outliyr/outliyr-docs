@@ -2,6 +2,8 @@
 
 This fragment provides the necessary data and configuration for integrating an item with the 3D **Item Inspection System**, which utilizes the PocketWorlds plugin to render interactive previews. Adding this fragment to an item definition allows players to potentially view that item in a dedicated inspection viewport.
 
+<figure><img src="../../../.gitbook/assets/image (13).png" alt="" width="563"><figcaption></figcaption></figure>
+
 ### Purpose
 
 * **Visual Representation:** Specifies the Static Mesh or Skeletal Mesh used to represent the item in the 3D inspection view.
@@ -11,106 +13,30 @@ This fragment provides the necessary data and configuration for integrating an i
 
 ### Configuration (on `InventoryFragment_Inspect`)
 
-Add this fragment to an `ULyraInventoryItemDefinition` and configure its properties in the Details panel:
+To enable 3D inspection for an item, add the `InventoryFragment_Inspect` to its `ULyraInventoryItemDefinition`, then configure the following properties in the Details panel:
 
-```cpp
-// Fragment providing data needed for the 3D Item Inspection system (PocketWorlds).
-UCLASS(MinimalAPI)
-class UInventoryFragment_Inspect : public ULyraInventoryItemFragment
-{
-    GENERATED_BODY()
-public:
-    // --- Mesh ---
-    // The Static Mesh to display for inspection. Use this OR SkeletalMesh, not both typically.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TObjectPtr<UStaticMesh> StaticMesh;
-
-    // The Skeletal Mesh to display for inspection. Use this OR StaticMesh.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TObjectPtr<USkeletalMesh> SkeletalMesh;
-
-    // --- Camera/Zoom ---
-    // Can the player zoom in/out using the mouse wheel?
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool bCanZoom = true;
-
-    // Initial Field of View (degrees) when inspection starts.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float InitialFOV = 60.0f;
-
-    // Minimum FOV allowed when zooming in (smaller value = more zoom).
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float MaxZoomInFOV = 45.0f; // Renamed for clarity, this is the *minimum* FOV value
-
-    // Maximum FOV allowed when zooming out (larger value = less zoom).
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float MaxZoomOutFOV = 60.0f; // Renamed for clarity, this is the *maximum* FOV value
-
-    // --- Rotation ---
-    // Can the player rotate the item by dragging the mouse?
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool bCanRotate = true;
-
-    /** If true, dragging rotates the camera's Spring Arm. If false, rotates the ActorSpawnPointComponent directly. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool bRotateSpringArm = false;
-
-    /** Should the model snap back to DefaultInspectionRotation when the player stops rotating? */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool bResetRotationOnLoseFocus = false; // Note: Implementation might be in the StageManager/Widget
-
-    /** If bRotateSpringArm is false, should Pitch rotation be clamped? */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(EditCondition="!bRotateSpringArm"))
-    bool bClampXRotationAxis = true; // Typically Pitch
-
-    /** Min/Max Pitch angle if clamped (degrees). */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(EditCondition="bClampXRotationAxis && !bRotateSpringArm"))
-    FVector2D RotationXAxisClamp = FVector2D (-75.0f, 75.0f);
-
-    /** If bRotateSpringArm is false, should Yaw rotation be clamped? */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(EditCondition="!bRotateSpringArm"))
-    bool bClampYRotationAxis = true; // Typically Yaw
-
-    /** Min/Max Yaw angle if clamped (degrees). */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(EditCondition="bClampYRotationAxis && !bRotateSpringArm"))
-    FVector2D RotationYAxisClamp = FVector2D (-35.0f, 35.0f); // Note: Clamping Yaw directly might feel odd, often left unclamped or uses spring arm rotation.
-
-    // Initial rotation applied to the item model when inspection starts.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FRotator DefaultInspectionRotation = FRotator::ZeroRotator;
-
-    // --- Icon Snapshot Settings ---
-    // Configuration for generating a 2D inventory icon snapshot using the inspection setup.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FInspectionImageDetails InventoryIconImage = FInspectionImageDetails(false, FRotator::ZeroRotator, 1.0f, false);
-};
-
-// --- Struct for Icon Snapshot Config ---
-USTRUCT(BlueprintType)
-struct FInspectionImageDetails
-{
-    GENERATED_BODY()
-    // Should the ItemIconGeneratorComponent use this setup to generate an icon?
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool bUseAsInventoryImage = false;
-
-    // The specific rotation the model should have for the icon snapshot.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FRotator ImageRotation = FRotator::ZeroRotator;
-
-    // Ratio for fitting the object to the render target size (e.g., 1.0 = fill, 0.5 = half size).
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0.01", ClampMax = "10.0", UIMin = "0.01", UIMax = "10.0"))
-    float FitToScreenRatio = 1.0f;
-
-    /**
-     * If true, items with the same ItemDefinition share the same cached icon render target.
-     * Set to false if instances can look different (e.g., weapons with attachments).
-     */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool bCacheRenderTarget = true;
-    // Constructors...
-};
-```
+1. **Choose a Visual Mesh:**
+   * Set either `StaticMesh` or `SkeletalMesh` to define how the item appears in the inspection view.
+   * Only one of these should typically be set — whichever represents the item's 3D appearance.
+2. **Camera Settings (Zoom):**
+   * `bCanZoom`: Enable or disable zooming with the mouse wheel or controller input.
+   * `InitialFOV`: Field of View when inspection begins.
+   * `MaxZoomInFOV` / `MaxZoomOutFOV`: Set the zoom boundaries (smaller FOV = closer zoom).
+3. **Rotation Settings:**
+   * `bCanRotate`: Whether the player can rotate the item during inspection.
+   * `bRotateSpringArm`: Enables unrestricted rotation using a virtual spring arm.
+   * `bResetRotationOnLoseFocus`: Resets item rotation when the player stops interacting.
+   * `bClampXRotationAxis` / `bClampYRotationAxis`: Whether to limit rotation on each axis.
+   * `RotationXAxisClamp` / `RotationYAxisClamp`: Define min/max angles for clamping.
+   * `DefaultInspectionRotation`: Initial rotation applied to the item when inspection begins.
+4. **Icon Snapshot Settings (Optional):**\
+   Configure how the item is rendered when generating a 2D icon snapshot from the 3D model:
+   * `InventoryIconImage.bUseAsInventoryImage`: Whether to use this 3D view for inventory icons.
+   * `ImageRotation`: Rotation applied when generating the icon image.
+   * `FitToScreenRatio`: Controls how much of the screen the object fills during capture.
+   * `bCacheRenderTarget`: Share a cached render target for items of the same definition, or allow unique icons per instance (useful for visual attachments).
+5. **Save and Test:**\
+   After configuration, trigger an item inspection (e.g., via UI or gameplay ability) to verify that the camera behavior, rotation limits, and mesh visuals function as expected within the inspection viewport.
 
 ### Runtime Usage
 

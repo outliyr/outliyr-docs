@@ -50,11 +50,14 @@ This is the most fundamental message for Tetris UI updates, indicating that the 
   * Displaying/clearing the item icon in the root cell.
   * Showing/hiding highlighting for non-root cells occupied by an item (using the `RootSlot` info).
   * Updating tooltips or other cell-specific information.
-* **UI Handling:** A grid UI widget would typically:
-  1. Listen for this message using `RegisterListener`.
-  2. In the handler function, check if `InventoryOwner` matches the displayed inventory.
-  3. Use `ClumpID` and `Position` to identify the specific UI slot widget corresponding to the changed cell.
-  4. Update that slot widget based on the `Instance`, `Rotation`, and `RootSlot` information in the payload. (e.g., set icon, set background tint based on `RootSlot` != -1, store item instance reference for tooltips).
+*   **UI Handling:** A grid UI widget would typically:
+
+    1. Listen for this message using `RegisterListener`.
+    2. In the handler function, check if `InventoryOwner` matches the displayed inventory.
+    3. Use `ClumpID` and `Position` to identify the specific UI slot widget corresponding to the changed cell.
+    4. Update that slot widget based on the `Instance`, `Rotation`, and `RootSlot` information in the payload. (e.g., set icon, set background tint based on `RootSlot` != -1, store item instance reference for tooltips).
+
+    <figure><img src="../../../.gitbook/assets/image (178).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ### `TAG_Lyra_Inventory_Message_InventoryResized`
 
@@ -74,7 +77,7 @@ This message signals a more significant change: the entire layout or structure o
         UPROPERTY(BlueprintReadWrite, Category = Gameplay)
         TObjectPtr<AActor> Instigator = nullptr; // Technically Actor, but cast to Component expected
 
-        // Other fields usually unused for this specific message...
+        // Other fields unused for this specific message...
         UPROPERTY(BlueprintReadWrite, Category = Gameplay)
         TObjectPtr<AActor> Target = nullptr;
         // ... Verb, Magnitude ...
@@ -88,10 +91,10 @@ This message signals a more significant change: the entire layout or structure o
   3. Re-read the `InventoryLayout` and `GetAllGridCells` from the inventory component.
   4. Re-generate the entire visual grid based on the new layout and cell information.
 
+<figure><img src="../../../.gitbook/assets/image (177).png" alt="" width="563"><figcaption><p>Example of tetris inventory listening for resizing</p></figcaption></figure>
+
 ### Other Potentially Relevant Messages
 
-* **`TAG_Lyra_Inventory_Message_StackChanged`:** Still relevant for updating stack counts displayed on items within the grid UI, just like in the base system.
-* **`TAG_Lyra_Inventory_Message_DestroyGridWindow`:** (If implemented as described in `LyraTetrisInventoryManagerComponent::ClientCloseInventoryWindow`) Used to force-close UI windows associated with a specific inventory component, particularly useful when a container item holding that inventory is destroyed or removed. The payload is `FInventoryAbilityData_DestroyTetrisInventoryWindow`.
-* **`TAG_Lyra_Inventory_Message_ItemVisualChange`:** Still relevant if systems outside the inventory modify an item in a way that requires its grid icon/representation to update (e.g., applying a visual effect, changing durability state).
+The gameplay messages broadcast from the parent Base Lyra Inventory class would still be broadcasted. Listen to those broadcasts to respond to important inventory events. Go to [this page](../../../base-lyra-modified/items/inventory-manager-component/broadcasted-gameplay-messages.md) to get more details on Base Lyra Inventory gameplay messages.
 
 By listening for these grid-specific messages alongside the base inventory messages, your UI can stay accurately synchronized with the spatial state and structural changes of the `ULyraTetrisInventoryManagerComponent`.

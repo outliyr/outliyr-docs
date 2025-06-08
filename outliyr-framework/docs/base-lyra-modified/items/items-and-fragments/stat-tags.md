@@ -44,31 +44,31 @@ These functions operate on the `StatTags` container within the item instance:
   * **Authority Only.**
   * Adds the specified `StackCount` to the existing count for the `Tag`. If the tag doesn't exist, it's added with the given count. Does nothing if `StackCount` <= 0.
 
-<figure><img src="../../../.gitbook/assets/image (18) (1) (1).png" alt="" width="334"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (18) (1) (1) (1).png" alt="" width="334"><figcaption></figcaption></figure>
 
 * `SetStatTagStack(FGameplayTag Tag, int32 StackCount)`
   * **Authority Only.**
   * Sets the count for the `Tag` directly to `StackCount`. If `StackCount` <= 0, the tag is effectively removed. If the tag doesn't exist and `StackCount` > 0, it's added.
 
-<figure><img src="../../../.gitbook/assets/image (19) (1) (1).png" alt="" width="332"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (19) (1) (1) (1).png" alt="" width="332"><figcaption></figcaption></figure>
 
 * `RemoveStatTagStack(FGameplayTag Tag, int32 StackCount)`
   * **Authority Only.**
   * Removes the specified `StackCount` from the existing count for the `Tag`. If the resulting count is <= 0, the tag is removed entirely. Does nothing if `StackCount` <= 0 or the tag doesn't exist.
 
-<figure><img src="../../../.gitbook/assets/image (20) (1).png" alt="" width="325"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (20) (1) (1).png" alt="" width="325"><figcaption></figcaption></figure>
 
 * `GetStatTagStackCount(FGameplayTag Tag) const`
   * **Client & Server.**
   * Returns the current stack count associated with the `Tag`, or 0 if the tag is not present.
 
-<figure><img src="../../../.gitbook/assets/image (21) (1).png" alt="" width="344"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (21) (1) (1).png" alt="" width="344"><figcaption></figcaption></figure>
 
 * `HasStatTag(FGameplayTag Tag) const`
   * **Client & Server.**
   * Returns `true` if the `Tag` exists in the container (i.e., has a stack count > 0), `false` otherwise.
 
-<figure><img src="../../../.gitbook/assets/image (22) (1).png" alt="" width="331"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (22) (1) (1).png" alt="" width="331"><figcaption></figcaption></figure>
 
 ***
 
