@@ -1,7 +1,7 @@
 # Modular Input with GameFeatures
 
-{% hint style="info" %}
-This page will cover the input related aspect of how [GameFeatures](../../gameframework-and-experience/game-features/) can be used, for more information outside of the input behaviour check it's page.
+{% hint style="success" %}
+This page will cover the input related aspect of how GameFeatures can be used, for more information outside of the input behaviour check it's [documentation page](../../gameframework-and-experience/game-features/).
 {% endhint %}
 
 Lyra's architecture heavily leverages **Game Feature Plugins** to achieve modularity. This extends to the input system, allowing distinct features (like a new game mode, a vehicle system, or a unique set of character abilities) to introduce their own input configurations without altering core game files. This is primarily achieved through specific **Game Feature Actions**.

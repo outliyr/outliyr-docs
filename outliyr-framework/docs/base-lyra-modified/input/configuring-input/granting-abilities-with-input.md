@@ -1,7 +1,7 @@
 # Granting Abilities With Input
 
 {% hint style="success" %}
-This page will cover the input related aspect of the [ULyraAbilitySet](../../gameframework-and-experience/experience-primary-assets/lyra-ability-sets.md), for more information outside of the input behaviour check it's page.
+This page will cover the input related aspect of the ULyraAbilitySet, for more information outside of the input behaviour check it's [documentation page](../../gameframework-and-experience/experience-primary-assets/lyra-ability-sets.md).
 {% endhint %}
 
 While `ULyraPawnData` and `ULyraInputConfig` establish how player inputs are interpreted as `GameplayTags`, the **`ULyraAbilitySet`** Data Asset is crucial for granting the actual `ULyraGameplayAbility` instances to an actor and, importantly, specifying which `InputTag` should trigger them.

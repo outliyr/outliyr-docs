@@ -90,7 +90,6 @@
   * [Practical Guides & How-Tos](base-lyra-modified/input/practical-guides-and-how-tos/README.md)
     * [How-To: Add a New Input to Trigger a Gameplay Ability](base-lyra-modified/input/practical-guides-and-how-tos/how-to-add-a-new-input-to-trigger-a-gameplay-ability.md)
     * [How-To: Add a New Native Input Binding (Non-Ability)](base-lyra-modified/input/practical-guides-and-how-tos/how-to-add-a-new-native-input-binding-non-ability.md)
-    * [How-To: Add a New Rebindable Key](base-lyra-modified/input/practical-guides-and-how-tos/how-to-add-a-new-rebindable-key.md)
     * [How-To: Change Default Sensitivity or Deadzone Values](base-lyra-modified/input/practical-guides-and-how-tos/how-to-change-default-sensitivity-or-deadzone-values.md)
 * [Interaction](base-lyra-modified/interaction/README.md)
   * [How Interaction Works](base-lyra-modified/interaction/how-interaction-works.md)

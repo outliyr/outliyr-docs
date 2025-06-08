@@ -12,9 +12,7 @@ The following "How-To" guides will walk you through the process of:
    * This is perhaps the most common task: making a new key press or button input activate a specific character ability.
 2. **Adding a New Native Input Binding (Non-Ability):**
    * For actions that are better suited to direct C++ function calls rather than the Gameplay Ability System (e.g., simple character interactions, UI toggles).
-3. **Adding a New Rebindable Key:**
-   * Ensuring that a new input action you've defined can be customized by players in the game's settings menu.
-4. **Changing Default Sensitivity or Deadzone Values:**
+3. **Changing Default Sensitivity or Deadzone Values:**
    * Adjusting the out-of-the-box feel for gamepad controls.
 
 Each guide will break down the necessary steps, referencing the relevant Data Assets and C++ classes involved.

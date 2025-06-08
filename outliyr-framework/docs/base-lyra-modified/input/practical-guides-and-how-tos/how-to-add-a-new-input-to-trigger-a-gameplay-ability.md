@@ -1,6 +1,6 @@
 # How-To: Add a New Input to Trigger a Gameplay Ability
 
-This guide walks you through the complete process of setting up a new hardware input (like a key press) to trigger a specific `ULyraGameplayAbility`. This involves creating or identifying several assets and ensuring they are correctly linked.
+This guide walks you through the complete process of setting up a new hardware input (like a key press) to trigger a specific `ULyraGameplayAbility`. This involves creating or identifying several assets and ensuring they are correctly linked. Once you've successfully set this up, you can refer to the [**Input & Keybindings documentation**](../../settings/input-and-keybindings.md) to learn how to make this new input action rebindable in the game's settings menu.
 
 **Goal:** Make pressing the 'G' key trigger a "Throw Grenade" Gameplay Ability.
 
@@ -41,7 +41,7 @@ This guide walks you through the complete process of setting up a new hardware i
        * Click the keyboard icon next to the mapping entry and press the 'G' key.
        * (Optional) Add Triggers if needed (e.g., if you only want it on "Pressed"). By default, it will trigger on press and release type events based on how `BindAbilityActions` works.
      * Save the `IMC_Default_KBM`.
-     * _(Ensure this IMC is actually being added to the player, typically via `ULyraPawnData` or `GameFeatureAction_AddInputContextMapping`)_.
+     * _(Ensure this IMC is actually being added to the player, typically via `ULyraPawnData` , `GameFeatureAction_AddInputContextMapping` or during runtime)_.
 5. **Step 5: Create the `ULyraGameplayAbility`**
    * **Purpose:** Define the actual logic for throwing a grenade.
    * **Action:**
