@@ -16,36 +16,6 @@ Gameplay Message Processors are server-authoritative components designed specifi
 
 The foundation for all server-side accolade detection logic is the `UGameplayMessageProcessor` base class. It provides a standardized framework for creating these event listeners.
 
-```cpp
-// Simplified definition
-UCLASS(MinimalAPI, BlueprintType, Blueprintable, meta=(BlueprintSpawnableComponent))
-class UGameplayMessageProcessor : public UActorComponent
-{
-    GENERATED_BODY()
-
-public:
-    // Called when the game begins or the component is registered.
-    virtual void BeginPlay() override;
-    // Called when the game ends or the component is unregistered.
-    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
-    // Intended to be overridden by subclasses to register message listeners.
-    virtual void StartListening();
-    // Intended to be overridden by subclasses to perform cleanup if needed (though EndPlay handles listener removal).
-    virtual void StopListening();
-
-protected:
-    // Helper to store listener handles for automatic cleanup.
-    void AddListenerHandle(FGameplayMessageListenerHandle&& Handle);
-    // Helper to get the reliable server time for checking time-based conditions.
-    double GetServerTime() const;
-
-private:
-    // Stores handles to registered listeners for automatic unregistration in EndPlay.
-    TArray<FGameplayMessageListenerHandle> ListenerHandles;
-};
-```
-
 **Key Aspects:**
 
 * **Actor Component:** Designed to be added as a component to an Actor. In the Lyra/Shooter Base context, these are typically added to the **GameState** Actor, ensuring they exist as singletons on the server.
@@ -61,11 +31,8 @@ private:
 Shooter Base provides several pre-built processors inheriting from `UGameplayMessageProcessor` to handle common shooter accolades. These serve as excellent examples and cover many standard use cases:
 
 * **`UEliminationAssistProcessor`:** Listens for damage and elimination messages to track which players contributed damage to an eliminated target, broadcasting an `Lyra.Assist.Message` for qualifying players.
-  * _(See sub-page: Elimination Assist Processor for details)_
 * **`UEliminationChainProcessor`:** Tracks the timestamps of eliminations per player. If multiple eliminations occur within the configured `ChainTimeLimit`, it broadcasts specific accolade messages (e.g., `Accolade.DoubleKill`, `Accolade.TripleKill`) based on the chain length defined in `EliminationChainTags`.
-  * _(See sub-page: Elimination Chain Processor for details)_
 * **`UEliminationStreakProcessor`:** Counts consecutive eliminations for each player, resetting the count when that player is eliminated. It broadcasts specific accolade messages (e.g., `Accolade.KillingSpree`, `Accolade.Unstoppable`) based on the streak length defined in `EliminationStreakTags`.
-  * _(See sub-page: Elimination Streak Processor for details)_
 
 These processors demonstrate how to listen to messages, manage internal state (`TMap`s tracking player data), use server time, and trigger new events.
 

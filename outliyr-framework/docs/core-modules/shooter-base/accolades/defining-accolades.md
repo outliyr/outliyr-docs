@@ -12,43 +12,6 @@ This data-driven design makes the system highly flexible. Adding a new accolade 
 
 The core structure used within the Data Table is `FAccoladeDefinitionRow`. This struct holds all the configurable properties for a single accolade type:
 
-```cpp
-USTRUCT(BlueprintType)
-struct FAccoladeDefinitionRow : public FTableRowBase
-{
-    GENERATED_BODY()
-
-public:
-    // The message to display (e.g., "DOUBLE KILL")
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    FText DisplayName;
-
-    // The sound cue or wave to play when this accolade appears
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    TSoftObjectPtr<USoundBase> Sound;
-
-    // The icon texture or material to display alongside the text
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail="true", AllowedClasses="Texture,MaterialInterface,SlateTextureAtlasInterface", DisallowedClasses="MediaTexture"))
-    TSoftObjectPtr<UObject> Icon;
-
-    // How long (in seconds) this accolade should remain visible on screen
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    float DisplayDuration = 1.0f;
-
-    // A Gameplay Tag specifying *where* on the UI this accolade should appear (e.g., "HUD.Accolade.CenterScreen", "HUD.Accolade.Side")
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    FGameplayTag LocationTag;
-
-    // Gameplay Tags associated *with* this specific accolade (e.g., "Accolade.Type.MultiKill", "Accolade.Tier.Minor")
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    FGameplayTagContainer AccoladeTags;
-
-    // If this accolade is displayed, remove any currently displayed or pending accolades that possess *any* of these tags.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    FGameplayTagContainer CancelAccoladesWithTag;
-};
-```
-
 **Property Breakdown:**
 
 * **`DisplayName` (FText):** The primary text shown to the player for this accolade. Supports localization.

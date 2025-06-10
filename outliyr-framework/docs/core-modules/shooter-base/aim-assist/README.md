@@ -2,7 +2,7 @@
 
 Welcome to the documentation for the Aim Assist system! This system is designed to enhance the gameplay experience, particularly for players using gamepads, by providing subtle assistance in targeting. This page will give you a high-level understanding of what our Aim Assist system does, its design goals, and the main components you'll interact with.
 
-{% hint style="success" %}
+{% hint style="info" %}
 This was originally made by Lyra, in their shooter core game feature.
 {% endhint %}
 
@@ -20,9 +20,9 @@ The entire system is implemented as an **`InputModifier`** within Unreal Engine'
 This Aim Assist system was developed with several key principles in mind:
 
 * **Intuitive Feel:** The goal is for the assistance to feel natural and responsive, enhancing the player's skill rather than overshadowing it. It should be subtle enough that players may not always consciously notice it, but appreciate its benefits.
-* **Fairness and Configurability:** We believe aim assist should be a tool that can be finely tuned. The system offers extensive configuration options to allow you, the developer, to tailor its behavior to match the desired feel and balance of your game – whether it's a fast-paced shooter or a more tactical experience.
+* **Fairness and Configurability:** Aim assist should be a tool that can be finely tuned. The system offers extensive configuration options to allow you, the developer, to tailor its behavior to match the desired feel and balance of your game – whether it's a fast-paced shooter or a more tactical experience.
 * **Performance:** The system is designed to be efficient, minimizing its impact on game performance, even when multiple potential targets are present.
-* **A Foundation, Not a Final Product:** While this system is robust and ready to use, it's also built as a foundation. We encourage you to understand its workings so you can extend, modify, and integrate it deeply into your project's specific mechanics, rather than treating it as a black box or something to simply "rip out" for isolated use.
+* **A Foundation, Not a Final Product:** While this system is robust and ready to use, it's also built as a foundation. I encourage you to understand its workings so you can extend, modify, and integrate it deeply into your project's specific mechanics, rather than treating it as a black box or something to simply "rip out" for isolated use.
 
 The design draws inspiration from established systems like Lyra's, but has been structured to be a clear and adaptable base for your game.
 

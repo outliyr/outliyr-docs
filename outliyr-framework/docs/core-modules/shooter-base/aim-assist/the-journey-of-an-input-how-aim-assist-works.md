@@ -1,6 +1,6 @@
 # The Journey of an Input - How Aim Assist Works
 
-Now that you have a general idea of what our Aim Assist system does, let's dive into the mechanics. This page will walk you through the step-by-step process of how player input is received, how targets are identified and evaluated, and how the final aim assistance is calculated and applied. Think of this as following a single "look" command from the player's controller all the way to the adjusted camera movement on screen.
+Now that you have a general idea of what the Aim Assist system does, let's dive into the mechanics. This page will walk you through the step-by-step process of how player input is received, how targets are identified and evaluated, and how the final aim assistance is calculated and applied. Think of this as following a single "look" command from the player's controller all the way to the adjusted camera movement on screen.
 
 ***
 
@@ -8,9 +8,9 @@ Now that you have a general idea of what our Aim Assist system does, let's dive 
 
 Everything begins when the player moves their look stick (or mouse, though aim assist is primarily geared towards gamepad input). This raw input is captured by Unreal Engine's **Enhanced Input system**.
 
-Our `UAimAssistInputModifier` is registered within an Input Mapping Context, specifically for the look input action. This means that before the raw look input values (typically a 2D vector representing X and Y look-axis deflection) are used to rotate the player's camera, they are first passed to our `UAimAssistInputModifier`.
+The `UAimAssistInputModifier` is registered within an Input Mapping Context, specifically for the look input action. This means that before the raw look input values (typically a 2D vector representing X and Y look-axis deflection) are used to rotate the player's camera, they are first passed to our `UAimAssistInputModifier`.
 
-The key function where our system intercepts this input is `ModifyRaw_Implementation`. This function receives the current raw input value, the time since the last frame (DeltaTime), and a reference to the `UEnhancedPlayerInput` subsystem. From here, the journey to apply aim assistance begins.
+The key function where the system intercepts this input is `ModifyRaw_Implementation`. This function receives the current raw input value, the time since the last frame (DeltaTime), and a reference to the `UEnhancedPlayerInput` subsystem. From here, the journey to apply aim assistance begins.
 
 ***
 

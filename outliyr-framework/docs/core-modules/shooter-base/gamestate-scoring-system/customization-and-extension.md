@@ -1,85 +1,111 @@
 # Customization & Extension
 
-While `UShooterScoring_Base` provides essential default scoring for eliminations and assists, its true value lies in its extensibility. Game modes rarely have identical scoring rules or win conditions. This component is designed to be **subclassed** (in Blueprint or C++) to implement the unique logic required for your specific game experience.
+While `UShooterScoring_Base` provides a foundation for tracking scores, its primary role in a sophisticated game mode is to act as the **central controller for the game's flow**. It does this by listening to and triggering **Game Phases**.
 
-### Primary Method: Subclassing `UShooterScoring_Base`
+Instead of simply reacting to isolated events like eliminations, this component should manage the entire lifecycle of a match—from warmup, to active play, to round end, to the final scoreboard—by using the `ULyraGamePhaseSubsystem`.
 
-The intended workflow is:
+{% hint style="success" %}
+You can explore the included game mode examples to see how flexible the system is, and how different rules, game phases, and win conditions can be implemented.
+{% endhint %}
 
-1. **Create Subclass:** For your specific game mode (e.g., Domination, CTF, Arena), create a new Blueprint Class inheriting from `UShooterScoring_Base` (e.g., `BP_Scoring_Domination`, `BP_Scoring_Arena`).
-2. **Override Hooks:** Implement custom logic by overriding the virtual functions and `BlueprintNativeEvent` implementations provided by the base class.
-3. **Activate Subclass:** Use Lyra Experiences to add _your subclass_ component (instead of the base class) to the GameState for that specific game mode (See "Activating the Scoring Component").
+### Prerequisites
 
-### Hook 1: `OnEliminationScored` (Reacting to Kills)
+Before proceeding, a strong understanding of the **Game Phase System** is required. This documentation assumes you are familiar with its core concepts, including `ULyraGamePhaseSubsystem,` `ULyraGamePhaseAbility`, and how hierarchical Gameplay Tags are used to manage the game's flow. The custom scoring component's main role is to act as a controller for this system.
 
-This is the **most commonly overridden** function for implementing mode-specific logic related to eliminations.
+Please review the [**Game Phase System documentation**](../../../base-lyra-modified/game-phase-system/) first.
 
-* **Purpose:** Called automatically by the base class _after_ it has processed a `Lyra.Elimination.Message` and potentially applied the default score changes (for enemy kills).
-* **Signature (C++):** `virtual void OnEliminationScored_Implementation(ELyraTeamComparison TeamKillComparision);`
-* **Override (BP/C++):** Implement your logic within this function.
-* **`TeamKillComparision` Parameter:** Provides context about the kill (DifferentTeams, SameTeam, NoComparison, InvalidArgument).
-* **Common Use Cases:**
-  * **Check Win Conditions:** Get current team scores (using `ULyraTeamSubsystem::GetTeamTagStackCount` with `ShooterGame.Score.Eliminations`) and check if a team has reached the target score limit or if other win conditions (like score difference) are met.
-  * **Trigger Game End:** If a win condition is met, use the `ULyraGamePhaseSubsystem` to start the appropriate end-game phase (e.g., `StartPhase(BP_GamePhase_PostGame::StaticClass())`).
-  * **Friendly Fire Penalties:** If `TeamKillComparision == ELyraTeamComparison::SameTeam`, you could implement logic here to _subtract_ points from the offending team or player using `AddTeamTagStack`/`AddStatTagStack` with a negative value.
-  * **Suicide Penalties:** Check if `Payload.Instigator == Payload.Target` (requires accessing the original payload - might need modifications or storing it) and apply penalties.
-  * **Mode-Specific Bonuses:** Award extra points based on the context (e.g., killing the flag carrier, eliminating an enemy near an objective) - this might require accessing more game state information within the override.
-  * **Update Custom UI:** Send messages or update replicated variables related to kill events specific to your mode.
+### The Phase-Driven Workflow
 
-### Hook 2: `ResetAllActivePlayers` (Forcing Resets)
+The intended workflow is to subclass `UShooterScoring_Base` and use it as the "brain" for your game mode's progression.
 
-This function provides a convenient way to trigger a reset/respawn on all currently active players.
+1. **Create a Subclass:** For your game mode (e.g., Headquarters, Search & Destroy), create a new Blueprint Class inheriting from `UShooterScoring_Base` (e.g., `BP_Scoring_Headquarters`).
+2.  **Listen to Phases:** In your subclass's **Begin Play** event, get the `ULyraGamePhaseSubsystem` and register listeners. This is how your scoring component knows what state the game is in. You will bind custom functions to phase start and end events.
 
-* **Purpose:** Useful for synchronizing state changes, like ending a round, resetting positions after a major event, or forcing players back to spawn points between phases.
-* **Signature (C++):** `virtual void ResetAllActivePlayers_Implementation();` (It's a `BlueprintNativeEvent`, so override the `_Implementation` in C++ or the event in BP).
-* **Default Logic:** Iterates through all `PlayerState`s, checks if they have a valid Pawn/Controller and _don't_ have the `Status.SpawningIn` tag, and then sends the `GameplayEvent.RequestReset` event to their ASC. This event typically triggers a death/respawn ability.
-* **Override Use Cases:**
-  * **Different Reset Tag:** Send a different Gameplay Event tag if your respawn logic uses a custom event.
-  * **Excluding Players:** Add logic to skip resetting certain players based on team, role, or custom state tags.
-  * **Additional Cleanup:** Perform extra cleanup actions on the player's Pawn or Controller before sending the reset event.
-  * **Conditional Reset:** Only reset players if certain game state conditions are met.
+    <figure><img src="../../../.gitbook/assets/image (181).png" alt="" width="375"><figcaption></figcaption></figure>
+3. **Gate Logic by Phase:** In event handlers like `OnEliminationScored`, first check the current game phase using `IsPhaseActive`. You typically only want to award points or check for win conditions during a `GamePhase.Playing` phase, not during `GamePhase.Warmup` or `GamePhase.PostGame`.
+4. **Trigger Phase Transitions:** When a game-altering event occurs (a team reaches the score limit, a bomb is defused, a headquarters is destroyed), your scoring component is responsible for telling the `ULyraGamePhaseSubsystem` to `StartPhase`, moving the entire game into its next logical state.
 
-### Hook 3: `PostWarmup` (Transitioning to Main Phase)
+### Hook 1: Connecting to the Game Flow in Begin Play (Core Logic)
 
-This is a simple placeholder intended for logic that should run once the main scoring phase of the game begins.
+This is the most important part of setting up your custom scoring component. In `BeginPlay`, you subscribe to the phases relevant to your game mode.
 
-* **Purpose:** Designed to be called explicitly by your game mode logic, often triggered by a Game Phase transition (e.g., when `GamePhase.Playing` starts after `GamePhase.Warmup` ends).
-* **Signature (C++):** `virtual void PostWarmup_Implementation();`
-* **Override Use Cases:**
-  * Reset scores/stats that might have accumulated during a non-scoring warmup phase.
-  * Enable objective scoring mechanisms that were disabled during warmup.
-  * Log the official match start time.
-  * Initialize mode-specific timers or counters.
+**Purpose:** To activate and deactivate pieces of your game mode logic as the game progresses through its phases.
 
-### Hook 4: Overriding Message Handlers (Advanced - Use Cautiously)
+**Implementation (Blueprint Example in `BP_Scoring_Headquarters`):**
 
-You _can_ override the functions that handle the incoming messages directly.
+1. On `Event BeginPlay` (after calling the `Super`), get the `Lyra Game Phase Subsystem`.
+2. Call `When Phase Starts or Is Active` and listen for `GamePhase.Playing`. Bind this to a function like `OnPlayingPhaseStarted`.
+   * Inside `OnPlayingPhaseStarted`, you might reset scores, enable objective markers, and start a match timer.
+3. Call `When Phase Ends` and listen for `GamePhase.Playing`. Bind this to a function like `OnPlayingPhaseEnded`.
+   * Inside `OnPlayingPhaseEnded`, you would disable player input and stop the match timer.
+4. Set up listeners for your mode's specific sub-phases. For Headquarters:
+   * `WhenPhaseStartsOrIsActive(GamePhase.Playing.Captured, ...)` -> Bind to `OnHeadquartersCaptured`. This function would disable respawning for the capturing team and start a countdown timer.
+   * `WhenPhaseEnds(GamePhase.Playing.Captured, ...)` -> Bind to `OnHeadquartersLost`. This function would re-enable respawning for all players (using `ResetAllActivePlayers`) and start the next `GamePhase.Playing.Locked` phase.
 
-* **Functions (C++ `_Implementation` / BP Event):** `OnEliminationMessage`, `OnAssistMessage`.
-* **Warning:** Overriding these **completely replaces** the default scoring logic provided by `UShooterScoring_Base` for that message type. You would be responsible for implementing _all_ score/stat tag updates yourself.
-* **When to Use:** Only override these if the default scoring logic (e.g., +1 kill for enemy elim, +1 assist) is fundamentally wrong for your game mode and cannot be corrected by adjustments in `OnEliminationScored`. For example, if eliminations grant variable points based on kill streaks or objectives, you might override `OnEliminationMessage`.
-* **Recommendation:** Prefer using `OnEliminationScored` for checks and adjustments _after_ the default scoring, as it's less error-prone.
+This observer pattern is the foundation of a clean, phase-driven architecture.
 
-### Adding New Scoring Logic (Custom Events)
+### Hook 2: OnEliminationScored (Reacting During a Phase)
 
-Your game mode might have unique scoring events beyond eliminations and assists (e.g., capturing a point, delivering a flag, completing an interaction).
+This function is still your primary hook for reacting to kills, but its logic should be conditional on the current game phase.
 
-1. **Define Custom Messages/Events:** Create new Gameplay Tags (e.g., `ShooterGame.Event.ObjectiveCaptured`) and potentially custom payload structs if needed. Broadcast these messages from the relevant server-side game logic (e.g., from the control point actor when captured).
-2.  **Register Listeners:** In your scoring component subclass's `BeginPlay` override (remember to call `Super::BeginPlay()`), register listeners for your custom message tags.
+**Purpose:** To handle scoring and check for win conditions **only when scoring is appropriate.**
 
-    ```cpp
-    // Inside BP_Scoring_MyMode::BeginPlay()
-    Super::BeginPlay(); // Call base class first!
-    if(HasAuthority())
-    {
-        UGameplayMessageSubsystem& MessageSubsystem = UGameplayMessageSubsystem::Get(this);
-        MessageSubsystem.RegisterListener(MyGameplayTags::ObjectiveCaptured, this, &ThisClass::OnObjectiveCaptured);
-    }
-    ```
-3. **Implement Handlers:** Create the handler functions (e.g., `void UBP_Scoring_MyMode::OnObjectiveCaptured(FGameplayTag Channel, const FMyObjectiveCapturePayload& Payload)`).
-4. **Apply Scoring:** Inside the handler, determine which player/team scored and apply points using `AddStatTagStack` or `AddTeamTagStack` with appropriate custom score tags (e.g., `ShooterGame.Score.ObjectivePoints`).
-5. **Check Win Conditions:** Optionally, check win conditions within these custom handlers as well.
+**Implementation (Blueprint/C++):**
 
-By subclassing `UShooterScoring_Base` and strategically overriding its hooks or adding listeners for custom events, you can build comprehensive and mode-specific scoring and win condition logic upon the provided foundation.
+```cpp
+// Inside OnEliminationScored_Implementation
+// FIRST, check if we are in a phase where scoring is allowed.
+ULyraGamePhaseSubsystem* PhaseSubsystem = GetWorld()->GetSubsystem<ULyraGamePhaseSubsystem>();
+if (!PhaseSubsystem || !PhaseSubsystem->IsPhaseActive(LyraGameplayTags::GamePhase_Playing))
+{
+    // Not in a playing phase, so don't award points or check for wins.
+    return;
+}
+
+// Now, proceed with the default scoring logic from the base class.
+Super::OnEliminationScored_Implementation(TeamKillComparision);
+
+// Check for win conditions
+// This logic now only runs during the Playing phase.
+if (CheckForWinCondition())
+{
+    // A team has won! End the playing phase and start the post-game phase.
+    PhaseSubsystem->StartPhase(BP_GamePhase_PostGame::StaticClass());
+}
+```
+
+**Common Use Cases (Now Phase-Aware):**
+
+* **Check Win Conditions:** After a kill, get team scores and if a limit is reached, call `StartPhase` to transition to `GamePhase.PostGame`.
+* **Friendly Fire/Suicide:** Apply penalties, but only if the active phase dictates it.
+* **Mode-Specific Bonuses:** Award extra points for killing an enemy near an objective, but only if the objective is active (which can be tied to a sub-phase like `GamePhase.Playing.HillActive`).
+
+### Hook 3: ResetAllActivePlayers (Responding to a Phase Change)
+
+This function is a powerful tool for synchronizing all players, often used as a direct result of a phase transition.
+
+**Purpose:** Force a respawn or reset on all players, typically at the end of a round or when an objective is cleared.
+
+**How to Use with Phases:**\
+Instead of calling this function arbitrarily, trigger it from a phase event handler.
+
+**Example (Search & Destroy):**\
+In `BeginPlay`, you would set up a listener:`WhenPhaseEnds(GamePhase.Playing.Round, MatchType: ExactMatch, ...)` -> Bind to `OnRoundEnded`.
+
+Inside the `OnRoundEnded` function, you would call `ResetAllActivePlayers` to ensure everyone is ready for the next round, which might be triggered by starting a new `GamePhase.Playing.Round` or `GamePhase.RoundSwitchSides` phase.
+
+### Hook 4: Adding New Scoring Logic (Triggering New Phases)
+
+When your game mode has unique events (capturing a point, delivering a flag), these events are often the catalyst for a phase transition.
+
+**Workflow:**
+
+1. **Define Custom Messages:** Create Gameplay Tags for your events (e.g., `ShooterGame.Event.ObjectiveCaptured`).
+2. **Register Listeners:** In your scoring component's `BeginPlay`, register a listener for this message.
+3. **Implement Handler & Trigger Phase:** Inside the handler function:
+   * Apply the score using `AddTeamTagStack`.
+   * **Crucially, determine if this event changes the state of the game.** If capturing the point ends the round or a lockdown period, call `StartPhase` to move to the next phase (e.g., `StartPhase(Phase_RoundEnd::StaticClass())`).
+
+By making your scoring component the master of phase transitions, you create a clear and authoritative source for your game's flow logic.
 
 ***

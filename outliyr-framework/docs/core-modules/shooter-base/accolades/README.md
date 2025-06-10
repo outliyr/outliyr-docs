@@ -2,6 +2,10 @@
 
 Welcome to the Shooter Base Accolade System documentation. This system provides a robust, data-driven, and extensible framework for rewarding players with visual and auditory feedback for specific achievements and actions during gameplay.
 
+{% hint style="info" %}
+This was originally made by Lyra, in their shooter core game feature. I made some slight modifications.
+{% endhint %}
+
 ### Purpose
 
 The primary goal of the Accolade System is to enhance the player experience by:

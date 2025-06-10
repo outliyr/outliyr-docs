@@ -41,7 +41,7 @@ The GameState Scoring System relies on and interacts with several other parts of
 * **`UGameplayMessageSubsystem`:** Used to listen for elimination and assist events (and potentially custom events in subclasses).
 * **`ULyraTeamSubsystem`:** Used to compare player teams and to track team-based scores via `AddTeamTagStack`.
 * **`ALyraPlayerState`:** Used to track individual player stats (kills, deaths, assists) via `AddStatTagStack`.
-* **`ULyraGamePhaseSubsystem` (Optional but Recommended):** Game phase changes can be used to trigger logic within the scoring component (e.g., calling `PostWarmup` when the `GamePhase.Playing` starts, or checking win conditions only during specific phases). Subclasses might also trigger phase changes upon reaching score limits.
+* **`ULyraGamePhaseSubsystem` (Optional but Recommended):** Game phase changes can be used to trigger logic within the scoring component (e.g., calling `PostWarmup` when the `GamePhase.Playing` starts, or checking win conditions only during specific phases). Subclasses might also trigger phase changes upon reaching score limits. Read [this page](../../../base-lyra-modified/game-phase-system/) for more details on the **Game Phase System**.
 * **Gameplay Tags:** Underpin the stat tracking mechanism.
 
 This overview introduces the purpose and core concepts of the GameState Scoring System. The following pages will detail the default logic provided by the base class, explain how to extend it for specific game modes using its various hooks, and cover how to integrate the component into your Lyra Experiences.

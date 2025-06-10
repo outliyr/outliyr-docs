@@ -83,7 +83,7 @@ The `FAimAssistFilter` struct, also configured on each `UAimAssistInputModifier`
 * **`bExcludeRequester`:** If true, the player pawn itself is excluded (almost always true).
 * **`bExcludeAllAttachedToRequester`:** If true, actors attached to the player pawn are excluded.
 * **`bTraceComplexCollision`:** If true, visibility traces will use complex collision. More accurate but potentially more expensive.
-* **`bExcludeDeadOrDying`:** If true, actors whose `ULyraHealthComponent` (or similar) reports them as dead or dying are excluded.
+* **`bExcludeDeadOrDying`:** If true, actors whose `ULyraHealthComponent` reports them as dead or dying are excluded.
 * **`ExcludedClasses (TSet<TObjectPtr<UClass>>)`:** A set of actor classes to always exclude from aim assist. Add any actor types here that should never be targeted.
 * **`ExclusionGameplayTags (FGameplayTagContainer)`:** Targets that have any of these gameplay tags (via their `FAimAssistTargetOptions`) will be excluded.
 * **`TargetRange`:** This is actually part of `FAimAssistSettings` but acts like a filter. It's the maximum distance for initial target consideration.
@@ -153,7 +153,7 @@ Aim assist doesn't exist in a vacuum. Here's how it interacts with common gamepl
   * `FAimAssistOwnerViewData::TeamID` is populated from the player's `ALyraPlayerState` (or a similar player state).
   * `FAimAssistFilter::bIncludeSameFriendlyTargets` uses this `TeamID` to compare against the `TeamID` of potential target actors (if they also have a player state and team concept) to filter out friendlies.
 * **Health/Death System:**
-  * `FAimAssistFilter::bExcludeDeadOrDying` relies on finding a `ULyraHealthComponent` (or your game's equivalent) on the target actor. It then checks `IsDeadOrDying()` to exclude them. Ensure your targetable characters have a compatible health component.
+  * `FAimAssistFilter::bExcludeDeadOrDying` relies on finding a `ULyraHealthComponent` on the target actor. It then checks `IsDeadOrDying()` to exclude them. Ensure your targetable characters have a compatible health component.
 * **Weapon System & ADS:**
   * As mentioned, `TargetingType` on `UAimAssistInputModifier` is key.
   * Your weapon system, when entering/exiting ADS, should be responsible for enabling the `ADS`-configured `UAimAssistInputModifier` and disabling the `Normal` (hip-fire) one, and vice-versa. This is typically done by getting the `UEnhancedInputLocalPlayerSubsystem` from the `ULocalPlayer` and calling `AddPlayerMappedKey` or `RemovePlayerMappedKey` for the specific modifier instances if they are part of different IMCs, or by directly enabling/disabling modifiers if they are always present. Alternatively, you can change the active Input Mapping Context to one that includes the appropriate aim assist modifier.

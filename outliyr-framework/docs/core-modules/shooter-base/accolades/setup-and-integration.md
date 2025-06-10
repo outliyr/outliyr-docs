@@ -16,7 +16,7 @@ The core logic components (`UEliminationAssistProcessor`, `UEliminationChainProc
    * Specify the **Target Actor** as `GameState`.
    * Add an entry to the **Component List**:
      * Set the **Component Class** to the desired processor (e.g., `UEliminationChainProcessor`).
-     * Set **Spawn Actor Condition** usually to `OnlyOnServer`.
+     * Set **Server Component** and **Client Component** to **true**.
    * **Configure Processor Properties:** If the processor has configurable properties (like `UEliminationChainProcessor::ChainTimeLimit` or its `EliminationChainTags` map), you can often set default values directly within the Game Feature data associated with the action, or create Blueprint subclasses of the processors, configure them there, and add the _subclass_ in the action.
 
 **(Alternative: Manual Addition)** If not using experiences, you could manually add these components to your `AGameStateBase` Blueprint or C++ class, ensuring they are only created on the server (`HasAuthority()`). However, using experiences is the more modular and Lyra- idiomatic approach.
@@ -30,17 +30,20 @@ Actions:
     Target Actor: GameState
     Components:
       - Component Class: UEliminationChainProcessor
-        Spawn Actor Condition: OnlyOnServer
+        Client Component: True
+        Server Component: True
       - Component Class: UAccoladeRelay
-        Spawn Actor Condition: OnlyOnServer
+        Client Component: True
+        Server Component: True
       - Component Class: UEliminationFeedRelay
-        Spawn Actor Condition: OnlyOnServer
+        Client Component: True
+        Server Component: True
       # ... Add Assist & Streak processors similarly
 ```
 
 ### 2. Data Setup (Accolades)
 
-Refer back to the "Defining Accolades" page for full details. The essential steps are:
+Refer back to the "[Defining Accolades](defining-accolades.md)" page for full details. The essential steps are:
 
 1. **Define Gameplay Tags:** Create specific tags for each accolade type (e.g., `Accolade.DoubleKill`, `Accolade.Assist`, `Accolade.ObjectiveCapture`) in Project Settings -> Gameplay Tags. Ensure processor configurations (`EliminationChainTags`, `EliminationStreakTags`) use these tags.
 2. **Create Data Table:** Create a Data Table asset using `FAccoladeDefinitionRow` as the row struct (e.g., `DT_Accolades`).
