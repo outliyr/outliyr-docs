@@ -24,12 +24,12 @@ if (APawn* Pawn = PS->GetPawn())
         if(IsPlayerDead(PS))
         {
             // Apply NEGATIVE bias for dead teammate
-            SpawnBias -= 50.0f / FMath::Max(Distance, 1.0f);
+            SpawnBias -= DeadTeammateDistanceWeight / FMath::Max(Distance, 1.0f);
         }
         else
         {
             // Apply POSITIVE bias for living teammate
-            SpawnBias += 100.0f / FMath::Max(Distance, 1.0f);
+            SpawnBias += TeammateDistanceWeight / FMath::Max(Distance, 1.0f);
         }
     }
     // ... (else clause handles enemies) ...
@@ -55,27 +55,24 @@ bool UShooterPlayerSpawningManagmentComponent::IsPlayerDead(APlayerState* Player
 }
 ```
 
-This function checks if the teammate's Ability System Component has the `Status.Death` Gameplay Tag, which is typically applied by the death handling logic (like the `GA_killcam_Death` ability mentioned previously or a standard Lyra death ability).
+This function checks if the teammate's Ability System Component has the `Status.Death` Gameplay Tag, which is typically applied by the death handling logic (like the `GA_killcam_Death` ability mentioned in [Killcam](../../kill-cam/) or a standard Lyra death ability).
 
 ### Bias Calculation Formulas
 
 The influence is inversely proportional to the distance, meaning closer teammates have a stronger effect (positive or negative) on the score.
 
 1. **Living Teammates:**
-   * **Formula:** `SpawnBias += 100.0f / FMath::Max(Distance, 1.0f);`
-   * **Effect:** Adds to the score. The contribution decreases as the distance increases. `FMath::Max(Distance, 1.0f)` prevents division by zero if the distance is extremely small. The `100.0f` acts as a scaling factor for the positive influence.
+   * **Formula:** `SpawnBias += TeammateDistanceWeight / FMath::Max(Distance, 1.0f);`
+   * **Effect:** Adds to the score. The contribution decreases as the distance increases. `FMath::Max(Distance, 1.0f)` prevents division by zero if the distance is extremely small. `TeammateDistanceWeight`(`100.0f`) acts as a scaling factor for the positive influence.
    * **Result:** Spawn points closer to living teammates receive a higher bias score.
 2. **Dead Teammates:**
-   * **Formula:** `SpawnBias -= 50.0f / FMath::Max(Distance, 1.0f);`
-   * **Effect:** Subtracts from the score. The penalty decreases as the distance increases. The `50.0f` scales the negative influence (currently half as strong as the positive influence from a living teammate at the same distance in this example).
+   * **Formula:** `SpawnBias -= DeadTeammateDistanceWeight / FMath::Max(Distance, 1.0f);`
+   * **Effect:** Subtracts from the score. The penalty decreases as the distance increases. `DeadTeammateDistanceWeight`(`50.0f`) scales the negative influence (currently half as strong as the positive influence from a living teammate at the same distance in this example).
    * **Result:** Spawn points closer to where teammates died receive a lower bias score, making them less likely to be chosen.
 
 ### Role of Weight Properties
 
-The class defines `UPROPERTY` members like `TeammateDistanceWeight` and `DeadTeammateDistanceWeight`.
-
-* **Conceptual Role:** These properties are _intended_ to allow designers to easily tune the relative importance of living vs. dead teammate proximity via configuration. Ideally, the formulas above would incorporate these weights as multipliers (e.g., `SpawnBias += TeammateDistanceWeight * (100.0f / ...)`).
-* **Current Implementation Note:** In the specific code snippet provided for `CalculateSpawnBias`, these weight properties are **not directly used** in the calculation formulas (which use hardcoded constants `100.0f` and `50.0f`). Developers extending this class could modify the base calculation or use these weights within their `CalculateGameModeBias` overrides to achieve tunable behavior.
+The class defines `UPROPERTY` members like `TeammateDistanceWeight` and `DeadTeammateDistanceWeight`. These properties allow designers to easily tune the relative importance of living vs. dead teammate proximity via configuration.
 
 By considering both living and dead teammates, this part of the bias calculation helps guide players towards potentially safer and more strategically relevant spawn locations relative to their team's current situation.
 

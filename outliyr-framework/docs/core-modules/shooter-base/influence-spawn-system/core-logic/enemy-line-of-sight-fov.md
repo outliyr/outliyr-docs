@@ -46,7 +46,7 @@ float UShooterPlayerSpawningManagmentComponent::CalculateEnemyFOVBias(AControlle
                 // Spawn point is within FOV - calculate penalty
                 // Normalize score (0=edge of FOV, 1=directly ahead)
                 float FOVScore = (DotProduct - FMath::Cos(FOVRadians)) / (1.0f - FMath::Cos(FOVRadians));
-                TotalFOVBias += 200.0f * FOVScore; // Add scaled penalty
+                TotalFOVBias += FOVBiasWeight * FOVScore; // Add scaled penalty
             }
         }
     }
@@ -83,94 +83,55 @@ Finally, `CalculateSpawnBias` _subtracts_ this `TotalFOVBias` from the overall s
 ### Configuration & Tuning
 
 * **`EnemyFOVAngle` (float):** This `UPROPERTY` allows you to define the width (in degrees) of the enemy's view cone used for this check. A wider angle makes the check more aggressive, penalizing a larger area around enemies.
-* **`FOVBiasWeight` (float):** Similar to other weights, this `UPROPERTY` exists but is not directly used in the provided calculation snippet (`TotalFOVBias += 200.0f * FOVScore`). Developers could modify the calculation to incorporate this weight (`TotalFOVBias += FOVBiasWeight * 200.0f * FOVScore`) for easier tuning of the FOV penalty's overall strength relative to distance penalties. The current large constant (`200.0f`) implies a high default importance for avoiding enemy line of sight.
+* **`FOVBiasWeight` (float) (**`200.0f`**):** Similar to other weights, this `UPROPERTY` exists so developers can tune the FOV penalty's overall strength relative to distance penalties.
 
-### Visual Diagram Concept
-
-Imagine a top-down view:
-
-```mermaid
-graph TD
-    subgraph "Enemy (E) View"
-        direction N
-        E -->|Forward Vector| FV[ ]
-        style FV fill:none,stroke:none
-        E -.-> ConeEdgeL[FOV Boundary Left]
-        E -.-> ConeEdgeR[FOV Boundary Right]
-        subgraph "FOV Cone (EnemyFOVAngle)"
-            direction N
-            ConeEdgeL --- S2[S2 - Inside, Off-Center]
-            S2 --- S3[S3 - Inside, Directly Ahead]
-            S3 --- ConeEdgeR
-        end
-    end
-
-    subgraph "Spawn Points"
-        S1[S1 - Outside Cone]
-        S4[S4 - Behind Enemy]
-    end
-
-    E -- DirectionToS1 --> S1
-    E -- DirectionToS2 --> S2
-    E -- DirectionToS3 --> S3
-    E -- DirectionToS4 --> S4
-
-    subgraph "Calculations & Penalties"
-        Dot1["DotProduct(E->S1, Forward) < Cos(HalfAngle)"] --> Penalty1["Result: NO FOV Penalty"]
-        Dot2["DotProduct(E->S2, Forward) > Cos(HalfAngle)\n(Closer to Cos(HalfAngle))"] --> Penalty2["Result: MEDIUM FOV Penalty"]
-        Dot3["DotProduct(E->S3, Forward) ≈ 1.0\n(Much > Cos(HalfAngle))"] --> Penalty3["Result: HIGH FOV Penalty"]
-        Dot4["DotProduct(E->S4, Forward) < 0"] --> Penalty4["Result: NO FOV Penalty"]
-    end
-
-    style S1 fill:#f9f,stroke:#333,stroke-width:2px
-    style S2 fill:#ff9,stroke:#333,stroke-width:2px
-    style S3 fill:#f96,stroke:#333,stroke-width:2px
-    style S4 fill:#f9f,stroke:#333,stroke-width:2px
-```
+### Visual Diagram Concept (Top-Down view)
 
 ```
-Diagram: Enemy FOV Check for Spawn Point Bias
+                                  ▲
+                                  | Enemy's Forward View Direction
+                                  |
+                                  |
+  * SP_C (SAFE)                   | * SP_A (DANGEROUS)
+    (Angle > Limit)               |  (Angle is near 0°)
+     \                            |
+      \                           |                          /
+       \ <---- FOV Boundary ----- | ----------------------- /
+        \     (Angle Limit)       |                        /
+         \                        |                       /
+          \                       |              * SP_B (RISKY)
+           \                 (Angle < Limit)            /
+            \                                          /
+                                  E
+                               (Enemy)
 
-          Enemy View Direction
-                 ^
-                 |
-                 |
-       ----------|----------  <-- FOV Boundary (Left)
-        \        |        /
-         \       |       /
-          \      |      /    Angle Limit = (EnemyFOVAngle / 2)
-           \     |θ1   /
-            \ E--*---* SP1 (Inside FOV)
-             \   |   /
-              \  |  /
-               \ | / Angle θ2
-                \|/
-                 * SP2 (Outside FOV)
-                 |
-       ----------|----------  <-- FOV Boundary (Right)
-                 |
-
-Key:
-  E   = Enemy Viewpoint Location
-  ^   = Enemy Forward View Direction Vector
-  SP1 = Potential Spawn Point #1
-  SP2 = Potential Spawn Point #2
- ---* = Vector from Enemy (E) to Spawn Point (SP1)
-  θ1  = Angle between Enemy View Direction and Vector E->SP1
-  θ2  = Angle between Enemy View Direction and Vector E->SP2
- \ /  = Boundary lines representing the edge of the EnemyFOVAngle cone
-
-Check Performed by the System:
-  Is the calculated Angle (θ) LESS THAN (EnemyFOVAngle / 2) ?
-  (Actual code uses: Is DotProduct(ViewDir, SpawnDir) > Cos(EnemyFOVAngle / 2) ?)
-
-Outcome:
-  - For SP1: Angle θ1 < (EnemyFOVAngle / 2) --> TRUE
-             Result: SP1 is INSIDE the FOV cone. Significant NEGATIVE bias is added.
-
-  - For SP2: Angle θ2 > (EnemyFOVAngle / 2) --> FALSE
-             Result: SP2 is OUTSIDE the FOV cone. No specific FOV bias is added (though proximity bias still applies).
+   * SP_D (SAFE)
+   (Behind Enemy / Angle > 90°)
 ```
+
+#### **Detailed Breakdown of the Diagram**
+
+* **E (Enemy):** The viewpoint.
+* **▲ (View Direction):** The central vector of the enemy's vision.
+
+**The Spawn Points:**
+
+* **SP\_A (DANGEROUS / Max Penalty):**
+  * **Position:** Almost directly in front of the enemy.
+  * **Angle:** The angle to SP\_A is nearly 0 degrees, making it deep inside the FOV.
+  * **Result:** Receives the highest possible penalty from `FOVBiasWeight`. The system will strongly avoid this.
+* **SP\_B (RISKY / Medium Penalty):**
+  * **Position:** Inside the FOV cone, but near the edge.
+  * **Angle:** The angle to SP\_B is less than the `Angle Limit` (`EnemyFOVAngle / 2`), but not by much.
+  * **Result:** Receives a graduated penalty. It's considered visible and dangerous, but less so than SP\_A.
+* **SP\_C (SAFE / No Penalty):**
+  * **Position:** To the side of the enemy, clearly outside the visual cone.
+  * **Angle:** The angle to SP\_C is **greater than** the `Angle Limit`.
+  * **Result:** The dot product check fails. No FOV bias is applied. This is a good spawn location.
+* **SP\_D (SAFE / No Penalty):**
+  * **Position:** Behind the enemy.
+  * **Angle:** The angle to SP\_D is greater than 90 degrees, which is far beyond any typical forward-facing `Angle Limit`.
+  * **Result:** Just like SP\_C, it is safely outside the FOV cone and receives no penalty.
 
 The system calculates the angle between the Enemy Forward Vector and the vector from the Enemy to the Spawn Point using the dot product and checks if it's within the cone defined by `EnemyFOVAngle`.
 

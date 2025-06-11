@@ -23,7 +23,7 @@ if (APawn* Pawn = PS->GetPawn())
     else // Enemy found
     {
         // Apply NEGATIVE bias for enemy proximity
-        SpawnBias -= 100.0f / FMath::Max(Distance, 1.0f);
+        SpawnBias -= EnemyDistanceWeight / FMath::Max(Distance, 1.0f);
     }
 }
 ```
@@ -35,16 +35,13 @@ if (APawn* Pawn = PS->GetPawn())
 
 Similar to the teammate bias, the enemy proximity influence uses a formula inversely proportional to distance, but applies it as a penalty:
 
-* **Formula:** `SpawnBias -= 100.0f / FMath::Max(Distance, 1.0f);`
-* **Effect:** Subtracts from the `SpawnBias` score. The closer the enemy, the larger the subtraction (penalty). The penalty diminishes rapidly as the distance increases. `FMath::Max(Distance, 1.0f)` prevents division by zero. The `100.0f` constant acts as a scaling factor for this negative influence.
+* **Formula:** `SpawnBias -= EnemyDistanceWeight / FMath::Max(Distance, 1.0f);`
+* **Effect:** Subtracts from the `SpawnBias` score. The closer the enemy, the larger the subtraction (penalty). The penalty diminishes rapidly as the distance increases. `FMath::Max(Distance, 1.0f)` prevents division by zero. `EnemyDistanceWeight` (`100.0f`) acts as a scaling factor for this negative influence.
 * **Result:** Spawn points closer to enemies receive a significantly lower bias score, making them much less likely to be selected compared to points further away from detected enemies.
 
 ### Role of Weight Property (`EnemyDistanceWeight`)
 
-The class defines a `UPROPERTY` named `EnemyDistanceWeight`.
-
-* **Conceptual Role:** This property is intended to provide designers with a configurable multiplier to adjust the importance or strength of the enemy proximity penalty relative to other factors (like teammate proximity or FOV).
-* **Current Implementation Note:** Similar to the teammate weights, the specific code snippet provided for `CalculateSpawnBias` **does not directly use** the `EnemyDistanceWeight` property in its formula (it uses the hardcoded constant `100.0f`). Developers can modify the base calculation or use this weight in `CalculateGameModeBias` overrides if fine-grained tuning via this property is desired. The current fixed scaling factor (`100.0f`) suggests a strong default aversion to spawning near enemies.
+The class defines a `UPROPERTY` named `EnemyDistanceWeight`. This property provides designers with a configurable multiplier to adjust the importance or strength of the enemy proximity penalty relative to other factors (like teammate proximity or FOV).
 
 This enemy proximity check is a fundamental part of the system's safety mechanism. It works in conjunction with the Enemy Line of Sight check (discussed next) to create zones of negative influence around opponents, pushing spawns towards safer locations.
 

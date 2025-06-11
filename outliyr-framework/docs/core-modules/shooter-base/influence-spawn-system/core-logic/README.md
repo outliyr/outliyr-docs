@@ -70,6 +70,50 @@ As shown in the structure above, the final `SpawnBias` is an aggregation of scor
 4. **Enemy Line of Sight (FOV):** Subtracts significant points if the spawn point falls within an enemy's calculated field of view cone.
 5. **Game Mode Logic:** Adds or subtracts points based on custom rules defined for the specific game mode (e.g., proximity to objectives).
 
+```mermaid
+graph TD
+    subgraph Legend
+        direction LR
+        P_Good["\+"] --- Txt_Good(Positive Bias: Good)
+        P_Bad["\-"] --- Txt_Bad(Negative Bias: Bad)
+        P_VBad["--"] --- Txt_VBad(Heavy Negative Bias: Very Bad)
+    end
+
+    subgraph "Spawn Point A (Score: -250)"
+        style Spawn_A fill:#f99,stroke:#333,stroke-width:2px
+        Spawn_A("Spawn Point A")
+    end
+
+    subgraph "Spawn Point B (Score: +80)"
+        style Spawn_B fill:#9f9,stroke:#333,stroke-width:2px
+        Spawn_B("Spawn Point B")
+    end
+
+    subgraph "Spawn Point C (Score: -40)"
+        style Spawn_C fill:#f99,stroke:#333,stroke-width:2px
+        Spawn_C("Spawn Point C")
+    end
+
+    subgraph "Influencing Factors"
+        Enemy("Enemy (with FOV)")
+        Teammate("Living Teammate")
+        DeadTeammate("Dead Teammate")
+    end
+
+    Enemy --"-50 (Proximity)"--> Spawn_A
+    Enemy --"--200 (In FOV)"--> Spawn_A
+
+    Teammate --"+80 (Proximity)"--> Spawn_B
+    DeadTeammate --"-40 (Proximity)"--> Spawn_C
+
+    FinalChoice{Select Highest Score}
+    Spawn_B --> FinalChoice
+    FinalChoice --"SELECTED"--> Final_B(Spawn at B)
+    style Final_B fill:#9f9,stroke:#333,stroke-width:4px
+
+    classDef default fill:#fff,stroke:#333,stroke-width:2px;
+```
+
 ### Iterating Player State
 
 To calculate proximity and line-of-sight influences, the system iterates through the `PlayerArray` available on the current `AGameStateBase`. For each `APlayerState` in the array, it typically:
