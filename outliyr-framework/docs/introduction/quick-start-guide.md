@@ -36,7 +36,7 @@ Let's jump into a pre-built game mode to see the framework in action. We'll use 
     * With the map open, go to **Window > World Settings**.
     * You'll see **Default Gameplay Experience** it should be set to an asset like `B_TeamDeathmatch` which defines what systems and features are loaded for this map.
 
-    <figure><img src="../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p><em>World Settings panel showing the TDM Experience selected for the map</em></p></figcaption></figure>
+    <figure><img src="../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p><em>World Settings panel showing the TDM Experience selected for the map</em></p></figcaption></figure>
 3. **Play In Editor (PIE):**
    * Click the **Play** button in the main editor toolbar.
    * If prompted for the number of players, choose **1 or 2**.&#x20;
@@ -68,7 +68,7 @@ Now that you've played it, let's briefly see where the TDM setup lives:
        * **Default Pawn Data:** The `ULyraPawnData` asset used for TDM players.
        * **Action Sets / Actions:** Any `ULyraExperienceActionSet`s it references or direct `UGameFeatureAction`s it uses (e.g., to add TDM scoring components or UI).
 
-       <figure><img src="../.gitbook/assets/image (3) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p><em><code>B_TeamDeathmatch</code> asset open, highlighting key properties.</em></p></figcaption></figure>
+       <figure><img src="../.gitbook/assets/image (3) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p><em><code>B_TeamDeathmatch</code> asset open, highlighting key properties.</em></p></figcaption></figure>
 
 #### Other Useful Assets in the Plugin
 

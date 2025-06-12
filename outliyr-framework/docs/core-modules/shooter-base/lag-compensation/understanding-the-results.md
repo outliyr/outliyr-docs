@@ -101,7 +101,3 @@ struct FPenetrationHitResult : public FHitResult
 By understanding these result structures, particularly the distinction between historical and mapped coordinates provided by `FPenetrationHitResult`, you can correctly process the outcomes of lag-compensated traces for both gameplay logic and visual feedback.
 
 ***
-
-**Next Steps:**
-
-We'll now look at the **"Debugging Tools"** available for visualizing and troubleshooting the lag compensation system.

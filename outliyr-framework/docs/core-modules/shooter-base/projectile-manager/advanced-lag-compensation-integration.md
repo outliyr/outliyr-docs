@@ -28,6 +28,26 @@ Consider a fast bullet fired by Client A at Client B:
 
 This ensures that the collision check honors the perspective of the firing client, making hits feel accurate despite network latency and projectile travel time.
 
+```mermaid
+sequenceDiagram
+    participant ClientA
+    participant Server
+    participant ProjectileManager
+    participant LagCompManager
+    participant ClientB
+
+    ClientA->>Server: Fire Request (Timestamp T1, Latency L1)
+    Note right of Server: Receives at T2 (T2 > T1)
+    Server->>ProjectileManager: Spawn Projectile (Start Simulation)
+    Note right of ProjectileManager: Simulates movement P1 -> P2 at T3
+    ProjectileManager->>LagCompManager: Rewind Trace (T1, L1)
+    LagCompManager->>ClientB: Rewind Hitbox to T1
+    LagCompManager-->>ProjectileManager: Return Historical Hitbox
+    ProjectileManager->>ProjectileManager: Perform Collision Check P1->P2
+    Note right of ProjectileManager: Accurate from Client A’s POV
+
+```
+
 ### Interaction Details
 
 * **Asynchronous Operation:** The call to `ULagCompensationManager::RewindLineTrace` is asynchronous. The projectile thread initiates the request and continues other work (or waits) until the Lag Compensation thread returns the result via the `TFuture`.
@@ -36,12 +56,8 @@ This ensures that the collision check honors the perspective of the firing clien
 
 ### Reference Lag Compensation Documentation
 
-For a detailed understanding of _how_ the lag compensation system itself performs the rewind, interpolation, and historical tracing, please refer to the main **Lag Compensation** section of this documentation. This Projectile Manager section focuses on _how it utilizes_ that system.
+For a detailed understanding of _how_ the lag compensation system itself performs the rewind, interpolation, and historical tracing, please refer to the main [**Lag Compensation** section](../lag-compensation/) of this documentation. This Projectile Manager section focuses on _how it utilizes_ that system.
 
 By integrating lag compensation directly into its collision detection loop, the Projectile Manager provides a robust solution for achieving accurate, server-authoritative hit registration for high-velocity projectiles in a networked environment.
 
 ***
-
-**Next Steps:**
-
-Let's look at the **"Debugging Tools"** specifically available for the Projectile Manager system.

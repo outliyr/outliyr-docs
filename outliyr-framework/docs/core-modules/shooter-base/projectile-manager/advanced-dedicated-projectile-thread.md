@@ -1,6 +1,6 @@
 # Advanced: Dedicated Projectile Thread
 
-**Note:** This section provides a high-level overview for context. Modifying the thread's internal logic is complex and generally not recommended unless you have significant expertise in C++, multithreading, and physics simulation.
+This section provides a high-level overview for context. Modifying the thread's internal logic is complex and generally not recommended unless you have significant expertise in C++, multithreading, and physics simulation.
 
 The core simulation of projectiles managed by the `UProjectileManager` does not happen on the main game thread. To handle potentially thousands of projectiles efficiently without impacting frame rate, the work is offloaded to a dedicated background thread implemented by the `FLagCompensationThreadRunnable` class. This thread is distinct from the one used by the [Lag Compensation system](../lag-compensation/).
 
@@ -48,7 +48,3 @@ While the `FNewTraceProjectileMessage` defines the initial parameters, the threa
 By running these operations on a separate thread, the Projectile Manager can simulate a large number of fast-moving objects with complex collision and penetration rules without crippling the main game thread responsible for rendering and gameplay logic execution.
 
 ***
-
-**Next Steps:**
-
-Let's explicitly detail the crucial link between this system and the lag compensation mechanism in **"Advanced: Lag Compensation Integration"**.

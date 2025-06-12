@@ -45,7 +45,3 @@ The ShooterBase Lag Compensation system implements this using several key ideas:
 The following pages will delve into the specific components, data structures, workflow, and debugging features of this powerful system.
 
 ***
-
-**Next Steps:**
-
-* Proceed to the **"How It Works"** page to learn about the inner workings of the lag compensation system in more detail.

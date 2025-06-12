@@ -41,7 +41,3 @@ The Lag Compensation system relies on two primary components working together: t
 These two components form the backbone of the system's architecture on the game thread side, enabling the selective tracking and management necessary for the background thread to perform its work efficiently.
 
 ***
-
-**Next Steps:**
-
-We'll now take a closer look at the worker thread itself in the **"The Lag Compensation Thread (`FLagCompensationThreadRunnable`)"** page.

@@ -1,4 +1,4 @@
-# When to use This vs Actor Projectiles
+# When to use Projectile Manager vs Actor Projectiles
 
 ShooterBase offers two distinct systems for handling projectiles, each suited for different scenarios:
 
@@ -54,7 +54,7 @@ Yes, absolutely. A typical project using the ShooterBase plugin will likely use 
 * Assault rifles, SMGs, pistols might use the **Projectile Manager** (spawned via `GA_Weapon_Fire_BulletDrop`).&#x20;
 * Rocket launchers, grenade launchers, bows might use **Actor-Based Projectiles** (spawned via `GA_Weapon_Fire_Projectile`).&#x20;
 
-The choice is made at the Gameplay Ability level – the ability determines whether to send a message to the UProjectileManager or to spawn an AProjectileBase actor. Different weapons granted by the ULyraEquipmentDefinition can simply grant different firing abilities.
+The choice is made at the Gameplay Ability level – the ability determines whether to send a message to the `UProjectileManager` or to spawn an `AProjectileBase` actor. Different weapons granted by the `ULyraEquipmentDefinition` can simply grant different firing abilities.
 
 ***
 
@@ -63,7 +63,7 @@ The choice is made at the Gameplay Ability level – the ability determines whet
 Yes, absolutely. A single weapon could potentially have:
 
 * A primary fire mode using the **Projectile Manager** (via a message-sending ability like `GA_Weapon_Fire_BulletDrop`) for its standard bullets.
-* An alternate fire mode using an **Actor-Based Projectile** ability (like `GA_Weapon_Fire_Projectile`) to launch a grenade (AGrenadeProjectile subclass of AProjectileBase).
+* An alternate fire mode using an **Actor-Based Projectile** ability (like `GA_Weapon_Fire_Projectile`) to launch a grenade (`AGrenadeProjectile` subclass of `AProjectileBase`).
 
 ***
 
@@ -80,5 +80,3 @@ While the Actor-based system is easily extended by subclassing `AProjectileBase`
 By choosing the appropriate system based on the projectile's intended behavior and performance requirements, you can leverage the strengths of both approaches provided by ShooterBase.
 
 ***
-
-**Section Complete:** This concludes the documentation for the Projectile Manager system.

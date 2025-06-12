@@ -46,7 +46,3 @@ Storing detailed `FLagHitboxInfo` for _each_ collision primitive (instead of jus
 By handling these complex tasks on a separate thread, the `FLagCompensationThreadRunnable` ensures the server can perform accurate, historical hit validation without sacrificing main thread responsiveness.
 
 ***
-
-**Next Steps:**
-
-With the components and the thread's role explained, we'll look at how game code actually initiates these historical traces in **"Requesting Rewind Traces"**.

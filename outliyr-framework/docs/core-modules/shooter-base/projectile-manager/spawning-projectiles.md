@@ -77,6 +77,8 @@ struct FNewTraceProjectileMessage
 
 This typically happens on the **server** within the `OnTargetDataReadyCallback` (or a function called from it) after the ability cost has been successfully committed.
 
+{% tabs %}
+{% tab title="C++" %}
 ```cpp
 // Example within a server-side Ability function (e.g., OnRangedWeaponTargetDataReady)
 // Assumes 'ValidatedTargetDataHandle' contains the necessary trajectory info
@@ -131,10 +133,14 @@ if (ValidatedTargetDataHandle.IsValid(0)) // Check if there's data to process
 
 ```
 
+
+{% endtab %}
+
+{% tab title="Blueprints" %}
+<figure><img src="../../../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+{% endtabs %}
+
 By populating the `FNewTraceProjectileMessage` with accurate data derived from the weapon, ability, and client's target data, and broadcasting it using the correct tag, you instruct the `UProjectileManager` to initiate the simulation of a high-performance, lag-compensated projectile on its dedicated thread.
 
 ***
-
-**Next Steps:**
-
-Now that we know how projectiles are spawned, we'll look at **"Usage: Handling Impacts"** to see what happens when the simulation thread detects a collision.

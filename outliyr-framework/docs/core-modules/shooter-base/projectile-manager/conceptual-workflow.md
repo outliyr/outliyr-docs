@@ -1,9 +1,5 @@
 # Conceptual Workflow
 
-Okay, let's break down the step-by-step workflow of the Projectile Manager.
-
-***
-
 This page details the step-by-step process of how a projectile is requested, simulated, and its impact handled within the Projectile Manager system. Understanding this flow helps clarify the roles of the different components and threads involved.
 
 **(Diagram: Request -> Manager -> Thread (Simulate + LagComp Trace) -> Manager (Impact) -> Effects/Damage)**
@@ -123,4 +119,3 @@ This detailed workflow highlights the separation of concerns: the game thread ha
 
 **Next Steps:**
 
-We'll now focus on **"Usage: Spawning Projectiles"**, detailing how developers actually interact with the system to fire these managed projectiles.

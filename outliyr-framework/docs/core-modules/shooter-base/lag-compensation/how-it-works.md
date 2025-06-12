@@ -96,7 +96,3 @@ Understanding the sequence of events involved in recording history and processin
 This flow allows the server to accurately validate client actions against past states while offloading the computationally intensive parts to a background thread, preserving game thread performance.
 
 ***
-
-**Next Steps:**
-
-Now that the overall flow is outlined, we'll examine the specific roles and details of the **"Core Components"**: `ULagCompensationManager` and `ULagCompensationSource`.

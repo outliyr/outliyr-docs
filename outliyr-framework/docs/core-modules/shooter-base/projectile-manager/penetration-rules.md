@@ -90,7 +90,3 @@ struct FProjectileMaterialPenetrationInfo
 By carefully defining physical materials and their corresponding penetration rules in the map provided during spawning, you gain fine-grained control over how projectiles interact with the environment.
 
 ***
-
-**Next Steps:**
-
-We'll briefly look at the **"Advanced: The Simulation Thread (`FProjectileThreadRunnable`)"** to give users a high-level context of where their configured rules are applied, without going into excessive implementation detail.

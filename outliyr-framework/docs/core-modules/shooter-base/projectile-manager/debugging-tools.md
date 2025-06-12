@@ -45,7 +45,3 @@ These tools are essential for:
 * Visualizing the outcome of the lag-compensated traces performed by the manager.
 
 ***
-
-**Next Steps:**
-
-The final page for this section will be **"When to Use This vs. Actor Projectiles"**, providing clear guidelines for developers on choosing the right projectile system for their needs.

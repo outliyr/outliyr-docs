@@ -1,7 +1,5 @@
 # Projectile Manager
 
-### Purpose: High-Performance Projectiles
-
 The **Projectile Manager** is a specialized, high-performance system within ShooterBase designed to handle large numbers of fast-moving, trace-based projectiles, typically representing bullets from firearms like assault rifles, SMGs, or miniguns.
 
 Standard Unreal Engine approaches often involve spawning an `AActor` for each projectile. While flexible, this can become a significant performance bottleneck when dealing with:
@@ -22,7 +20,7 @@ The Projectile Manager solves these problems by simulating projectiles as lightw
 
 ### Contrast with Actor-Based Projectiles (`AProjectileBase`)
 
-It's crucial to understand when to use the Projectile Manager versus the standard Actor-based projectile system (`AProjectileBase` used by `UGameplayAbility_PredictiveProjectile`):
+It's crucial to understand when to use the Projectile Manager versus the standard Actor-based projectile system (`AProjectileBase` used by `UGameplayAbility_PredictiveProjectile` more details [check this page](when-to-use-projectile-manager-vs-actor-projectiles.md)):
 
 * **Use Projectile Manager For:**
   * Typical bullet trajectories (affected by gravity, potentially penetration).
@@ -30,7 +28,7 @@ It's crucial to understand when to use the Projectile Manager versus the standar
   * Performance-critical scenarios where actor overhead is a concern.
   * When accurate, lag-compensated hit detection for fast projectiles is essential.
 * **Use `AProjectileBase` / Actor Projectiles For:**
-  * Slower projectiles (grenades, rockets, arrows, magic spells).
+  * Slower projectiles (grenades, rockets, magic spells).
   * Projectiles requiring complex, unique behaviors beyond simple physics (e.g., homing logic, timed detonation, custom movement patterns).
   * Projectiles needing intricate visual prediction (handled by `UGameplayAbility_PredictiveProjectile`).
   * Situations where the number of active projectiles is relatively low and actor overhead is acceptable.
@@ -48,7 +46,7 @@ It's crucial to understand when to use the Projectile Manager versus the standar
 
 Similar to the Lag Compensation system it relies upon, the Projectile Manager involves **complex multithreading, asynchronous operations, and detailed simulation logic.**
 
-**Modifying the core internals (`UProjectileManager`, `FProjectileThreadRunnable`) is highly advanced and carries significant risk.** It requires deep expertise in C++, multithreading, physics, and networking.
+**Modifying the core internals (`UProjectileManager`, `FProjectileThreadRunnable`) is highly advanced and carries significant risk.** It requires expertise in C++, multithreading, physics, and networking.
 
 **Developers are strongly advised to interact with the system via its intended interface:**
 
@@ -59,7 +57,3 @@ Similar to the Lag Compensation system it relies upon, the Projectile Manager in
 Attempting to alter the thread's simulation or collision logic without a full understanding can easily lead to instability, incorrect behavior, or performance degradation.
 
 ***
-
-**Next Steps:**
-
-We'll now explore the **"Conceptual Workflow"** in more detail, breaking down the journey of a projectile request from initiation to impact handling.

@@ -37,7 +37,3 @@ The Projectile Manager offers significant advantages for handling bullet-like pr
 In summary, the Projectile Manager achieves high performance and scalability by simulating projectiles as server-side data structures on a dedicated thread, leveraging lag compensation for accurate collision, eliminating projectile replication overhead, and relying on decoupled cosmetic systems like Niagara and Gameplay Cues for visual feedback.
 
 ***
-
-**Next Steps:**
-
-This completes the conceptual overview and benefit analysis. We can now proceed back to the detailed workflow starting with **"Conceptual Workflow"**.

@@ -43,7 +43,3 @@ This class, accessible in the Project Settings (usually under "Project" > "Plugi
 These debugging tools are invaluable for understanding how the lag compensation system is interpreting the world state and validating hits, helping to troubleshoot issues with hit registration or unexpected collisions.
 
 ***
-
-**Next Steps:**
-
-We'll conclude the Lag Compensation section by discussing some important **"Limitations & Considerations"**.

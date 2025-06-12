@@ -131,7 +131,3 @@ graph LR
 Whether using C++ or Blueprints, these methods provide the necessary interface to query the Lag Compensation system for historical trace results, forming the basis of authoritative hit validation.
 
 ***
-
-**Next Steps:**
-
-Now that we know how to request a trace, the next logical step is to understand the data returned in **"Understanding the Results"**.
