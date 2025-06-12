@@ -72,6 +72,7 @@ The primary way to initiate a rewind trace from C++ is by calling one of the `Re
         ResultFuture.Then([this, AssociatedData...](TFuture<FRewindLineTraceResult> Future)
         {
             FRewindLineTraceResult ServerResult = MoveTemp(Future).Get();
+            // neccessary to perform the logic back in the game thread
             AsyncTask(ENamedThreads::GameThread, [this, ServerResult, AssociatedData...]()
             {
                 // Process the ServerResult on the game thread...
@@ -86,7 +87,7 @@ The primary way to initiate a rewind trace from C++ is by calling one of the `Re
 
 To make lag-compensated traces accessible from Blueprints (primarily for server-side logic in Blueprint-based abilities or actors), an Async Action node is provided.
 
-* **Node:** `Rewind Line Trace (Async)` (or similar name in the Blueprint palette)
+* **Node:** `Rewind Line Trace (Async)`
 * **Class:** `UAsyncAction_RewindLineTrace`
 * **Inputs:** Takes similar inputs as the C++ function: `WorldContextObject`, `Latency` (in seconds for BP), `Trace Start`, `Trace End`, `Trace Rotation`, `Trace Shape` (Enum), `Sphere Radius`, `Trace Channel`, `Actors To Ignore`.
 * **Outputs (Execution Pins):**
@@ -124,8 +125,6 @@ graph LR
     C -- True --> D;
     C -- False --> E[Handle Miss];
 ```
-
-_(Mermaid diagram illustrating Blueprint usage)_
 
 * **Underlying Logic:** The static `K2_RewindLineTrace` function on `UAsyncAction_RewindLineTrace` creates an instance of the action. The action's `Activate` method calls the C++ `ULagCompensationManager::RewindLineTrace`. It uses the `TFuture` internally and triggers the `OnTraceCompleted` delegate when the future is ready.
 

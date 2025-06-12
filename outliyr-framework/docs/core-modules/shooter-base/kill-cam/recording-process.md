@@ -49,7 +49,6 @@ Several settings, primarily configured within `SetUpKillcam_Internal` via Consol
 
 * **`CVarKillcamMaxDesiredRecordTimeMS` (`demo.RecordHz` equivalent for time):** While `UDemoNetDriver` has `MaxDesiredRecordTimeMS`, this CVar likely influences how much time the driver aims to keep buffered. It sets the target duration of gameplay history to maintain.
 * **`CVarKillcamBufferTimeInSeconds` (`ReplayStreamer->SetTimeBufferHintSeconds`):** This directly tells the `InMemoryNetworkReplayStreaming` implementation how many seconds of data it should aim to keep buffered in memory. This is a primary control over memory usage and the maximum possible lookback time.
-* **Other `demo.*` CVars:** `SetUpKillcam_Internal` also sets various `demo.` CVars (like `FastForwardSkipRepNotifies`, `QueueCheckpointChannels`, etc.) to `0`. This likely configures the replay driver for the most immediate and complete data capture suitable for killcam playback, disabling certain optimizations used for standard, non-interactive replay viewing.
 * **`CheckpointSaveMaxMSPerFrame`:** Limits the time spent saving replay checkpoints per frame to manage performance impact.
 * **`ActorPrioritizationEnabled`, `ViewerOverride`:** These settings help focus the recording effort on actors relevant to the local player's perspective, potentially optimizing the recorded data.
 

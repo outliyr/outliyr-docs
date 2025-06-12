@@ -16,7 +16,7 @@ The primary goal of the Killcam system is to enhance the player experience after
 At its heart, the Killcam system leverages Unreal Engine's **Replay System** and an experimental **World Duplication** feature. Here's the high-level idea:
 
 1. **Record:** The game client constantly records recent gameplay activity into a short, in-memory replay buffer.
-2. **Duplicate:** When the game starts (in the correct mode), the engine creates an invisible, in-memory duplicate of the current game world's dynamic level collection.
+2. **Duplicate:** When the game starts (**outside PIE**), the engine creates an invisible, in-memory duplicate of the current game world's dynamic level collection.
 3. **Trigger:** Upon player death, the system identifies the killer and victim and prepares for playback.
 4. **Playback:** When triggered, the system stops recording, activates the duplicated world, plays back the relevant segment of the recorded replay within this isolated world, focusing the camera appropriately (usually on the killer).
 5. **Switch View:** The player's viewport is temporarily switched to view the action unfolding in the duplicated world.

@@ -34,5 +34,3 @@ Advanced methods—such as full snapshot interpolation—can potentially offer m
 Being aware of these points helps in effectively utilizing the lag compensation system and understanding the boundaries of its simulation when interpreting results or planning extensions.
 
 ***
-
-**Section Complete:** This concludes the documentation for the Lag Compensation system.

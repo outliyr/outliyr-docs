@@ -6,7 +6,7 @@ Integrating the Shooter Base Killcam system is streamlined using the provided Ly
 
 This is a **mandatory prerequisite** for the Killcam system to function. As detailed in "[Under the Hood: World Duplication](under-the-hood-world-duplication.md)," the system requires a custom UGameEngine class that overrides `Experimental_ShouldPreDuplicateMap` to return true.
 
-* **Requirement:** Ensure your project uses `ULyraGameEngine` (provided with Shooter Base) or a child class derived from it that preserves this override.
+* **Requirement:** Ensure your project uses `ULyraGameEngine` or a child class derived from it that preserves this override.
 *   **Configuration:** Verify that your `Config/DefaultEngine.ini` file has the correct configuration:
 
     ```ini
@@ -53,7 +53,7 @@ The `LAS_ShooterBase_Death_Killcam` Action Set uses several standard Game Featur
    * Uses [`GameFeatureAction_AddAbilities`](../../../base-lyra-modified/gameframework-and-experience/game-features/game-feature-actions/add-abilities.md).
    * **Target:** `APlayerState` (or relevant subclass, must have an Ability System Component).
    * **Granted Abilities:**
-     * `GA_killcam_Death`: This ability likely activates automatically upon receiving the death event (e.g., triggered by a `GameplayEvent.Death` tag). It handles the main killcam flow initiation on the client (sending the start message via RPC), manages temporary UI elements (like "Press X to Skip"), and adds/removes the necessary input mapping context for the skip action.
+     * `GA_killcam_Death`: This ability activates automatically upon receiving the death event (e.g., triggered by a `GameplayEvent.Death` tag). It handles the main killcam flow initiation on the client (sending the start message via RPC), manages temporary UI elements (like "Press X to Skip"), and adds/removes the necessary input mapping context for the skip action.
      * `GA_killcam_Camera`: This ability is activated by the `TAG_GameplayEvent_Killcam` sent from `UKillcamPlayback` when playback is ready. It takes the Killer and Victim actors (from the duplicate world) provided in the event data, sets up the spectator view targeting the killer, and potentially displays contextual UI like a "You" indicator over the victim's replicated actor.
      * `GA_Manual_Respawn`: This ability prevents the default Lyra auto-respawn behavior. It ensures the player only respawns when explicitly triggered, typically after the killcam ends or is skipped.
 4. **Adds Skip Killcam Input Ability & Binding:**
