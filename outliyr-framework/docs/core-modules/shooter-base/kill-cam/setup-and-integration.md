@@ -2,6 +2,8 @@
 
 Integrating the Shooter Base Killcam system is streamlined using the provided Lyra Experience framework. While the underlying system is complex, enabling it for a specific gameplay experience primarily involves configuring the engine correctly and including a dedicated Action Set.
 
+<figure><img src="../../../.gitbook/assets/image (185).png" alt=""><figcaption><p>Blueprint Killcam logic in ShooterBase</p></figcaption></figure>
+
 ### 1. Engine Setup Requirement (ULyraGameEngine)
 
 This is a **mandatory prerequisite** for the Killcam system to function. As detailed in "[Under the Hood: World Duplication](under-the-hood-world-duplication.md)," the system requires a custom UGameEngine class that overrides `Experimental_ShouldPreDuplicateMap` to return true.

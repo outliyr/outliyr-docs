@@ -4,6 +4,8 @@ The heart of the weapon firing logic in both Lyra and the extended ShooterBase s
 
 In the context of ShooterBase weapons, GAS is used to define _how_ a weapon fires, handles its targeting, applies effects, and interacts with the network prediction and validation systems.
 
+<figure><img src="../../../../.gitbook/assets/image (186).png" alt=""><figcaption><p>Base Shooter Gameplay Abilities in ShooterBase</p></figcaption></figure>
+
 ### Building on Lyra GAS
 
 ShooterBase weapon abilities inherit from Lyra's foundation:

@@ -30,8 +30,7 @@ When `GA_Killcam_Camera` activates on the client in response to the `GameplayEve
 
     if (SpectatorPawn)
     {
-        // Possess locally? Or just manage view directly?
-        // Lyra likely uses SetViewTargetWithBlend directly on PlayerController targeting the SpectatorPawn
+        // SetViewTargetWithBlend directly on PlayerController targeting the SpectatorPawn
         GetActorInfo()->PlayerController->SetViewTargetWithBlend(SpectatorPawn, ...);
 
         // Perform client-side initialization
@@ -59,14 +58,12 @@ When `GA_Killcam_Camera` activates on the client in response to the `GameplayEve
 
 ### Data Flow & Limitations (Killcam Spectating)
 
-* **Primary Data Source:** The **pre-recorded replay stream** captured by the `DemoNetDriver` before the player's death.
-* **Visuals/Movement:** Directly driven by the replayed actor transforms within the duplicated world.
-* **Camera Mode/ADS State Mimicking:** Dependent on whether this state information was successfully **replicated** to the client during the recording phase and thus captured by the `DemoNetDriver`.
-  * If the `USpectatorDataContainer` (holding CameraMode, ToggleADS) **was not** replicating to the client while recording (because they weren't spectating the killer pre-death), this information **will not be available** in the replay data.
-  * In this default scenario, the spectator camera might only mimic basic view rotation or fall back to default modes. Achieving perfect camera mode/ADS state mirroring during killcam would require changes to replicate the container more broadly or implement predictive pre-death subscription.
-* **UI Mimicking (Quickbar/Ammo/etc.):** Similarly dependent on pre-recorded data.
-  * Since `QuickBarSlots` (containing `ULyraInventoryItemInstance` pointers) and their associated `SpareAmmo` stat tags are typically replicated only to subscribed spectators via the `USpectatorDataProxy` filtering, this information **is generally NOT recorded** for the killer by the client before death.
-  * Therefore, **full UI mimicking (showing the killer's exact quickbar, ammo, etc.) is NOT the default behavior during killcam playback.** The killcam UI typically shows different information related to the death event itself rather than attempting to replicate the killer's live HUD.
+The accuracy of the Killcam's view mimicking is directly tied to the system's replication strategy, which makes a specific trade-off between functionality and performance.
+
+* **Primary Data Source:** The pre-recorded replay stream captured by the local client's `DemoNetDriver` before the player's death.
+* **Visuals/Movement:** Directly driven by the replayed actor transforms within the duplicated world, which is standard `DemoNetDriver` behavior.
+* **Camera Mode/ADS State Mimicking (Enabled by Design):** The `USpectatorDataContainer` (holding `CameraMode`, `ToggleADS`) is intentionally replicated to all clients at all times. This ensures this minimal state information is captured by every client's `DemoNetDriver`. When the Killcam plays back, this data is available in the replay stream, allowing the spectator camera to accurately mimic the killer's camera state and whether they were aiming down sights.
+* **UI Mimicking - Quickbar/Ammo (Limited by Design):** To conserve bandwidth, complex data like `QuickBarSlots` (containing `ULyraInventoryItemInstance` pointers) and their associated `SpareAmmo` stat tags are replicated **only** to subscribed spectators via `USpectatorDataProxy` filtering. Because a player is not subscribed to their killer before death, this information is **intentionally not recorded** in the client's replay buffer. Therefore, full UI mimicking (showing the killer's exact quickbar, weapon stats, and ammo) is **not** a feature of the Killcam playback. The Killcam UI will typically show different information related to the death event itself rather than attempting to replicate the killer's live HUD.
 
 ### Summary
 

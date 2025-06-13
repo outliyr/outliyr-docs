@@ -2,6 +2,16 @@
 
 The `USpectatorDataContainer` is a lightweight, replicated `UObject` designed specifically to hold the gameplay state information that needs to be mirrored from a spectated player to their active spectators. It lives within and is managed by the `USpectatorDataProxy`, but its properties are replicated independently, subject to the proxy's filtering rules.
 
+### **Replication Strategy and the Killcam**
+
+A key design choice for this system is that the `USpectatorDataContainer` object itself is always replicated to all clients, regardless of their subscription status. While the more complex data it contains (like inventory items) is filtered, the container's basic properties (Camera Mode, ADS Status) are always being broadcast.
+
+This may seem inefficient, but it is a deliberate solution to a problem inherent in creating a Killcam. The Killcam feature works by using the `DemoNetDriver`, which replays the last few seconds of network traffic that the client has already recorded. The problem is that a player is never spectating (and therefore not subscribed to) their killer _before_ they die.
+
+* **The Ideal (But Infeasible) Scenario:** You would know who is about to kill you and subscribe to their data feed a few seconds in advance. This is not possible to predict reliably.
+* **The Complex Alternative:** The server could record everyone's state and send a custom, efficient replay packet to a player upon death. This is a significant engineering task and a potential future improvement.
+* **The Chosen Solution:** The simplest, most robust approach is to have every player broadcast the minimal information needed for the Killcam. By always replicating the lightweight `USpectatorDataContainer`, we ensure that every client is already recording the necessary data (like camera mode and ADS status) for any potential killer. This allows the Killcam to function correctly by simply replaying the information it was already passively receiving.
+
 ### Role and Purpose
 
 * **Data Holder:** Contains the specific variables representing the spectated player's state relevant for immersive spectating (Quickbar, Camera, ADS).

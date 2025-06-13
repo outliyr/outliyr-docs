@@ -24,7 +24,7 @@ This includes mimicking:
 
 To achieve this level of immersion, the system combines several key concepts:
 
-1. **Dedicated Spectator Pawn (`ATeammateSpectator`):** When spectating begins, the player's controller possesses a specialized pawn derived from `ASpectatorPawn`. This pawn contains its own camera system (`ULyraCameraComponent`) capable of mimicking the target.
+1. **Dedicated Spectator Pawn (`ATeammateSpectator`):** When spectating begins, the player's controller possesses a specialized pawn derived from `ASpectatorPawn`. This pawn contains its own camera system (`ULyraCameraComponent`) capable of mimicking the target's camera.
 2. **Data Proxy & Filtering (`USpectatorDataProxy`):** Every player state has a `USpectatorDataProxy` component. This acts as a gatekeeper, managing a list of subscribed spectators and ensuring that detailed gameplay state is replicated only to those who are actively watching. This is crucial for performance and prevents leaking unnecessary information across the network.
 3. **Replicated Data Container (`USpectatorDataContainer`):** Nested within the proxy, this replicated `UObject` holds the specific pieces of information needed by spectators (Quickbar slots, Active Slot Index, Camera Mode class, ADS state).
 4. **Selective Replication:** The proxy filters replication, ensuring the container and its data are primarily sent only to subscribed spectators. Details like inventory item instances within the quickbar are also carefully replicated, this helps reduce bandwidth since broadcasting client information to everyone can be expensive.

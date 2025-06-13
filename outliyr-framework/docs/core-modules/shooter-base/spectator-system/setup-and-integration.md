@@ -2,6 +2,8 @@
 
 Enabling the core functionality of the Immersive Spectator System within your game modes is designed to be straightforward, primarily involving the inclusion of a dedicated [Lyra Experience Action Set](../../../base-lyra-modified/gameframework-and-experience/experience-primary-assets/experience-action-set.md): `LAS_ShooterBase_Spectator`.
 
+<figure><img src="../../../.gitbook/assets/image (184).png" alt=""><figcaption><p>Blueprint Spectator Logic in ShooterBase</p></figcaption></figure>
+
 ### Simplicity via Action Sets
 
 Instead of manually adding individual components and abilities required for spectating, the system leverages Lyra's Action Set framework. By adding this single Action Set to your game mode's Experience Definition, you activate the necessary pieces required for both the data replication (proxy/container) and the basic spectating initiation and control logic.
@@ -17,11 +19,11 @@ Instead of manually adding individual components and abilities required for spec
 
 Adding this Action Set ensures that the following configurations are applied automatically when the experience loads.
 
-### Action Set Breakdown (LAS\_ShooterBase\_Spectator)
+### Action Set Breakdown (`LAS_ShooterBase_Spectator`)
 
 This Action Set contains several specific [GameFeatureAction](../../../base-lyra-modified/gameframework-and-experience/game-features/) instances configured to set up the spectator system:
 
-1. [**`GameFeatureAction_AddComponents`**](../../../base-lyra-modified/gameframework-and-experience/game-features/game-feature-actions/add-components.md) **(Adds USpectatorDataProxy)**
+1. [**`GameFeatureAction_AddComponents`**](../../../base-lyra-modified/gameframework-and-experience/game-features/game-feature-actions/add-components.md) **(Adds `USpectatorDataProxy`)**
    * **Target Actor:** `APlayerState` (or relevant subclass).
    * **Component Class:** `USpectatorDataProxy`.
    * **Spawn Condition:** Client & Server. The proxy needs to exist on the server to manage subscriptions and own the container, and on the client to listen for local state changes (like camera mode) and potentially for killcam interactions.
