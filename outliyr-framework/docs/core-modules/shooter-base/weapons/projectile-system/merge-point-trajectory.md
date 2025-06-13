@@ -6,8 +6,6 @@ The **Merge Point Trajectory** system in `AProjectileBase` provides an elegant s
 
 ### The Problem: Camera vs. Muzzle
 
-&#x20;_(Placeholder: Diagram illustrating the camera/muzzle discrepancy)_
-
 * **Player Aim:** Originates from the camera's position, directed towards the center of the screen (crosshair).
 * **Projectile Origin:** Physically starts at the weapon's muzzle socket.
 * **The Disconnect:** At close ranges, the paths diverge significantly. Firing straight from the muzzle feels inaccurate relative to the crosshair; firing straight from the camera looks physically wrong as the projectile doesn't originate from the gun.
@@ -15,8 +13,6 @@ The **Merge Point Trajectory** system in `AProjectileBase` provides an elegant s
 ### The Solution: A Smooth Curve to Merge
 
 The Merge Point system guides the projectile along a smooth curve from its actual spawn point (muzzle) to intercept the player's true aiming line at a calculated "Merge Point." After reaching this point, the projectile continues straight towards the final impact point along the original aiming line.
-
-&#x20;_(Placeholder: Diagram showing the projectile path: Spawn -> Curve -> Merge -> Straight -> End)_
 
 **Key Points:**
 
@@ -68,7 +64,3 @@ The Merge Point system guides the projectile along a smooth curve from its actua
 This system provides a sophisticated solution for projectile trajectory that enhances both gameplay feel and visual fidelity in networked shooter environments.
 
 ***
-
-**Next Steps:**
-
-* Proceed to the **"`UProjectileFunctionLibrary`"** page to see the helper functions used for calculating the merge point.

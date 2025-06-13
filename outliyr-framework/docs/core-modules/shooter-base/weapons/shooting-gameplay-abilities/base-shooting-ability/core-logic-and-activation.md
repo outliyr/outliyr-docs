@@ -2,45 +2,6 @@
 
 `UGameplayAbility_RangedWeapon` serves as the abstract base class for all Gameplay Abilities designed to fire ranged weapons within the ShooterBase system. It inherits from `ULyraGameplayAbility_FromEquipment` and establishes the fundamental activation flow, validation checks, and common helper functions used by its specialized subclasses (Hitscan, Projectile, etc.).
 
-```cpp
-// Header: GameplayAbility_RangedWeapon.h
-// Parent: ULyraGameplayAbility_FromEquipment
-
-UCLASS(MinimalAPI, Abstract)
-class UGameplayAbility_RangedWeapon : public ULyraGameplayAbility_FromEquipment
-{
-    GENERATED_BODY()
-
-public:
-    // Constructor
-
-    // Helper to get the specific ranged weapon instance
-    UFUNCTION(BlueprintCallable, Category="Lyra|Ability")
-    UE_API ULyraRangedWeaponInstance* GetWeaponInstance() const;
-
-    // Standard GAS Activation Flow Overrides
-    UE_API virtual bool CanActivateAbility(...) const override;
-    UE_API virtual void ActivateAbility(...) override;
-    UE_API virtual void EndAbility(...) override;
-
-protected:
-    // Hook for subclasses to implement targeting/firing logic
-    UFUNCTION(BlueprintCallable)
-    UE_API virtual void StartRangedWeaponTargeting();
-
-    // Callback delegate handle
-    FDelegateHandle OnTargetDataReadyCallbackDelegateHandle;
-
-    // Callback function signature (implemented differently by subclasses)
-    UE_API virtual void OnTargetDataReadyCallback(
-        const FGameplayAbilityTargetDataHandle& InData,
-        FGameplayTag ApplicationTag
-        );
-
-    // ... other protected members and functions for tracing, spread, etc. ...
-};
-```
-
 ### Purpose
 
 This base class avoids code duplication by handling common setup and teardown tasks associated with firing a weapon via GAS. Its main responsibilities in the activation flow include:
@@ -110,7 +71,3 @@ This base class avoids code duplication by handling common setup and teardown ta
 This base class provides the essential structure and GAS integration points, allowing specific firing abilities to focus solely on their unique tracing, validation, and effect application logic.
 
 ***
-
-**Next Steps:**
-
-* Proceed to the next sub-page for `UGameplayAbility_RangedWeapon`: **"Targeting System & Tracing"**.

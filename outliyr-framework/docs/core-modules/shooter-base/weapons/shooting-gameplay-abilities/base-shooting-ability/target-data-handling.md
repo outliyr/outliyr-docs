@@ -6,31 +6,10 @@ After performing targeting traces, the results (hit locations, actors hit, surfa
 
 While the base GAS provides `FGameplayAbilityTargetData_SingleTargetHit`, Lyra (and thus ShooterBase) often uses a slightly extended version:
 
-```cpp
-// Defined in LyraGameplayAbilityTargetData.h (Lyra Core)
-USTRUCT(BlueprintType)
-struct FLyraGameplayAbilityTargetData_SingleTargetHit : public FGameplayAbilityTargetData_SingleTargetHit
-{
-    GENERATED_BODY()
-
-    // ... other Lyra-specific additions if any ...
-
-    // ShooterBase might implicitly use this structure when inheriting Lyra abilities.
-    // Key data from FGameplayAbilityTargetData_SingleTargetHit:
-    // - FHitResult HitResult;
-    // - bool bHitReplaced; // Used by server validation
-
-    // Often added or utilized by ShooterBase abilities:
-    // int32 CartridgeID; // Groups hits from the same multi-bullet shot (e.g., shotgun)
-    // double Timestamp; // Client timestamp when the shot was fired, used for lag compensation
-    int32 MyItem; // Re-purposed in ShooterBase penetration to group hits from the same penetrating bullet trace
-};
-```
-
 This structure holds the standard `FHitResult` from a trace. ShooterBase abilities often populate or utilize additional fields like:
 
 * **`Timestamp`:** Added by ShooterBase abilities (`UGameplayAbility_RangedWeapon_Hitscan`, `_Projectile`). Captures the client's perceived server time when the shot was fired. This is crucial for the server-side lag compensation system to accurately rewind the world state for validation.
-* **`CartridgeID`:** (Potentially used by Lyra/ShooterBase) A random ID assigned to all bullet traces originating from a single trigger pull / ability activation, especially useful for multi-pellet weapons like shotguns to group their impacts.
+* **`CartridgeID`:** A random ID assigned to all bullet traces originating from a single trigger pull / ability activation, especially useful for multi-pellet weapons like shotguns to group their impacts.
 * **`MyItem`:** (Re-purposed by `UGameplayAbility_HitScanPenetration`) Standard `FHitResult` field used by the penetration ability to link consecutive hits that resulted from a single initial bullet trace penetrating multiple surfaces.
 * **`bHitReplaced`:** A boolean flag set by the server during hit validation (`PerformServerSideValidation`). If `true`, it indicates the client's hit result was deemed invalid (due to cheating or discrepancy) and potentially replaced with the server's calculated hit (or nullified).
 
@@ -48,7 +27,7 @@ Subclasses implementing `StartRangedWeaponTargeting` are responsible for creatin
    * Assign `Timestamp` (using calculated client perceived server time).
    * Assign `MyItem` (if used for grouping, like in penetration).
    * Add it to the handle: `TargetData.Add(NewTargetData);`
-5. **Handle Unconfirmed Hits (Hitscan):** If using the hit marker system (primarily for hitscan), call `WeaponStateComponent->AddUnconfirmedServerSideHitMarkers(TargetData, FoundHits)` to register the hits locally for immediate visual feedback while waiting for server confirmation. Projectile abilities often skip this and use `ClientConfirmSingleHit` directly upon server-confirmed impact.
+5. **Handle Unconfirmed Hits (Hitscan):** If using the hit marker system (primarily for hitscan), call `WeaponStateComponent->AddUnconfirmedServerSideHitMarkers(TargetData, FoundHits)` to register the hits locally for immediate visual feedback while waiting for server confirmation. Projectile abilities skip this and use `ClientConfirmSingleHit` directly upon server-confirmed impact.
 6. **Trigger Callback:** Call `OnTargetDataReadyCallback(TargetData, FGameplayTag())` to immediately process the data locally (or pass it to the server if needed).
 
 ```cpp
@@ -100,7 +79,3 @@ The `EndAbility` function ensures that any target data associated with the abili
 This structured approach to creating, packaging, and processing target data within the GAS framework allows ShooterBase abilities to handle complex hit results, integrate with lag compensation, and manage network communication effectively.
 
 ***
-
-**Next Steps:**
-
-* This concludes the breakdown of the base `UGameplayAbility_RangedWeapon`. We now move on to the concrete implementations, starting with the **"Hitscan Ability: `UGameplayAbility_RangedWeapon_Hitscan`"** page, likely split into Client Execution, Server Validation, and Processing Validated Data. Let's begin with Client-Side Execution.

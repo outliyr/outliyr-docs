@@ -146,7 +146,7 @@ An **Edit Condition** (subclass of `FGameSettingEditCondition`) is responsible f
 
 When an edit condition determines that a setting should be disabled, it can provide a reason message (as seen in the `InOutEditState.Disable(Message)` call). The UI framework is responsible for displaying this message to the user, typically as a tooltip or an informative text block next to the disabled setting. This greatly improves user experience by explaining _why_ an option is not available.
 
-<figure><img src="../../.gitbook/assets/image (4) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (4) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 **Using Edit Conditions When Extending:**
 
@@ -191,7 +191,7 @@ While `ULyraGameSettingRegistry` defines _what_ settings are available and their
 * (Explain UGameSettingVisualData as before - it maps UGameSetting types to UMG widget classes)
 * Mention Lyra's default visual data asset (e.g., `GameSettingVisualData_Lyra`) and that developers usually don't need to touch this unless making broad UI style changes or adding entirely new setting widget types.
 
-<figure><img src="../../.gitbook/assets/image (5) (1) (1) (1).png" alt="" width="563"><figcaption><p>The Game Settings Registry Visual Data contains details on how the panel should display.</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (5) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p>The Game Settings Registry Visual Data contains details on how the panel should display.</p></figcaption></figure>
 
 **Customizing Setting Appearance and Interaction in Lyra**
 

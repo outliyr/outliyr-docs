@@ -79,5 +79,3 @@ This function performs the visual smoothing to transition from the fake client p
 This comprehensive synchronization and interpolation process provides the seamless visual experience that makes client-side prediction for projectiles effective.
 
 ***
-
-**Section Complete:** This concludes the detailed breakdown of the Gameplay Abilities provided by ShooterBase for weapon firing. You now have documentation covering the base ability structure, hitscan (including penetration), and both non-predictive and predictive projectile implementations.

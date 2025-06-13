@@ -18,7 +18,7 @@ The `ULyraRangedWeaponInstance::Tick()` function constantly updates these values
 * **`GetCalculatedSpreadAngleMultiplier()`:** Returns the combined multiplier based on aiming, movement, stance, etc. Note that this returns `0.0f` if `HasFirstShotAccuracy()` is true.
 * **`GetSpreadExponent()`:** Returns a value affecting the _distribution_ of shots within the spread cone. Higher exponents cluster shots more towards the center.
 
-**(Refer to the Lyra documentation or your previous notes on `ULyraRangedWeaponInstance` for the full details of how these values are calculated within the weapon instance itself).**
+**(Refer to the Lyra documentation or your previous notes on** [**`ULyraRangedWeaponInstance`**](../../../../../base-lyra-modified/weapons/range-weapon-instance.md) **for the full details of how these values are calculated within the weapon instance itself).**
 
 ### Applying Spread (`VRandConeNormalDistribution`)
 
@@ -72,7 +72,3 @@ When the ability performs its targeting trace (typically within the `TraceBullet
 By querying the weapon instance for the current spread parameters and applying them using `VRandConeNormalDistribution`, the `UGameplayAbility_RangedWeapon` ensures that shots dynamically reflect the weapon's current accuracy state.
 
 ***
-
-**Next Steps:**
-
-* Proceed to the final sub-page for `UGameplayAbility_RangedWeapon`: **"Target Data Handling"**.

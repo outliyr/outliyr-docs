@@ -1,113 +1,83 @@
 # Gun Fragment
 
-The `GunFragment` is a required [inventory fragment](../../../../base-lyra-modified/items/items-and-fragments/item-fragments.md) used to identify an item as a firearm in the ShooterBase plugin. Items without this fragment will not be treated as guns by the inventory, gameplay ability, or equipment systems.
+The `GunFragment` is the essential component for creating firearms in this asset. It is a required **Inventory Fragment** that must be added to any `ULyraInventoryItemDefinition` intended to function as a gun. Without it, the equipment, ability, and inventory systems will not recognize the item as a firearm, and no shooting or reloading logic will work.
 
-This fragment enables the weapon to support both traditional shooter ammo systems (e.g., Call of Duty) and inventory-based ammo systems (e.g., Escape from Tarkov, Apex Legends), making it highly adaptable for a variety of shooter styles.
+<figure><img src="../../../../.gitbook/assets/image (3).png" alt=""><figcaption></figcaption></figure>
 
-***
+### Design Philosophy: A Flexible Foundation
 
-### Requirements
+Shooter games handle ammunition in two primary ways:
 
-Any item intended to function as a firearm **must** include the `GunFragment`. Without it:
+1. **Traditional System**: Ammo is an abstract counter, like in _Call of Duty_ or _Halo_. You have a number for "ammo in clip" and a number for "total spare ammo."
+2. **Inventory-Based System**: Ammunition is a physical item in the player's inventory that must be loaded into the gun, like in _Escape from Tarkov_ or _PUBG_.
 
-* The item will not be recognized as a gun
-* No shooting logic or gun-specific abilities will activate
-* Magazine, reload, and ammo systems will not function
+This asset is designed to support **both systems out-of-the-box**. The entire behavior of a weapon is determined by a single setting in its `GunFragment`, allowing you to choose the model that best fits your game's design without needing to rewrite core logic.
 
-***
+### How It Works: Static Config vs. Live Data
 
-### Overview
+The system separates a gun's permanent, unchangeable properties from its dynamic, in-game state. This is a core concept in Lyra's inventory design.
 
-The `UInventoryFragment_Gun` class and its corresponding transient fragment `FTransientFragmentData_Gun` define both static and runtime data for firearm items.
-
-***
-
-### [Transient Fragment](../../../../base-lyra-modified/items/items-and-fragments/transient-data-fragments.md) (instanced data)
-
-Defined in `FTransientFragmentData_Gun`, these values are stored per instance and allow weapons of the same class to behave independently at runtime.
-
-```cpp
-USTRUCT(BlueprintType)
-struct FTransientFragmentData_Gun : public FTransientFragmentData
-```
-
-#### Key Fields
-
-| Property               | Description                                                                           |
-| ---------------------- | ------------------------------------------------------------------------------------- |
-| `MagazineAmmo`         | List of ammo types and quantities loaded in the weapon                                |
-| `CurrentReloadSection` | Used to track the current reload animation phase                                      |
-| `LastFiredAmmoTypes`   | Tracks the ammo type used for the last shot fired (used by abilities, not replicated) |
+* **`UInventoryFragment_Gun` (Static Configuration)**: This is where you define the weapon's fundamental stats in the Unreal Editor. These values are part of the item's _template_ (`ULyraInventoryItemDefinition`) and don't change during gameplay. Examples include maximum magazine size and which ammo model to use.
+* **`FTransientFragmentData_Gun` (Live Instance Data)**: This is a lightweight data structure that stores the _runtime state_ for a _single instance_ of a gun. This is what allows two different M4A1s picked up by two different players to have different amounts of ammo loaded. This data is created when a gun instance is spawned and is destroyed with it.
 
 ***
 
-### Configuration (Gun Fragment)
+### Configuration (`UInventoryFragment_Gun`)
 
-Defined in `UInventoryFragment_Gun`, this is where weapon stats and behavior are configured.
+You will configure these properties on the `GunFragment` within your weapon's `Item Definition` asset.
 
-```cpp
-UCLASS(MinimalAPI)
-class UInventoryFragment_Gun : public ULyraInventoryItemFragment
-```
+**Core Properties**
 
-#### Core Properties
+These properties are fundamental to any firearm, regardless of the ammo system you choose.
 
-| Property                | Description                                                                                                    |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `MagazineAmmo`          | Starting magazine ammo (ignored if using inventory-based ammo)                                                 |
-| `MagazineSize`          | Max capacity of the magazine                                                                                   |
-| `SpareAmmo`             | Starting spare ammo (ignored if using inventory-based ammo)                                                    |
-| `bInfiniteMagazineAmmo` | If true, the weapon has infinite magazine ammo                                                                 |
-| `bInfiniteSpareAmmo`    | If true, the weapon has infinite spare ammo                                                                    |
-| `InventoryAmmoTypes`    | If empty, the weapon uses standard ammo counters; if filled, the weapon pulls ammo from the player’s inventory |
+| Property                | Description                                                                                                                                                                                                           |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MagazineSize`          | The maximum number of rounds the weapon's magazine can hold. This value is also added as a `GameplayTag` (`Lyra.ShooterGame.Weapon.MagazineSize`) to the item instance for easy access by gameplay abilities.         |
+| `bInfiniteMagazineAmmo` | If true, the weapon's magazine is always considered full. Firing will not consume ammo, and reloading is unnecessary. Ideal for special weapons or debug modes.                                                       |
+| `bInfiniteSpareAmmo`    | If true, the weapon can be reloaded an infinite number of times. In the Traditional system, it draws from an infinite pool. In the Inventory-Based system, it can reload without needing ammo items in the inventory. |
 
-> If `InventoryAmmoTypes` is empty, the weapon behaves like a traditional shooter. If it contains one or more ammo item definitions, the weapon will use actual inventory items as ammunition.
+**Choosing Your Ammo System**
 
-***
+The `InventoryAmmoTypes` property is the critical switch that determines the weapon's behavior.
 
-### Initialization Behavior
+| Property             | Description                                                                                                                                                                                                                                                                                                    |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `InventoryAmmoTypes` | <p>This set defines which <code>ULyraInventoryItemDefinition</code>s the weapon accepts as ammunition.<br>- <strong>If EMPTY</strong>: The weapon uses the <strong>Traditional Ammo System</strong>.<br>- <strong>If POPULATED</strong>: The weapon uses the <strong>Inventory-Based Ammo System</strong>.</p> |
 
-#### OnInstanceCreated
+**Traditional Ammo System Properties**
 
-When a gun item instance is created, this function:
+These properties are **only used if `InventoryAmmoTypes` is empty**.
 
-* Adds stat tags to represent magazine size and ammo amounts
-* Applies infinite ammo rules if applicable
-* Initializes weapon ammo based on either internal values or linked inventory ammo types
+| Property       | Description                                                                    |
+| -------------- | ------------------------------------------------------------------------------ |
+| `MagazineAmmo` | The number of bullets the weapon has in its magazine when it is first created. |
+| `SpareAmmo`    | The total number of spare bullets the weapon starts with.                      |
 
-```cpp
-void UInventoryFragment_Gun::OnInstanceCreated(ULyraInventoryItemInstance* Instance) const;
-```
-
-#### CreateNewTransientFragment
-
-This method initializes the transient fragment data for the weapon.
-
-```cpp
-bool UInventoryFragment_Gun::CreateNewTransientFragment(...)
-```
-
-* Called when a new instance of the gun is spawned
-* Prepares `MagazineAmmo`, reload section, and other runtime variables
+When a gun using this system is created, these values are used to set the initial stack counts for the `Lyra.ShooterGame.Weapon.MagazineAmmo` and `Lyra.ShooterGame.Weapon.SpareAmmo` Gameplay Tags on the item instance. All firing and reloading logic then interacts with these tags.
 
 ***
 
-### Design Goals
+### Runtime State (`FTransientFragmentData_Gun`)
 
-* **Modular behavior**: Items are extended with fragments, avoiding deep inheritance trees.
-* **Per-instance control**: Transient data ensures that two instances of the same gun class can behave differently.
-* **Inventory integration**: Full support for inventory-based ammo systems using the `InventoryAmmoTypes` set.
-* **Stat-based customization**: All gameplay-related values (ammo, size, behavior) are represented as stat tags, allowing for flexible expansion or modification via gameplay effects.
+This transient data holds the live information for a gun instance.
+
+| Property               | Description                                                                                                                                         |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MagazineAmmo`         | An array that tracks the specific ammo types and counts currently loaded in the magazine. **This is only used by the Inventory-Based Ammo System.** |
+| `CurrentReloadSection` | A `FName` used to track the progress of a multi-stage reload animation.                                                                             |
+| `LastFiredAmmoTypes`   | Tracks the definition of the last ammo type fired. This is used by abilities to trigger ammo-specific effects (e.g., tracers).                      |
 
 ***
 
 ### Usage Guidelines
 
-* Always attach `GunFragment` to `ULyraItemInstances` meant to function as firearms.
-* Choose whether the gun uses `InventoryAmmoTypes` depending on your game’s ammo management style.
-* Customize `MagazineSize`, `SpareAmmo`, and other properties to configure per-weapon stats.
-* If using inventory-based ammo, make sure your inventory contains compatible ammo item definitions.
+1. **Always** add a `GunFragment` to any `Item Definition` that is a firearm.
+2. **Decide** on your ammo system:
+   * For a simple, abstract ammo system, leave `InventoryAmmoTypes` **empty** and configure `MagazineAmmo` and `SpareAmmo`.
+   * For a realistic, inventory-driven system, **populate** `InventoryAmmoTypes` with your ammo `Item Definition` assets.
+3. Configure `MagazineSize` and infinite ammo flags to match your weapon's design.
+4. To implement more advanced behaviors like mixed-ammo magazines or staged reloads, see the **Advanced Ammo System** documentation.
 
 {% hint style="success" %}
-**Note**: The item query is helpful when tracking the ammo types in the inventory for UI purposes, this is what is currently done.
+Use Gameplay Abilities for all weapon actions (firing, reloading). The `ULyraAbilityCost_Ammo` cost object is already configured to automatically handle both ammo systems, significantly simplifying your implementation.
 {% endhint %}

@@ -2,34 +2,6 @@
 
 Gameplay Abilities often have associated costs that must be met for activation and are consumed upon successful execution. `ULyraAbilityCost_Ammo` is a specialized `ULyraAbilityCost` subclass designed specifically to handle ammunition consumption for weapons within the ShooterBase system, seamlessly integrating with the `UInventoryFragment_Gun`.
 
-```cpp
-// Header: LyraAbilityCost_Ammo.h (Potentially, or within a relevant ShooterBase header)
-// Parent: ULyraAbilityCost
-
-UCLASS(meta=(DisplayName="Ammo cost"))
-class ULyraAbilityCost_Ammo : public ULyraAbilityCost
-{
-    GENERATED_BODY()
-
-public:
-    // Constructor
-
-    // Checks if the weapon has enough ammo
-    virtual bool CheckCost(...) const override;
-    // Deducts ammo from the weapon
-    virtual void ApplyCost(...) override;
-
-protected:
-    // Amount of ammo to consume per shot (can scale with ability level)
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Costs)
-    FScalableFloat Quantity;
-
-    // Tag to add if cost check fails (e.g., "Ability.Fail.Cost.Ammo")
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Costs)
-    FGameplayTag FailureTag;
-};
-```
-
 ### Purpose
 
 This ability cost provides a unified way to manage ammo expenditure for firing abilities, supporting both:
@@ -108,5 +80,3 @@ This function is called by GAS _after_ an ability has successfully executed _on 
 This component is essential for making weapon firing abilities correctly interact with the ammunition system defined on the weapon's `UInventoryFragment_Gun`.
 
 ***
-
-**Next Steps:** We can now proceed to the **"Base Ability: `UGameplayAbility_RangedWeapon` - Core Logic & Activation"** page as originally planned after the GAS overview.

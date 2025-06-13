@@ -2,7 +2,7 @@
 
 While hitscan weapons deal damage instantly along a line, many shooters rely on projectiles – objects that travel through the world over time, affected by gravity and velocity. Implementing projectiles effectively in a networked environment presents unique challenges, primarily related to latency and visual consistency.
 
-The ShooterBase Projectile System provides a robust solution designed to address these challenges, built around two key components:
+The ShooterBase Projectile System provides a robust solution designed to address these challenges, built around two key components (Not to be confused with the [Projectile Manager](../../projectile-manager/) designed for multiple, tiny, fast bullets):
 
 1. **`AProjectileBase`:** An `AActor` class serving as the foundation for all simulated projectiles fired by weapons in ShooterBase. It incorporates logic for:
    * Standard projectile movement (`UProjectileMovementComponent`).
@@ -34,7 +34,3 @@ By combining these techniques, the system aims to provide projectile behavior th
 The following pages will delve into the implementation details of `AProjectileBase` and the utility functions in `UProjectileFunctionLibrary`.
 
 ***
-
-**Next Steps:**
-
-* Proceed to the **"`AProjectileBase`: Core Concepts"** page.

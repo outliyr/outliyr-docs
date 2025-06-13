@@ -53,7 +53,3 @@ The detailed implementation of these differences is covered in the following sub
 This ability allows for more dynamic and engaging firefights where cover isn't always absolute safety.
 
 ***
-
-**Next Steps:**
-
-* Now we can correctly proceed to the **"Projectile Ability: `UGameplayAbility_RangedWeapon_Projectile`"**.

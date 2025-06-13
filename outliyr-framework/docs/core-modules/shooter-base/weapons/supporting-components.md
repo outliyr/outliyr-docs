@@ -27,7 +27,3 @@ While the core weapon logic resides in the Weapon Instances (`UGunWeaponInstance
 These components complement the main weapon instances and abilities, providing necessary state management for hit feedback and convenient debugging tools for developers working with the ShooterBase weapon systems.
 
 ***
-
-**Next Steps:**
-
-* The final page for this section could be **"Customization & Extension"**, providing guidance on how users can adapt and build upon the provided weapon systems.

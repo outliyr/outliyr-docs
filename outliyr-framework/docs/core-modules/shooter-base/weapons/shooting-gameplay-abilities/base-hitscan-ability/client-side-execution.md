@@ -2,38 +2,6 @@
 
 The `UGameplayAbility_RangedWeapon_Hitscan` ability implements the logic for instant, trace-based weapon fire. A significant portion of its work happens immediately on the firing client to ensure responsiveness, even before the server confirms the action.
 
-```cpp
-// Header: GameplayAbility_RangedWeapon_Hitscan.h
-// Parent: UGameplayAbility_RangedWeapon
-
-UCLASS(MinimalAPI)
-class UGameplayAbility_RangedWeapon_Hitscan : public UGameplayAbility_RangedWeapon
-{
-    GENERATED_BODY()
-
-public:
-    // Constructor
-
-protected:
-    // Overrides from base class to kick off the hitscan process
-    UE_API virtual void StartRangedWeaponTargeting() override;
-
-    // Overrides from base class to handle local processing and server communication
-    UE_API virtual void OnTargetDataReadyCallback(
-        const FGameplayAbilityTargetDataHandle& InData,
-        FGameplayTag ApplicationTag
-        ) override;
-
-    // Helper performing the local traces
-    UE_API virtual void TraceBulletsInCartridge(
-        const FRangedWeaponFiringInput& InputData,
-        TArray<FHitResult>& OutHits
-        ) override;
-
-    // ... Server validation and processing functions ...
-};
-```
-
 ### Initiating the Shot (`StartRangedWeaponTargeting`)
 
 When the `UGameplayAbility_RangedWeapon_Hitscan` is activated (usually triggered by player input), its `ActivateAbility` calls the overridden `StartRangedWeaponTargeting` function. This function executes the core client-side logic for determining the shot's path and initial results:
@@ -116,7 +84,3 @@ This virtual function, overridden in the hitscan ability, performs the specific 
 This entire sequence happens almost instantaneously on the client, providing responsive feedback while the server works in the background to validate the shot.
 
 ***
-
-**Next Steps:**
-
-* Proceed to the next sub-page for `UGameplayAbility_RangedWeapon_Hitscan`: **"Server-Side Validation (Lag Compensation)"**.

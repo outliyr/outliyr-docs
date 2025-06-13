@@ -13,22 +13,6 @@ ShooterBase weapon abilities inherit from Lyra's foundation:
 * **`ULyraGameplayAbility`:** The base class for all abilities in Lyra, providing common functionality.
 * **`ULyraGameplayAbility_FromEquipment`:** A specialized Lyra ability subclass designed to be granted by and associated with a `ULyraEquipmentInstance`. This is the direct parent for most ShooterBase weapon firing abilities, providing easy access to the owning weapon instance via `GetAssociatedEquipment()`.
 
-```cpp
-// Lyra Core Ability for Equipment
-UCLASS()
-class ULyraGameplayAbility_FromEquipment : public ULyraGameplayAbility
-{
-    // ... Provides GetAssociatedEquipment(), GetAssociatedItem() ...
-};
-
-// ShooterBase Base Ranged Weapon Ability
-UCLASS(Abstract)
-class UGameplayAbility_RangedWeapon : public ULyraGameplayAbility_FromEquipment
-{
-    // ... Base logic for all ranged weapon firing ...
-};
-```
-
 ### ShooterBase Ability Structure
 
 ShooterBase provides a hierarchy of abstract and concrete ability classes specifically for ranged weapons:
@@ -66,7 +50,3 @@ ShooterBase provides a hierarchy of abstract and concrete ability classes specif
 The following pages will explore each of these ability classes in detail, explaining their specific logic, configuration options, and network interactions.
 
 ***
-
-**Next Steps:**
-
-* Proceed to the **"Ammo Cost"** page, to gain an understanding of how the ammo is checked before an ability can be successfully activated.

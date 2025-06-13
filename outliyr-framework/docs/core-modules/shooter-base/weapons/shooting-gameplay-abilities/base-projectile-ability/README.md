@@ -4,33 +4,11 @@ This ability handles the firing logic for weapons that launch **projectile actor
 
 Crucially, this specific ability implements a **server-authoritative** approach **without client-side prediction** for the projectile _spawning_ itself. While the client still performs local traces to determine the initial trajectory and trigger cosmetic effects instantly, the actual projectile actor responsible for gameplay collision and effects is spawned only by the server.
 
-```cpp
-// Header: GameplayAbility_RangedWeapon_Projectile.h
-// Parent: UGameplayAbility_RangedWeapon
-
-UCLASS(MinimalAPI)
-class UGameplayAbility_RangedWeapon_Projectile : public UGameplayAbility_RangedWeapon
-{
-    GENERATED_BODY()
-
-public:
-    // Constructor
-
-protected:
-    // Overrides from base class to handle projectile-specific logic
-    UE_API virtual void OnTargetDataReadyCallback(...) override;
-    UE_API virtual void TraceBulletsInCartridge(...) override;
-    UE_API virtual void StartRangedWeaponTargeting() override;
-
-    // (No server-side validation override needed for projectile spawning itself)
-};
-```
-
 ### Purpose and Key Features
 
 * **Actor Spawning:** Its primary function (on the server) is to spawn an instance of a projectile actor (like `AProjectileBase`) based on the firing parameters.
 * **Travel Time:** Accounts for the fact that projectiles take time to reach their target.
-* **Server Authority:** The server is solely responsible for spawning the gameplay-relevant projectile actor. What the client sees initially are only cosmetic effects (like tracers) based on its local trace.
+* **Server Authority:** The server is solely responsible for spawning the gameplay-relevant projectile actor.
 * **No Prediction (for Spawning):** This version does _not_ implement the fake client projectile spawning found in `UGameplayAbility_PredictiveProjectile`. Players will perceive latency equal to their ping before seeing the actual server-spawned projectile appear and interact with the world.
 * **Suitable Use Cases:**
   * Situations where projectile prediction complexity is not desired or needed.
@@ -54,7 +32,3 @@ The specific implementation details are covered in the following sub-page:
 * **Core Firing Flow:** Details how the client calculates trajectory and how the server uses that data to spawn the projectile.
 
 ***
-
-**Next Steps:**
-
-* Proceed to the **"Projectile Ability: `UGameplayAbility_RangedWeapon_Projectile` - Core Firing Flow"** sub-page.

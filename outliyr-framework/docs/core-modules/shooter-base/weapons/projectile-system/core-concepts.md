@@ -2,43 +2,6 @@
 
 `ProjectileBase` is the fundamental actor class for all simulated projectiles originating from weapons within the ShooterBase system. It serves as a networked container for movement logic, prediction state, and the advanced trajectory features like the Merge Point system.
 
-```cpp
-// Header: ProjectileBase.h
-// Parent: AActor
-
-UCLASS(MinimalAPI, Abstract)
-class AProjectileBase : public AActor
-{
-    GENERATED_BODY()
-
-public:
-    // Constructor, TickActor, Replication functions...
-
-    // Key component for movement
-    UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-    TObjectPtr<class UProjectileMovementComponent> ProjectileMovement;
-
-    // Flag indicating if this is the client-predicted visual projectile
-    UE_API bool IsFakeProjectile() const { return bIsFakeProjectile; }
-
-    // Check if this is the server-authoritative projectile
-    UFUNCTION(BlueprintCallable, BlueprintPure)
-    UE_API bool ProjectileHasAuthority() const;
-
-    // ... other properties and functions related to prediction and merge points ...
-
-protected:
-    // Standard Actor lifecycle functions
-    UE_API virtual void BeginPlay() override;
-    UE_API virtual void Tick(float DeltaTime) override;
-
-private:
-    // Internal state
-    bool bIsFakeProjectile = false;
-    // ... other internal variables ...
-};
-```
-
 ### Purpose and Design
 
 `AProjectileBase` is designed to be:
@@ -92,7 +55,3 @@ You will typically create Blueprint subclasses of `AProjectileBase` to:
 4. **Implement Custom Logic:** Add any unique behaviors specific to your projectile type.
 
 ***
-
-**Next Steps:**
-
-* Continue to the **"`AProjectileBase`: Replication & Prediction"** page to understand how these projectiles behave over the network.

@@ -9,16 +9,6 @@ This function is called:
 1. **After Server Validation:** At the end of `PerformServerSideValidation`, once all asynchronous rewind traces have completed and the `TargetDataHandle` potentially contains invalidated/corrected hits (marked via `bHitReplaced`). This call occurs within a new `FScopedPredictionWindow` linked to the original client action via the `ValidationKey`.
 2. **Directly (Listen Server/Standalone):** In `OnTargetDataReadyCallback` on the server if `!CurrentActorInfo->IsLocallyControlled()` is false (meaning it's the server itself or a listen-server host), bypassing the lag compensation validation steps entirely as the initial trace is already authoritative.
 
-```cpp
-// Header: GameplayAbility_RangedWeapon_Hitscan.h
-
-protected:
-    // Called after server validation OR directly on server/host
-    UE_API virtual void ProcessValidatedTargetData(
-        const FGameplayAbilityTargetDataHandle& TargetDataHandle
-        );
-```
-
 ### Processing Logic
 
 1. **Filter Valid Hits:**
@@ -60,7 +50,3 @@ protected:
 This final step ensures that gameplay consequences (damage, cost) are applied authoritatively based on server-verified information, while also providing feedback to the client to correct its predicted state regarding hit markers.
 
 ***
-
-**Next Steps:**
-
-* This concludes the standard hitscan ability. The next page will cover the **"Hitscan Penetration Ability: `UGameplayAbility_HitScanPenetration`"**, starting with its configuration and penetration logic.

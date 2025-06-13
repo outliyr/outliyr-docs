@@ -58,7 +58,3 @@ The core validation flow remains similar to the standard hitscan, using the Lag 
 This adapted validation ensures that penetration results are not only checked against the correct historical world state but also adhere strictly to the server's defined penetration rules, preventing exploits related to material properties or penetration limits.
 
 ***
-
-**Next Steps:**
-
-* This completes the Hitscan Penetration ability. We'll now move to the projectile abilities, starting with the simpler **"Projectile Ability: `UGameplayAbility_RangedWeapon_Projectile`"**.

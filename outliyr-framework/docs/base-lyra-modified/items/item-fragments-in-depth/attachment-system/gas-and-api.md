@@ -114,14 +114,14 @@ This library provides Blueprint utilities specifically for working with the `FAt
   * **Payload:** `AttachmentContainerItemInstance`, `AttachmentInfo` (`FAppliedAttachmentEntry` - contains SlotTag, ItemInstance, etc.), `bRemoved`.
   * **Purpose:** The primary message for UI or other systems to listen to for changes in attached items on a specific container. UI can use this to refresh attachment slot displays.
 
-<figure><img src="../../../../.gitbook/assets/image (4) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (4) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 * **`TAG_Lyra_Inventory_Message_ItemVisualChange` (`FItemInstanceVisualChangeMessage`)**
   * **Broadcast By:** Can be broadcast manually (e.g., by `UInventoryFragment_Attachment::CombineItems` after a successful attach) when an item's visual representation should update due to attachment changes, even if its core stack count didn't change.
   * **Payload:** `ItemInstance` (the container item whose visuals changed).
   * **Purpose:** A hint for UI to re-render the container item's slot.
 
-<figure><img src="../../../../.gitbook/assets/image (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ***
 

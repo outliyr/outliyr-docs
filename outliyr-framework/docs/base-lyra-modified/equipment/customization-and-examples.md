@@ -58,7 +58,7 @@ Subclass `ULyraEquipmentInstance` **only** when you need persistent runtime logi
 **Valid Use Cases:**
 
 * **Weapon Heat/Spread:** Updated every frame while equipped (see [`ULyraRangedWeaponInstance`](../weapons/range-weapon-instance.md))
-* **Recoil Tracking & Recovery:** Involves frame-accurate interpolation and aim compensation (see [`UGunWeaponInstance`](../../core-modules/shooter-base/weapons/gun-weapon-instance.md))
+* **Recoil Tracking & Recovery:** Involves frame-accurate interpolation and aim compensation (see [`UGunWeaponInstance`](../../core-modules/shooter-base/weapons/gun-weapon-instance/))
 
 These are cases where **tick-based logic in C++** is more performant and reliable than using timers inside abilities, particularly when low latency or fine control is needed.
 

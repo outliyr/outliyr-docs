@@ -1,116 +1,30 @@
 # Base Shooting Ability
 
-`UGameplayAbility_RangedWeapon` serves as the abstract base class for all Gameplay Abilities designed to fire ranged weapons within the ShooterBase system. It inherits from ULyraGameplayAbility\_FromEquipment and establishes the fundamental activation flow, validation checks, and common helper functions used by its specialized subclasses (Hitscan, Projectile, etc.).
+The `UGameplayAbility_RangedWeapon` class is a fundamental abstract base class within the ShooterBase plugin. It serves as the common ancestor for all Gameplay Abilities designed to initiate firing actions for ranged weapons. By inheriting from `ULyraGameplayAbility_FromEquipment`, it's intrinsically linked to an equipped weapon instance and provides a structured framework for shared ranged weapon logic.
 
-```cpp
-// Header: GameplayAbility_RangedWeapon.h
-// Parent: ULyraGameplayAbility_FromEquipment
+### Purpose and Design
 
-UCLASS(MinimalAPI, Abstract)
-class UGameplayAbility_RangedWeapon : public ULyraGameplayAbility_FromEquipment
-{
-    GENERATED_BODY()
+The primary goal of `UGameplayAbility_RangedWeapon` is to centralize common functionalities required by various ranged weapon firing mechanisms (hitscan, projectile, etc.). This avoids code duplication in more specialized ability subclasses and provides a consistent interface.
 
-public:
-    // Constructor
+Its key design aspects include:
 
-    // Helper to get the specific ranged weapon instance
-    UFUNCTION(BlueprintCallable, Category="Lyra|Ability")
-    UE_API ULyraRangedWeaponInstance* GetWeaponInstance() const;
+* **Abstraction:** As an `Abstract` class, it cannot be used directly. It must be subclassed to implement specific firing behaviors.
+* **Weapon Association:** Provides a typed getter (`GetWeaponInstance()`) for easy access to the `ULyraRangedWeaponInstance` associated with the ability.
+* **Standard Activation Flow:** Implements the basic GAS activation lifecycle (`CanActivateAbility`, `ActivateAbility`, `EndAbility`), including critical setup like binding the `OnTargetDataReadyCallback` and cleanup.
+* **Targeting Framework:** Offers a suite of helper functions (`GetTargetingTransform`, `WeaponTrace`, `DoSingleBulletTrace`) to determine aiming direction and perform world traces.
+* **Spread Application:** Includes a utility (`VRandConeNormalDistribution`) for applying weapon spread to trace directions.
+* **Hook for Firing Logic:** Defines `StartRangedWeaponTargeting()` as the main virtual function that subclasses override to initiate their unique tracing and target data generation process.
+* **Target Data Handling:** Sets up the callback mechanism (`OnTargetDataReadyCallback`) where processed target data (either locally generated or server-validated) is received and acted upon by subclasses.
 
-    // Standard GAS Activation Flow Overrides
-    UE_API virtual bool CanActivateAbility(...) const override;
-    UE_API virtual void ActivateAbility(...) override;
-    UE_API virtual void EndAbility(...) override;
+### Key Functionality Areas
 
-protected:
-    // Hook for subclasses to implement targeting/firing logic
-    UFUNCTION(BlueprintCallable)
-    UE_API virtual void StartRangedWeaponTargeting();
+The functionality provided by this base class can be broken down into several key areas, which are detailed in the following sub-pages:
 
-    // Callback delegate handle
-    FDelegateHandle OnTargetDataReadyCallbackDelegateHandle;
+1. **Core Logic & Activation:** Covers the fundamental ability lifecycle, validation, and callback setup.
+2. **Targeting System & Tracing:** Details how the ability determines trace origins, directions, and performs world intersection tests.
+3. **Spread Calculation:** Explains how weapon spread (from `ULyraRangedWeaponInstance`) is applied to the aiming vector.
+4. **Target Data Handling:** Describes how trace results are packaged and managed within the GAS framework using `FGameplayAbilityTargetDataHandle`.
 
-    // Callback function signature (implemented differently by subclasses)
-    UE_API virtual void OnTargetDataReadyCallback(
-        const FGameplayAbilityTargetDataHandle& InData,
-        FGameplayTag ApplicationTag
-        );
-
-    // ... other protected members and functions for tracing, spread, etc. ...
-};
-```
-
-### Purpose
-
-This base class avoids code duplication by handling common setup and teardown tasks associated with firing a weapon via GAS. Its main responsibilities in the activation flow include:
-
-* Validating that an appropriate ULyraRangedWeaponInstance is equipped.
-* Setting up the necessary GAS callbacks for handling asynchronous results (like target data).
-* Updating weapon state (like the last firing time).
-* Cleaning up GAS delegates upon ability completion.
-* Providing a common entry point (StartRangedWeaponTargeting) for subclasses to initiate their specific firing logic.
-
-### Activation Flow
-
-1.  **CanActivateAbility**:
-
-    * Performs the standard checks from ULyraGameplayAbility\_FromEquipment (e.g., cooldowns, costs, blocking tags like TAG\_WeaponFireBlocked).
-    * **Adds a crucial check:** Ensures that the associated equipment instance (GetAssociatedEquipment()) is not only present but also specifically a ULyraRangedWeaponInstance (or a subclass like UGunWeaponInstance). If the equipped item isn't a compatible ranged weapon, activation fails. This prevents attempting to use ranged abilities with non-ranged equipment.
-
-    ```cpp
-    // Inside CanActivateAbility
-    if (GetWeaponInstance() == nullptr)
-    {
-        // Log error: Ability needs a ULyraRangedWeaponInstance
-        bResult = false;
-    }
-    ```
-2.  **ActivateAbility**:
-
-    * Calls Super::ActivateAbility to perform standard GAS activation setup.
-    * Gets the UAbilitySystemComponent (ASC).
-    * **Binds the callback:** Registers the OnTargetDataReadyCallback function to handle target data being set for this ability instance, associating it with the current PredictionKey. This is vital because targeting and hit processing might happen asynchronously or be delayed.
-
-    ```cpp
-    // Inside ActivateAbility
-    OnTargetDataReadyCallbackDelegateHandle = MyAbilityComponent->AbilityTargetDataSetDelegate(
-            CurrentSpecHandle, CurrentActivationInfo.GetActivationPredictionKey())
-            .AddUObject(this, &ThisClass::OnTargetDataReadyCallback);
-    ```
-
-    * **Updates Weapon State:** Calls GetWeaponInstance()->UpdateFiringTime(). This marks the time the weapon was last fired, which is used by the weapon instance itself for things like spread recovery calculations.
-    * (Subclass Responsibility): Typically, the ActivateAbility implementation in concrete subclasses (like Hitscan or Projectile) will call StartRangedWeaponTargeting() to kick off the actual firing process after this base setup.
-3. **StartRangedWeaponTargeting**:
-   * This protected virtual function is intended to be overridden by subclasses.
-   * It serves as the primary entry point where the specific firing logic begins (e.g., performing traces, calculating trajectories).
-   * The base implementation does nothing, requiring subclasses to provide the functionality.
-4. **OnTargetDataReadyCallback**:
-   * This function is called automatically by the ASC when target data associated with this ability's PredictionKey is set (either locally by StartRangedWeaponTargeting or received from the server).
-   * The base implementation is virtual and typically empty or contains minimal common logic.
-   * **Subclasses override this** to handle the received FGameplayAbilityTargetDataHandle. This is where hitscan validation occurs, projectiles are spawned, or damage effects are applied based on the target data.
-5.  **EndAbility**:
-
-    * Performs standard GAS ability ending procedures.
-    * **Cleans up the callback:** Unregisters the OnTargetDataReadyCallback delegate using the stored OnTargetDataReadyCallbackDelegateHandle to prevent dangling references or callbacks after the ability has finished.
-
-    ```cpp
-    // Inside EndAbility
-    MyAbilityComponent->AbilityTargetDataSetDelegate(
-        CurrentSpecHandle, CurrentActivationInfo.GetActivationPredictionKey())
-        .Remove(OnTargetDataReadyCallbackDelegateHandle);
-    ```
-
-    * **Consumes Target Data:** Tells the ASC to consume any client-replicated target data associated with this ability instance's prediction key.
-
-### Helper Functions
-
-* **GetWeaponInstance()**: A convenience function that simply casts the result of GetAssociatedEquipment() (from the parent class) to ULyraRangedWeaponInstance\*, providing easy typed access for subclasses.
-
-This base class provides the essential structure and GAS integration points, allowing specific firing abilities to focus solely on their unique tracing, validation, and effect application logic.
+By providing these foundational elements, `UGameplayAbility_RangedWeapon` allows its children (like `UGameplayAbility_RangedWeapon_Hitscan` or `UGameplayAbility_RangedWeapon_Projectile`) to focus on their specific mechanics, such as server-side validation for hitscan or projectile spawning.
 
 ***
-
-**Next Steps:**
-
-* Proceed to the next sub-page for UGameplayAbility\_RangedWeapon: **"Targeting System & Tracing"**.

@@ -2,18 +2,6 @@
 
 This ability provides the core implementation for weapons that use **hitscan** mechanics – where the "bullet" travels instantaneously along a line or narrow sweep from the firing point to its maximum range, registering hits immediately. This is typical for many rifles, pistols, and SMGs in shooter games.
 
-```cpp
-// Header: GameplayAbility_RangedWeapon_Hitscan.h
-// Parent: UGameplayAbility_RangedWeapon
-
-UCLASS(MinimalAPI)
-class UGameplayAbility_RangedWeapon_Hitscan : public UGameplayAbility_RangedWeapon
-{
-    GENERATED_BODY()
-    // ... Overrides for StartRangedWeaponTargeting, OnTargetDataReadyCallback, etc. ...
-};
-```
-
 ### Purpose and Key Features
 
 * **Instant Hit Detection:** Uses line traces (or narrow sphere sweeps) performed via the base class (`UGameplayAbility_RangedWeapon`) helper functions (`DoSingleBulletTrace`) to determine impacts along the aiming vector.
@@ -42,7 +30,3 @@ This detailed flow is broken down further in the following sub-pages:
 Understanding this ability is crucial for implementing most conventional firearms in your ShooterBase project.
 
 ***
-
-**Next Steps:**
-
-* We can now logically proceed to the **"Projectile Ability: `UGameplayAbility_RangedWeapon_Projectile`"**.

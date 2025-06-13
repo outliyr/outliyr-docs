@@ -47,15 +47,15 @@ This catchup logic ensures that projectiles viewed on client machines appear clo
 * **`PostNetReceiveVelocity()`**: Called on simulated proxies when velocity updates are received. It directly sets the `ProjectileMovementComponent->Velocity`. While full movement isn't replicated continuously, velocity updates might still occur.
 * **Merge Point State (`SpawnPoint`, `MergePoint`, `EndPoint`, `bHasMerged` - Replicated)**: These crucial properties defining the projectile's trajectory path are replicated so that simulated proxies can accurately calculate the Merge Point curve and perform catchup ticks correctly along that path.
 
-### Relevancy
+### **Relevancy**
 
-* **`IsNetRelevantFor()`**: Determines if this projectile should be replicated to a specific client. The base implementation currently calls `Super::IsNetRelevantFor`, using standard Unreal Engine relevancy logic.
-* **Potential Optimization (`LyraConsoleVariables::DrawSimulatedProjectileOnOwner`)**: The commented-out line `// return !IsOwnedBy(ViewTarget) || LyraConsoleVariables::DrawSimulatedProjectileOnOwner;` suggests a potential optimization where the server _doesn't_ replicate the authoritative projectile to the owning client if that client is already predicting its own fake projectile (unless a debug CVar is enabled). This saves bandwidth but relies on the prediction/synchronization system (`UGameplayAbility_PredictiveProjectile`) working correctly.
+**`IsNetRelevantFor()`**:\
+This function determines whether the projectile should be replicated to a given client. It includes custom logic to **avoid replicating the server-side projectile to the owning client**, under the assumption that the client is already visualizing a locally predicted projectile (spawned via `UGameplayAbility_PredictiveProjectile`).
+
+To support debugging, this behavior can be overridden with the console variable `Shooterbase.Projectile.DrawSimulatedOnOwner`. When enabled, the owning client will also receive the replicated version of the projectile for comparison.
+
+This optimization helps reduce network bandwidth and prevents visual duplication of the projectile on the owning client. However, it assumes that the prediction and reconciliation system is functioning correctly and that client-side projectiles will visually match their server counterparts.
 
 By combining these replication strategies, initial replication boosts, and client catchup mechanics, `AProjectileBase` aims to deliver a networked projectile experience that is both reliable and visually consistent across different player connections.
 
 ***
-
-**Next Steps:**
-
-* Proceed to the **"`AProjectileBase`: Merge Point Trajectory"** page for a deep dive into the curve-based aiming correction system.

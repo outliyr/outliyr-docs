@@ -1,6 +1,6 @@
 # Server-Side Validation
 
-Because hitscan weapons rely on instantaneous traces, simply trusting the client's reported hit results would make cheating trivial (e.g., aimbots reporting headshots regardless of actual aim). Therefore, the server must authoritatively validate the client's shot using the state of the world _as the client perceived it_ when the shot was fired. This is achieved using a **Lag Compensation Manager**.
+Because hitscan weapons rely on instantaneous traces, simply trusting the client's reported hit results would make cheating trivial (e.g., aimbots reporting headshots regardless of actual aim). Therefore, the server must authoritatively validate the client's shot using the state of the world _as the client perceived it_ when the shot was fired. This is achieved using the [**Lag Compensation Manager**](../../../lag-compensation/).
 
 ### The Need for Lag Compensation
 
@@ -75,7 +75,3 @@ This function orchestrates the core lag compensation and validation logic (guard
 This rigorous process ensures that hitscan impacts are authoritatively verified against a historically accurate world state, maintaining fairness in the networked environment while leveraging client prediction for responsiveness.
 
 ***
-
-**Next Steps:**
-
-* Proceed to the final sub-page for `UGameplayAbility_RangedWeapon_Hitscan`: **"Processing Validated Data"**.

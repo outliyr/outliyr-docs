@@ -49,7 +49,3 @@ This ability orchestrates the process of firing a server-authoritative projectil
 The firing client gets immediate cosmetic feedback (muzzle flash, sound, tracer) aligned with their calculated shot trajectory (including spread). After a delay corresponding to network latency, the actual, server-spawned projectile actor appears on the client (and other clients) via replication and performs its simulation, collision, and effect logic authoritatively. There is no attempt to synchronize a client-spawned projectile with the server one in this ability.
 
 ***
-
-This detailed flow clarifies the distinct roles of client and server for this non-predictive projectile ability. Following this, we'll examine the more intricate predictive version.
-
-**Next Up:** Exploring the `UGameplayAbility_PredictiveProjectile` ability overview.

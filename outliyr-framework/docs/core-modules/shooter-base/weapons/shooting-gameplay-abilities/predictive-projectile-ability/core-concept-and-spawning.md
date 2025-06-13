@@ -77,7 +77,3 @@ This is the central function responsible for creating `AProjectileBase` instance
 This intricate spawning logic ensures that the client sees a projectile immediately (or after a calculated delay) while the server maintains control over the authoritative simulation, setting the stage for the synchronization process.
 
 ***
-
-**Wrapping Up:** This covers the spawning aspect. The final piece is understanding how these separately spawned projectiles are visually reconciled.
-
-**Final Sub-Page:** Synchronization & Interpolation for `UGameplayAbility_PredictiveProjectile`.

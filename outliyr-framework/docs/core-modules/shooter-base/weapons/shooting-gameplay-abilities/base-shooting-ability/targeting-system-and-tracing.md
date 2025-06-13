@@ -6,26 +6,6 @@ A fundamental task of any ranged weapon ability is determining _where_ the weapo
 
 To accommodate different aiming styles and perspectives, the ability uses an enum to define the origin and orientation of the targeting trace:
 
-```cpp
-// Defined in GameplayAbility_RangedWeapon.h (within ShooterBase_RangeWeaponAbility namespace)
-UENUM(BlueprintType)
-enum class ELyraAbilityTargetingSource : uint8
-{
-    // From the player's camera towards camera focus
-    CameraTowardsFocus,
-    // From the pawn's center, in the pawn's orientation
-    PawnForward,
-    // From the pawn's center, oriented towards camera focus
-    PawnTowardsFocus,
-    // From the weapon's muzzle or location, in the pawn's orientation
-    WeaponForward,
-    // From the weapon's muzzle or location, towards camera focus
-    WeaponTowardsFocus,
-    // Custom blueprint-specified source location
-    Custom            UMETA(Hidden) // Often hidden in BP to encourage using defined methods
-};
-```
-
 * **CameraTowardsFocus:** Starts trace from the player's camera location, aiming towards the center of the screen (standard FPS aiming).
 * **PawnForward:** Starts trace from the pawn's center, aiming directly forward based on the pawn's rotation (less common for player weapons, maybe useful for AI or specific mechanics).
 * **PawnTowardsFocus:** Starts trace from the pawn's center, but orients it towards the camera's focal point.
@@ -89,7 +69,3 @@ While `GetTargetingTransform` determines the _start_ and _direction_, these help
 These functions provide a flexible and robust system for determining where a weapon is aimed and what its shots intersect with in the game world. Subclasses utilize these helpers within their `StartRangedWeaponTargeting` implementation.
 
 ***
-
-**Next Steps:**
-
-* Proceed to the next sub-page for `UGameplayAbility_RangedWeapon`: **"Spread Calculation"**.

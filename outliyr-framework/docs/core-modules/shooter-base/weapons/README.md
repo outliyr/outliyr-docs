@@ -55,8 +55,3 @@ Throughout this section, you will learn how to:
 We believe these enhancements provide a significant advantage, empowering you to build sophisticated and satisfying weapon mechanics for your shooter project. Let's dive into the specifics!
 
 ***
-
-**Next Steps:**
-
-* The next logical page would likely be **"Weapon Instance Enhancements (`UGunWeaponInstance`)"** focusing on the recoil system.
-* Ensure you link back to any base Lyra documentation where relevant (e.g., for the core Equipment Manager concepts).

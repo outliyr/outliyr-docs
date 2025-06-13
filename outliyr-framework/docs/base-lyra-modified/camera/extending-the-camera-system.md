@@ -105,7 +105,7 @@ In your **Lyra Gameplay Ability** Blueprint:
 
 * Use the **Set Camera Mode** node to activate a specific camera mode
 
-<figure><img src="../../.gitbook/assets/image (3) (1) (1) (1) (1) (1) (1).png" alt="" width="375"><figcaption><p>Calling <code>Set Camera Mode</code> in an ability's ActivateAbility event</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (3) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="375"><figcaption><p>Calling <code>Set Camera Mode</code> in an ability's ActivateAbility event</p></figcaption></figure>
 
 #### Clearing the Camera Mode
 
@@ -113,7 +113,7 @@ At the end of your ability (Or when you want to go back to the default camera mo
 
 * Use the **Clear Camera Mode** node to go back to the default camera mode.
 
-<figure><img src="../../.gitbook/assets/image (4) (1) (1) (1) (1) (1).png" alt="" width="375"><figcaption><p><em>Calling <code>Clear Camera Mode</code> in EndAbility</em></p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (4) (1) (1) (1) (1) (1) (1).png" alt="" width="375"><figcaption><p><em>Calling <code>Clear Camera Mode</code> in EndAbility</em></p></figcaption></figure>
 
 ***
 

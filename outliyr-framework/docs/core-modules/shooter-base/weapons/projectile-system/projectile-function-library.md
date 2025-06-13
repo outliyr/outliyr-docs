@@ -2,52 +2,6 @@
 
 The `UProjectileFunctionLibrary` provides a set of static, Blueprint-callable utility functions designed to assist with common calculations related to the ShooterBase projectile system, particularly the Merge Point Trajectory.
 
-```cpp
-// Header: ProjectileFunctionLibrary.h
-// Parent: UBlueprintFunctionLibrary
-
-UCLASS(MinimalAPI)
-class UProjectileFunctionLibrary : public UBlueprintFunctionLibrary
-{
-    GENERATED_BODY()
-
-public:
-    /**
-     * Calculates the Merge Point on the true camera trace path.
-     */
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Projectile")
-    static UE_API FVector CalculateMergePoint(
-        const FVector& CameraLocation,
-        const FVector& EndTrace,
-        const FVector& MuzzleLocation,
-        float ForwardBias
-        );
-
-    /**
-     * Calculates the velocity needed for a projectile to travel from MuzzleLocation
-     * to MergePoint in the same time it would take to travel from CameraLocation
-     * to MergePoint at a given MuzzleVelocity (ignoring gravity).
-     * Note: This is generally NOT used for the default Hermite spline approach in AProjectileBase,
-     * but could be useful for alternative trajectory implementations.
-     */
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Projectile")
-    static UE_API FVector CalculateVelocityToMerge(
-        const FVector& StartPoint, // Typically CameraLocation
-        const FVector& MuzzleLocation,
-        const FVector& MergePoint,
-        float MuzzleVelocity
-        );
-
-private:
-    /** Helper to calculate travel time between two points at a constant speed. */
-    static UE_API float CalculateTimeIgnoringGravity(
-        const FVector& StartPoint,
-        const FVector& EndPoint,
-        float Speed
-        );
-};
-```
-
 ### Purpose
 
 This library centralizes reusable calculations needed by the projectile system, making the logic cleaner within the abilities (`UGameplayAbility_PredictiveProjectile`) and potentially reusable elsewhere.
@@ -93,7 +47,3 @@ This library centralizes reusable calculations needed by the projectile system, 
 This library provides essential calculations for the Merge Point system, ensuring projectiles behave intuitively and consistently within the ShooterBase framework.
 
 ***
-
-**Next Steps:**
-
-* This completes the sub-pages for the Projectile System based on `AProjectileBase`. The next logical step would be to move to the **"Gameplay Abilities (GAS Integration)"** section, starting with the overview page for GAS in ShooterBase weapons.
