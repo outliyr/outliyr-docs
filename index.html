@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="Description">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  <link rel="stylesheet" href="https://unpkg.com/docsify-plugin-toc@1.3.1/dist/light.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/sidebar.min.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-breadcrumb@latest/dist/breadcrumb.min.css">
+  <style>
+    /* Target only divs that wrap images */
+    div:has(> img) {
+      display: block !important;
+      text-align: center !important;
+      margin: 1em auto;
+    }
+  </style>
+  <style>
+    .alert.flat a {
+      text-decoration: underline;
+      font-weight: 600;
+    }
+
+    .alert.flat.note a {
+      color: #0078d4; /* brighter blue */
+    }
+
+    .alert.flat.tip a {
+      color: #2e8b57; /* medium-sea green */
+    }
+
+    .alert.flat.warning a {
+      color: #d35400; /* strong orange */
+    }
+
+    .alert.flat.attention a {
+      color: #c0392b; /* vivid red */
+    }
+
+    /* Optional hover effect */
+    .alert.flat a:hover {
+      text-decoration: none;
+      opacity: 0.85;
+    }
+
+    /* Optional slight glow (can be removed if too much) */
+    .alert.flat a {
+      text-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+  <style>
+    /* Better spacing for the sidebar */
+    .sidebar {
+      padding: 1rem;
+      font-size: 15px;
+    }
+
+    /* Space out each item */
+    .sidebar ul li a {
+      padding: 0.5rem 0.75rem;
+      display: block;
+      border-radius: 4px;
+      transition: background 0.2s ease;
+    }
+
+    /* Add hover background */
+    .sidebar ul li a:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    /* Increase font size and weight for collapsible section titles */
+    .sidebar ul li > p {
+      font-size: 16px;
+      font-weight: 600;
+      padding: 0.75rem 0.75rem;
+      margin: 0.25rem 0;
+      color: var(--theme-color, #42b983);
+    }
+
+    /* Optional: make current page link more distinct */
+    .sidebar ul li.active > a {
+      font-weight: bold;
+      background-color: rgba(0, 0, 0, 0.07);
+    }
+
+    .sidebar-nav ul:not(.app-sub-sidebar) > li:not(.file)::before
+    {
+      top: 19px;
+    }
+
+    .sidebar-nav ul:not(.app-sub-sidebar) > li.open::before
+    {
+      top: 17px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="toc"></div>
+  <script>
+    window.$docsify = {
+      name: 'Outliyr Framework',
+      repo: '',
+      relativePath: true,
+      loadSidebar: true,
+      alias: {
+        '/_sidebar.md': '/SUMMARY.md',
+        '/.*/_sidebar.md': '/SUMMARY.md',
+      },
+      search: {
+        maxAge: 86400000, // Expiration time, the default one day
+        paths: 'auto',
+        placeholder: 'Type to search',
+
+        // Localization
+        placeholder: {
+          '/': 'Type to search',
+        },
+
+        noData: 'No Results!',
+        depth: 2,
+
+        hideOtherSidebarContent: false, // whether or not to hide other sidebar content
+      },
+      toc: {
+        tocMaxLevel: 5,
+        target: 'h2, h3, h4, h5, h6',
+        ignoreHeaders:  ['<!-- {docsify-ignore} -->', '<!-- {docsify-ignore-all} -->']
+      },
+      pagination: {
+        crossChapter: true,
+        crossChapterText: true,
+      },
+      breadcrumb: {
+        showHome: true,
+        homeText: 'Outliyr',
+        separator: ' &rsaquo; ',
+        casing: 'capitalize',
+        linkColor: 'var(--theme-color, #42b983)',
+        size: 'small'
+      },
+      mermaidConfig: {
+        querySelector: ".mermaid",
+      },
+      mermaidZoom: {
+        minimumScale: 1,
+        maximumScale: 5,
+        zoomPannel: true
+      },
+      'flexible-alerts': {
+        style: 'flat',
+        note: { label: 'info' },
+        warning: { label: 'warning' },
+        attention: { label: 'attention' },
+        success: { label: 'tip', icon: 'icon-tip', className: 'tip'},
+      },
+    }
+  </script>
+  <!-- Docsify v4 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify-tabs@1"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/h-hg/docsify-image-caption/dist/docsify-image-caption.min.js"></script>
+  <script src="https://unpkg.com/docsify-plugin-toc@1.3.1/dist/docsify-plugin-toc.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/d3@7"></script>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true });
+    window.mermaid = mermaid;
+  </script>
+  <script src="//unpkg.com/docsify-mermaid@2.0.1/dist/docsify-mermaid.js"></script>
+  <script src="//unpkg.com/docsify-mermaid-zoom/dist/docsify-mermaid-zoom.js"></script>
+  <script src="//unpkg.com/docsify-pagination/dist/docsify-pagination.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify-breadcrumb@latest/dist/index.min.js"></script>
+  <script src="https://unpkg.com/docsify-plugin-flexible-alerts"></script>
+  </script>
+</body>
+</html>
