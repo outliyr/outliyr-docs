@@ -61,9 +61,13 @@ When duplication is active, the client's `UWorld` manages two primary dynamic le
 * **`ELevelCollectionType::DynamicSourceLevels`:** This collection represents the "live" world. It's where the player controller resides, gameplay simulation occurs, and interactions normally happen. This collection is initially visible.
 * **`ELevelCollectionType::DynamicDuplicatedLevels`:** This collection holds the parallel, duplicated set of levels. It's initially hidden and inactive. The Killcam system hijacks this collection to stage and run the replay playback using the DemoNetDriver.
 
-### Client-Side Nature
+### **Client-Side Nature & Listen Server Limitation**
 
-It's vital to remember that the core Killcam process—recording, world state management (duplication and visibility), replay playback, and view control—occurs **entirely on the client** of the player who was eliminated. The server's primary role is typically limited to sending authoritative messages to that specific client, telling it when to start and stop the killcam sequence, and providing the necessary context (like the killer's PlayerState).
+It's vital to remember that the core Killcam process—recording, world state management (duplication and visibility), replay playback, and view control—occurs entirely on the client of the player who was eliminated. This client-centric design has an important implication: **the feature is not supported for a player hosting a listen server.**
+
+When a client enters the killcam, its connection to the live game is temporarily replaced by a replay connection (`DemoNetDriver`). If a listen server were to do this, it would terminate its NetDriver that manages all connected clients, causing a server-wide desync. Therefore, the killcam is automatically disabled for the host to preserve game integrity.
+
+In a typical game session (either on a dedicated server or for clients connected to a listen server), the server's role is limited to sending authoritative messages to the specific client that was killed, telling it when to start and stop the killcam sequence and providing the necessary context (like the killer's PlayerState).
 
 ### Adapting the Experience System (`ULyraExperienceManagerComponent`)
 
