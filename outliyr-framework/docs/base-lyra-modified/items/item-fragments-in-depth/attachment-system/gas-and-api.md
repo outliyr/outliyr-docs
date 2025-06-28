@@ -27,11 +27,12 @@ When an attachment grants an ability (defined in the `FAttachmentDetails` -> `FA
 **Benefits & Helpers:**
 
 * **Contextual Awareness:** Provides functions to easily determine the context of the ability activation:
-  * `GetAssociatedParentAttachmentItem() const`: Returns the `ULyraInventoryItemInstance*` of the item that _hosts_ the attachment granting this ability (this is the `SourceObject` passed during `GiveAbility`).
-  * `GetAssociatedAttachmentItem() const`: Determines which _specific_ attachment in the parent's `AttachmentArray` granted this ability by checking the ability spec's dynamic source tags (which include the `AttachmentSlot` tag) and returns the corresponding `ULyraInventoryItemInstance*`.
-  * `GetAssociatedEquipmentInstance() const`: Finds the `ULyraEquipmentInstance*` associated with the ultimate root item this attachment chain is connected to (if equipped).
-  * `GetAssociatedEquipmentItem() const`: Gets the root `ULyraInventoryItemInstance*` if the chain is equipped.
+  * `GetParentAttachmentItem() const`: Returns the `ULyraInventoryItemInstance*` of the item that _hosts_ the attachment granting this ability (this is the `SourceObject` passed during `GiveAbility`).
+  * `GetAttachmentItem() const`: Determines which _specific_ attachment in the parent's `AttachmentArray` granted this ability by checking the ability spec's dynamic source tags (which include the `AttachmentSlot` tag) and returns the corresponding `ULyraInventoryItemInstance*`.
+  * `GetEquipmentInstance() const`: Finds the `ULyraEquipmentInstance*` associated with the ultimate root item this attachment chain is connected to (if equipped).
+  * `GetEquipmentItem() const`: Gets the root `ULyraInventoryItemInstance*` if the chain is equipped.
   * `GetSpawnAttachmentActor() const`: Finds the visual `AActor*` spawned specifically for the attachment that granted this ability.
+  * `GetAttachmentSlotTag() const`: Returns the `GameplayTag` slot the attachment is in.
 * **Simplified Logic:** Avoids manual casting and navigation through the `UTransientRuntimeFragment_Attachment` data structures within the ability's logic.
 
 **Example Usage (in `GA_ToggleScopeZoom` derived from `ULyraGameplayAbility_FromAttachment`):**
