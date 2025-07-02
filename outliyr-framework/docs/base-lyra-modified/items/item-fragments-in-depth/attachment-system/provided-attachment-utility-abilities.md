@@ -1,6 +1,6 @@
 # Provided Attachment Utility Abilities
 
-To streamline common attachment functionalities—specifically modifying stats on the host equipment or its associated item instance—this asset provides pre-built Gameplay Ability base classes. These utility abilities encapsulate the logic for applying and reversing modifications, reducing boilerplate code and providing clear examples for developers.
+To streamline common attachment functionalities, specifically modifying stats on the host equipment or its associated item instance, this asset provides pre-built Gameplay Ability base classes. These utility abilities encapsulate the logic for applying and reversing modifications, reducing boilerplate code and providing clear examples for developers.
 
 You typically **subclass** these utility abilities, configure their specific parameters in the subclass defaults, and then add your subclass to an `ULyraAbilitySet`. This Ability Set is then assigned to the `AbilitySetsToGrant` array within the `FAttachmentDetails` -> `FAttachmentBehaviour` of the relevant attachment's configuration (defined on the _host_ item's `UInventoryFragment_Attachment`).
 
@@ -14,6 +14,12 @@ Instead of requiring custom C++ or complex Blueprint logic for every stat-modify
 * **Runtime:** When the attachment is active, the ability is granted and automatically applies (and later reverses) the configured modifications.
 
 All these utility abilities inherit from `ULyraGameplayAbility_FromAttachment`, giving them easy access to the attachment item, its parent (host) item, and the root equipment context.
+
+{% hint style="info" %}
+These abillities can be found in **ShooterBase/Content/Attachments/Generic\_Abilities**
+{% endhint %}
+
+<figure><img src="../../../../.gitbook/assets/image (189).png" alt=""><figcaption></figcaption></figure>
 
 ### 1. Modifying Equipment Instance Stats (`GA_EquipmentAttributeModifier`)
 
