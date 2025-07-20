@@ -45,7 +45,7 @@ These are the main functions you'll interact with to change the Pawn's equipped 
       1. Adds a new `FLyraAppliedEquipmentEntry` to the `EquipmentList`.
       2. Creates the `ULyraEquipmentInstance` (using the `InstanceType` from the Definition).
       3. Sets the `ItemInstance` as the `Instigator` on the `ULyraEquipmentInstance`.
-      4. Applies **Holstered** behavior: Grants `AbilitySetsToGrant` and spawns `ActorsToSpawn` defined for _this specific slot_ in the `EquipmentSlotDetails`.
+      4. Applies **Holstered** behavior: Grants `AbilitySetsToGrant`, spawns `ActorsToSpawn`, and applies `Input Mappings` and `Input Config` defined for _this specific slot_ in the `EquipmentSlotDetails`.
       5. Calls `OnHolster()` on the `ULyraEquipmentInstance`.
       6. Updates the `ItemInstance`'s `CurrentSlot` data (using `FEquipmentAbilityData_SourceEquipment`).
       7. Marks the list/entry for replication.
@@ -69,7 +69,7 @@ These are the main functions you'll interact with to change the Pawn's equipped 
       1. Finds the `FLyraAppliedEquipmentEntry` for the slot.
       2. Retrieves the `ULyraEquipmentInstance`.
       3. **Crucially, if the item is currently Held, it first calls `UnholdItem(EquipmentInstance)`** to ensure Held abilities/actors are removed correctly before proceeding.
-      4. Removes **Holstered** behavior: Takes back `AbilitySetsToGrant` and destroys `ActorsToSpawn` associated with _this slot_.
+      4. Removes **Holstered** behavior: Takes back `AbilitySetsToGrant`, destroys `ActorsToSpawn`, and removes `Input Mappings` and `Input Config` associated with _this slot_.
       5. Calls `OnUnHolster()` on the `ULyraEquipmentInstance`.
       6. Sets the associated `ItemInstance`'s `CurrentSlot` back to a null/invalid state.
       7. Removes the `FLyraAppliedEquipmentEntry` from the `EquipmentList`.
@@ -88,7 +88,7 @@ These are the main functions you'll interact with to change the Pawn's equipped 
     * **Process (on Success):**
       1. Finds the `FLyraAppliedEquipmentEntry` (or creates a temporary one if holding directly from an inventory `ItemInstance` that wasn't previously slotted).
       2. If the item was previously **Holstered** in a slot, its Holstered abilities/actors are removed first.
-      3. Applies **Held** behavior: Grants `AbilitySetsToGrant` and spawns `ActorsToSpawn` defined in the `ActiveEquipmentDetails` of the Definition.
+      3. Applies **Held** behavior: Grants `AbilitySetsToGrant`, spawns `ActorsToSpawn`, and applies `Input Mappings` and `Input Config` defined in the `ActiveEquipmentDetails` of the Definition.
       4. Calls `OnEquipped()` on the `ULyraEquipmentInstance`.
       5. Sets `bIsHeld = true` in the `FLyraAppliedEquipmentEntry`.
       6. Marks the entry for replication.
@@ -101,7 +101,7 @@ These are the main functions you'll interact with to change the Pawn's equipped 
     * **Checks:** Is this `EquipmentInstance` currently Held (`bIsHeld == true`)?
     * **Process (on Success):**
       1. Finds the `FLyraAppliedEquipmentEntry`.
-      2. Removes **Held** behavior: Takes back `AbilitySetsToGrant` and destroys `ActorsToSpawn` associated with `ActiveEquipmentDetails`.
+      2. Removes **Held** behavior: Takes back `AbilitySetsToGrant`, destroys `ActorsToSpawn`, and removes `Input Mappings` and `Input Config` associated with `ActiveEquipmentDetails`.
       3. Calls `OnUnequipped()` on the `ULyraEquipmentInstance`.
       4. Sets `bIsHeld = false`.
       5. **Decision Point:**
@@ -124,6 +124,7 @@ The core of the Manager's state is the `FLyraEquipmentList` struct, which contai
   * `SlotTag`: The slot it occupies (if any). Empty tag means it's held directly or has no assigned slot.
   * `bIsHeld`: The crucial boolean indicating if it's currently Held or Holstered.
   * `HolsteredGrantedHandles` / `HeldGrantedHandles`: Internal structs (`FLyraAbilitySet_GrantedHandles`) used by GAS to track granted abilities for efficient removal.
+  * `BindHandles`: Internal `TArray<uint32>` used by `ULyraHeroComponent` to track the applied `ULyraInputConfig` for efficient removal.
   * `LastReplicatedState`: Non-replicated struct used internally by the replication system (FFastArraySerializer) to correctly manage transitions on clients (e.g., distinguishing between Unholding and fully Unequipping).
 * **`FLyraEquipmentList`:**
   * Contains the `TArray<FLyraAppliedEquipmentEntry> Entries`.
@@ -135,6 +136,10 @@ The core of the Manager's state is the `FLyraEquipmentList` struct, which contai
 
 * **What replicates:** `FLyraEquipmentList` (FastArray) + every live `ULyraEquipmentInstance`, its `Instigator` (`ULyraInventoryItemInstance`) and any `UTransientRuntimeFragment`s.
 * **Driver:** `ULyraEquipmentManagerComponent::ReplicateSubobjects` handles the sub-objects; FastArray callbacks (`PostReplicatedAdd/Change/Remove`) fire the correct `OnEquipped/Unequipped/Holster` transitions on clients.
+* **Input Handling:**&#x20;
+  * On the **listen server**, input mappings and configs are applied/removed directly by the `FLyraEquipmentList`'s internal functions (e.g., `ApplyActiveEquipmentBehavior`) when the equipment's state changes.&#x20;
+  * On **remote clients**, input mappings and configs are applied/removed by the `FLyraEquipmentList`'s `FFastArraySerializer` callbacks (`PostReplicatedAdd/Change/Remove`) in response to replicated state changes.&#x20;
+  * In both cases, checks ensure that input-specific logic only runs on the local player's controller.
 * **Authority only APIs:** `EquipItemToSlot`, `UnequipItemFromSlot`, `HoldItem`, `UnholdItem` run _server-side only_. UI or abilities should RPC/AbilityTask to reach them.
 * **Client-side listening:**
   * Gameplay-Message tag **`TAG_Lyra_Equipment_Message_EquipmentChanged`** updates HUD/FX.

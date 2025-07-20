@@ -66,7 +66,9 @@ This Data Asset is where you define _everything_ about how an item behaves once 
        * `ActorToSpawn` (`TSubclassOf<AActor>`): The Blueprint or C++ Actor class to spawn.
        * `Attach Socket` (`FName`): The socket name on the Pawn's mesh.
        * `Attach Transform` (`FTransform`): Relative offset/rotation/scale.
-   * _Example:_ For `ED_Rifle`, you might add an entry where the `FEquipmentSlotTagKey` holds the `Lyra.Equipment.Slot.Weapon.Back` tag. The `FLyraEquipmentDetails` for this entry might specify spawning a `BP_RifleMesh_OnBack` actor attached to a `spine_socket`.
+     * **`Input Mappings` (`TArray<FPawnInputMappingContextAndPriority>`):** Input Mapping Contexts (Enhanced Input) to add to the player's input system _only when the item is holstered in this specific slot_. This is useful for defining passive inputs that are always available when an item is equipped but not actively held, that might not fit the generic input mapping for the hero's pawn data.
+     * **`Input Config` (`ULyraInputConfig`):** A Lyra Input Config asset to add to the player's input system _only when the item is holstered in this specific slot_. This provides the mapping between input actions and gameplay input tags.
+   * _Example:_ For `ED_Rifle`, you might add an entry where the `FEquipmentSlotTagKey` holds the `Lyra.Equipment.Slot.Weapon.Back` tag. The `FLyraEquipmentDetails` for this entry might specify spawning a `BP_RifleMesh_OnBack` actor attached to a `spine_socket`, and possibly adding an `IMC_WeaponHolstered` for a quick-swap action.
 3. **`bCanBeHeld` (`bool`)**
    * A simple flag determining if this piece of equipment can be actively wielded by the player (transitioned to the "Held" state).
    * Set to `true` for items like weapons or tools that the player actively uses.
@@ -76,6 +78,12 @@ This Data Asset is where you define _everything_ about how an item behaves once 
    * **Purpose:** Defines behavior when the item is actively **Held**. This section is ignored if `bCanBeHeld` is `false`.
    * `Ability Sets To Grant`: Ability Sets (GAS) to grant _only when the item is held_. This is where you'd typically grant abilities like `GA_FireWeapon`, `GA_Reload`, `GA_AimDownSights`.
    * `Actors To Spawn`: Actors to spawn and attach _only when the item is held_. This is typically where you'd spawn the main weapon mesh that attaches to the character's hands (e.g., `BP_RifleMesh_InHands` attached to `hand_r_socket`).
+   * **`Input Mappings` (`TArray<FPawnInputMappingContextAndPriority>`):** Input Mapping Contexts (Enhanced Input) to add to the player's input system _only when the item is held_. This is useful for defining active inputs specific to that equipment, that might not fit the generic input mapping for the hero's pawn data.
+   * **`Input Config` (`ULyraInputConfig`):** A Lyra Input Config asset to add to the player's input system _only when the item is held_. This provides the mapping between input actions and gameplay input tags for active weapon use.
+
+{% hint style="success" %}
+When it comes to input mapping and input config, you would rarely use this functionality. For inputs that are generic and can be shared amongst equipment they are better going in the player's pawn data. An example would be weapon firing and reloading, this is generic and would be better served in the hero's input mapping and input config.
+{% endhint %}
 
 **How to Create:**
 
