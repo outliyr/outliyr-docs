@@ -1,6 +1,6 @@
 # Pickup System
 
-This section details the system used to represent inventory items physically within the game world and allow players to pick them up. It relies on the `IPickupable` interface and provides `ALyraWorldCollectable` as a ready-to-use example actor.
+This section details the system used to represent inventory items physically within the game world and allow players to pick them up. It relies on the `IPickupable` interface and provides `ALyraWorldCollectable` as a ready-to-use example actor for _editor placement_ and serving as the target for the dropping system.
 
 ### The `IPickupable` Interface
 
@@ -51,45 +51,32 @@ This class provides a ready-to-use implementation of a world pickup actor.
 * **Storage:** Contains a replicated `FInventoryPickup` property named `StaticInventory` to hold the item data.
 * **Interaction:** Implements `GatherInteractionOptions_Implementation` to provide interaction options (like "Collect Item") to the player interaction system. The default text is often derived from the item's `DisplayName`.
 * **Pickup Logic:** Implements `GetPickupInventory` to return its `StaticInventory`. Interaction logic (likely within a Gameplay Ability triggered by interaction) would typically call `AddPickupToInventory` on this actor.
-* **Visuals:** Designed to display a mesh. While it doesn't _force_ the use of `InventoryFragment_PickupItem`, its typical workflow involves:
-  * When spawning a collectable for a dropped `ItemInstance`, the spawning logic reads the `InventoryFragment_PickupItem` from the item's definition.
-  * It uses the `StaticMesh` or `SkeletalMesh` defined in the fragment to set the visual component of the `ALyraWorldCollectable`.
-  * The `DisplayName` from the fragment might be used for the interaction text.
-* **Replication:** Replicates `StaticInventory`. Crucially, it overrides `ReplicateSubobjects` to ensure any `ULyraInventoryItemInstance`s stored within `StaticInventory.Instances` are properly replicated as subobjects to clients. It also uses `AddReplicatedSubObject` when instances are added via `SetPickupInventory`.
+* **Visuals:** Designed to display a mesh. The actual `UStaticMeshComponent` or `USkeletalMeshComponent` is dynamically created at runtime within the actor based on the `StaticMesh` or `SkeletalMesh` properties found in the `InventoryFragment_PickupItem` on the item definition. This allows a single `ALyraWorldCollectable` actor to represent items with different mesh types (static or skeletal) seamlessly. The `DisplayName` from the fragment might also be used for the interaction text. For comprehensive details on how the mesh is created, managed, and its physics behavior, refer to the \[Dropping Items & World Collectable Lifecycle] documentation.
+* **Replication:** Replicates `StaticInventory`. Crucially, it overrides `ReplicateSubobjects` to ensure any `ULyraInventoryItemInstance`s stored within `StaticInventory.Instances` are properly replicated as subobjects to clients. It also uses `AddReplicatedSubObject` when instances are added via `SetPickupInventory`. The dynamically created mesh component (`FPooledMesh`) is also replicated.
 
 ### Role of `InventoryFragment_PickupItem`
 
 While not strictly enforced by the `IPickupable` interface itself, the `InventoryFragment_PickupItem` plays a key role in the _intended workflow_ for representing items in the world:
 
 * **Defines World Appearance:** This fragment, added to an `ULyraInventoryItemDefinition`, stores the `StaticMesh` or `SkeletalMesh`, `MeshOffset`, `DisplayName` (for world context), and `PadColor` used when representing this item type as a physical object in the world (typically via `ALyraWorldCollectable`).
-* **Enables Dropping (Implicitly):** Systems responsible for dropping items from an inventory into the world will typically check if the item instance's definition _has_ this fragment. If it doesn't, the system may assume the item cannot be dropped or represented physically and prevent the action. If it _does_ have the fragment, the system uses the fragment's properties to spawn and configure the `ALyraWorldCollectable` (or similar pickup actor).
+* **Enables Dropping (Implicitly):** Systems responsible for dropping items from an inventory into the world will typically check if the item instance's definition _has_ this fragment. If it doesn't, the system may assume the item cannot be dropped or represented physically and prevent the action. If it _does_ have the fragment, the system uses the fragment's properties to spawn and configure the `ALyraWorldCollectable` (or similar pickup actor). This fragment is essential for any item intended to be physically present and interactable in the world.
 
 **In short:** Add `InventoryFragment_PickupItem` to items that players should be able to drop or that should have a specific physical mesh when placed in the world as a pickup.
 
-### Workflow Example (Dropping & Picking Up)
+### Workflow Example (Picking Up)
 
-1. **Drop Action (Server):**
-   * Player initiates a "Drop" action via UI/GAS.
-   * Server-side ability resolves the `ULyraInventoryItemInstance` (`DroppedItemInstance`) from the player's inventory.
-   * It checks if `DroppedItemInstance->FindFragmentByClass<UInventoryFragment_PickupItem>()` exists. If not, the drop likely fails.
-   * If the fragment exists, the ability calls `PlayerInventory->RemoveItemInstance(DroppedItemInstance)` (or `RemoveItem` for partial stacks).
-   * The ability spawns an `ALyraWorldCollectable` actor at the drop location.
-   * It gets the `InventoryFragment_PickupItem` data (mesh, offset) and configures the actor's visual component.
-   * It creates an `FInventoryPickup` containing an `FPickupInstance` pointing to `DroppedItemInstance`.
-   * It calls `WorldCollectable->SetPickupInventory()` to populate the actor and register the item instance for replication via the collectable actor.
-2. **Interaction (Client -> Server):**
+1. **Interaction (Client -> Server):**
    * Player looks at the `ALyraWorldCollectable` and presses the interact key.
    * Interaction system triggers a Gameplay Event/Ability on the server.
-3. **Pickup Logic (Server):**
+2. **Pickup Logic (Server):**
    * The server-side pickup ability gets the `ALyraWorldCollectable` actor that was interacted with.
    * It gets the `IPickupable` interface from the actor.
    * It gets the interacting player's `ULyraInventoryManagerComponent` (`PlayerInventory`).
    * It calls `Pickupable->AddPickupToInventory(PlayerInventory, WorldCollectable, OutStacked, OutNew)`.
-   * `AddPickupToInventory` attempts to transfer the `DroppedItemInstance` into `PlayerInventory` using `TryAddItemInstance`.
-   * If successful (`AddPickupToInventory` returns true):
-     * The ability destroys the `ALyraWorldCollectable` actor.
-   * If unsuccessful (e.g., inventory full):
-     * The `ALyraWorldCollectable` remains, potentially with fewer items if partially picked up.
+   * `AddPickupToInventory` attempts to transfer the items defined in the `ALyraWorldCollectable`'s `FInventoryPickup` into `PlayerInventory` using `TryAddItemDefinition` or `TryAddItemInstance`.
+   * If items are successfully added, they are removed from the `ALyraWorldCollectable`'s `FInventoryPickup`.
+   * If the `FInventoryPickup` becomes empty (meaning all items were picked up), `AddPickupToInventory` returns `true`, signaling that the `ALyraWorldCollectable` actor can likely be destroyed.
+   * If unsuccessful (e.g., inventory full), the `ALyraWorldCollectable` remains, potentially with fewer items if partially picked up.
 
 ***
 
