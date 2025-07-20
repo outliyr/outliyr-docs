@@ -8,7 +8,7 @@ The ShooterBase Projectile System provides a robust solution designed to address
    * Standard projectile movement (`UProjectileMovementComponent`).
    * **Client-side prediction:** Spawning visual-only projectiles immediately on the firing client to hide latency.
    * **Network synchronization:** Reconciling client-predicted projectiles with server-authoritative ones.
-   * **Merge Point Trajectory:** A sophisticated technique to visually blend the projectile's path from the weapon's muzzle location onto the player's true aiming line (camera view), ensuring intuitive aiming, especially at close ranges.
+   * **Merge Point Trajectory:** A sophisticated technique to visually blend the projectile's path from the weapon's muzzle location onto the player's true aiming line (the ballistic arc from the camera view), ensuring intuitive aiming.
 2. **`UProjectileFunctionLibrary`:** A collection of static Blueprint-callable utility functions specifically designed to aid in projectile calculations, most notably for determining the crucial "Merge Point" used in the trajectory blending system.
 
 ### Problems Addressed
@@ -16,7 +16,9 @@ The ShooterBase Projectile System provides a robust solution designed to address
 This system is specifically designed to tackle common issues with networked projectiles:
 
 * **Latency:** In a typical client-server model, there's a delay between the client firing and the server spawning the authoritative projectile. Without prediction, the player perceives a noticeable lag before seeing their projectile appear.
-* **Visual Disconnect (Muzzle vs. Camera Aim):** Players aim using a camera centered on the screen, but projectiles often originate from the weapon's muzzle. At close ranges or when near obstacles, this difference can cause projectiles to visibly deviate from the player's crosshair or hit nearby cover unexpectedly.
+* **Trajectory Parallax:** A projectile's physical path starts at the weapon's muzzle, but the player's _intended_ path originates from their camera. These two ballistic arcs are offset. This parallax error causes frustrating misses in key scenarios like:
+  * **Compensating for bullet drop:** A player aiming high to hit a distant target would have their projectile follow a different arc than intended, missing the shot.&#x20;
+  * **Leading moving targets:** The projectile's path would not match the player's predicted lead, causing it to fly wide.
 * **Reliability:** Ensuring fast-moving projectiles replicate reliably and appear consistently for all clients can be tricky.
 
 ### Core Concepts
@@ -26,7 +28,7 @@ The ShooterBase Projectile System employs several key concepts:
 * **Client Prediction:** The firing client immediately spawns a non-colliding, visual-only "fake" projectile (`AProjectileBase` with `bIsFakeProjectile = true`). This provides instant visual feedback.
 * **Server Authority:** The server spawns the "real" projectile (`AProjectileBase` with `bIsFakeProjectile = false`) which handles actual collision and damage logic. This projectile is replicated to clients.
 * **Synchronization:** When the replicated server projectile arrives on the client, the system matches it with the corresponding fake projectile (using a prediction key as an ID) and smoothly interpolates the fake one to the server one's position before destroying the fake and revealing the real one.
-* **Merge Point Trajectory:** Instead of flying straight from the muzzle, the projectile initially follows a smooth curve (a Hermite spline) from the muzzle (`SpawnPoint`) to a calculated `MergePoint` located on the player's true aiming line (derived from camera view). After reaching the `MergePoint`, it proceeds straight towards the final impact point (`EndPoint`) using the standard `UProjectileMovementComponent`. This creates a visually intuitive path that aligns better with player expectation.
+* **Converging Path System:** Instead of flying straight from the muzzle, the projectile can initially follow a precisely calculated, constant-acceleration curve (the **"Bridge Path"**). This curve starts at the muzzle and is designed to perfectly intercept the position and velocity of the player's true aiming trajectory (the **"True Path"** from the camera) at a specific point in time. This creates a visually intuitive path that guarantees the projectile aligns with the player's aim.
 * **Initial Replication Boost:** Special logic (`SendInitialReplication`) attempts to force fast-moving projectiles to replicate sooner, reducing the chance of clients being hit by "invisible" projectiles that were destroyed on the server before they could be replicated.
 
 By combining these techniques, the system aims to provide projectile behavior that feels responsive, looks visually correct, and functions reliably in a multiplayer setting.

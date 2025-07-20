@@ -258,7 +258,7 @@
     * [Projectile System](core-modules/shooter-base/weapons/projectile-system/README.md)
       * [Core Concepts](core-modules/shooter-base/weapons/projectile-system/core-concepts.md)
       * [Replication & Prediction](core-modules/shooter-base/weapons/projectile-system/replication-and-prediction.md)
-      * [Merge Point Trajectory](core-modules/shooter-base/weapons/projectile-system/merge-point-trajectory.md)
+      * [Converging Path System](core-modules/shooter-base/weapons/projectile-system/converging-path-system.md)
       * [Projectile Function Library](core-modules/shooter-base/weapons/projectile-system/projectile-function-library.md)
     * [Shooting Gameplay Abilities](core-modules/shooter-base/weapons/shooting-gameplay-abilities/README.md)
       * [Ammo Cost](core-modules/shooter-base/weapons/shooting-gameplay-abilities/ammo-cost.md)
