@@ -15,6 +15,7 @@ The Projectile Manager solves these problems by simulating projectiles as lightw
 * **Multithreaded Simulation:** Offloads the computationally intensive tasks of projectile movement and collision detection to a separate thread (`FProjectileThreadRunnable`), minimizing impact on the main game thread's performance.
 * **Efficient Data Structure:** Simulates projectiles as data (`FTraceProjectile`) rather than full actors, significantly reducing overhead.
 * **Lag-Compensated Collision:** Integrates directly with the `ULagCompensationManager` to perform collision traces against historically accurate hitbox positions of tracked targets, ensuring fair and accurate hit registration even with latency.
+* **Converging Path Accuracy:** The initial trajectory for each projectile is calculated using the [**Converging Path**](../weapons/projectile-system/converging-path-system.md) system designed for trace projectiles. This ensures the server's simulation perfectly matches the player's intended ballistic arc (from the camera), even though it's never visually rendered on the server. This is critical for accurate hit registration when compensating for bullet drop or leading targets.
 * **Penetration Physics:** Includes logic for projectiles to penetrate materials based on configurable rules (`FProjectileMaterialPenetrationInfo`), allowing bullets to pass through cover.
 * **Scalability:** Designed to handle a significantly higher volume of active projectiles compared to spawning individual actors.
 
@@ -36,11 +37,12 @@ It's crucial to understand when to use the Projectile Manager versus the standar
 ### Core Interaction Flow (High-Level)
 
 1. **Request:** Game logic (usually a firing Gameplay Ability) sends a message (`FNewTraceProjectileMessage`) via the `UGameplayMessageSubsystem` requesting a projectile spawn.
-2. **Management:** The `UProjectileManager` (on the GameState) receives the message.
-3. **Thread Handover:** The Manager converts the message into an `FTraceProjectile` data structure and passes it to the background simulation thread (`FProjectileThreadRunnable`).
-4. **Simulation (Thread):** The thread adds the projectile to its simulation loop. Each cycle, it updates positions (applying gravity), performs collision checks using lag-compensated traces (`ULagCompensationManager::RewindLineTrace`), and handles penetration logic.
-5. **Impact Notification (Thread -> Manager):** When a collision occurs, the thread sends the impact details (`FPenetrationHitResult`) back to the `UProjectileManager` on the main game thread asynchronously.
-6. **Impact Handling (Manager - Game Thread):** The `UProjectileManager` receives the impact notification and triggers game logic – applying damage (`UGameplayEffect`), spawning visual/audio effects (via the `AddImpactEffects` Blueprint event), and notifying the shooter via hit markers (`UWeaponStateComponent`).
+2. **Cosmetic Tracer (Client):** The firing client simultaneously spawns a purely cosmetic **Niagara tracer**. This effect uses the same initial [Converging Path](../weapons/projectile-system/converging-path-system.md) parameters to render a visually identical path for instant feedback.
+3. **Management (Server):** The UProjectileManager (on the GameState) receives the message.
+4. **Thread Handover:** The Manager converts the message into an `FTraceProjectile` data structure and passes it to the background simulation thread (`FProjectileThreadRunnable`).
+5. **Simulation (Thread):** The thread adds the projectile to its simulation loop. Each cycle, it updates positions (applying gravity), performs collision checks using lag-compensated traces (`ULagCompensationManager::RewindLineTrace`), and handles penetration logic.
+6. **Impact Notification (Thread -> Manager):** When a collision occurs, the thread sends the impact details (`FPenetrationHitResult`) back to the `UProjectileManager` on the main game thread asynchronously.
+7. **Impact Handling (Manager - Game Thread):** The `UProjectileManager` receives the impact notification and triggers game logic – applying damage (`UGameplayEffect`), spawning visual/audio effects (via the `AddImpactEffects` Blueprint event), and notifying the shooter via hit markers (`UWeaponStateComponent`).
 
 ### <mark style="color:red;">IMPORTANT: Complexity and Modification Warning</mark>
 

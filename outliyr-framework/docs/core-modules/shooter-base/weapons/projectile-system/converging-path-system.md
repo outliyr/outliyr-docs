@@ -57,7 +57,7 @@ The process is divided into distinct phases:
 
 ### Application to Visual Effects (VFX)
 
-This system's precision extends to visual effects. The associated Niagara tracer (e.g., `NS_Tracer_Example`) uses HLSL scripts that replicate the exact same kinematic formulas. The `FProjectileInitState` parameters are passed to the Niagara System, allowing the visual effect to independently calculate and render the _exact same_ Bridge Path and subsequent True Path, ensuring the VFX tracer never deviates from the physical projectile.
+This system's precision extends to visual effects. The associated Niagara tracer (e.g., `NS_WeaponFire_ProjectileTracer`) uses HLSL scripts that replicate the exact same kinematic formulas. The `FProjectileInitState` parameters are passed to the Niagara System, allowing the visual effect to independently calculate and render the _exact same_ Bridge Path and subsequent True Path, ensuring the VFX tracer never deviates from the physical projectile.
 
 ### Benefits
 
