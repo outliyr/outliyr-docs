@@ -319,6 +319,10 @@
     * [Live Inspection UI](core-modules/tetris-inventory/item-inspection-system/live-inspection-ui.md)
     * [Async Icon Generation](core-modules/tetris-inventory/item-inspection-system/async-icon-generation.md)
 * [True First Person](core-modules/true-first-person.md)
+* [Gameplay Maps](core-modules/gameplay-maps/README.md)
+  * [Compound Blockout System](core-modules/gameplay-maps/compound-blockout-system/README.md)
+    * [Blockout Shapes](core-modules/gameplay-maps/compound-blockout-system/blockout-shapes.md)
+    * [Tips for Effective Blockout](core-modules/gameplay-maps/compound-blockout-system/tips-for-effective-blockout.md)
 
 ## Game Modes
 
