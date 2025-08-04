@@ -13,7 +13,7 @@ Unlike standard Unreal Engine plugins, this framework is designed as a **standal
 You can obtain the framework via the **Unreal Engine Marketplace** (once released).
 
 {% hint style="info" %}
-This project would require at least **Unreal Engine 5.5**
+This project would require at least **Unreal Engine 5.6**
 {% endhint %}
 
 ***

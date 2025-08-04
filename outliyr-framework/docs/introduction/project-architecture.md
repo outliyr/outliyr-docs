@@ -38,68 +38,82 @@ This framework takes a **hybrid approach**, using C++ for performance-critical s
 This framework is **layered**, meaning each level **depends only on the layers below it**.
 
 * **Base Lyra is standalone** – It has been modified, but it doesn’t require additional modules.
+* **Gameplay Maps is standalone** – It contains the reusable maps used by different game modes.
 * **Core Modules rely on Base Lyra** – They add mechanics like shooting, inventory, and true first-person controls.
 * **Game Modes rely on Core Modules and Base Lyra** – They determine the rules and gameplay experience and are completely isolated.
+
+{% hint style="success" %}
+Core Modules depend on the Gameplay Maps only to showcase their functionality through demo levels. If you remove these demo levels from the Core Modules, the dependency on Gameplay Maps is removed entirely.
+{% endhint %}
 
 {% tabs %}
 {% tab title="Diagram" %}
 ```mermaid
+
 graph TD
     subgraph "Framework Layers"
         direction LR
 
         subgraph "Layer 0: Standalone Foundation"
             A["Base Lyra (Modified)"]
+            B["Gameplay Maps"]
         end
 
         subgraph "Layer 1: Core Gameplay Modules"
             direction TB
-            B["Shooter Base"]
-            C["Tetris Inventory"]
-            D["True First Person"]
-            E["... (Other New Core Modules)"]
+            C["Shooter Base"]
+            D["Tetris Inventory"]
+            E["True First Person"]
+            F["... (Other New Core Modules)"]
         end
 
         subgraph "Layer 2: Game Mode Experiences"
             direction TB
-            F["Team Deathmatch"]
-            G["Battle Royale"]
-            H["Gun Game"]
-            I["Extraction"]
-            J["... (Other New Game Modes)"]
+            G["Team Deathmatch"]
+            H["Battle Royale"]
+            I["Gun Game"]
+            J["Extraction"]
+            K["... (Other New Game Modes)"]
         end
     end
 
     %% Dependencies
-    B --> A
     C --> A
     D --> A
     E --> A
+    F --> A
 
+    C --> B
+    D --> B
+    E --> B
     F --> B
-    F --> E
-    G --> B
+
     G --> C
-    G --> E
-    H --> B
-    H --> E
-    I --> B
+    G --> F
+    H --> C
+    H --> D
+    H --> F
     I --> C
-    I --> E
-    J --> B
-    J --> E
+    I --> F
+    J --> C
+    J --> D
+    J --> F
+    K --> C
+    K --> F
 
     %% Styling to emphasize layers and standalone nature
     style A fill:#A9CCE3,stroke:#1A5276,stroke-width:3px,color:#1A5276
-    style B fill:#D6EAF8,stroke:#2471A3,stroke-width:2px
+    style B fill:#A9CCE3,stroke:#1A5276,stroke-width:3px,color:#1A5276
     style C fill:#D6EAF8,stroke:#2471A3,stroke-width:2px
     style D fill:#D6EAF8,stroke:#2471A3,stroke-width:2px
     style E fill:#D6EAF8,stroke:#2471A3,stroke-width:2px
-    style F fill:#E8F6F3,stroke:#1D8348,stroke-width:2px
+    style F fill:#D6EAF8,stroke:#2471A3,stroke-width:2px
     style G fill:#E8F6F3,stroke:#1D8348,stroke-width:2px
     style H fill:#E8F6F3,stroke:#1D8348,stroke-width:2px
     style I fill:#E8F6F3,stroke:#1D8348,stroke-width:2px
     style J fill:#E8F6F3,stroke:#1D8348,stroke-width:2px
+    style K fill:#E8F6F3,stroke:#1D8348,stroke-width:2px
+
 ```
 
 {% hint style="info" %}
@@ -109,7 +123,7 @@ graph TD
 
 {% tab title="Root Level" %}
 ```
-[Base Lyra]  <- Independent, standalone  
+[Base Lyra, Gameplay Maps]  <- Independent, standalone  
   ├── [Shooter Base]  
   ├── [Tetris Inventory]  
   ├── [True First Person]

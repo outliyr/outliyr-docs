@@ -28,9 +28,9 @@ Let's jump into a pre-built game mode to see the framework in action. We'll use 
 
     * In the Content Browser, make sure "Show Plugin Content" is enabled (Settings cogwheel in the Content Browser).
     * Navigate to the TDM plugin's content folder: `Plugins/GameFeatures/TeamDeathmatch/Content/Maps/`
-    * Open the TDM map (`L_TeamDeatchmatch`)
+    * Open the TDM map (`L_TDM_Test`)
 
-    <figure><img src="../.gitbook/assets/image (5) (1) (1) (1) (1) (1).png" alt="" width="273"><figcaption><p>Team Death match map file and file path</p></figcaption></figure>
+    <figure><img src="../.gitbook/assets/image (190).png" alt="" width="563"><figcaption><p>Team Death match map file and file path</p></figcaption></figure>
 2.  **Check World Settings (Informational):**
 
     * With the map open, go to **Window > World Settings**.
