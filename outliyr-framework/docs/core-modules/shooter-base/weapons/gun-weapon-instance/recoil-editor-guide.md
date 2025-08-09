@@ -13,7 +13,7 @@ You can open the Recoil Editor at any time from the main Unreal Engine menu bar:
 
 This will open the editor in a new tab.
 
-<figure><img src="../../../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Editor Interface Overview
 

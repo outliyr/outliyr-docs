@@ -46,7 +46,7 @@ Let's walk through the process of creating a new type of indicator, for example,
          * This event receives a boolean `bIsClamped`.
          * You can change the widget's appearance based on this. For example, hide certain details or show a different icon when clamped.
 
-         <figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1).png" alt="" width="563"><figcaption><p>Example of changing widget apperance based on clamping</p></figcaption></figure>
+         <figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p>Example of changing widget apperance based on clamping</p></figcaption></figure>
      *   **`Event On Indicator Display Mode Changed`:**
 
          * Receives `IsScreenLocked` boolean.

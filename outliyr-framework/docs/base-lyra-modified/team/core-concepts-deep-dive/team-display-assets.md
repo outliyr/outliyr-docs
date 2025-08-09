@@ -52,7 +52,7 @@ The `ULyraTeamDisplayAsset` provides several Blueprint-callable helper functions
 
 * `ApplyToMeshComponent(UMeshComponent* MeshComponent)`: Iterates through the materials on the mesh component. For scalar and vector parameters, it calls `SetScalar/VectorParameterValueOnMaterials`. For texture parameters, it creates Dynamic Material Instances if needed and sets the texture parameters on them individually.
 
-<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1).png" alt="" width="321"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1).png" alt="" width="321"><figcaption></figcaption></figure>
 
 * `ApplyToNiagaraComponent(UNiagaraComponent* NiagaraComponent)`: Sets corresponding User Exposed variables (float, LinearColor, Texture Object) on the Niagara component. Parameter names must match the Niagara variable names.
 
