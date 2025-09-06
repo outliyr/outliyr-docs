@@ -26,6 +26,65 @@ A basic spherical primitive, useful for curved surfaces, domed ceilings, or spec
     * _Recommended Range:_ 3 to 128
     * _Default:_ 32
 
+### Cylinder (`UBlockoutShape_Cylinder`)
+
+A common cylindrical primitive, useful for columns, pipes, or curved wall sections. When `bCapped` is false, it automatically generates an inward-facing surface to create a hollow tube with correctly oriented normals.
+
+* **Parameters:**
+  * **Radius (float):** The radius of the cylinder's base and top.
+    * _Default:_ 50.0
+  * **Height (float):** The total height of the cylinder.
+    * _Default:_ 100.0
+  * **RadialSteps (int32):** Controls the number of segments around the circumference, defining the smoothness of the curve.
+    * _Recommended Range:_ 3 to 128
+    * _Default:_ 32
+  * **HeightSteps (int32):** Controls the number of segments along the cylinder's height, for vertical resolution.
+    * _Recommended Range:_ 3 to 128
+    * _Default:_ 4
+  * **bCapped (bool):** If `True`, the top and bottom faces of the cylinder are closed. If `False`, it forms an open-ended tube.
+    * _Default:_ True
+
+### Cone (`UBlockoutShape_Cone`)
+
+A conical primitive, allowing for both true cones and truncated cones (frustums) with different top and base radii. When `bCapped` is false, it generates an inward-facing surface for a hollow cone or frustum.
+
+* **Parameters:**
+  * **BaseRadius (float):** The radius of the cone's base.
+    * _Default:_ 50.0
+  * **TopRadius (float):** The radius of the cone's top. Set to `0.0` for a true cone.
+    * _Default:_ 5.0
+  * **Height (float):** The total height of the cone.
+    * _Default:_ 100.0
+  * **RadialSteps (int32):** Controls the number of segments around the circumference.
+    * _Recommended Range:_ 3 to 128
+    * _Default:_ 32
+  * **HeightSteps (int32):** Controls the number of segments along the cone's height.
+    * _Recommended Range:_ 3 to 128
+    * _Default:_ 4
+  * **bCapped (bool):** If `True`, the top and bottom faces of the cone are closed. If `False`, it forms an open-ended cone/frustum.
+    * _Default:_ True
+
+### Torus (`UBlockoutShape_Torus`)
+
+A donut or ring-shaped primitive, useful for arches, intricate piping, or decorative elements.
+
+* **Parameters:**
+  * **MajorRadius (float):** The radius from the center of the torus to the center of its circular tube.
+    * _Default:_ 100.0
+  * **MinorRadius (float):** The radius of the circular tube itself.
+    * _Default:_ 20.0
+  * **MajorSteps (int32):** Controls the number of segments around the main ring of the torus.
+    * _Recommended Range:_ 3 to 128
+    * _Default:_ 32
+  * **MinorSteps (int32):** Controls the number of segments around the cross-section of the torus's tube.
+    * _Recommended Range:_ 3 to 128
+    * _Default:_ 16
+  * **RevolveOptions (FGeometryScriptRevolveOptions):** Advanced options for controlling the generation of the torus, including:
+    * `RevolveDegrees`: Defines the arc length of the torus (e.g., 360 for a full ring, 180 for a half-ring).
+    * `DegreeOffset`: Shifts the starting point of the revolve.
+    * `bFillPartialRevolveEndcaps`: If `RevolveDegrees` is less than 360, this closes the open ends.
+    * _Default:_ Full 360-degree revolve with closed endcaps if partial.
+
 ### Ramp (`UBlockoutShape_Ramp`)
 
 An inclined plane, perfect for creating sloped surfaces, accessible elevations, or transition points. Its UVs are procedurally generated and box-projected for consistent tiling with blockout materials.
