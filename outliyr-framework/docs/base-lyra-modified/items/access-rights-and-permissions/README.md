@@ -4,7 +4,7 @@
 > _And if so, what exactly are they **allowed to do** with the things inside it?”_
 
 That two-step question is the entire purpose of the Access Rights & Permissions layer.\
-Everything else – replication filters, UI greying-out, GAS security checks – flows from those two answers.
+Everything else, replication filters, UI greying-out, GAS security checks, flows from those two answers.
 
 ***
 
@@ -21,10 +21,10 @@ Everything else – replication filters, UI greying-out, GAS security checks –
 
 ### Core concepts at a glance
 
-| Concept          | What it answers                                 | Type    | Typical values                                                                               |
-| ---------------- | ----------------------------------------------- | ------- | -------------------------------------------------------------------------------------------- |
-| **Access Right** | “Do I replicate this container to you?”         | Enum    | `NoAccess`, `ReadOnly`, `FullAccess`                                                         |
-| **Permission**   | “If you _can_ see it, which actions are legal?” | Bitmask | `MoveItems`, `PutInItems`, `TakeOutItems`, `EquipItems`, `UseItems` (or the combined `Full`) |
+| Concept          | What it answers                                 | Type    | Typical values                                                                                                                                                                                    |
+| ---------------- | ----------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Access Right** | “Do I replicate this container to you?”         | Enum    | `NoAccess`, `ReadOnly`, `FullAccess`                                                                                                                                                              |
+| **Permission**   | “If you _can_ see it, which actions are legal?” | Bitmask | <p><code>MoveItems</code>, <code>PutInItems</code>, <code>TakeOutItems</code>, <code>EquipItems</code>, <code>UseItems</code> ,<br><code>HoldItems</code> (or the combined <code>Full</code>)</p> |
 
 #### Evaluation order
 

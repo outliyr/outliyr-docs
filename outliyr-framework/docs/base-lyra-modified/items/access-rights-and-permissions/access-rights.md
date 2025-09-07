@@ -20,7 +20,7 @@ enum class EItemContainerAccessRights : uint8
 ```
 
 * **NoAccess**\
-  &#xNAN;_&#x4E;othing_ replicates, not the item list, not the weight, not the per-item sub-objects.\
+  _Nothing_ replicates, not the item list, not the weight, not the per-item sub-objects.\
   Ideal for distant chests, enemy player backpacks, or secret admin containers.
 * **ReadOnly**\
   The client is sent every replicated property and sub-object the container normally exposes, but any attempt to interact is blocked server-side _before_ permissions are consulted.\
@@ -33,9 +33,9 @@ enum class EItemContainerAccessRights : uint8
 ### How Access Rights are evaluated at runtime
 
 1. **Fast-Array lookup**\
-   &#xNAN;_&#x44;oes this player have a specific entry?_\
+   Does this player have a specific entry?\
    → If yes, use it.\
-   → If no, fall back to the container’s _DefaultAccessRight_ property.
+   → If no, fall back to the container’s DefaultAccessRight property.
 2.  **Replication filter** (inside the container’s `ReplicateSubobjects`)
 
     ```cpp

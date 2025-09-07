@@ -75,7 +75,7 @@ If you find yourself gating multiple unrelated UI buttons behind the same flag, 
 | **Read-Only lore chest**         | `None` (because Access will be ReadOnly) |
 | **Take-Only loot chest**         | `TakeOutItems`                           |
 | **Donation box**                 | `PutInItems`                             |
-| **Equipment locker** (swap only) | \`MoveItems                              |
+| **Equipment locker** (swap only) | `MoveItems`                              |
 
 ***
 

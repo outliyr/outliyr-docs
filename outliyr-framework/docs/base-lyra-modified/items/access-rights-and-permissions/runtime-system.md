@@ -23,14 +23,14 @@ This page therefore focuses on the moving parts under the hood and on the life-c
 ### Lifecycle of a change (server → client)
 
 * **Authority change**\
-  &#xNAN;_&#x53;ome gameplay rule fires:_\
+  _Some gameplay rule fires:_\
   `IItemPermissionOwner::Execute_SetContainerAccessRight(Inventory, TargetPC, ReadOnly)`
 * **Fast-array marks dirty**\
   `FItemAccessRightsContainer::Set` edits or adds an entry → `MarkItemDirty`/`MarkArrayDirty`.
 * **UObject replication pass (same frame)**\
   The container’s `ReplicateSubobjects` is executed for every connection.\
-  &#xNAN;_&#x46;or connections **other** than `TargetPC` nothing is written_, because the fast-array diff is empty.\
-  For the `TargetPC` channel the delta is serialized into the network bunch.
+  For connections **other** than `TargetPC` nothing is written, because the fast-array diff is empty.\
+  For the TargetPC channel the delta is serialized into the network bunch.
 * **Client receives bunch (frames later)**\
   Fast-array callback `PostReplicatedChange` runs **only** on the affected client.\
   The callback calls `Owner->BroadcastAccessChanged()`.
