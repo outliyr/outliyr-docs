@@ -6,7 +6,7 @@ This system is foundational to how players interact with the game world, control
 
 Lyra's input architecture is designed to be robust, flexible, and highly data-driven. This offers several key advantages for developers:
 
-* **Data-Driven Configuration:** Much of the input setup—from mapping raw key presses to defining what actions they trigger—is handled through Data Assets (`Input Actions`, `Input Mapping Contexts`, `Lyra Input Configs`). This means less hard-coding and more iteration speed, allowing you to tweak input behavior directly in the editor.
+* **Data-Driven Configuration:** Much of the input setup, from mapping raw key presses to defining what actions they trigger, is handled through Data Assets (`Input Actions`, `Input Mapping Contexts`, `Lyra Input Configs`). This means less hard-coding and more iteration speed, allowing you to tweak input behavior directly in the editor.
 * **Seamless Gameplay Ability System (GAS) Integration:** Input events can directly trigger complex Gameplay Abilities. This powerful connection allows for sophisticated character actions and interactions to be initiated by player input with minimal boilerplate code.
 * **Support for Advanced Input Processing:** The system inherently supports:
   * **Input Modifiers:** Raw input values can be processed through modifiers (e.g., dead zones, sensitivity scaling, axis inversion) before an action is triggered.
