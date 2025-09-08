@@ -2,7 +2,7 @@
 
 With an `Input Action` triggered by the Enhanced Input system and translated into a `GameplayTag` by an active `ULyraInputConfig`, the next crucial stage is to **bind** this tagged input to executable game logic and **dispatch** commands to the appropriate systems. This responsibility primarily falls to two key components working in tandem: the `ULyraInputComponent` and the `ULyraHeroComponent`, both typically found on a player-controlled Pawn.
 
-**`ULyraInputComponent`**
+### **`ULyraInputComponent`**
 
 * **Role:** This component, inheriting from `UEnhancedInputComponent`, is the direct interface with Unreal Engine's Enhanced Input binding mechanism. Its core job is to take `Input Actions` (identified by `GameplayTags` via a `ULyraInputConfig`) and bind their triggered events (Pressed, Released, Held, etc.) to C++ delegate functions.
 * **Key Functions for Binding:**
@@ -21,7 +21,7 @@ With an `Input Action` triggered by the Enhanced Input system and translated int
   * `AddInputMappings()` / `RemoveInputMappings()`: While present, the actual logic for adding/removing `InputMappingContexts` to the `UEnhancedInputLocalPlayerSubsystem` is often orchestrated by the `ULyraHeroComponent` during its initialization. These functions in `ULyraInputComponent` might be more for future extensibility or specific edge cases related to the component itself manipulating IMCs.
   * `RemoveBinds()`: Used to clear bindings associated with a given set of handles.
 
-**`ULyraHeroComponent`**
+### **`ULyraHeroComponent`**
 
 * **Role:** This component, found on player-controlled Pawns (or Pawns simulating players), is responsible for the overall setup and management of player input and camera controls. It acts as the orchestrator for input binding.
 * **Input Initialization (`InitializePlayerInput(UInputComponent* PlayerInputComponent)`):**
@@ -50,7 +50,7 @@ With an `Input Action` triggered by the Enhanced Input system and translated int
   * `AddAdditionalInputConfig(const ULyraInputConfig* InputConfig)`: Allows external systems (like `GameFeatureAction_AddInputBinding`) to request that new `InputConfigs` be bound. It uses the Pawn's `ULyraInputComponent` to `BindAbilityActions` from this new config.
   * `RemoveAdditionalInputConfig(TArray<uint32>& BindHandles)`: Removes bindings previously added by `AddAdditionalInputConfig`.
 
-**The Flow of Control (Binding Example for an Ability):**
+### **The Flow of Control (Binding Example for an Ability):**
 
 1. `ULyraHeroComponent::InitializePlayerInput()` is called.
 2. It gets the `ULyraInputConfig` (e.g., `InputConfig_Player`) from `PawnData`.

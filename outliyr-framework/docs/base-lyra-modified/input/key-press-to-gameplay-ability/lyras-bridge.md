@@ -2,7 +2,7 @@
 
 After the Enhanced Input system has processed a hardware input and triggered an abstract `Input Action` (IA), Lyra needs a way to connect this generic IA to its more specific, `GameplayTag`-driven systems. This is where the **`ULyraInputConfig`** Data Asset plays a pivotal role. It acts as a crucial bridge, translating editor-defined `Input Actions` into `GameplayTags` that the rest of Lyra's framework, particularly the Gameplay Ability System (GAS) and native input handlers, can understand and act upon.
 
-**Purpose of `ULyraInputConfig`**
+### **Purpose of `ULyraInputConfig`**
 
 The primary purpose of a `ULyraInputConfig` is to map `UInputAction` assets to specific `FGameplayTag`s. This decoupling is powerful:
 
@@ -10,7 +10,7 @@ The primary purpose of a `ULyraInputConfig` is to map `UInputAction` assets to s
 * **Flexibility:** Different `ULyraInputConfig` assets can map the same `Input Action` to different `GameplayTags`. This allows, for instance, a "Primary Action" input to trigger a "Fire Weapon" ability in one context (defined by one `InputConfig`) and a "Melee Attack" ability in another context (defined by a different `InputConfig`).
 * **Centralized Mapping:** Provides a clear, data-driven location to see how `Input Actions` are being interpreted by Lyra's systems.
 
-**Key Properties of `ULyraInputConfig`**
+### **Key Properties of `ULyraInputConfig`**
 
 A `ULyraInputConfig` Data Asset contains two main lists of mappings:
 
@@ -30,14 +30,14 @@ A `ULyraInputConfig` Data Asset contains two main lists of mappings:
      * These handler functions then pass this `InputTag` to the `ULyraAbilitySystemComponent`.
      * The `ULyraAbilitySystemComponent` uses this `InputTag` to find and activate abilities that have been granted with a matching `InputTag` in their `FGameplayAbilitySpec` (often configured via a `ULyraAbilitySet`).
 
-**How `ULyraInputConfig` Assets are Used**
+### **How `ULyraInputConfig` Assets are Used**
 
 `ULyraInputConfig` assets are typically referenced and activated in a couple of main ways:
 
 * **`ULyraPawnData`:** Each `ULyraPawnData` asset (which defines a pawn archetype) has an `InputConfig` property where you can assign a default `ULyraInputConfig`. When a pawn is initialized with this `PawnData`, the `ULyraHeroComponent` will use this `InputConfig` to set up its bindings.
 * **Game Feature Actions:** The `UGameFeatureAction_AddInputBinding` allows Game Feature Plugins to dynamically add or potentially layer `ULyraInputConfig` assets when the feature is active. This is useful for features that introduce new abilities or significantly alter input behavior (e.g., vehicle controls).
 
-**Example Scenario:**
+### **Example Scenario:**
 
 1. **Enhanced Input Layer:**
    * `IMC_Default_KBM` maps `Space Bar` key -> `IA_Jump_Default`.

@@ -23,11 +23,16 @@ The journey can be broadly divided into these key stages, each of which will be 
    * The `ULyraHeroComponent` orchestrates the setup of these bindings for player-controlled Pawns.
    * For ability-related inputs, this stage typically involves binding the `Input Action` (via its tag) to functions within the `ULyraHeroComponent` that will, in turn, notify the Ability System Component.
    * For native inputs, the `Input Action` (via its tag) is bound directly to a C++ function.
-4. **Gameplay Ability Activation (`ULyraAbilitySystemComponent` & `ULyraGameplayAbility`):**
-   * This is the final stage for inputs intended to trigger Gameplay Abilities.
-   * The `ULyraAbilitySystemComponent` (ASC) on the Pawn (or PlayerState) receives the `InputTag` from the `ULyraHeroComponent`.
-   * The ASC then searches through its list of granted abilities to find any that are associated with this specific `InputTag`.
-   * If a match is found, and all conditions are met (cooldowns, costs, activation policies), the `ULyraGameplayAbility` is activated.
+4.  **Gameplay Ability Activation (`ULyraAbilitySystemComponent` & `ULyraGameplayAbility`):**
+
+    * This is the final stage for inputs intended to trigger Gameplay Abilities.
+    * The `ULyraAbilitySystemComponent` (ASC) on the Pawn (or PlayerState) receives the `InputTag` from the `ULyraHeroComponent`.
+    * The ASC then searches through its list of granted abilities to find any that are associated with this specific `InputTag`.
+    * If a match is found, and all conditions are met (cooldowns, costs, activation policies), the `ULyraGameplayAbility` is activated.
+
+
+
+<figure><img src="../../../.gitbook/assets/image (192).png" alt=""><figcaption><p>Lyra Starter Game Overview | Tech Talk | State of Unreal 2022</p></figcaption></figure>
 
 Each of these stages involves specific assets and C++ classes working in concert. The following sub-pages will dissect each stage, explaining the "why" and "how" of their individual roles and interactions. By understanding this entire pipeline, you'll be well-equipped to debug, customize, and extend Lyra's input system to suit your project's needs.
 

@@ -19,7 +19,7 @@ The very first step in Lyra's input processing chain (and indeed, any modern Unr
   * Mapping: `Space Bar` key -> `IA_Jump`
   * Mapping: `Left Mouse Button` -> `IA_PrimaryFire`
 
-**`UInputAction` (IA)**
+### **`UInputAction` (IA)**
 
 * **Role:** An `Input Action` is a Data Asset that represents an abstract, logical action a player can perform within the game. It defines _what_ the player is trying to do, not _how_ they are doing it (i.e., which specific key they pressed). Examples include "Move Character," "Jump," "Fire Weapon," "Interact."
 * **Creation:** You create IAs in the Content Browser (Right-click > Input > Input Action).

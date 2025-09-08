@@ -2,7 +2,7 @@
 
 The final stage in the journey of an input intended to trigger a Gameplay Ability involves the **`ULyraAbilitySystemComponent` (ASC)** and the **`ULyraGameplayAbility`** itself. After the `ULyraHeroComponent` has processed an input and determined the relevant `InputTag` (derived from the active `ULyraInputConfig`), it passes this tag to the ASC. The ASC then takes over to find and potentially activate a corresponding ability.
 
-**`ULyraAbilitySystemComponent` (ASC)**
+### **`ULyraAbilitySystemComponent` (ASC)**
 
 * **Role:** The ASC is the heart of the Gameplay Ability System for an actor. It manages granted abilities, attributes, active gameplay effects, and handles the logic for ability activation, execution, and termination. In Lyra, it's typically found on the `ALyraPlayerState` for player-controlled characters, but can also be on Pawns or other actors.
 * **Receiving Input Events:**
@@ -29,7 +29,7 @@ The final stage in the journey of an input intended to trigger a Gameplay Abilit
   * `TryActivateAbility(FGameplayAbilitySpecHandle AbilityHandle, bool bAllowRemoteActivation = true)`: This is the fundamental GAS function that checks if an ability can be activated (costs, cooldowns, tags, etc.) and then proceeds to activate it if all checks pass.
   * `CallServerTryActivateAbility()` / `ClientActivateAbilitySucceed()` / `ClientActivateAbilityFailed()`: Handles the network replication aspects of ability activation.
 
-**`ULyraGameplayAbility`**
+### **`ULyraGameplayAbility`**
 
 * **Role:** This is the base class for all gameplay abilities in Lyra. It defines the logic, effects, and conditions of a specific action a character can perform (e.g., jump, fire weapon, cast spell).
 * **Association with an `InputTag`:**
@@ -47,7 +47,7 @@ The final stage in the journey of an input intended to trigger a Gameplay Abilit
   * Even after an ability is activated, it might need to respond to further input events (e.g., a charged ability).
   * `UGameplayAbility::AbilitySpecInputPressed()` and `UGameplayAbility::AbilitySpecInputReleased()`: These virtual functions can be overridden in a `ULyraGameplayAbility` subclass to react to continued input presses or releases while the ability is active. This is often used in conjunction with ability tasks like `UAbilityTask_WaitInputPress` or `UAbilityTask_WaitInputRelease`.
 
-**The Complete Chain for an Ability Input:**
+### **The Complete Chain for an Ability Input:**
 
 1. **Hardware Key Press** (e.g., Left Mouse Button).
 2. **`InputMappingContext`** maps `LMB` -> `IA_PrimaryFire`.
