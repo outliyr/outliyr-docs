@@ -23,7 +23,7 @@ These abillities can be found in **ShooterBase/Content/Attachments/Generic\_Abil
 
 ### 1. Modifying Equipment Instance Stats (`GA_EquipmentAttributeModifier`)
 
-* **Purpose:** Designed to allow attachments to modify [**Tag Attributes**](../../../equipment/equipment-instance.md#managing-runtime-state-tag-attributes-fgameplaytagattributecontainer) (float values stored in the `FGameplayTagAttributeContainer`) on the **`ULyraEquipmentInstance`** of the _root equipped item_ that the attachment chain is ultimately connected to. Ideal for stats like recoil, spread, sway, damage multipliers, etc., that are part of the active weapon's runtime state.
+* **Purpose:** Designed to allow attachments to modify [**Tag Attributes**](../../../equipment/equipment-instance.md#managing-runtime-state-tag-attributes-fgameplaytagattributecontainer) (float values stored in the `FGameplayTagAttributeContainer`) on the **`ULyraEquipmentInstance`** of the _root equipped item_ that the attachment chain is ultimately connected to. Ideal for stats like recoil, spread, sway, damage multipliers, etc., that are part of the active equipment's runtime state.
 * **Inheritance:** Subclass of `ULyraGameplayAbility_FromAttachment`.
 * **Configuration (in your Subclass Defaults):**
   * **`Float Stat Modifications` (`TArray<FFloatStatModification>`):** This is the key array you configure. Each element defines a single stat modification:
@@ -54,28 +54,22 @@ These abillities can be found in **ShooterBase/Content/Attachments/Generic\_Abil
 * **Purpose:** Specifically designed for attachments (typically magazines themselves) to modify **Stat Tags** (integer values in `FGameplayTagStackContainer`) related to ammunition capacity on the **`ULyraInventoryItemInstance`** of the _host equipment item_ (e.g., the rifle itself).
 * **Inheritance:** Subclass of `ULyraGameplayAbility_FromAttachment`.
 * **Configuration (in your Subclass Defaults):**
-  * You would typically configure properties in your subclass defining:
-    * The target Stat Tag for magazine capacity (e.g., `Weapon.Ammo.MagazineCapacity`).
-    * The new capacity value this magazine provides.
-    * (Potentially) A Stat Tag for max capacity if your system distinguishes between current and max.
+  * You would configure properties in your subclass defining:
+    * The operation (add, multiply, divide)
+    * The magnitude to apply the operation on (float)
 * **Runtime Logic:**
   * **On Grant (Ability Activation):**
     1. Uses `GetAssociatedEquipmentItem()` to get the `ULyraInventoryItemInstance` of the host weapon.
-    2. If found, calls `WeaponItemInstance->SetStatTagStack(MagazineCapacityTag, NewCapacityValue)`.
-    3. **Important:** This ability would also need to contain logic to handle ammo adjustments. For example:
-       * If current ammo (`Weapon.Ammo.CurrentInMagazine`) exceeds the _new_ capacity, the excess ammo might be moved to reserve (`Weapon.Ammo.Reserve`) or dropped.
-       * If the old capacity was smaller, no immediate ammo change might be needed beyond updating the max.
+    2. If found, calculates the new magazine size based on the operation and magnitude provided then sets the stat tag and stores the change.
   * **On Removal (Ability `EndAbility`):**
-    1. Reverts the magazine capacity Stat Tag on the `WeaponItemInstance`. This is complex:
-       * It might revert to a default "no magazine" capacity.
-       * If another magazine is immediately swapped in, that magazine's `GA_MagazineStatModifier` would then set the new capacity.
-       * Needs to handle ammo again: if the capacity is _reduced_, current ammo might need to be clamped and excess moved/dropped.
+    1. It uses the stored values when the ability was granted to reverse the change cause by this abilty
+    2. Then it handles ammo overflow, if the magazine size reduces to smaller amount than the current ammo.
 *   **Use Case Example:**
 
-    * An `ID_Attachment_ExtendedMagazine` is configured to grant an `ULyraAbilitySet` containing `GA_ExtendedMag_Set50RndCapacity` (a subclass of `GA_MagazineStatModifier`).
-    * `GA_ExtendedMag_Set50RndCapacity` is configured to set `Weapon.Ammo.MagazineCapacity` to 50.
-    * When attached to a held rifle, the ability activates and changes the rifle's item instance `MagazineCapacity` Stat Tag to 50, adjusting current ammo as needed.
-    * When removed, the rifle's capacity reverts (e.g., to a default 20 if no other magazine is present).
+    * An `ID_Attachment_ExtendedMagazine` is configured to grant an `ULyraAbilitySet` containing `GA_ExtendedMag_Add50RndCapacity` (a subclass of `GA_MagazineStatModifier`).
+    * `GA_ExtendedMag_Add50RndCapacity` is configured to add 50 to `Lyra.ShooterGame.Weapon.MagazineSize`.
+    * When attached to a held rifle, the ability activates and adds 50 to the rifle's item instance `Lyra.ShooterGame.Weapon.MagazineSize` Stat Tag.
+    * When removed, the rifle's capacity reverts removing any extra ammo in the new reduced `MagazineSize`.
 
     <figure><img src="../../../../.gitbook/assets/image (18) (1).png" alt=""><figcaption><p> Subclassed <code>GA_MagazineStatModifier</code> extending magazine by 40</p></figcaption></figure>
 
