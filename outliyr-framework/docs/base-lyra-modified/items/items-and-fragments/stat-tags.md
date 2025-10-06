@@ -18,7 +18,7 @@ Each `ULyraInventoryItemInstance` contains a `StatTags` property, which is an in
 
 ### Comparison with Transient Fragments
 
-It's important to understand when to use Stat Tags versus the Transient Fragment system you introduced:
+It's important to understand when to use Stat Tags versus the Transient Fragment system:
 
 | Feature            | Stat Tags (`FGameplayTagStackContainer`)                 | Transient Fragments (`FTransientFragmentData`/`UTransientRuntimeFragment`)       |
 | ------------------ | -------------------------------------------------------- | -------------------------------------------------------------------------------- |
