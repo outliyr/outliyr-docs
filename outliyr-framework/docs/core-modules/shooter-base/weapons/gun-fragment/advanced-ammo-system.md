@@ -17,7 +17,7 @@ To enable this advanced system, you simply need to populate the `InventoryAmmoTy
 
     * This asset comes with two reload abilities that already handle this, one for magazine reloads and another for shell reloads (e.g loading shotgun shells one by one)
 
-    <figure><img src="../../../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+    <figure><img src="../../../../.gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ***
 

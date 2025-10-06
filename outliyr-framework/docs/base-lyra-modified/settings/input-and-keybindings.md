@@ -99,7 +99,7 @@ To override the default mappable settings in an IMC:
         * `IgnoreSettings` – to disable all settings customization for this specific mapping (useful for internal or hidden mappings).
       * **Assign a custom `PlayerMappableKeySettings` data asset** to the mapping if using `OverrideSettings`. This allows you to redefine how the action appears in the settings UI for this specific context.
 
-    <figure><img src="../../.gitbook/assets/image (3) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>Overriding IA_QuickSlot1 in ShooterBase IMC</p></figcaption></figure>
+    <figure><img src="../../.gitbook/assets/image (3) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>Overriding IA_QuickSlot1 in ShooterBase IMC</p></figcaption></figure>
 
 #### Ensuring Actions Are Functional and Discoverable
 

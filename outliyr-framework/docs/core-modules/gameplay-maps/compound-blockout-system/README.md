@@ -23,26 +23,3 @@ The Compound Blockout System offers significant advantages for level design:
 * **Single Actor, Reduced Draw Calls:** All individual Blockout Shapes are combined and rendered as a single UDynamicMeshComponent on the Compound Blockout Actor. This significantly **reduces draw calls for that combined structure** compared to using many separate standard mesh actors for each primitive during the blockout phase, helping maintain editor performance in complex layouts.
 * **Per-Shape Material Assignment:** Each individual Blockout Shape can have its own MaterialOverride. This allows designers to easily apply different colors or basic textures to distinct parts of their blockout (e.g., walls vs. floor, or different functional areas) for clear visual separation during prototyping. These materials are dynamically assigned to the correct sections of the final combined mesh.
 
-### Core Concepts
-
-Understanding these fundamental concepts will help you effectively utilize the system:
-
-* **Compound Blockout Actor:**
-  * The main actor you place in your `Gameplay Map`.
-  * It acts as a container for all the individual `Blockout Shapes` that define your desired geometry.
-  * It renders the final combined mesh.
-* **Blockout Shapes:**
-  * Individual geometric primitives (e.g., Box, Sphere, Ramp, Stairs, Room) that you add to a `Compound Blockout Actor`.
-  * Each shape has its own set of parameters defining its size, form, and behavior.
-* **Operation (Add / Subtract):**
-  * Each `Blockout Shape` has an `Operation` property that dictates how its volume interacts with the existing mesh.
-  * `Add`: Merges the shape's volume with the mesh being built (e.g., building up walls, adding platforms).
-  * `Subtract`: Removes the shape's volume from the existing mesh (e.g., cutting holes for doors, creating hollow spaces).
-  * **Order Matters:** The order of `Blockout Shapes` within the `Compound Blockout Actor`'s "Shapes" array determines the sequence of these boolean operations. Shapes are processed from top to bottom.
-* **RelativeTransform:**
-  * A property on each individual `Blockout Shape` that controls its precise **position, rotation, and scale** _relative_ to its parent `Compound Blockout Actor`. This allows you to position and size each primitive accurately within the larger blockout.
-* **MaterialOverride:**
-  * An optional property on each `Blockout Shape` allowing you to assign a specific `UMaterialInterface` to that shape's geometry.
-  * If left empty, the parent `CompoundBlockoutActor`'s default material is used.
-  * _Note:_ `MaterialOverride` is only visible on `Add` operations, as `Subtract` operations remove geometry.
-

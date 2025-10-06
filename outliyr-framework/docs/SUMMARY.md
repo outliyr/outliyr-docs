@@ -321,8 +321,11 @@
 * [True First Person](core-modules/true-first-person.md)
 * [Gameplay Maps](core-modules/gameplay-maps/README.md)
   * [Compound Blockout System](core-modules/gameplay-maps/compound-blockout-system/README.md)
-    * [Blockout Shapes](core-modules/gameplay-maps/compound-blockout-system/blockout-shapes.md)
-    * [Tips for Effective Blockout](core-modules/gameplay-maps/compound-blockout-system/tips-for-effective-blockout.md)
+    * [Compound Blockout Actor](core-modules/gameplay-maps/compound-blockout-system/compound-blockout-actor.md)
+    * [Working with Shapes & Booleans](core-modules/gameplay-maps/compound-blockout-system/working-with-shapes-and-booleans.md)
+    * [Shape Library Reference](core-modules/gameplay-maps/compound-blockout-system/shape-library-reference.md)
+    * [The Baking Pipeline: Finalizing Assets](core-modules/gameplay-maps/compound-blockout-system/the-baking-pipeline-finalizing-assets.md)
+    * [Best Practices & Tips](core-modules/gameplay-maps/compound-blockout-system/best-practices-and-tips.md)
 
 ## Game Modes
 
