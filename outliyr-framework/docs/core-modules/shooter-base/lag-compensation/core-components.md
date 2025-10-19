@@ -1,43 +1,220 @@
 # Core Components
 
-The Lag Compensation system relies on two primary components working together: the `ULagCompensationManager` acting as the central orchestrator and the `ULagCompensationSource` marking actors for tracking.
+This page describes the main components that make up the Lag Compensation system in their actual implementation form.
 
-### `ULagCompensationManager` (The Hub)
+The Lag Compensation system is composed of three primary classes:
 
-* **Header:** `LagCompensationManager.h`
-* **Parent:** `UGameStateComponent`
-* **Location:** Designed to be added as a component to your project's `AGameStateBase`. This central location ensures it exists singleton-like on the server and has easy access to world time and state.
-* **Purpose:** Acts as the main interface and manager for the entire lag compensation system on the server.
-* **Key Responsibilities:**
-  * **Source Management:** Maintains a list (`LagCompensationSources`) of currently active `ULagCompensationSource` components in the world. It listens for registration/unregistration messages (`TAG_Lyra_LagCompensation_Add_Message`, `TAG_Lyra_LagCompensation_Remove_Message`) broadcast via the `UGameplayMessageSubsystem` to keep this list up-to-date. It also broadcasts a discovery message (`TAG_Lyra_LagCompensation_Discover_Message`) upon initialization to catch any sources that might have been created before it.
-  * **Thread Ownership:** Creates and manages the lifecycle of the dedicated lag compensation background thread (`FLagCompensationThreadRunnable`). It passes necessary context (like the `UWorld*`) to the thread upon creation and ensures the thread is properly shut down (`EnsureCompletion`) when the manager is destroyed (`EndPlay`).
-  * **Request Handling (`RewindLineTrace`):** Provides the public C++ functions (`RewindLineTrace` overload for Latency or Timestamp) that server-side game code calls to request a lag-compensated trace. It takes the trace parameters, creates a request structure (`FRewindLineTraceRequest`), and enqueues it for processing by the background thread.
-  * **Asynchronous Results:** Manages the `TPromise`/`TFuture` mechanism to return results from the background thread asynchronously to the calling game thread code.
-  * **Tick Synchronization:** In its `TickComponent`, it triggers the `GameTickEvent` semaphore that the background thread waits on. This helps synchronize the background thread's main loop (specifically history updates) with the game thread's tick, preventing excessive drift.
-  * **Initialization:** Waits for the Lyra Experience to be loaded (`OnExperienceLoaded`) before fully initializing its listeners and thread (if applicable, i.e., not Standalone) to ensure the game world is in a stable state.
-  * **Disabling:** Listens to the `lyra.LagCompensation.DisableLagCompensation` CVar to bypass thread creation and potentially perform synchronous, non-rewound traces if lag compensation is disabled globally.
+| Component                            | Thread        | Role                                                                                 |
+| ------------------------------------ | ------------- | ------------------------------------------------------------------------------------ |
+| **`ULagCompensationSource`**         | Game Thread   | Records per-frame world-space snapshots for one actor’s hit geometry.                |
+| **`ULagCompensationManager`**        | Game Thread   | Central registry of sources, manages threading, and provides async rewind-trace API. |
+| **`FLagCompensationThreadRunnable`** | Worker Thread | Owns per-actor history buffers, performs interpolation, and executes rewind traces.  |
 
-### `ULagCompensationSource` (The Marker)
+All gameplay interaction occurs through the manager; sources only push snapshots, and the worker performs all heavy operations in isolation.
 
-* **Header:** `LagCompensationSource.h`
-* **Parent:** `UGameFrameworkComponent` (can be added to any `AActor`)
-* **Location:** Designed to be added as a component to any `AActor` whose position and collision shapes need to be tracked historically for lag compensation purposes. This is **typically added to player-controlled Pawns** and potentially important AI characters or dynamic objects.
-* **Purpose:** Marks an actor as relevant for lag compensation. Its presence signals the system to start recording historical data for its associated mesh's hitboxes.
-* **Key Responsibilities:**
-  * **Self-Registration:** On `BeginPlay`/`OnExperienceLoaded`, it broadcasts the `TAG_Lyra_LagCompensation_Add_Message` via the `UGameplayMessageSubsystem`, signaling the `ULagCompensationManager` to start tracking it. It also listens for the manager's `TAG_Lyra_LagCompensation_Discover_Message` to register itself if it initializes _before_ the manager.
-  * **Self-Unregistration:** On `EndPlay`, it broadcasts the `TAG_Lyra_LagCompensation_Remove_Message`, signaling the `ULagCompensationManager` to stop tracking it and eventually allowing the background thread to clean up its historical data.
-  * **Mesh Association:** It attempts to find and cache a pointer to the primary `UMeshComponent` (specifically `UStaticMeshComponent` or `USkeletalMeshComponent`) on its owning Actor. This mesh component is the source from which the lag compensation thread extracts hitbox information (simple collision or physics asset bodies). **It's crucial that the actor has a valid Mesh Component with appropriate collision/physics asset setup for this component to function correctly.**
+***
 
-### Interaction Summary
+### **`ULagCompensationSource` — Actor Snapshot Recorder**
 
-1. `ULagCompensationSource` components on Actors register themselves with the `ULagCompensationManager` on the GameState.
-2. The `ULagCompensationManager` creates and manages the `FLagCompensationThreadRunnable`.
-3. The `FLagCompensationThreadRunnable` periodically queries the `ULagCompensationManager` for its list of active `ULagCompensationSource`s.
-4. The thread accesses the `MeshComponent` associated with each source to capture and store historical hitbox data (`FLagCompensationData`).
-5. Game code requests a rewind trace from the `ULagCompensationManager`.
-6. The `ULagCompensationManager` queues the request for the `FLagCompensationThreadRunnable`.
-7. The thread processes the request using its stored historical data and returns the result asynchronously via a `TFuture`.
+**Header:** `LagCompensationSource.h`\
+**Parent:** `UGameFrameworkComponent`
 
-These two components form the backbone of the system's architecture on the game thread side, enabling the selective tracking and management necessary for the background thread to perform its work efficiently.
+Each actor that should participate in lag compensation must have one `ULagCompensationSource` component attached.\
+It identifies what kind of mesh (static or skeletal) the actor uses, constructs a table of collision shapes, and records snapshots each frame.
+
+#### **Responsibilities**
+
+* **Registration and Lifecycle**
+  * On `BeginPlay`, the component waits for the **Lyra experience** to load.
+  * Once loaded, it:
+    * Resolves the relevant `UStaticMeshComponent` or `USkeletalMeshComponent`.
+    * Builds the static or skeletal shape definition tables.
+    * Finds the `ULagCompensationManager` in the `GameState` and registers with it.
+  * On `EndPlay`, it unregisters and cleans up any delegates.
+*   **Snapshot Capture**
+
+    * For **static meshes**:
+      * Ticks every frame (`TG_PostUpdateWork`) and captures:
+        * Current `FBox` bounds.
+        * Collision responses.
+        * Component-to-world transform.
+    * For **skeletal meshes**:
+      * Does **not tick**.
+      * Instead binds to the skeletal mesh’s `OnBoneTransformsFinalized` delegate, and captures bone world transforms as soon as animation finishes each frame.
+
+    ```cpp
+    FLagCompensationSnapshot Snapshot;
+    Snapshot.Timestamp = GetWorld()->GetTimeSeconds();
+    Snapshot.ActorBounds = SkeletalMeshComp->Bounds.GetBox();
+    Snapshot.CollisionResponses = SkeletalMeshComp->GetCollisionResponseToChannels();
+    Snapshot.BoneWorld = SkeletalMeshComp->GetBoneTransformsWorldSpace();
+    ```
+* **Shape Table Construction**
+  * **Static shapes** (`BuildStaticShapeTable`):
+    * Extracts simple primitives (Box, Sphere, Capsule, Convex) from the static mesh’s `UBodySetup`.
+    * Stores per-shape parameters in an array of `FStaticShapeDef`.
+  * **Skeletal shapes** (`BuildBoneShapeTable`):
+    * Reads shapes from the physics asset.
+    * Stores each body’s type, bone name, transform, and convex hull data into `FBoneShapeDef`.
+  * These tables are static: they describe the _local-space_ geometry layout.
+* **Snapshot Submission**
+  *   Each captured snapshot is immediately handed off to the manager:
+
+      ```cpp
+      CachedManager->IngestSnapshot_GameThread(this, MoveTemp(Snapshot));
+      ```
+* **Thread Safety**
+  * All snapshot building happens entirely on the **game thread**.
+  * The worker thread never touches animation or physics components directly.
+
+***
+
+### **`ULagCompensationManager` — Central Coordinator**
+
+**Header:** `LagCompensationManager.h`\
+**Parent:** `UGameStateComponent`
+
+The `ULagCompensationManager` acts as the bridge between gameplay code and the background worker.
+
+#### **Responsibilities**
+
+* **Source Management**
+  * Keeps an array of all active `ULagCompensationSource` components.
+  *   Uses a `FCriticalSection` lock for thread-safe modification:
+
+      ```cpp
+      FScopeLock Lock(&LagCompensationSourcesLock);
+      LagCompensationSources.Add(SourceToAdd);
+      ```
+  * Sources register and unregister themselves automatically.
+* **Thread Management**
+  * On experience load, the manager creates the `FLagCompensationThreadRunnable` and passes it:
+    * The current `UWorld*`
+    * A pointer back to the manager
+    * A pointer to its internal `FLagCompensationDebugService`
+  * The worker immediately spawns its own `FRunnableThread` and creates a synchronization event `GameTickEvent`.
+* **Tick Synchronization**
+  * Every `TickComponent`:
+    * Triggers `GameTickEvent` to wake the worker.
+    * Flushes the debug draw service to render any queued hitbox or pose visualizations.
+* **Snapshot Intake**
+  *   `IngestSnapshot_GameThread()` queues snapshots for the worker:
+
+      ```cpp
+      LagCompensationThreadHandler->EnqueueSnapshot(Source, MoveTemp(Snapshot));
+      LagCompensationThreadHandler->GameTickEvent->Trigger();
+      ```
+* **Public API**
+  *   Provides asynchronous rewind tracing:
+
+      ```cpp
+      TFuture<FRewindLineTraceResult> RewindLineTrace(
+          float LatencyInMs,
+          const FVector& Start,
+          const FVector& End,
+          const FRewindTraceInfo& RewindTraceInfo,
+          ECollisionChannel Channel,
+          const TArray<AActor*>& ActorsToIgnore);
+      ```
+  * The manager wraps each trace request in a `TPromise` and enqueues it to the worker thread, returning the `TFuture` immediately.
+* **Thread Lifetime**
+  * On `EndPlay`, calls `EnsureCompletion()` on the worker and deletes it safely.
+
+***
+
+### **`FLagCompensationThreadRunnable` — Background Worker**
+
+**Header:** `LagCompensationThreadRunnable.h`\
+**Implements:** `FRunnable`
+
+This thread owns all historical data and executes rewind traces asynchronously.\
+It is **completely isolated** from gameplay and only communicates through queues.
+
+#### **Responsibilities**
+
+1. **Snapshot Storage**
+   * Receives incoming `FLagCompensationSnapshot` objects from the manager.
+   *   Converts them into lightweight `FLagCompensationData` nodes and pushes them into per-source linked lists:
+
+       ```cpp
+       TMap<ULagCompensationSource*, TDoubleLinkedList<FLagCompensationData>*> ActorHistoryData;
+       ```
+   * Each list represents one actor’s time history, pruned to the configured `MaxLatencyInMilliseconds`.
+2. **Request Handling**
+   * Receives `FRewindLineTraceRequest` objects via a concurrent queue.
+   * Each contains timestamp, trace parameters, and a promise for returning the result.
+3. **Rewind Process**
+   * For each request:
+     * Finds the two nearest snapshots bracketing the requested time.
+     * Interpolates transforms and bone poses to produce an exact world-space pose at that timestamp.
+     * Expands shapes (`ExpandShapesAtTime`) from stored local-space definitions and interpolated transforms.
+     * Performs geometric intersection tests against these expanded shapes.
+4. **Collision Testing**
+   * Supports all collision primitives:
+     * Sphere, Capsule, Box, and Convex hulls.
+   * Uses exact Minkowski sum sweeps (sphere vs primitive) with robust handling of start-inside cases.
+   * Writes intersection data into `FPenetrationHitResult` structures.
+5. **Result Aggregation**
+   * Sorts collisions by distance.
+   * Appends static world results from `LagTraceUtils::PerformDirectTraceFallback()`.
+   * Fulfills the associated `TPromise` to complete the trace.
+6. **Debug Visualization (via `FLagCompensationDebugService`)**
+   * Builds `FLagDebugPoseCmd` and `FLagDebugCollisionCmd` batches describing poses and collisions.
+   * Enqueues them for game-thread rendering instead of drawing directly.
+7. **Synchronization & Shutdown**
+   * Sleeps until `GameTickEvent` is triggered.
+   * Cleans up all lists and returns the sync event to the pool on destruction.
+
+***
+
+#### **History Data Structure**
+
+| Type                       | Purpose                                                                  |
+| -------------------------- | ------------------------------------------------------------------------ |
+| `FLagCompensationSnapshot` | Captured per-frame data from sources (game thread).                      |
+| `FLagCompensationData`     | Processed, thread-owned historical record used for rewind interpolation. |
+| `ActorHistoryData`         | Map of `ULagCompensationSource*` → linked list of past poses.            |
+
+***
+
+#### **Thread Flow Summary**
+
+```
+┌───────────────────────────────┐
+│ ULagCompensationSource        │
+│ (Game Thread)                 │
+│ - Captures snapshot           │
+│ - Submits to Manager          │
+└──────────────┬────────────────┘
+               │
+               ▼
+┌───────────────────────────────┐
+│ ULagCompensationManager       │
+│ (Game Thread)                 │
+│ - Queues snapshot             │
+│ - Triggers GameTickEvent      │
+└──────────────┬────────────────┘
+               │
+               ▼
+┌───────────────────────────────┐
+│ FLagCompensationThreadRunnable│
+│ (Worker Thread)               │
+│ - Drains snapshot queue       │
+│ - Updates history             │
+│ - Processes rewind requests   │
+│ - Enqueues debug draw data    │
+└───────────────────────────────┘
+```
+
+***
+
+#### **Design Notes**
+
+* All real game state access (animation, transforms, physics) happens on the **game thread only**.
+* The worker thread uses only immutable snapshot data, no UObject access after ingestion.
+* The manager and worker communicate exclusively through lock-free queues and one synchronization event.
+* Debug rendering is 100% game-thread safe via the deferred command service.
+
+***
 
 ***

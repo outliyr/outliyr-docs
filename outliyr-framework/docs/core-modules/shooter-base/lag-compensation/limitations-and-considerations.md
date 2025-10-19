@@ -7,7 +7,7 @@ While the ShooterBase Lag Compensation system is a powerful tool for achieving a
 2. **Selective Tracking Only:**
    * The system _only_ tracks and rewinds actors with the `ULagCompensationSource` component. It does not track the entire world state.
    * **Implication:** Collisions requested via `RewindLineTrace` against static world geometry or dynamic actors _without_ the source component will be tested against their **current** position, not their historical position. This is usually acceptable for static geometry but might lead to slight inaccuracies if players are interacting closely with non-tracked dynamic objects. Add the `ULagCompensationSource` to any dynamic actor where historical collision accuracy is critical.
-3. **State Rewound = Hitboxes Only:**
+3. **State Rewound = Collision Only:**
    * The system rewinds the **position, rotation, and shape** of collision primitives (hitboxes).
    * It does **not** rewind:
      * Animation state (actors will be traced against their historical hitbox positions, but their current visual animation might not match that pose).
@@ -24,11 +24,20 @@ While the ShooterBase Lag Compensation system is a powerful tool for achieving a
      * **Exit Angle Deviation:** The trace exits the object along the same vector it entered. It doesn't simulate random exit angle changes based on material properties (like the `MaxExitSpreadAngle` defined in `FProjectileMaterialPenetrationInfo`, which is intended more for projectile _simulation_ rather than hitscan _validation_).
      * **Velocity/Energy Loss:** The rewind trace only determines geometric intersection. It doesn't calculate energy loss or check if the "bullet" would have had enough remaining force to exit the material based on thickness (it relies only on the `MaxPenetrationAngle` check using data defined elsewhere, like in the calling Ability).
    * **Reasoning:** Simulating these complex physics accurately within the historical rewind context for every trace would be extremely computationally expensive and significantly increase the complexity of the thread logic and historical data required. The current system prioritizes efficient geometric validation of whether a _path_ existed through historically positioned hitboxes. The _consequences_ of penetration (like reduced damage) are handled by the Gameplay Ability after the validated hit sequence is returned.
-6. **Supported Shapes:** The internal trace logic (`CalculateTraceIntersections`) and history storage (`ConvertCollisionToShape`) are currently implemented for **Box, Sphere, and Capsule (Sphyl)** collision primitives derived from `FKShapeElem`. Complex convex hulls or triangle mesh collision shapes from physics assets might not be accurately represented or traced against in the historical state. Use standard primitive shapes for actors requiring lag compensation.
+6. **Supported Shapes:** The internal trace logic (`CalculateTraceIntersections`) and history storage (`ConvertCollisionToShape`) are currently implemented for **Box, Sphere, and Capsule (Sphyl)** collision primitives derived from `FKShapeElem`. Basic support exists for convex shapes, simplified hull approxiamation is used. Triangle mesh / complex collisions are not supported and might not be accurately represented or traced against in the historical state. Use simples primitives for actors partcipating in lag compensation.
 7. **Timestamp Accuracy:** The system relies on the `Timestamp` provided (usually by the client) being reasonably accurate. Significant clock drift or manipulation could affect validation accuracy, although GAS and the engine have some mechanisms to mitigate clock issues.
 
 {% hint style="danger" %}
-Advanced methods—such as full snapshot interpolation—can potentially offer more precise hit detection (especially in high-latency or competitive scenarios), these techniques require significant modifications to Unreal’s networking architecture and can incur higher bandwidth and complexity costs. This implementation represents a practical, well-tested solution that balances accuracy with the design limitations and performance considerations inherent to Unreal Engine. Users seeking state-of-the-art precision may need to explore custom replication systems or experimental solutions beyond the scope of this plugin.
+**Animation Accuracy**
+
+The ShooterBase system captures bone transforms directly from the finalized animation pose each frame, after all graph evaluations are complete. This means historical hitboxes reflect the exact animation state the player saw at that moment, including all blend, aim offset, and additive motions.
+
+While it does not perform full animation re-simulation (as deterministic rollback systems might), the stored pose data provides _frame-accurate skeletal fidelity_ for practical hit validation.
+
+In most use cases, the resulting rewind poses will align visually with the original animation to within a single frame of error, more than sufficient for both gameplay accuracy and visual debugging.\
+\
+\
+Advanced rollback systems that re-simulate animation or physics states can offer marginally higher precision, but require deep engine integration and high data throughput. ShooterBase focuses on a balanced, production-ready solution that achieves sub-frame positional accuracy within Unreal’s standard architecture.
 {% endhint %}
 
 Being aware of these points helps in effectively utilizing the lag compensation system and understanding the boundaries of its simulation when interpreting results or planning extensions.

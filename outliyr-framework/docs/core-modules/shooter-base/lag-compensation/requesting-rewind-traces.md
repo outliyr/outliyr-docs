@@ -1,133 +1,265 @@
 # Requesting Rewind Traces
 
-## Requesting Rewind Traces
+The Rewind Trace API is the main gameplay-facing interface to the Lag Compensation System.\
+It allows the server to **query where a trace would have intersected actors in the past**, accounting for player latency.
 
-Once the Lag Compensation system is running and tracking historical data, server-side game logic needs a way to request a trace against a specific point in the past. This is typically done during hit validation for client actions. ShooterBase provides methods for requesting these traces from both C++ and Blueprints.
+You can call this API during **hit validation**, **server-side shot correction**, or **retroactive projectile simulation**.\
+Internally, the system rewinds tracked actors to the requested moment, reconstructs their hit geometry, and performs a normal Unreal-style trace against that historical scene.
 
-### Requesting from C++ (`ULagCompensationManager::RewindLineTrace`)
+***
 
-The primary way to initiate a rewind trace from C++ is by calling one of the `RewindLineTrace` functions on the `ULagCompensationManager` instance (obtained from the GameState).
+### Architecture Philosophy
 
-*   **Signatures:**
+Traditional lag-compensation approaches often store pre-expanded hitboxes for every frame or maintain per-player physics proxies.\
+ShooterBase instead exposes a **single unified trace interface** that works across all actor types (skeletal or static) while remaining thread-safe and asynchronous.
 
-    ```cpp
-    // Request using latency relative to current server time
-    TFuture<FRewindLineTraceResult> RewindLineTrace(
-        float LatencyInMilliseconds, // How far back in time (ms)
-        const FVector& Start,
-        const FVector& End,
-        const FRewindTraceInfo& RewindTraceInfo,
-        const ECollisionChannel& TraceChannel,
-        const TArray<AActor*>& AActorsToIgnore
-    );
+This design follows three key goals:
 
-    // Request using an absolute server timestamp
-    TFuture<FRewindLineTraceResult> RewindLineTrace(
-        double Timestamp, // Specific past server time (World->GetTimeSeconds())
-        const FVector& Start,
-        const FVector& End,
-        const FRewindTraceInfo& RewindTraceInfo,
-        const ECollisionChannel& TraceChannel,
-        const TArray<AActor*>& AActorsToIgnore
-    );
-    ```
-* **Parameters:**
-  * `LatencyInMilliseconds` / `Timestamp`: Specify the point in the past. Using `Timestamp` (often provided by the client in the `TargetDataHandle`) is generally more precise for validating client actions. The latency version calculates the target timestamp internally (`World->GetTimeSeconds() - (LatencyInMilliseconds / 1000.0f)`).
-  * `Start`, `End`: World-space start and end points of the trace. These should generally match the trace vectors reported by the client.
-  * `RewindTraceInfo` (`FRewindTraceInfo` struct): Specifies the shape and parameters of the trace:
-    * `TraceType` (`ERewindTraceType::Line` or `ERewindTraceType::Sphere`): Determines if it's a line trace or a sphere sweep.
-    * `SphereRadius`: Required if `TraceType` is `Sphere`.
-    * `Rotation`: _Currently seems unused in the core sphere/line trace logic but included in the struct, potentially for future expansion like box or capsule traces._
-  * `TraceChannel`: The `ECollisionChannel` to use for the trace (e.g., `Lyra_TraceChannel_Weapon`, `Lyra_TraceChannel_Weapon_Multi`). Must match a channel the target actors' collision profiles are set to interact with.
-  * `AActorsToIgnore`: An array of `AActor*` to explicitly ignore during _all_ phases of the trace (both historical hitbox and standard world trace).
-* **Return Value:** `TFuture<FRewindLineTraceResult>`
-  * The function returns _immediately_ with a `TFuture`.
-  * The actual trace calculation happens asynchronously on the lag compensation thread.
-  * You use the `TFuture` object to check when the result is ready and retrieve it.
-*   **Usage Example (Inside a Gameplay Ability):**
+| Goal                       | Explanation                                                                                                                 |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **Server Authority**       | All rewind traces execute only on the server. Clients never perform or predict rewinds.                                     |
+| **Asynchronous Execution** | Rewind traces are processed on the background worker to avoid blocking gameplay.                                            |
+| **Ease of Use**            | Gameplay code and Blueprints can trigger traces with one function or node — results are returned via `TFuture` or delegate. |
 
-    ```cpp
-    // Inside PerformServerSideValidation or similar server function
-    ULagCompensationManager* LagCompManager = GetWorld()->GetGameState()->FindComponentByClass<ULagCompensationManager>();
-    if (LagCompManager && ClientHitResult) // ClientHitResult from TargetDataHandle
-    {
-        double ClientTimestamp = ExtractTimestampFromTargetData(TargetDataHandle.Get(i)); // Get timestamp
-        FVector ClientTraceStart = ClientHitResult->TraceStart;
-        FVector ClientTraceEnd = ClientHitResult->TraceEnd;
+***
 
-        FRewindTraceInfo TraceInfo;
-        TraceInfo.TraceType = ERewindTraceType::Line; // Or Sphere if needed
-        // TraceInfo.SphereRadius = WeaponData->GetBulletTraceSweepRadius(); // If sphere
+### C++ API — `ULagCompensationManager::RewindLineTrace`
 
-        TFuture<FRewindLineTraceResult> ResultFuture = LagCompManager->RewindLineTrace(
-            ClientTimestamp,
-            ClientTraceStart,
-            ClientTraceEnd,
-            TraceInfo,
-            Lyra_TraceChannel_Weapon, // Or appropriate channel
-            ActorsToIgnoreList // Your list of ignored actors
-        );
+The manager exposes two overloads: one using **absolute timestamp** and one using **relative latency**.
 
-        // Attach a callback to handle the result when ready
-        ResultFuture.Then([this, AssociatedData...](TFuture<FRewindLineTraceResult> Future)
-        {
-            FRewindLineTraceResult ServerResult = MoveTemp(Future).Get();
-            // neccessary to perform the logic back in the game thread
-            AsyncTask(ENamedThreads::GameThread, [this, ServerResult, AssociatedData...]()
-            {
-                // Process the ServerResult on the game thread...
-                CompareClientHitToServerResult(ClientHitResult, ServerResult);
-                // ...
-            });
-        });
-    }
-    ```
+```cpp
+// Rewind to an absolute timestamp
+TFuture<FRewindLineTraceResult> RewindLineTrace(
+    double Timestamp,
+    const FVector& Start,
+    const FVector& End,
+    const FRewindTraceInfo& TraceInfo,
+    ECollisionChannel TraceChannel,
+    const TArray<AActor*>& ActorsToIgnore);
 
-### Requesting from Blueprints (`UAsyncAction_RewindLineTrace`)
-
-To make lag-compensated traces accessible from Blueprints (primarily for server-side logic in Blueprint-based abilities or actors), an Async Action node is provided.
-
-* **Node:** `Rewind Line Trace (Async)`
-* **Class:** `UAsyncAction_RewindLineTrace`
-* **Inputs:** Takes similar inputs as the C++ function: `WorldContextObject`, `Latency` (in seconds for BP), `Trace Start`, `Trace End`, `Trace Rotation`, `Trace Shape` (Enum), `Sphere Radius`, `Trace Channel`, `Actors To Ignore`.
-* **Outputs (Execution Pins):**
-  * `On Trace Completed`: Execution pin that fires when the asynchronous trace finishes.
-  * `Return Value` (`bool`): True if any blocking hits were found, false otherwise.
-  * `Out Hit Results` (`TArray<FPenetrationHitResult>`): The array of hits found by the rewind trace, ordered by distance.
-* **Usage:**
-  1. Place the `Rewind Line Trace (Async)` node in your server-side Blueprint graph.
-  2. Connect the input execution pin and provide the necessary trace parameters.
-  3. Connect logic to the `On Trace Completed` output pin. This logic will execute once the lag compensation thread returns the result.
-  4. Inside the logic connected to `On Trace Completed`, use the `Return Value` and `Out Hit Results` pins to determine the outcome and process the hits (e.g., apply damage, check against client data).
-
-```mermaid
-graph LR
-    subgraph Input Parameters
-        LatVal["Latency (0.1s)"]
-        StartVec["Trace Start (Vector)"]
-        EndVec["Trace End (Vector)"]
-        Channel["Trace Channel (Enum)"]
-        Ignore["Actors To Ignore (Array)"]
-    end
-
-    A["Event Begin Play (Server)"] -- Execution --> B(Rewind Line Trace Async);
-
-    LatVal -- Data --> B;
-    StartVec -- Data --> B;
-    EndVec -- Data --> B;
-    Channel -- Data --> B;
-    Ignore -- Data --> B;
-
-    B -- On Trace Completed (Exec Pin) --> C{Branch};
-    B -- Return Value (Bool) --> C;
-    B -- Out Hit Results (Array) --> D[Process Hits];
-
-    C -- True --> D;
-    C -- False --> E[Handle Miss];
+// Rewind using latency in milliseconds
+TFuture<FRewindLineTraceResult> RewindLineTrace(
+    float LatencyMs,
+    const FVector& Start,
+    const FVector& End,
+    const FRewindTraceInfo& TraceInfo,
+    ECollisionChannel TraceChannel,
+    const TArray<AActor*>& ActorsToIgnore);
 ```
 
-* **Underlying Logic:** The static `K2_RewindLineTrace` function on `UAsyncAction_RewindLineTrace` creates an instance of the action. The action's `Activate` method calls the C++ `ULagCompensationManager::RewindLineTrace`. It uses the `TFuture` internally and triggers the `OnTraceCompleted` delegate when the future is ready.
+#### **Parameters**
 
-Whether using C++ or Blueprints, these methods provide the necessary interface to query the Lag Compensation system for historical trace results, forming the basis of authoritative hit validation.
+| Parameter                 | Description                                                                                   |
+| ------------------------- | --------------------------------------------------------------------------------------------- |
+| **Timestamp / LatencyMs** | When to rewind. Use a precise client timestamp if available; otherwise provide known latency. |
+| **Start / End**           | World-space trace endpoints (usually from the client-reported shot).                          |
+| **TraceInfo**             | `FRewindTraceInfo` describing shape, radius, and orientation.                                 |
+| **TraceChannel**          | Unreal collision channel to evaluate (e.g., `ECC_GameTraceChannel2`).                         |
+| **ActorsToIgnore**        | Optional array of actors excluded from the historical and world trace phases.                 |
+
+#### **Return**
+
+`TFuture<FRewindLineTraceResult>` — the trace runs asynchronously.\
+Attach a continuation with `.Then()` or poll its readiness.
+
+***
+
+#### **Example (C++ Usage)**
+
+```cpp
+ULagCompensationManager* LagComp = GetWorld()->GetGameState()->FindComponentByClass<ULagCompensationManager>();
+if (!LagComp) return;
+
+FRewindTraceInfo TraceInfo;
+TraceInfo.TraceType   = ERewindTraceType::Sphere;
+TraceInfo.SphereRadius = 6.0f;
+
+double ClientTimestamp = TargetData.Timestamp;
+FVector Start = TargetData.TraceStart;
+FVector End   = TargetData.TraceEnd;
+
+TFuture<FRewindLineTraceResult> Future = LagComp->RewindLineTrace(
+    ClientTimestamp, Start, End, TraceInfo,
+    Lyra_TraceChannel_Weapon, ActorsToIgnore);
+
+Future.Then([this](TFuture<FRewindLineTraceResult> InFuture)
+{
+    FRewindLineTraceResult Result = MoveTemp(InFuture).Get();
+
+    AsyncTask(ENamedThreads::GameThread, [this, Result]()
+    {
+        if (Result.HitResults.Num() > 0)
+        {
+            const FPenetrationHitResult& Hit = Result.HitResults[0];
+            ApplyDamageOrEffect(Hit);
+        }
+    });
+});
+```
+
+***
+
+### Blueprint API — `Rewind Line Trace (Async)`
+
+To expose the same functionality to Blueprints, the system provides an asynchronous action node:
+
+#### **Node Details**
+
+| Element             | Description                                                     |
+| ------------------- | --------------------------------------------------------------- |
+| **Class**           | `UAsyncAction_RewindLineTrace`                                  |
+| **Function**        | `K2_RewindLineTrace`                                            |
+| **Category**        | “Lag Compensation”                                              |
+| **Execution Pin**   | Runs only on the server                                         |
+| **Output Delegate** | `On Trace Completed` → (bool ReturnValue, TArray OutHitResults) |
+
+#### **Inputs**
+
+* `Latency` — how far back to rewind (seconds).
+* `Trace Start`, `Trace End` — world-space endpoints.
+* `Trace Rotation` — optional orientation for future shape types.
+* `Trace Shape` — `Line` or `Sphere`.
+* `Sphere Radius` — only relevant for sphere traces.
+* `Trace Channel` — collision channel.
+* `Actors To Ignore` — optional list.
+
+#### **Outputs**
+
+| Pin                     | Description                            |
+| ----------------------- | -------------------------------------- |
+| **On Trace Completed**  | Fired when the async trace finishes.   |
+| **Return Value (bool)** | `true` if a blocking hit was found.    |
+| **Out Hit Results**     | Array of all hits, sorted by distance. |
+
+#### **Blueprint Example**
+
+```blueprint
+Event Server_FireWeapon
+ ├─ Rewind Line Trace (Async)
+ │   • Latency = 0.1
+ │   • Start = MuzzleLocation
+ │   • End = AimDirection * 20000
+ │   • Trace Shape = Sphere
+ │   • Sphere Radius = 6
+ │   • Trace Channel = Weapon
+ │   • Actors To Ignore = Self
+ └─ On Trace Completed
+       ↳ Branch(ReturnValue)
+          ├─ True  → ApplyDamage(OutHitResults[0])
+          └─ False → SpawnMissEffect()
+```
+
+_Under the hood_, the node simply wraps the C++ call.\
+`Activate()` triggers the manager’s `RewindLineTrace`, waits for its `TFuture`, then broadcasts `OnTraceCompleted` back on the game thread.
+
+***
+
+### Result Structures
+
+When a rewind trace request is completed by the lag compensation thread, it returns the results packaged within specific data structures. Understanding these structures is crucial for correctly interpreting and utilizing the outcome of the historical trace.
+
+#### **`FRewindLineTraceResult`**
+
+```cpp
+USTRUCT(BlueprintType)
+struct FRewindLineTraceResult
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<FPenetrationHitResult> HitResults;
+};
+```
+
+**`HitResults` (`TArray<FPenetrationHitResult>`):** This is the core data. It's an array containing zero or more `FPenetrationHitResult` structs.
+
+* **Ordering:** The hits in this array are sorted based on their distance from the `TraceStart` point, with the closest hit appearing first (index 0).
+* **Content:** It includes hits detected against:
+  * Interpolated historical hitboxes of `ULagCompensationSource` actors.
+  * Current collision geometry of non-compensated actors encountered during the trace.
+* **Empty Array:** If the trace didn't hit anything relevant (respecting the trace channel and ignored actors), this array will be empty.
+
+***
+
+#### **`FPenetrationHitResult`**
+
+An enhanced version of `FHitResult` with extra data to describe how a trace entered and exited a historical hitbox.
+
+```cpp
+// Defined in LagCompensationManager.h (or similar header)
+USTRUCT(BlueprintType)
+struct FPenetrationHitResult : public FHitResult
+{
+    GENERATED_BODY()
+
+    // --- Standard FHitResult fields are inherited ---
+    // Including: bBlockingHit, Time, Location, ImpactPoint, Normal, ImpactNormal,
+    // Component, BoneName, PhysMaterial, Distance, TraceStart, TraceEnd, etc.
+    // NOTE: For hits against historical hitboxes, these standard fields
+    // represent the state IN THE REWOUND PAST. Location/ImpactPoint are
+    // where the hit occurred on the historical hitbox.
+
+    // --- Penetration-Specific Data ---
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FVector ExitPoint; // World-space location where the trace exited the hit primitive.
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FVector ExitNormal; // World-space normal of the surface at the ExitPoint.
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FName ExitBoneName; // Bone name associated with the exit surface (if skeletal).
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) // Added by system, not configurable
+    float PenetrationDepth; // Calculated distance between entry (ImpactPoint) and ExitPoint.
+
+    // --- Hitbox Mapping Data (Internal Use & Advanced Scenarios) ---
+
+    // Helper function to map the historical hit location/normal back to the
+    // corresponding position on the actor's CURRENT mesh.
+    FPenetrationHitResult GetMappedHitResult() const;
+
+    // Internal indices identifying the specific hitbox shape involved in the hit.
+    // Used by GetMappedHitResult to find the current shape.
+    int32 EntryBodySetupIndex; // Index within PhysicsAsset->SkeletalBodySetups (Skeletal)
+    int32 EntryPrimitiveIndex; // Index within BodySetup->AggGeom (Skeletal) or StaticMesh->BodySetup->AggGeom (Static)
+    int32 ExitBodySetupIndex;
+    int32 ExitPrimitiveIndex;
+
+    // Flag indicating if this hit was against a historical hitbox and needs mapping
+    // via GetMappedHitResult() to get current world equivalent data.
+    // If false, the hit was against current world geometry, and standard FHitResult fields are current.
+    bool bNeedsMapping = false;
+```
+
+**Key Fields to Understand:**
+
+* **Standard `FHitResult` Fields:** These behave as expected, providing information about the hit (actor, component, bone, physical material, impact point/normal). **Crucially, if `bNeedsMapping` is true, these coordinates and normals are relative to the actor's position&#x20;**_**at the rewound timestamp**_**.**
+* **`ExitPoint`, `ExitNormal`, `ExitBoneName`:** These fields are calculated by the thread's detailed intersection logic. They provide the location and surface normal where the trace _exited_ the specific collision primitive it hit. This is essential for calculating `PenetrationDepth` and potentially for logic involving bullet exit effects or subsequent penetration calculations (though the current Gameplay Ability for penetration doesn't seem to use exit angles directly for subsequent traces).
+* **`PenetrationDepth`:** The calculated distance the trace traveled _inside_ the hit primitive.
+* **`bNeedsMapping`:** This boolean tells you if the hit occurred against a rewound historical hitbox (`true`) or against the current state of a non-compensated actor/world geometry (`false`).
+* **`GetMappedHitResult()`:** **This is important if you need to apply effects (like decals, particle effects) based on the hit.** If `bNeedsMapping` is true, calling this function performs calculations using the stored indices (`EntryBodySetupIndex`, etc.) to find the corresponding collision primitive on the actor's _current_ mesh component. It then transforms the relative impact location and normal from the historical hit onto this current primitive, returning a _new_ `FPenetrationHitResult` where `Location`, `ImpactPoint`, `Normal`, and `ImpactNormal` represent the equivalent position in the **current world state**. This ensures visual effects appear correctly on the character model as it exists _now_, not where it was in the past. If `bNeedsMapping` is false, it simply returns a copy of itself.
+* **Mapping Indices (`EntryBodySetupIndex`, etc.):** These internal indices pinpoint which specific collision shape within the Static Mesh's simple collision or the Skeletal Mesh's Physics Asset was involved in the entry and exit points of the hit. They are primarily used internally by `GetMappedHitResult`.
+
+### Typical Usage
+
+1. **Check for Hits:** Examine the `HitResults` array size in the returned `FRewindLineTraceResult`. If empty, it was a miss.
+2. **Process Closest Hit:** Access `Result.HitResults[0]` for the first (closest) blocking hit.
+3. **Validate (e.g., in Hitscan Ability):** Compare the `Actor` and `PhysMaterial` of `Result.HitResults[0]` against the client's reported hit.
+4. **Apply Damage/Gameplay Effects:** Use the standard fields (`Actor`, `Component`, `BoneName`, `PhysMaterial`) from the validated `FPenetrationHitResult` to target gameplay effects. Remember that damage calculations might need to account for penetration if applicable (e.g., using data stored elsewhere based on the `PhysMaterial`).
+5. **Apply Visual Effects (Decals, Particles):**
+   * Call `ValidatedHit.GetMappedHitResult()` to get a hit result with coordinates mapped to the current world state.
+   * Use the `Location`, `ImpactPoint`, and `ImpactNormal` from the **mapped** result to spawn decals or particle effects, ensuring they appear correctly on the current mesh position.
+
+***
+
+### Summary
+
+* Use `ULagCompensationManager::RewindLineTrace` (C++) or **Rewind Line Trace (Async)** (Blueprint) to query past world states.
+* The result returns asynchronously via `TFuture` or `OnTraceCompleted`.
+* Use `FPenetrationHitResult::GetMappedHitResult()` when spawning effects in the present world.
+* All logic should execute on the **server**, the system never rewinds client-side data.
+
+With this API, gameplay systems can authoritatively verify any client-reported trace while preserving responsiveness and visual correctness.
+
+***
 
 ***

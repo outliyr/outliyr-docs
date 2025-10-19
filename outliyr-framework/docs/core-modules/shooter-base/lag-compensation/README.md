@@ -16,14 +16,35 @@ This discrepancy leads to frustrating gameplay where players feel their shots ar
 
 This allows the server to "see" the world closer to how the client saw it, resulting in much more accurate and fair hit validation that aligns better with player perception.
 
-### Core Concepts of this System
+At a high level:
 
-The ShooterBase Lag Compensation system implements this using several key ideas:
+1. The server continuously records lightweight **snapshots** of important actors (called _sources_).
+2. When a client reports a shot with a timestamp, the server looks up or interpolates the historical snapshot from that time.
+3. The server **expands** each actor’s collision shapes as they were in that moment.
+4. The requested trace (usually a small sphere sweep) runs through those rewound hitboxes.
+5. The results determine whether the client’s shot truly hit, according to the world state that existed in the past.
 
-1. **History Tracking:** The server continuously records the historical positions, rotations, and collision shapes (hitboxes) of specific, designated actors (those with a `ULagCompensationSource` component) over a short period (e.g., the last 500ms).
-2. **Rewinding:** When a validation request (like a hitscan trace) arrives from a client with a specific timestamp, the system interpolates between stored history records to reconstruct the state (positions and orientations of hitboxes) of tracked actors at that precise past moment.
-3. **Tracing in the Past:** The hit detection trace (line trace, sphere trace) is performed against these reconstructed, historical hitbox positions.
-4. **Multi-threading:** To avoid blocking the main game thread with potentially complex history lookups and trace calculations, the core rewinding and tracing logic runs on a dedicated background thread (`FLagCompensationThreadRunnable`). Communication between the game thread and the worker thread is handled asynchronously.
+This approach gives the illusion of _zero-latency_ hit detection, keeping gameplay responsive and fair even under moderate ping.
+
+#### Core Design in This Implementation
+
+ShooterBase’s lag-compensation framework is built around a clean separation of responsibility between **sources**, the **manager**, and a dedicated **worker thread**.
+
+<table><thead><tr><th width="246">Component</th><th>Role</th></tr></thead><tbody><tr><td><strong><code>ULagCompensationSource</code></strong></td><td>A lightweight component added to any actor that should be tracked historically (player pawns, AI, critical objects). Each source records its own snapshot every tick on the <strong>game thread</strong> — including timestamp, actor bounds, and either bone transforms (skeletal) or component transforms (static).</td></tr><tr><td><strong><code>ULagCompensationManager</code></strong></td><td>A singleton-like component on the GameState that owns the system. It gathers snapshots from all registered sources, feeds them to the worker thread, and exposes the public API (<code>RewindLineTrace</code>, <code>RewindSphereTrace</code>, etc.) used by gameplay code.</td></tr><tr><td><strong><code>FLagCompensationThreadRunnable</code></strong></td><td>The background worker responsible for the heavy lifting. It drains queued snapshots, maintains per-actor history buffers, expands shapes on demand, performs rewound traces, and fulfills async results, all without blocking the game thread.</td></tr></tbody></table>
+
+#### Threading Model
+
+* **Game Thread:**
+  * Sources record snapshots (bone transforms, bounds, timestamp).
+  * Manager enqueues these snapshots and sends trace requests.
+  * Debug draw commands are executed here.
+* **Worker Thread:**
+  * Maintains historical buffers.
+  * Expands shapes (`ExpandSkeletalShapesAtTime`, `ExpandStaticShapesAtTime`).
+  * Processes rewind trace requests asynchronously.
+  * Returns results through `TFuture<FRewindLineTraceResult>`.
+
+This design keeps all expensive math off the main thread while maintaining deterministic, server-authoritative results.
 
 ### <mark style="color:red;">Target Audience & Disclaimer</mark>
 
