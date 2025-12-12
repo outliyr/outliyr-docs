@@ -18,7 +18,7 @@ Once you’ve got the core Access-Rights & Permissions pipeline running, you may
     {
       …,
       RepairItems   = 1 << 5  UMETA(DisplayName="Repair Items"),
-      Full          = MoveItems | UseItems | PutInItems | TakeOutItems | RepairItems
+      Full          = MoveItems | ModifyStack | PutInItems | TakeOutItems | HoldItems | RepairItems
     };
     ```
 2. **Recompile**

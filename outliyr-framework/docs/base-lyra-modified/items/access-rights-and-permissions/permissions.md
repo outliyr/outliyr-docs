@@ -13,7 +13,7 @@ enum class EItemContainerPermissions : uint8
 {
 	None         = 0,          // baseline
 	MoveItems    = 1 << 0,     // reorder / swap inside container
-	UseItems     = 1 << 1,     // consume, activate, drop-to-world
+	ModifyStack  = 1 << 1,     // increase or reduce the count of an item
 	PutInItems   = 1 << 2,     // add new items from outside
 	TakeOutItems = 1 << 3,     // remove items to another container
 	HoldItems    = 1 << 4,     // hold an item inside container
@@ -25,7 +25,7 @@ ENUM_CLASS_FLAGS(EItemContainerPermissions)
 | Flag             | Typical meaning (may vary by game)     |
 | ---------------- | -------------------------------------- |
 | **MoveItems**    | Rearranging slots, stacking, splitting |
-| **UseItems**     | Consuming a potion, dropping an object |
+| **ModifyStack**  | Consuming a potion, splitting items    |
 | **PutInItems**   | Adding items from _another_ container  |
 | **TakeOutItems** | Removing items to another container    |
 | **HoldItems**    | Holding an item inside a container     |
@@ -57,7 +57,7 @@ If you find yourself gating multiple unrelated UI buttons behind the same flag, 
 ## Design guidelines
 
 * **Default to the safest mask** – most world chests ship with `TakeOutItems` only.
-* **Do not gate Equip/Use behind MoveItems** unless you really mean it.\
+* **Do not gate Equip/Attach behind MoveItems** unless you really mean it.\
   Let players equip directly from loot windows by giving permission to `TakeOutItems` from the container and `PutInItems` in their equipment manager.
 * **Pair PutIn and TakeOut thoughtfully.**\
   It’s common for a team-stash to allow _either_ direction but not both ( e.g. donate-only boxes ).
