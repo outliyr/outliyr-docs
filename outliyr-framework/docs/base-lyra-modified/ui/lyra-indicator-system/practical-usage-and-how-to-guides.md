@@ -46,7 +46,7 @@ Let's walk through the process of creating a new type of indicator, for example,
          * This event receives a boolean `bIsClamped`.
          * You can change the widget's appearance based on this. For example, hide certain details or show a different icon when clamped.
 
-         <figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p>Example of changing widget apperance based on clamping</p></figcaption></figure>
+         <figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p>Example of changing widget apperance based on clamping</p></figcaption></figure>
      *   **`Event On Indicator Display Mode Changed`:**
 
          * Receives `IsScreenLocked` boolean.
@@ -78,7 +78,7 @@ Let's walk through the process of creating a new type of indicator, for example,
      * Call `Add Indicator` on the `ULyraIndicatorManagerComponent`, passing in your configured `UIndicatorDescriptor`.
    *   **Example Blueprint Snippet of setting creating an indicator for the kill confirmed dog tag:**
 
-       <figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+       <figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 3. **Removing the Indicator:**
    * When the indicator is no longer needed (e.g., quest completed):
      * If you stored a reference to the `UIndicatorDescriptor`, call `Unregister Indicator` on it.

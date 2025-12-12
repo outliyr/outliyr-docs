@@ -14,12 +14,12 @@ This page provides “recipes” for typical container setups. Each recipe shows
 2.  **On BeginPlay** (authority-only)
 
     ```cpp
-    // Grant this player full access & permissions to their own inventory:
+    // Grant this player read write & permissions to their own inventory:
     if (APlayerController* Controller = Cast<APlayerController>(GetOwner()))
     {
         if (Implements<UItemPermissionOwner>())
         {
-    	Execute_SetContainerAccessRight(this, Controller, EItemContainerAccessRights::FullAccess);
+    	Execute_SetContainerAccessRight(this, Controller, EItemContainerAccessRights::ReadWrite);
     	Execute_SetContainerPermissions(this, Controller, /* bitmask */ static_cast<int32>(EItemContainerPermissions::Full));
         }
     }
@@ -58,8 +58,8 @@ This page provides “recipes” for typical container setups. Each recipe shows
     ```cpp
     for (APlayerController* TeamPC : TeamMembers)
     {
-      // FullAccess to replicate list...
-      IItemPermissionOwner::Execute_SetContainerAccessRight(this, TeamPC, EItemContainerAccessRights::FullAccess);
+      // ReadWrite to replicate list and be about to interact with it
+      IItemPermissionOwner::Execute_SetContainerAccessRight(this, TeamPC, EItemContainerAccessRights::ReadWrite);
 
       // But fine-grain: only PutInItems + TakeOutItems
       IItemPermissionOwner::Execute_SetContainerPermissions(this, TeamPC,
@@ -67,7 +67,7 @@ This page provides “recipes” for typical container setups. Each recipe shows
     }
     ```
 
-    Or in Blueprint loop, call **Set Container Access Right** → **FullAccess**, then **Set Container Permissions** → “Put-In” & “Take-Out.”
+    Or in Blueprint loop, call **Set Container Access Right** → `ReadWrite`, then **Set Container Permissions** → `Put-In` & `Take-Out`.
 3. **Result**
    * Team members see and can deposit/withdraw.
    * Non-team players see nothing.
@@ -79,7 +79,7 @@ This page provides “recipes” for typical container setups. Each recipe shows
 **Goal:** Dynamically create a temporary container that starts hidden, then grant exactly one player full control.
 
 1. **Actor Setup**
-   * Your container actor/component class must include `LYRAGAME_DECLARE_PERMISSION_COMPONENT()` (C++ mix-in).
+   * Add the desired item conatainer component. Ensure the component has the permission interface.
 2.  **Spawn & Initialize**
 
     ```cpp
@@ -91,7 +91,7 @@ This page provides “recipes” for typical container setups. Each recipe shows
 3.  **Grant to one player**
 
     ```cpp
-    IItemPermissionOwner::Execute_SetContainerAccessRight(NewContainer, TargetPC, EItemContainerAccessRights::FullAccess);
+    IItemPermissionOwner::Execute_SetContainerAccessRight(NewContainer, TargetPC, EItemContainerAccessRights::ReadWrite);
     IItemPermissionOwner::Execute_SetContainerPermissions(NewContainer, TargetPC, static_cast<int32>(EItemContainerPermissions::Full));
     ```
 4. **Result**
@@ -101,7 +101,7 @@ This page provides “recipes” for typical container setups. Each recipe shows
 
 ### World Drop with Delayed Looting
 
-**Goal:** When an item is dropped, no one can see it for X seconds; afterward, nearby players get Read-Only or FullAccess.
+**Goal:** When an item is dropped, no one can see it for X seconds; afterward, nearby players get Read-Only or ReadWrite.
 
 1. **Defaults**
    * `DefaultAccessRight = NoAccess`

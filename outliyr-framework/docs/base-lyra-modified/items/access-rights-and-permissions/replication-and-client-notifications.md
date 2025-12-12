@@ -96,7 +96,7 @@ To make your UI or gameplay logic respond to permission changes:
         switch (Msg.NewAccess)
           • NoAccess   → Close or hide UI
           • ReadOnly   → Disable all interactive buttons
-          • FullAccess → Enable full interaction
+          • ReadWrite → Enable full interaction
     ```
 
     And similarly for `TAG_ItemPermission_Message_PermissionsChanged` to gray-out or enable individual buttons (e.g. “Take Out” only if `NewPermission & TakeOutItems != 0`).

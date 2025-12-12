@@ -221,6 +221,7 @@
     * [Playback Process](core-modules/shooter-base/kill-cam/playback-process.md)
     * [Collision Management](core-modules/shooter-base/kill-cam/collision-management.md)
     * [Setup & Integration](core-modules/shooter-base/kill-cam/setup-and-integration.md)
+  * [KillCam](core-modules/shooter-base/killcam.md)
   * [Lag Compensation](core-modules/shooter-base/lag-compensation/README.md)
     * [How It Works](core-modules/shooter-base/lag-compensation/how-it-works.md)
     * [Core Components](core-modules/shooter-base/lag-compensation/core-components.md)

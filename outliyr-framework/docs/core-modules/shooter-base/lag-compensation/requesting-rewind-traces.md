@@ -103,15 +103,7 @@ Future.Then([this](TFuture<FRewindLineTraceResult> InFuture)
 
 To expose the same functionality to Blueprints, the system provides an asynchronous action node:
 
-#### **Node Details**
-
-| Element             | Description                                                     |
-| ------------------- | --------------------------------------------------------------- |
-| **Class**           | `UAsyncAction_RewindLineTrace`                                  |
-| **Function**        | `K2_RewindLineTrace`                                            |
-| **Category**        | “Lag Compensation”                                              |
-| **Execution Pin**   | Runs only on the server                                         |
-| **Output Delegate** | `On Trace Completed` → (bool ReturnValue, TArray OutHitResults) |
+<figure><img src="../../../.gitbook/assets/image.png" alt="" width="361"><figcaption></figcaption></figure>
 
 #### **Inputs**
 
@@ -133,21 +125,7 @@ To expose the same functionality to Blueprints, the system provides an asynchron
 
 #### **Blueprint Example**
 
-```blueprint
-Event Server_FireWeapon
- ├─ Rewind Line Trace (Async)
- │   • Latency = 0.1
- │   • Start = MuzzleLocation
- │   • End = AimDirection * 20000
- │   • Trace Shape = Sphere
- │   • Sphere Radius = 6
- │   • Trace Channel = Weapon
- │   • Actors To Ignore = Self
- └─ On Trace Completed
-       ↳ Branch(ReturnValue)
-          ├─ True  → ApplyDamage(OutHitResults[0])
-          └─ False → SpawnMissEffect()
-```
+<figure><img src="../../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
 
 _Under the hood_, the node simply wraps the C++ call.\
 `Activate()` triggers the manager’s `RewindLineTrace`, waits for its `TFuture`, then broadcasts `OnTraceCompleted` back on the game thread.

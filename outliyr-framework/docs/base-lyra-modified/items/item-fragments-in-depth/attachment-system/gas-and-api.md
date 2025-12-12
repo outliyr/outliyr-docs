@@ -122,7 +122,7 @@ This library provides Blueprint utilities specifically for working with the `FAt
   * **Payload:** `ItemInstance` (the container item whose visuals changed).
   * **Purpose:** A hint for UI to re-render the container item's slot.
 
-<figure><img src="../../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ***
 

@@ -15,7 +15,7 @@ enum class EItemContainerAccessRights : uint8
 	None       UMETA(DisplayName="None"),        // internal value – never returned
 	NoAccess   UMETA(DisplayName="No Access"),   // replicate nothing
 	ReadOnly   UMETA(DisplayName="Read-Only"),   // replicate, but no interaction
-	FullAccess UMETA(DisplayName="Full Access")  // replicate + allow Permission checks
+	ReadWrite  UMETA(DisplayName="Read-Write")  // replicate + allow Permission checks
 };
 ```
 
@@ -25,7 +25,7 @@ enum class EItemContainerAccessRights : uint8
 * **ReadOnly**\
   The client is sent every replicated property and sub-object the container normally exposes, but any attempt to interact is blocked server-side _before_ permissions are consulted.\
   Perfect for spectators, “look-but-don’t-touch” loot windows, or preview-only vendors.
-* **FullAccess**\
+* **ReadWrite**\
   Replication flows and the player can attempt actions. Each action is then filtered by the **Permissions** bitmask.
 
 ***
@@ -50,11 +50,11 @@ enum class EItemContainerAccessRights : uint8
 
 ### Impact on bandwidth
 
-| Right          | `UItemPermissionComponent` sub-objects replicated? | Inventory / equipment sub-objects replicated? | Typical use-cases                    |
-| -------------- | -------------------------------------------------- | --------------------------------------------- | ------------------------------------ |
-| **NoAccess**   | Yes (it’s tiny)                                    | **No**                                        | Out-of-range chests, hidden GM stash |
-| **ReadOnly**   | Yes                                                | Yes                                           | Loot chest preview, spectator screen |
-| **FullAccess** | Yes                                                | Yes                                           | Local player inventory, team storage |
+| Right         | `UItemPermissionComponent` sub-objects replicated? | Inventory / equipment sub-objects replicated? | Typical use-cases                    |
+| ------------- | -------------------------------------------------- | --------------------------------------------- | ------------------------------------ |
+| **NoAccess**  | Yes (it’s tiny)                                    | **No**                                        | Out-of-range chests, hidden GM stash |
+| **ReadOnly**  | Yes                                                | Yes                                           | Loot chest preview, spectator screen |
+| **ReadWrite** | Yes                                                | Yes                                           | Local player inventory, team storage |
 
 A remote player with _NoAccess_ won’t even have the `ULyraInventoryItemInstance` objects listed in their `SubobjectRepKey` table – a measurable saving on saturated servers.
 
@@ -65,20 +65,20 @@ A remote player with _NoAccess_ won’t even have the `ULyraInventoryItemInstanc
 * **Default to NoAccess** for containers spawned in the world.\
   Grant rights explicitly when the player enters an interaction sphere or UI opens.
 * **Treat ReadOnly as a UI-only state**.\
-  Abilities that modify items should check `RequiredAccessRights == FullAccess` by default.
+  Abilities that modify items should check `RequiredAccessRights == ReadWrite` by default.
 * **Never rely on Permissions alone**.\
-  A mis-configured container that leaves Access at _Full_ but clears every Permission still replicates all item data to the client – fine if you need hover-tooltips, but wasteful if true secrecy is desired.
+  A mis-configured container that leaves Access at `ReadWrite` but clears every Permission still replicates all item data to the client – fine if you need hover-tooltips, but wasteful if true secrecy is desired.
 
 ***
 
 ### Quick recipes
 
-| Situation                                                       | Server code snippet                                                                     |
-| --------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| **Player walks up to a chest** – let them preview contents.     | `PermissionOwner->SetContainerAccessRight(PC, EItemContainerAccessRights::ReadOnly);`   |
-| **Player presses ‘E’ to interact** – open and allow take / put. | `PermissionOwner->SetContainerAccessRight(PC, EItemContainerAccessRights::FullAccess);` |
-| **Player walks away** – stop replication.                       | `PermissionOwner->RemoveContainerAccessRight(PC);` _(falls back to default NoAccess)_   |
+| Situation                                                       | Server code snippet                                                                    |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **Player walks up to a chest** – let them preview contents.     | `PermissionOwner->SetContainerAccessRight(PC, EItemContainerAccessRights::ReadOnly);`  |
+| **Player presses ‘E’ to interact** – open and allow take / put. | `PermissionOwner->SetContainerAccessRight(PC, EItemContainerAccessRights::ReadWrite);` |
+| **Player walks away** – stop replication.                       | `PermissionOwner->RemoveContainerAccessRight(PC);` _(falls back to default NoAccess)_  |
 
 ***
 
-Next page → **Permissions** – the fine-grained action flags that come into play only _after_ FullAccess is granted.
+Next page → **Permissions** – the fine-grained action flags that come into play only _after_ ReadWrite is granted.

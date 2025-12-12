@@ -18,7 +18,7 @@ Once you’ve got the core Access-Rights & Permissions pipeline running, you may
     {
       …,
       RepairItems   = 1 << 5  UMETA(DisplayName="Repair Items"),
-      Full          = MoveItems | UseItems | EquipItems | PutInItems | TakeOutItems | RepairItems
+      Full          = MoveItems | UseItems | PutInItems | TakeOutItems | RepairItems
     };
     ```
 2. **Recompile**
@@ -68,7 +68,7 @@ Follow the guide on integrating the permission system to your container. Once th
 
 * **Lean on defaults**\
   Only create per-player overrides when you really need to deviate from your `DefaultAccessRight` or `DefaultPermission`.
-* **Prefer ReadOnly over FullAccess for viewers**\
+* **Prefer `ReadOnly` over `ReadWrite` for viewers**\
   ReadOnly still ships all data once, but blocks server-side actions without extra per-item checks.
 * **Batch updates sparingly**\
   If you need to mass-grant or revoke rights, group them behind logical events (e.g. team-join) rather than hammering one RPC per player.
@@ -93,9 +93,9 @@ Follow the guide on integrating the permission system to your container. Once th
 * **Blueprint Watchers**\
   In a UMG widget, drag in the PermissionComponent reference and tick **Watch this value** in the Details panel; you’ll see live updates in the Blueprint debugger.
 * **Console Commands**\
-  Consider exposing a `DumpContainerPermissions` exec function that iterates your permission Fast-Arrays and logs each entry—handy for quick sanity checks.
+  Consider exposing a `DumpContainerPermissions` exec function that iterates your permission Fast-Arrays and logs each entry, handy for quick sanity checks.
 * **Editor Visualizers**\
-  For world containers (e.g. loot chests), draw a debug sphere or volume in `OnRender` showing who currently has ReadOnly / FullAccess. Use color-coding to spot mis-configured zones.
+  For world containers (e.g. loot chests), draw a debug sphere or volume in `OnRender` showing who currently has `ReadOnly` / `ReadWrite`. Use color-coding to spot mis-configured zones.
 
 ***
 

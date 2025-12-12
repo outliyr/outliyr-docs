@@ -92,7 +92,7 @@ OnAccessRightChanged (Msg : ItemAccessRightsChanged)
     If Msg.Container == MyContainer and Mes.PlayerController == MyPlayerController
         Switch (Msg.NewAccess)
             ReadOnly   →  DisableDragDrop()
-            FullAccess →  EnableInteraction()
+            ReadWrite →  EnableInteraction()
             NoAccess   →  CloseWindow()
 ```
 {% endtab %}
@@ -114,7 +114,7 @@ _Unregister_ the gameplay message in `Event Destruct` to avoid dangling handles.
   Calling them on a predicting client simply does nothing, no runtime crash, no exploit.
 * Clients can **never** directly grab the component pointer (private + not exposed).\
   Even a malicious Blueprint can’t alter another player’s rules.
-* **Prediction** is safe: abilities typically request _FullAccess + specific Permission_; if the server later denies it, prediction is rolled back automatically.
+* **Prediction** is safe: abilities typically request `ReadWrite` _+ specific Permission_; if the server later denies it, prediction is rolled back automatically.
 
 ***
 
