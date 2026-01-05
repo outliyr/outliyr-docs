@@ -47,7 +47,7 @@ These abillities can be found in **ShooterBase/Content/Attachments/Generic\_Abil
     * When the grip is attached to a held rifle, the ability activates, finds the rifle's `ULyraEquipmentInstance`, and multiplies its `Weapon.Stat.RecoilVertical` attribute by 0.8.
     * When the grip is removed, the ability ends, and the modification is reversed, restoring the original recoil value.
 
-    <figure><img src="../../../../.gitbook/assets/image (16) (1).png" alt="" width="563"><figcaption><p>Subclassed <code>GA_EquipmentAttributeModifier</code> modifying equipment tag attributes</p></figcaption></figure>
+    <figure><img src="../../../../.gitbook/assets/image (16) (1) (1).png" alt="" width="563"><figcaption><p>Subclassed <code>GA_EquipmentAttributeModifier</code> modifying equipment tag attributes</p></figcaption></figure>
 
 ### 2. Modifying Item Instance Magazine Stats (`GA_MagazineStatModifier`)
 
@@ -71,7 +71,7 @@ These abillities can be found in **ShooterBase/Content/Attachments/Generic\_Abil
     * When attached to a held rifle, the ability activates and adds 50 to the rifle's item instance `Lyra.ShooterGame.Weapon.MagazineSize` Stat Tag.
     * When removed, the rifle's capacity reverts removing any extra ammo in the new reduced `MagazineSize`.
 
-    <figure><img src="../../../../.gitbook/assets/image (18) (1).png" alt=""><figcaption><p> Subclassed <code>GA_MagazineStatModifier</code> extending magazine by 40</p></figcaption></figure>
+    <figure><img src="../../../../.gitbook/assets/image (18) (1) (1).png" alt=""><figcaption><p> Subclassed <code>GA_MagazineStatModifier</code> extending magazine by 40</p></figcaption></figure>
 
 ### How to Use These Utility Abilities
 

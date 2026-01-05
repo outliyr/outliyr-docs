@@ -2,7 +2,7 @@
 
 This fragment allows you to define rules for combining the item it's attached to (the "target" item) with other specific items (the "incoming" item) when the incoming item is dropped onto the target item within a Tetris inventory grid. It facilitates crafting or transformation interactions directly within the inventory interface.
 
-<figure><img src="../../../.gitbook/assets/image (10).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (10) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ### Purpose
 
@@ -45,7 +45,7 @@ To define item combination rules, you'll configure the `CombinationList` propert
         * `Resulting Item Definition`: `ID_Potion_Health`
         * `Resulting Item Quantity`: 1 (Produces 1 Health Potion)
 
-    <figure><img src="../../../.gitbook/assets/image (11).png" alt="" width="563"><figcaption><p>Example making a health potion</p></figcaption></figure>
+    <figure><img src="../../../.gitbook/assets/image (11) (1).png" alt="" width="563"><figcaption><p>Example making a health potion</p></figcaption></figure>
 
 ### Runtime Logic (`CombineItems` Override)
 

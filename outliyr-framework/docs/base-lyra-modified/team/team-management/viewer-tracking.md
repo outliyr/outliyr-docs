@@ -24,7 +24,7 @@ In many game scenarios, especially those involving spectating, killcams, or repl
       2. If they are different, updates the `CurrentViewer` weak pointer.
       3. Broadcasts the `OnViewerChanged` delegate.
 
-      <figure><img src="../../../.gitbook/assets/image (17) (1) (1).png" alt="" width="375"><figcaption></figcaption></figure>
+      <figure><img src="../../../.gitbook/assets/image (17) (1) (1) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 * **`GetCurrentViewer()`:**
   * **Action:** Returns the currently tracked viewer `APlayerState`.
   * **Logic:**
@@ -60,11 +60,11 @@ Directly binding to `OnViewerChanged` in Blueprints is discouraged. Instead, use
 
 * **`GetCurrentViewer(WorldContextObject)`:** Blueprint wrapper for `ULyraTeamSubsystem::GetCurrentViewer()`.
 
-<figure><img src="../../../.gitbook/assets/image (19) (1) (1).png" alt="" width="201"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (19) (1) (1) (1).png" alt="" width="201"><figcaption></figcaption></figure>
 
 * **`GetCurrentViewerTeam(WorldContextObject, ...)`:** Blueprint wrapper that calls `GetCurrentViewer` and then feeds the result into `FindTeamFromObject` to get the viewer's team ID and display asset easily.
 
-<figure><img src="../../../.gitbook/assets/image (20) (1).png" alt="" width="240"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (20) (1) (1).png" alt="" width="240"><figcaption></figcaption></figure>
 
 ### Async Action (`UAsyncAction_ObserveViewerTeam`)
 
@@ -72,7 +72,7 @@ Directly binding to `OnViewerChanged` in Blueprints is discouraged. Instead, use
 * Listens to both `ULyraTeamSubsystem::OnViewerChanged` and the `ILyraTeamAgentInterface::GetOnTeamIndexChangedDelegate()` of the _currently viewed_ PlayerState.
 * Outputs `OnViewerTeamChanged(bTeamSet, ObservedPS, TeamId)`. Includes logic to handle cases where the PlayerState might exist before its TeamID is assigned (briefly polling).
 
-<figure><img src="../../../.gitbook/assets/image (21) (1).png" alt="" width="287"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (21) (1) (1).png" alt="" width="287"><figcaption></figcaption></figure>
 
 ***
 

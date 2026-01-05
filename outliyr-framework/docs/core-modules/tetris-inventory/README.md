@@ -31,7 +31,7 @@ This plugin builds directly upon the **Modified Base Lyra Game Core** provided w
 * The enhanced `ULyraInventoryManagerComponent`.
 * The [Item Definition](../../base-lyra-modified/items/items-and-fragments/item-definition.md) (`ULyraInventoryItemDefinition`) and [Item Instance ](../../base-lyra-modified/items/items-and-fragments/item-instance.md)(`ULyraInventoryItemInstance`) system.
 * The [Item Fragment](../../base-lyra-modified/items/items-and-fragments/item-fragments.md) system (including Transient Fragments).
-* The [Gameplay Ability System (GAS) integration layer](../../base-lyra-modified/items/gas-and-ui-integration-layer/) (`UInventoryAbilityFunctionLibrary`, `FAbilityData_SourceItem`).
+* The [Gameplay Ability System (GAS) integration layer](/broken/pages/2rNFzK7hnHUfDlBvXU0d) (`UInventoryAbilityFunctionLibrary`, `FAbilityData_SourceItem`).
 
 **It is highly recommended to have a solid understanding of the concepts within the** [**Modified Base Lyra Item Documentation**](../../base-lyra-modified/items/) **before diving into the Tetris-specific features.** This documentation will assume familiarity with those base systems and will focus primarily on the additions and modifications introduced by the Tetris Inventory Plugin.
 

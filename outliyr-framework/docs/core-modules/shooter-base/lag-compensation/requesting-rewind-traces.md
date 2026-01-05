@@ -103,7 +103,7 @@ Future.Then([this](TFuture<FRewindLineTraceResult> InFuture)
 
 To expose the same functionality to Blueprints, the system provides an asynchronous action node:
 
-<figure><img src="../../../.gitbook/assets/image.png" alt="" width="361"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (28).png" alt="" width="361"><figcaption></figcaption></figure>
 
 #### **Inputs**
 
@@ -125,7 +125,7 @@ To expose the same functionality to Blueprints, the system provides an asynchron
 
 #### **Blueprint Example**
 
-<figure><img src="../../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 _Under the hood_, the node simply wraps the C++ call.\
 `Activate()` triggers the manager’s `RewindLineTrace`, waits for its `TFuture`, then broadcasts `OnTraceCompleted` back on the game thread.

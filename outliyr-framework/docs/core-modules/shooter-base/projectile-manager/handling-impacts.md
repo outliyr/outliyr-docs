@@ -31,7 +31,7 @@ This function is the C++ entry point on the `UProjectileManager` component where
           * Use the `Projectile.ImpactCueNotify` tag to trigger specific Gameplay Cues (via `Execute Gameplay Cue On Actor`) for different impact types (e.g., `Impact.Bullet.Flesh`, `Impact.Bullet.Metal`, `Impact.Bullet.Concrete`). Gameplay Cues handle spawning particle effects, decals, and playing sounds.
           * Spawn decals directly using `Spawn Decal at Location`.
 
-        <figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+        <figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
     4. **Apply Gameplay Effects (Damage):**
        * Checks if the `HitResult.GetActor()` is valid and has an `UAbilitySystemComponent`.
        * Constructs an `FGameplayEffectContextHandle`, setting the `Instigator` (PlayerState or Controller) and `Causer` (Weapon Actor) from the `Projectile` data. Adds the `HitResult` to the context.

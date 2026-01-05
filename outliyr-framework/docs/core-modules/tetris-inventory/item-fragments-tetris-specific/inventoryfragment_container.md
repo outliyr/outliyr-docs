@@ -2,7 +2,7 @@
 
 This fragment is the key to creating nested inventories. By adding `InventoryFragment_Container` to an item definition, you allow instances of that item (like backpacks, chests, weapon cases) to possess and manage their own internal `ULyraTetrisInventoryManagerComponent`.
 
-<figure><img src="../../../.gitbook/assets/image (12).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (12) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ### Purpose
 

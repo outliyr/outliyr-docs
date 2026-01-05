@@ -83,7 +83,7 @@ You configure the `InventoryLayout` directly on your `ULyraTetrisInventoryManage
 
 Manually editing nested `TArray` properties in the Unreal Details panel can be tedious and error-prone. This asset includes a dedicated **Layout Creator Editor Utility Widget** designed to simplify this process.
 
-<figure><img src="../../../.gitbook/assets/image (14).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (14) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 #### **Recommended Workflow:**
 
@@ -99,7 +99,7 @@ Manually editing nested `TArray` properties in the Unreal Details panel can be t
 Make sure the window is big enough to fit the editor widget into the screen
 {% endhint %}
 
-<figure><img src="../../../.gitbook/assets/image (15).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (15) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ### Runtime Representation (`FGridCellInfoList` & `GridCellIndexMap`)
 

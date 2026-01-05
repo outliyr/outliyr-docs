@@ -73,7 +73,7 @@ These functions search the `Fragments` array on the definition's CDO and return 
 
 {% tabs %}
 {% tab title="Blueprint" %}
-<figure><img src="../../../.gitbook/assets/image (23) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (23) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 
 {% tab title="C++" %}

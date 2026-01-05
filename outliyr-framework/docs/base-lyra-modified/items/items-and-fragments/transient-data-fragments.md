@@ -124,7 +124,7 @@ if(auto* TransientFragmentGun = ItemInstance->ResolveTransientFragment<UInventor
 {% tab title="Blueprints" %}
 **From Blueprint/C++:** Use `ResolveStructTransientFragment(FragmentClass)` on the `ULyraInventoryItemInstance`. This returns an `FInstancedStruct`. You'll need to use `GetInstancedStructValue` and specific the transient struct from the wildcard `value` pin.
 
-<figure><img src="../../../.gitbook/assets/image (27) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (27) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 {% hint style="danger" %}
 Ensure you select the **Corresponding Transient Struct** of the original fragment specified in `ResolveStructTransientFragment` for the wildcard `value` pin.

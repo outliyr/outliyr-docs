@@ -2,7 +2,7 @@
 
 This fragment provides the necessary data and configuration for integrating an item with the 3D **Item Inspection System**, which utilizes the PocketWorlds plugin to render interactive previews. Adding this fragment to an item definition allows players to potentially view that item in a dedicated inspection viewport.
 
-<figure><img src="../../../.gitbook/assets/image (13).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (13) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ### Purpose
 

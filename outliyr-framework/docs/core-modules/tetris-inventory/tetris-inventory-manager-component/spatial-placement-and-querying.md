@@ -97,7 +97,7 @@ bool CanPlaceItemInEmptySlot(
 {% endtab %}
 
 {% tab title="Blueprints" %}
-<figure><img src="../../../.gitbook/assets/image (19).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (19) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 
@@ -120,26 +120,26 @@ bool CanPlaceItemInEmptySlot(
 
 * **`FindSlotsFromShape(RootSlot, Shape, Rotation)` (Static):** Given a root position, a shape grid, and a rotation, calculates and returns the list of all absolute grid coordinates (`FIntPoint`) that the shape would occupy relative to that root. Purely geometric calculation.
 
-<figure><img src="../../../.gitbook/assets/image (20).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (20) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 * **`CanOccupySlot(ClumpID, CellCoordinates)`:** Checks if a specific coordinate refers to a valid, accessible cell based _only_ on the original `InventoryLayout` definition (i.e., was it marked `true`?). **Doesn't check if it's currently occupied by an item**.
 
-<figure><img src="../../../.gitbook/assets/image (22).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (22) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 * **`FindUIGridCell(ClumpID, CellCoordinates)`:** Performs the coordinate-to-index lookup using the internal `GridCellIndexMap`. Returns the index in the flat `GridCells` array, or `-1` if the coordinate is invalid or inaccessible. Primarily used by UI to map user clicks/hovers to specific cell data.
 
-<figure><img src="../../../.gitbook/assets/image (23).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (23) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 * **`GetGridCellInfo(GridCellIndex)`:** Returns the `FGridCellInfo` struct for a given index in the flat `GridCells` array. Used after `FindUIGridCell` to get the actual state (item instance, rotation, root slot) of the cell.
 
-<figure><img src="../../../.gitbook/assets/image (24).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (24) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 * **`GetItemInstanceFromSlot(SourceSlot, SourceClump)`:** Convenience function that combines `FindUIGridCell` and `GetGridCellInfo` to directly return the `ULyraInventoryItemInstance*` occupying the root of the specified grid coordinate, or `nullptr` if empty or invalid.
 
-<figure><img src="../../../.gitbook/assets/image (25).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (25) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 * **`GetItemInstanceAndRotationFromSlot(SourceSlot, SourceClump, Out SlotRotation)`:** Similar to `GetItemInstanceFromSlot` but also returns the `Rotation` stored in the root cell's `FGridCellInfo`.
 
-<figure><img src="../../../.gitbook/assets/image (26).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (26) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 These functions provide the necessary tools to query the spatial state of the inventory, find suitable placement locations, and check the validity of potential item moves based on the grid layout and item shapes.

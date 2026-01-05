@@ -13,7 +13,7 @@ It is crucial to understand the fundamental GAS & UI integration workflow establ
 * **Key Components:** The role of `UInventoryAbilityFunctionLibrary`, `FAbilityData_SourceItem`, Gameplay Abilities, Event Tags, and Gameplay Messages.
 * **Basic Workflow:** The step-by-step process of a UI action triggering a server ability.
 
-**(Please review the** [**Base Lyra GAS & UI Integration Documentation**](../../../base-lyra-modified/items/gas-and-ui-integration-layer/) **for a full explanation of these concepts.)**
+**(Please review the** [**Base Lyra GAS & UI Integration Documentation**](/broken/pages/2rNFzK7hnHUfDlBvXU0d) **for a full explanation of these concepts.)**
 
 ### Tetris-Specific Additions
 

@@ -8,7 +8,7 @@ The baking pipeline, (inspired by Lyra's mesh generation scripting tools) is des
 
 The primary way to bake an asset is through the "Bake" section in the Details panel of a selected `Compound Blockout Actor`.
 
-<figure><img src="../../../.gitbook/assets/image (4).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (4) (1).png" alt=""><figcaption></figcaption></figure>
 
 **Key Settings**
 

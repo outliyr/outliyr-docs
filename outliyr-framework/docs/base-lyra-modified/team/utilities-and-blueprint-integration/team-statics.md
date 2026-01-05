@@ -18,35 +18,35 @@ These functions are callable from any Blueprint graph. They typically require a 
     * **Outputs:** `bIsPartOfTeam` (bool), `TeamId` (int32), `DisplayAsset` (`ULyraTeamDisplayAsset*`).
     * **Action:** Calls `ULyraTeamSubsystem::FindTeamFromObject` to get the Team ID for the `Agent`, then uses that ID to call `ULyraTeamSubsystem::GetTeamDisplayAsset` to retrieve the _actual_ team display asset (not necessarily the perspective-aware one). Sets output parameters accordingly.
 
-    <figure><img src="../../../.gitbook/assets/image (23) (1).png" alt="" width="255"><figcaption></figcaption></figure>
+    <figure><img src="../../../.gitbook/assets/image (23) (1) (1).png" alt="" width="255"><figcaption></figcaption></figure>
 *   **`Get Team Display Asset`**
 
     * **Inputs:** `WorldContextObject`, `TeamId` (int32).
     * **Outputs:** Return Value (`ULyraTeamDisplayAsset*`).
     * **Action:** Calls `ULyraTeamSubsystem::GetTeamDisplayAsset(TeamId, INDEX_NONE)` (passing INDEX\_NONE for ViewerTeamId, meaning it ignores perspective mode). Retrieves the display asset explicitly assigned to the given `TeamId`.
 
-    <figure><img src="../../../.gitbook/assets/image (25) (1).png" alt="" width="226"><figcaption></figcaption></figure>
+    <figure><img src="../../../.gitbook/assets/image (25) (1) (1).png" alt="" width="226"><figcaption></figcaption></figure>
 *   **`Get Effective Team Display Asset`**
 
     * **Inputs:** `WorldContextObject`, `TeamId` (int32 - the ID of the team whose asset you want), `ViewerTeamId` (int32 - Optional, defaults to -1. The Team ID of the player viewing the target `TeamId`).
     * **Outputs:** Return Value (`ULyraTeamDisplayAsset*`).
     * **Action:** Calls `ULyraTeamSubsystem::GetEffectiveTeamDisplayAsset(TeamId, ViewerTeamId)`. This is the **recommended function** for getting visuals, as it correctly handles Perspective Color Mode. It returns the Ally/Enemy asset if perspective mode is active and applicable, otherwise falls back to the actual `TeamId`'s display asset. If `ViewerTeamId` is left at -1 (or not provided), the subsystem will use the `CurrentViewer` it tracks.
 
-    <figure><img src="../../../.gitbook/assets/image (26) (1).png" alt="" width="279"><figcaption></figcaption></figure>
+    <figure><img src="../../../.gitbook/assets/image (26) (1) (1).png" alt="" width="279"><figcaption></figcaption></figure>
 *   **`Get Team Scalar With Fallback`**
 
     * **Inputs:** `DisplayAsset` (`ULyraTeamDisplayAsset*`), `ParameterName` (FName), `DefaultValue` (float).
     * **Outputs:** Return Value (float).
     * **Action:** Safely attempts to find the `ParameterName` in the `DisplayAsset`'s `ScalarParameters` map. Returns the found value if successful, otherwise returns the `DefaultValue`. Prevents errors if `DisplayAsset` is null or the parameter doesn't exist.
 
-    <figure><img src="../../../.gitbook/assets/image (27) (1).png" alt="" width="273"><figcaption></figcaption></figure>
+    <figure><img src="../../../.gitbook/assets/image (27) (1) (1).png" alt="" width="273"><figcaption></figcaption></figure>
 *   **`Get Team Color With Fallback`**
 
     * **Inputs:** `DisplayAsset` (`ULyraTeamDisplayAsset*`), `ParameterName` (FName), `DefaultValue` (LinearColor).
     * **Outputs:** Return Value (LinearColor).
     * **Action:** Safely attempts to find the `ParameterName` in the `DisplayAsset`'s `ColorParameters` map. Returns the found color if successful, otherwise returns the `DefaultValue`.
 
-    <figure><img src="../../../.gitbook/assets/image (28) (1).png" alt="" width="312"><figcaption></figcaption></figure>
+    <figure><img src="../../../.gitbook/assets/image (28) (1) (1).png" alt="" width="312"><figcaption></figcaption></figure>
 *   **`Get Team Texture With Fallback`**
 
     * **Inputs:** `DisplayAsset` (`ULyraTeamDisplayAsset*`), `ParameterName` (FName), `DefaultValue` (Texture Object Reference).

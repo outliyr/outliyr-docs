@@ -36,10 +36,10 @@ This struct manages the collection of `FGridCellInfo` entries and handles their 
 
     * `TAG_Lyra_Inventory_Message_GridCellChanged` (**`FGridInventoryChangedMessage`**): Broadcast whenever `UpdateCellItemInstance` or `UpdateNonRootCells` modifies a cell's state. UI listens to this to refresh individual slots or the whole grid. The `FGridInventoryChangedMessage` payload contains the full state of the changed cell.
 
-    <figure><img src="../../../.gitbook/assets/image (17).png" alt="" width="563"><figcaption></figcaption></figure>
+    <figure><img src="../../../.gitbook/assets/image (17) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
     * `TAG_Lyra_Inventory_Message_InventoryResized` (**`FLyraVerbMessage`**): Broadcast by `PostReplicatedReceive` when `HasLayoutChanged` detects a change, signaling the UI that the entire grid structure needs to be rebuilt.
 
-    <figure><img src="../../../.gitbook/assets/image (16).png" alt="" width="563"><figcaption></figcaption></figure>
+    <figure><img src="../../../.gitbook/assets/image (16) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 This combination of a replicated flat array (`GridCells`) and a non-replicated, client-rebuilt coordinate lookup map (`GridCellIndexMap`) provides both network efficiency and fast runtime access to the state of each cell in the Tetris inventory grid.

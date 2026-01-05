@@ -14,7 +14,7 @@ While the `ULyraTeamSubsystem` manages team information at runtime, the `ULyraTe
 
 This component is configured primarily through its properties, usually set within a Blueprint subclass or directly if added via a Game Feature Action's defaults.
 
-<figure><img src="../../.gitbook/assets/image (22) (1).png" alt=""><figcaption><p>Setting up two teams with perspective colour mode on</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (22) (1) (1).png" alt=""><figcaption><p>Setting up two teams with perspective colour mode on</p></figcaption></figure>
 
 * **`PerspectiveColorConfig` (`FLyraPerspectiveColorConfig`)**:
   * `bPerspectiveColorMode` (`bool`): If true, enables the Ally/Enemy color override system in the `ULyraTeamSubsystem`.

@@ -51,7 +51,7 @@ The spatial presence of an item in the Tetris inventory grid is determined entir
     * `BooleanRow` (Inner TArray - 1 element for 1 column)
       * `[0]` = `true`&#x20;
 
-<figure><img src="../../../../.gitbook/assets/image (3) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (3) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 </details>
 
@@ -78,7 +78,7 @@ The spatial presence of an item in the Tetris inventory grid is determined entir
       * `[0]` = `true`
       * `[1]` = `true`&#x20;
 
-<figure><img src="../../../../.gitbook/assets/image (5) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (5) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 </details>
 
@@ -113,7 +113,7 @@ The spatial presence of an item in the Tetris inventory grid is determined entir
       * `[1]` = `true`&#x20;
       * `[2]` = `false`&#x20;
 
-<figure><img src="../../../../.gitbook/assets/image (6).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (6) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 </details>
 
@@ -121,7 +121,7 @@ The spatial presence of an item in the Tetris inventory grid is determined entir
 
 Manually editing nested `TArray` properties in the Unreal Details panel can be tedious and error-prone. This asset includes a dedicated **Shape Creator Editor Utility Widget** designed to simplify this process.
 
-<figure><img src="../../../../.gitbook/assets/image (7).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (7) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 #### **Recommended Workflow:**
 
@@ -135,7 +135,7 @@ Manually editing nested `TArray` properties in the Unreal Details panel can be t
 Make sure the window is big enough to fit the editor widget into the screen
 {% endhint %}
 
-<figure><img src="../../../../.gitbook/assets/image (8).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (8) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### **The Editor Preview**
 
@@ -146,7 +146,7 @@ To provide instant feedback, the `InventoryFragment_Tetris` utilizes a custom pr
 
 This preview updates automatically when you modify the `Shape` data (either manually or by pasting), allowing you to quickly verify the shape without needing the utility widget constantly open.
 
-<figure><img src="../../../../.gitbook/assets/image (9).png" alt="" width="375"><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (9) (1).png" alt="" width="375"><figcaption></figcaption></figure>
 
 ### Related Utilities
 

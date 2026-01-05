@@ -2,7 +2,7 @@
 
 The `GunFragment` is the essential component for creating firearms in this asset. It is a required **Inventory Fragment** that must be added to any `ULyraInventoryItemDefinition` intended to function as a gun. Without it, the equipment, ability, and inventory systems will not recognize the item as a firearm, and no shooting or reloading logic will work.
 
-<figure><img src="../../../../.gitbook/assets/image (3) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (3) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Design Philosophy: A Flexible Foundation
 

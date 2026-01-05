@@ -6,7 +6,7 @@ A `Compound Blockout Actor` is essentially a container that holds a list of simp
 
 When you select a `Compound Blockout Actor`, the Details panel will show a "Shapes" array. This is the heart of the actor.
 
-<figure><img src="../../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
 
 This is a standard Unreal Engine array, so you can:
 
@@ -67,7 +67,7 @@ You can control materials at two levels:
 1. **Actor Level:** The `Compound Blockout Actor` has a main `Material` property. This is the default material applied to any shape that doesn't have its own override.
 2. **Shape Level:** Each individual shape has a `Material Override` property. If you set this, that specific shape will be assigned its own material, creating a new material slot on the final Static Mesh.
 
-<figure><img src="../../../.gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 {% hint style="success" %}
 `Material Overrides` only have a visible effect on shapes with the **Add** operation. Subtractive shapes are "invisible" — they only remove geometry and do not contribute any surface or material slots to the final mesh.
@@ -86,7 +86,7 @@ To make it easier to work with complex stacks, each shape has a **Select** butto
 * **What it does:** Clicking "Select" immediately focuses the 3D transformation gizmo on that specific shape's pivot point within the actor.
 * **Why it's useful:** If you have 20 shapes in an actor, finding the right one to move in the viewport can be difficult. This button eliminates the guesswork and lets you instantly grab and transform the exact shape you want to edit.
 
-<figure><img src="../../../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 **2. Viewport Handles**
 

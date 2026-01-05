@@ -75,11 +75,9 @@ External systems often need to know when the player's equipment changes.
 * **Identify Messages:** The HUD might need to know:
   * When the held weapon changes (`TAG_Lyra_Equipment_Message_EquipmentChanged`, potentially filtered by checking if `bIsHeld` is true and the instance is a weapon).
   * When the ammo count _for the currently held weapon_ changes (This often comes from the _Inventory System_, perhaps via a message broadcast when an item's `StatTags` change, or by directly querying the `ULyraInventoryItemInstance` linked via the held `ULyraEquipmentInstance`).
-
-- **Create Listener:** In your HUD Widget Blueprint or C++ code:
+* **Create Listener:** In your HUD Widget Blueprint or C++ code:
   * Get the `UGameplayMessageSubsystem`.
   * Register a listener for the relevant message tags (e.g., `TAG_Lyra_Equipment_Message_EquipmentChanged`). You'll likely need to filter messages to only react to those relevant to the locally controlled player's Pawn/Controller.
-
 * **Implement Handler:** Create a function to handle the received message payload.
   * When `FLyraEquipmentChangeMessage` is received:
     * Check if it's for the local player's Pawn.
@@ -152,7 +150,7 @@ Use Tag Attributes to manage ability-specific or modifiable parameters on the eq
     * Get the `ULyraEquipmentInstance` again.
     * Call `EquipmentInstance->ReverseTagAttributeModification(StoredModInfo)`.
 
-    <figure><img src="../../.gitbook/assets/image (15) (1).png" alt=""><figcaption><p>Generalized Equipment Stat Modifier ability primarily used by attachments</p></figcaption></figure>
+    <figure><img src="../../.gitbook/assets/image (15) (1) (1).png" alt=""><figcaption><p>Generalized Equipment Stat Modifier ability primarily used by attachments</p></figcaption></figure>
 
 {% hint style="info" %}
 See the [Attachment fragment documentation ](../items/item-fragments-in-depth/attachment-system/)for more details on the attachment ability
