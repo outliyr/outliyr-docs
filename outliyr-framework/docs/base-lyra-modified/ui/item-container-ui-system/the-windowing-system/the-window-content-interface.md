@@ -32,7 +32,7 @@ public:
 
     // Cross-Window Navigation
     bool GetCursorScreenPosition(FVector2D& OutScreenPosition) const;
-    void ReceiveNavigationEntry(FIntPoint Direction, float ScreenCoordinate);
+    void ReceiveNavigationEntry(EUINavigation Direction, float ScreenCoordinate);
 };
 ```
 
@@ -128,7 +128,7 @@ Called when this content receives focus from cross-window navigation.
 
 ```cpp
 UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-void ReceiveNavigationEntry(FIntPoint Direction, float ScreenCoordinate);
+void ReceiveNavigationEntry(EUINavigation Direction, float ScreenCoordinate);
 ```
 
 **Purpose:** Position your cursor/selection to align with where navigation came from. This creates a smooth "handoff" between windows, if the user was selecting an item at Y=300 in Window A and navigates right to Window B, Window B should select something near Y=300 on its left edge.
@@ -150,15 +150,15 @@ void ReceiveNavigationEntry(FIntPoint Direction, float ScreenCoordinate);
 └─────────────────────┘          └─────────────────────┘
 
 Window B receives:
-  Direction = (1, 0)        // User pressed RIGHT (came from the left)
-  ScreenCoordinate = 300    // The Y position to align with
+  Direction = EUINavigation::Right   // User pressed RIGHT
+  ScreenCoordinate = 300             // The Y position to align with
 ```
 
 **Understanding the Parameters**
 
-**Direction** tells you which edge of your window the navigation entered from:
+**Direction** tells you which direction the user pressed (using Unreal's `EUINavigation` enum):
 
-<table><thead><tr><th width="108.45452880859375">Direction</th><th width="126.3636474609375">User Pressed</th><th width="129">Entry Edge</th><th>What to Do</th></tr></thead><tbody><tr><td><code>(1, 0)</code></td><td>Right</td><td>Left edge</td><td>Select item on LEFT side of your grid, near the Y coordinate</td></tr><tr><td><code>(-1, 0)</code></td><td>Left</td><td>Right edge</td><td>Select item on RIGHT side of your grid, near the Y coordinate</td></tr><tr><td><code>(0, 1)</code></td><td>Down</td><td>Top edge</td><td>Select item on TOP of your grid, near the X coordinate</td></tr><tr><td><code>(0, -1)</code></td><td>Up</td><td>Bottom edge</td><td>Select item on BOTTOM of your grid, near the X coordinate</td></tr></tbody></table>
+<table><thead><tr><th width="204.45452880859375">Direction</th><th width="97.272705078125">User Pressed</th><th width="117.54541015625">Entry Edge</th><th>What to Do</th></tr></thead><tbody><tr><td><code>EUINavigation::Right</code></td><td>Right</td><td>Left edge</td><td>Select item on LEFT side of your grid, near the Y coordinate</td></tr><tr><td><code>EUINavigation::Left</code></td><td>Left</td><td>Right edge</td><td>Select item on RIGHT side of your grid, near the Y coordinate</td></tr><tr><td><code>EUINavigation::Down</code></td><td>Down</td><td>Top edge</td><td>Select item on TOP of your grid, near the X coordinate</td></tr><tr><td><code>EUINavigation::Up</code></td><td>Up</td><td>Bottom edge</td><td>Select item on BOTTOM of your grid, near the X coordinate</td></tr></tbody></table>
 
 **ScreenCoordinate** is the perpendicular screen position to align with:
 
@@ -167,34 +167,39 @@ Window B receives:
 
 **Practical Implementation**
 
-The goal is to find the item in your content that best matches where the user was in the previous window:
+The goal is to find the item in your content that best matches where the user was in the previous window. Using `EUINavigation` enables clean switch statements:
 
 ```cpp
-void UMyGridContent::ReceiveNavigationEntry_Implementation(FIntPoint Direction, float ScreenCoordinate)
+void UMyGridContent::ReceiveNavigationEntry_Implementation(EUINavigation Direction, float ScreenCoordinate)
 {
-    if (Direction.X > 0)
+    switch (Direction)
     {
+    case EUINavigation::Right:
         // User pressed RIGHT, entering from LEFT edge
         // Find the item in the leftmost column closest to ScreenCoordinate (Y position)
         SelectItemInColumn(0, ScreenCoordinate);  // Column 0 = leftmost
-    }
-    else if (Direction.X < 0)
-    {
+        break;
+
+    case EUINavigation::Left:
         // User pressed LEFT, entering from RIGHT edge
         // Find the item in the rightmost column closest to ScreenCoordinate
         SelectItemInColumn(NumColumns - 1, ScreenCoordinate);
-    }
-    else if (Direction.Y > 0)
-    {
+        break;
+
+    case EUINavigation::Down:
         // User pressed DOWN, entering from TOP edge
         // Find the item in the top row closest to ScreenCoordinate (X position)
         SelectItemInRow(0, ScreenCoordinate);  // Row 0 = top
-    }
-    else if (Direction.Y < 0)
-    {
+        break;
+
+    case EUINavigation::Up:
         // User pressed UP, entering from BOTTOM edge
         // Find the item in the bottom row closest to ScreenCoordinate
         SelectItemInRow(NumRows - 1, ScreenCoordinate);
+        break;
+
+    default:
+        break;
     }
 }
 
@@ -227,7 +232,7 @@ void UMyGridContent::SelectItemInColumn(int32 Column, float TargetY)
 If your content doesn't have a grid or meaningful cursor positions, you can leave this as a no-op. The system will still focus your `GetFocusableContent()` widget, it just won't have the smooth spatial alignment.
 
 ```cpp
-void USimpleListContent::ReceiveNavigationEntry_Implementation(FIntPoint Direction, float ScreenCoordinate)
+void USimpleListContent::ReceiveNavigationEntry_Implementation(EUINavigation Direction, float ScreenCoordinate)
 {
     // No-op: ListView handles its own selection, just let GetFocusableContent handle focus
 }
@@ -250,7 +255,7 @@ public:
     virtual void SetContainerSource_Implementation(const FInstancedStruct& Source) override;
     virtual UWidget* GetFocusableContent_Implementation() const override;
     virtual bool GetCursorScreenPosition_Implementation(FVector2D& OutScreenPosition) const override;
-    virtual void ReceiveNavigationEntry_Implementation(FIntPoint Direction, float ScreenCoordinate) override;
+    virtual void ReceiveNavigationEntry_Implementation(EUINavigation Direction, float ScreenCoordinate) override;
 
 protected:
     UPROPERTY(meta = (BindWidget))
@@ -289,10 +294,10 @@ bool UMyInventoryContent::GetCursorScreenPosition_Implementation(FVector2D& OutS
     return false;
 }
 
-void UMyInventoryContent::ReceiveNavigationEntry_Implementation(FIntPoint Direction, float ScreenCoordinate)
+void UMyInventoryContent::ReceiveNavigationEntry_Implementation(EUINavigation Direction, float ScreenCoordinate)
 {
     // Select item nearest to the incoming Y coordinate for horizontal navigation
-    if (Direction.X != 0)
+    if (Direction == EUINavigation::Left || Direction == EUINavigation::Right)
     {
         SelectItemNearestToY(ScreenCoordinate);
     }

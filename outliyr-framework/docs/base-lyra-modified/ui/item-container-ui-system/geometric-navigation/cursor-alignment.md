@@ -62,22 +62,22 @@ Return value:
 
 The position should be in absolute screen coordinates (not local widget space).
 
-#### `ReceiveNavigationEntry`
+#### **`ReceiveNavigationEntry`**
 
 Called on the **target** window when receiving focus from cross-window navigation:
 
 ```cpp
 UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item Container Window|Focus")
-void ReceiveNavigationEntry(FIntPoint Direction, float ScreenCoordinate);
+void ReceiveNavigationEntry(EUINavigation Direction, float ScreenCoordinate);
 ```
 
-Parameters:
+**Parameters:**
 
-* `Direction`: Vector showing where navigation came from:
-  * `(1, 0)` = Came from the left (user pressed Right)
-  * `(-1, 0)` = Came from the right (user pressed Left)
-  * `(0, 1)` = Came from above (user pressed Down)
-  * `(0, -1)` = Came from below (user pressed Up)
+* `Direction`: The direction the user pressed (using Unreal's `EUINavigation` enum):
+  * `EUINavigation::Right` = User pressed Right, entering from left edge
+  * `EUINavigation::Left` = User pressed Left, entering from right edge
+  * `EUINavigation::Down` = User pressed Down, entering from top edge
+  * `EUINavigation::Up` = User pressed Up, entering from bottom edge
 * `ScreenCoordinate`: The perpendicular screen coordinate to align with:
   * For horizontal navigation (Left/Right): Y screen coordinate
   * For vertical navigation (Up/Down): X screen coordinate
@@ -99,7 +99,7 @@ bool ULyraInventoryListPanel::GetCursorScreenPosition_Implementation(
 }
 
 void ULyraInventoryListPanel::ReceiveNavigationEntry_Implementation(
-    FIntPoint Direction, float ScreenCoordinate)
+    EUINavigation Direction, float ScreenCoordinate)
 {
     // Default behavior: focus first item
     // Could be enhanced to find nearest item to ScreenCoordinate
@@ -132,11 +132,11 @@ bool ULyraTetrisGridClumpWidget::GetCursorScreenPosition_Implementation(
 }
 
 void ULyraTetrisGridClumpWidget::ReceiveNavigationEntry_Implementation(
-    FIntPoint Direction, float ScreenCoordinate)
+    EUINavigation Direction, float ScreenCoordinate)
 {
     // Calculate entry position from direction and screen coordinate
     FIntPoint EntryPosition = CalculateEntryPosition(Direction, ScreenCoordinate);
-
+   
     // Validate and set cursor
     if (!IsGridSlotValid(EntryPosition.X, EntryPosition.Y))
     {

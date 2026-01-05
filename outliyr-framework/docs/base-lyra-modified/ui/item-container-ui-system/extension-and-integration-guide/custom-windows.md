@@ -30,7 +30,7 @@ public:
     virtual bool GetCursorScreenPosition(FVector2D& OutPos) const = 0;
 
     // Position cursor when receiving focus from another window
-    virtual void ReceiveNavigationEntry(FIntPoint Direction, float ScreenCoordinate) = 0;
+    virtual void ReceiveNavigationEntry(EUINavigation Direction, float ScreenCoordinate) = 0;
 };
 ```
 
@@ -181,7 +181,7 @@ public:
         return false;
     }
 
-    virtual void ReceiveNavigationEntry_Implementation(FIntPoint Direction, float ScreenCoordinate) override
+    virtual void ReceiveNavigationEntry_Implementation(EUINavigation Direction, float ScreenCoordinate) override
     {
         // Select slot nearest to the incoming coordinate
         TilePanel->SelectSlotNearCoordinate(Direction, ScreenCoordinate);
@@ -391,16 +391,21 @@ public:
         return false;
     }
 
-    virtual void ReceiveNavigationEntry_Implementation(FIntPoint Direction, float ScreenCoordinate) override
+    virtual void ReceiveNavigationEntry_Implementation(EUINavigation Direction, float ScreenCoordinate) override
     {
-        // Select appropriate panel based on entry direction
-        if (Direction.X > 0)  // Came from left
+        // Focus the button on the entry side
+        switch (Direction)
         {
-            PlayerPanel->SelectSlotNearCoordinate(Direction, ScreenCoordinate);
-        }
-        else if (Direction.X < 0)  // Came from right
-        {
-            TargetPanel->SelectSlotNearCoordinate(Direction, ScreenCoordinate);
+        case EUINavigation::Right:
+            // Entering from left - focus left button (Keep)
+            KeepButton->SetKeyboardFocus();
+            break;
+        case EUINavigation::Left:
+            // Entering from right - focus right button (Equip)
+            EquipButton->SetKeyboardFocus();
+            break;
+        default:
+            break;
         }
     }
 
@@ -628,18 +633,28 @@ bool UMyContent::GetCursorScreenPosition_Implementation(FVector2D& OutScreenPosi
 Position your cursor when focus comes from another window:
 
 ```cpp
-void UMyContent::ReceiveNavigationEntry_Implementation(FIntPoint Direction, float ScreenCoordinate)
+void UMyContent::ReceiveNavigationEntry_Implementation(EUINavigation Direction, float ScreenCoordinate)
 {
-    if (Direction.X != 0)
+    switch (Direction)
     {
-        // Horizontal navigation - align with Y coordinate
-        // Select slot on the left edge if came from left, right edge if came from right
-        SelectSlotNearY(ScreenCoordinate, Direction.X > 0 ? EEdge::Left : EEdge::Right);
-    }
-    else if (Direction.Y != 0)
-    {
-        // Vertical navigation - align with X coordinate
-        SelectSlotNearX(ScreenCoordinate, Direction.Y > 0 ? EEdge::Top : EEdge::Bottom);
+    case EUINavigation::Right:
+        // Entering from LEFT edge - select slot on left side, near Y coordinate
+        SelectSlotNearY(ScreenCoordinate, EEdge::Left);
+        break;
+    case EUINavigation::Left:
+        // Entering from RIGHT edge - select slot on right side, near Y coordinate
+        SelectSlotNearY(ScreenCoordinate, EEdge::Right);
+        break;
+    case EUINavigation::Down:
+        // Entering from TOP edge - select slot on top, near X coordinate
+        SelectSlotNearX(ScreenCoordinate, EEdge::Top);
+        break;
+    case EUINavigation::Up:
+        // Entering from BOTTOM edge - select slot on bottom, near X coordinate
+        SelectSlotNearX(ScreenCoordinate, EEdge::Bottom);
+        break;
+    default:
+        break;
     }
 }
 ```
