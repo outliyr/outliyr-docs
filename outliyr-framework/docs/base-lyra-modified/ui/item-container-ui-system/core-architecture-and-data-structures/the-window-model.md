@@ -63,6 +63,8 @@ flowchart TB
     subgraph Layer ["LyraItemContainerLayer"]
         direction TB
         Canvas[Canvas Panel]
+        Focus[Focus & Z-Order]
+        Nav[Cross-Window Navigation]
     end
 
     subgraph Windows ["Windows on Canvas"]
@@ -74,7 +76,6 @@ flowchart TB
     subgraph Shell ["Inside a Window Shell"]
         Chrome[Title Bar + Close Button]
         Content[Content Widget]
-        Router[Navigation Router]
     end
 
     Layer --> Canvas
@@ -86,18 +87,17 @@ flowchart TB
 
 #### Key Components
 
-| Component                        | Role                                                                                                                     |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **LyraItemContainerLayer**       | The canvas that hosts all windows. An activatable widget that manages window creation, dragging, and z-order.            |
-| **LyraItemContainerWindowShell** | The window frame—title bar, close button, drag handle. Contains a content widget.                                        |
-| **Content Widget**               | The actual container display (list panel, tile panel, or custom). Implements `ILyraItemContainerWindowContentInterface`. |
-| **LyraNavigationRouter**         | Per-window navigation handler. Routes keyboard/gamepad input to the right panel.                                         |
+| Component                                                                           | Role                                                                                                                     |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| [**`LyraItemContainerLayer`**](../the-windowing-system/the-item-container-layer.md) | The canvas that hosts all windows. Manages window creation, dragging, z-order, focus, and cross-window navigation.       |
+| [**`LyraItemContainerWindowShell`**](../the-windowing-system/the-window-shell.md)   | The window frame, title bar, close button, drag handle. Contains a content widget.                                       |
+| **Content Widget**                                                                  | The actual container display (list panel, tile panel, or custom). Implements `ILyraItemContainerWindowContentInterface`. |
 
 ***
 
 ### The UI Manager: Conductor of the Orchestra
 
-`ULyraItemContainerUIManager` orchestrates the whole system:
+`ULyraItemContainerUIManager` orchestrates the data side of the system:
 
 ```mermaid
 flowchart TB
@@ -126,19 +126,27 @@ flowchart TB
 
 {% stepper %}
 {% step %}
-Creates and caches ViewModels — One ViewModel per container, reused across windows.
+#### Creates and caches ViewModels
+
+One `ViewModel` per container, reused across windows.
 {% endstep %}
 
 {% step %}
-Manages sessions — Groups related windows together.
+#### Manages sessions
+
+Groups related windows together.
 {% endstep %}
 
 {% step %}
-Handles lifecycle events — Item destroyed? Close its attachment window.
+#### Handles lifecycle events
+
+Item destroyed? Close its attachment window.
 {% endstep %}
 
 {% step %}
-Provides shared ViewModels — `InteractionViewModel` for drag/drop is shared.
+#### Provides shared `ViewModels`
+
+`InteractionViewModel` for drag/drop is shared.
 {% endstep %}
 {% endstepper %}
 
@@ -199,19 +207,19 @@ UI Manager creates (or reuses) a ViewModel for the container.
 {% endstep %}
 
 {% step %}
-Creates the window shell.
+Layer creates the window shell.
 {% endstep %}
 
 {% step %}
-Creates the content widget.
+Layer creates the content widget.
 {% endstep %}
 
 {% step %}
-Initializes content with ViewModel.
+Shell calls `SetContainerSource` on content with the ViewModel.
 {% endstep %}
 
 {% step %}
-Registers with window manager for navigation.
+Layer registers window and focuses it.
 {% endstep %}
 {% endstepper %}
 
@@ -228,12 +236,14 @@ Windows can close:
 sequenceDiagram
     participant User
     participant Window
+    participant Layer
     participant UIManager
     participant ViewModel
 
     User->>Window: Click close
-    Window->>UIManager: RequestCloseWindow
-    UIManager->>Window: Destroy widget
+    Window->>Layer: RequestCloseWindow
+    Layer->>UIManager: NotifyWindowClosed
+    Layer->>Window: Destroy widget
     UIManager->>ViewModel: ReleaseViewModel (refcount--)
     Note over ViewModel: If refcount == 0, VM cleaned up
 ```
@@ -242,55 +252,56 @@ sequenceDiagram
 
 ### Cross-Window Navigation
 
-Players can navigate between windows using keyboard/gamepad:
+Players can navigate between windows using keyboard/gamepad. The Layer intercepts navigation that escapes from a window and transfers focus to a neighboring window.
 
 ```mermaid
 flowchart LR
     subgraph Win1 ["Inventory Window"]
-        P1[List Panel]
+        C1[Content Widget]
     end
 
     subgraph Win2 ["Equipment Window"]
-        P2[Slot Panel]
+        C2[Content Widget]
     end
 
-    P1 -->|"Right at edge"| P2
-    P2 -->|"Left at edge"| P1
+    C1 -->|"Right at edge"| C2
+    C2 -->|"Left at edge"| C1
 ```
 
 #### How It Works
 
 {% stepper %}
 {% step %}
-Panel reaches navigation edge (e.g., pressing Right at rightmost item).
+Content widget reaches navigation edge (e.g., pressing Right at rightmost item).
 {% endstep %}
 
 {% step %}
-Panel broadcasts `OnEdgeReached` to its router.
+Content returns `FNavigationReply::Escape()` to signal edge reached.
 {% endstep %}
 
 {% step %}
-Router checks for neighbor panel in same window.
+Layer's `NativeOnNavigation` intercepts the escaped navigation.
 {% endstep %}
 
 {% step %}
-If none, asks `WindowManager` for neighbor window.
+Layer uses `FindWindowInDirection` with geometric scoring to find neighbor.
 {% endstep %}
 
 {% step %}
-WindowManager uses screen geometry to find adjacent window.
+Layer stores pending navigation context (direction and cursor position).
 {% endstep %}
 
 {% step %}
-Focus transfers to that window's appropriate panel.
+Layer focuses the target window, which calls `ReceiveNavigationEntry` on content.
 {% endstep %}
 {% endstepper %}
 
 ```cpp
-// Window Manager finds geometric neighbors
-ULyraItemContainerWindowShell* FindNeighborWindow(
-    ULyraItemContainerWindowShell* FromWindow,
-    EUINavigation Direction
+// Layer finds geometric neighbors
+FItemWindowHandle FindWindowInDirection(
+    FItemWindowHandle FromWindow,
+    EUINavigation Direction,
+    FVector2D CursorScreenPos
 );
 ```
 
@@ -300,35 +311,25 @@ ULyraItemContainerWindowShell* FindNeighborWindow(
 
 ***
 
-### Why This Design?
-
-| Benefit           | How Windows Enable It                                                  |
-| ----------------- | ---------------------------------------------------------------------- |
-| **Flexibility**   | Add/remove windows dynamically for any container                       |
-| **Reusability**   | Same window shell for inventory, equipment, attachments, vendors       |
-| **Navigation**    | Unified cross-window navigation without hardcoding                     |
-| **Sessions**      | Clean lifecycle management, close a session, close all related windows |
-| **Extensibility** | New container type? Just create new content widget                     |
-
-***
-
 ### Summary
 
 ```mermaid
 flowchart TB
     subgraph Summary ["Window Model Summary"]
-        L[Layer hosts windows]
+        L[Layer hosts windows & handles navigation]
         S[Shells provide chrome]
         C[Content displays container]
-        R[Routers handle navigation]
-        M[Manager orchestrates everything]
+        M[Manager orchestrates data lifecycle]
     end
 ```
 
-* **Layer** (`LyraItemContainerLayer`) — Canvas hosting windows
-* **Shell** (`LyraItemContainerWindowShell`) — Window frame with drag, close, title
-* **Content** — Container-specific display widget
-* **Router** (`LyraNavigationRouter`) — Per-window keyboard/gamepad navigation
-* **Manager** (`LyraItemContainerUIManager`) — ViewModel factory, session manager, lifecycle handler
+* **Layer** (`LyraItemContainerLayer`)
+  * Canvas hosting windows, focus management, z-order, cross-window navigation
+* **Shell** (`LyraItemContainerWindowShell`)
+  * Window frame with drag, close, title
+* **Content**
+  * Container-specific display widget implementing `ILyraItemContainerWindowContentInterface`
+* **Manager** (`LyraItemContainerUIManager`)
+  * ViewModel factory, session manager, lifecycle handler
 
 ***

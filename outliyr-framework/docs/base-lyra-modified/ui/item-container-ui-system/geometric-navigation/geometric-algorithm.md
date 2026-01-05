@@ -1,51 +1,97 @@
 # Geometric Algorithm
 
-At the heart of the Navigation Router is the **Geometric Neighbor Search**. While standard UMG navigation relies on simple center-to-center proximity, our algorithm uses a "Directional Lane" approach. This ensures that the cursor moves in a way that feels predictable and "aligned" to the human eye.
+At the heart of cross-window navigation is the **Geometric Neighbor Search** implemented in `LyraItemContainerLayer::FindWindowInDirection`. While standard UMG navigation relies on simple center-to-center proximity, our algorithm uses a "Directional Lane" approach. This ensures that focus moves in a way that feels predictable and "aligned" to the human eye.
 
 ### The Concept: Navigation Lanes
 
-Imagine your UI as a series of lanes on a highway. When you press **Right**, you aren't just looking for the closest object; you are looking for the best object that sits in your current "Lane."
+Imagine your UI as a series of lanes on a highway. When you press **Right**, you aren't just looking for the closest window; you are looking for the best window that sits in your current "Lane."
 
-#### 1. Perpendicular Overlap
+{% stepper %}
+{% step %}
+#### Direction Filtering
 
-The algorithm first checks if a candidate panel overlaps with the source panel along the axis perpendicular to your movement.
+The algorithm first filters candidate windows to only include those actually in the requested direction.
 
-* **Moving Horizontal (Left/Right):** Does the candidate share any vertical space (Y-axis) with the source?
-* **Moving Vertical (Up/Down):** Does the candidate share any horizontal space (X-axis) with the source?
+* Moving Right: Only consider windows whose left edge is to the right of the source window's right edge.
+* Moving Left: Only consider windows whose right edge is to the left of the source window's left edge.
+* Moving Up/Down: Similar logic for vertical movement.
 
-If they overlap, they are considered **Direct Neighbors**. If they don't overlap (e.g., a panel shifted slightly higher or lower), they are **Diagonal Neighbors**.
+A small threshold (50 pixels) is used to handle edge cases where windows are nearly aligned.
+{% endstep %}
+
+{% step %}
+#### Perpendicular Overlap
+
+The algorithm then checks if a candidate window overlaps with the cursor position along the axis perpendicular to movement.
+
+* Moving Horizontal (Left/Right): Does the candidate window share any vertical space with the cursor's Y position?
+* Moving Vertical (Up/Down): Does the candidate window share any horizontal space with the cursor's X position?
+
+If they overlap, they are considered **Direct Neighbors**. If they don't overlap (e.g., a window shifted slightly higher or lower), they are **Diagonal Neighbors**.
+{% endstep %}
+{% endstepper %}
 
 ### The Scoring Formula
 
-To decide between multiple candidates, the Router calculates a **Cost Score**. The panel with the **lowest** score wins.
+To decide between multiple candidates, the Layer calculates a **Cost Score**. The window with the **lowest** score wins.
 
-$$Score = Distance - (Overlap \times 0.5)$$
+```cpp
+Score = DirectionalDistance + (PerpendicularOffset * 0.5f)
+```
 
-#### Distance (Edge-to-Edge)
+#### Directional Distance
 
-We measure the gap between the boundaries of the panels, not their centers.
+We measure the gap between the boundaries in the direction of movement.
 
-* If moving Right, we measure from the `Source.Right` to the `Candidate.Left`.
-* This is crucial for windows of varying sizes; it ensures that a massive panel doesn't "hog" focus just because its center is technically closer.
+* If moving Right, we measure from the source window's right edge to the candidate's left edge.
+* This is crucial for windows of varying sizes; it ensures that a massive window doesn't "hog" focus just because its center is technically closer.
 
-#### Overlap (The "Alignment Bonus")
+#### Perpendicular Offset (Alignment Penalty)
 
-We reward panels that line up with the player's current position.
+We penalize windows that are offset from the cursor's current position.
 
-* A panel that perfectly aligns with your current row or column gets a massive reduction in cost.
-* This creates a "sticky" feeling—the cursor naturally wants to stay within its current lane unless the player makes a deliberate effort to move to a different row.
+* A window that perfectly aligns with your cursor's row or column gets no penalty.
+* Windows that are offset get a penalty proportional to the distance from the cursor.
+* The 0.5 multiplier makes perpendicular offset less important than direct distance.
+
+The Result: A directly aligned window further away will beat a closer window that's significantly offset. This creates the "sticky lane" feeling.
 
 ***
 
-### The Tie-Breaker: Precision Quality
+### The Implementation
 
-In complex UIs like a **Tetris Grid**, multiple panels might be at the exact same distance. To solve this, we introduce **Alignment Quality**.
+```cpp
+FItemWindowHandle ULyraItemContainerLayer::FindWindowInDirection(
+    FItemWindowHandle FromWindow,
+    EUINavigation Direction,
+    FVector2D CursorScreenPos) const
+{
+    float BestScore = FLT_MAX;
+    FItemWindowHandle BestTarget;
 
-1. **Perfect Match (1.0):** The target has a slot that lines up exactly with your current row/column.
-2. **Snapped Match (0.1 - 0.9):** The target is slightly offset, but we can "snap" the cursor to the nearest logical spot.
-3. **Default (0.5):** A generic panel (like a button) that accepts focus from anywhere.
+    for (const auto& Pair : ActiveWindows)
+    {
+        if (Pair.Key == FromWindow.WindowId) continue;
 
-**The Golden Rule:** A perfectly aligned panel 50 pixels away will beat a non-aligned panel 10 pixels away. This prevents the "zig-zag" cursor behavior common in many game UIs.
+        ULyraItemContainerWindowShell* CandidateShell = Pair.Value;
+        FGeometry CandidateGeom = CandidateShell->GetCachedGeometry();
+        FVector2D CandidatePos = CandidateGeom.GetAbsolutePosition();
+        FVector2D CandidateSize = CandidateGeom.GetAbsoluteSize();
+
+        // Check if candidate is in the correct direction
+        // Calculate distance and perpendicular offset
+        // Score = DirectionalDistance + (PerpendicularOffset * 0.5f)
+
+        if (Score < BestScore)
+        {
+            BestScore = Score;
+            BestTarget = FItemWindowHandle(Pair.Key);
+        }
+    }
+
+    return BestTarget;
+}
+```
 
 ***
 
@@ -54,24 +100,37 @@ In complex UIs like a **Tetris Grid**, multiple panels might be at the exact sam
 ```mermaid
 graph LR
     subgraph Search ["Geometric Search Logic"]
-        A[Check Direction] --> B{Overlap?}
-        B -->|Yes| C[Direct Neighbor: High Priority]
-        B -->|No| D[Diagonal Neighbor: Low Priority]
-        
-        C --> E[Calculate Edge Distance]
-        D --> E
-        
-        E --> F[Apply Overlap Bonus]
-        F --> G[Sort by Final Score]
+        A[Check Direction] --> B{In Direction?}
+        B -->|Yes| C[Calculate Directional Distance]
+        B -->|No| X[Skip Window]
+
+        C --> D[Calculate Perpendicular Offset]
+        D --> E[Compute Score]
+        E --> F[Compare to Best Score]
+        F --> G[Select Lowest Score]
     end
 ```
 
 ### Developer Tips for Debugging
 
-If you find that the cursor is "skipping" a panel or jumping to the wrong place:
+{% stepper %}
+{% step %}
+#### Check Window Geometry
 
-1. **Check Geometry:** Ensure `UpdatePanelGeometry` is being called. If the Router thinks a panel is at `(0,0)`, it will never find it.
-2. **Inspect Overlap:** Is the panel slightly too high or too low? A 1-pixel gap can turn a "Direct Neighbor" into a "Diagonal Neighbor," drastically changing its score.
-3. **Check Lanes:** If you have a very narrow panel, it might be hard to hit from a wider panel. You can use **Route Overrides** (explained in the next section) to manually "force" a connection in tricky layouts.
+Windows must have valid cached geometry. If a window was just created, its geometry might not be available until the next frame.
+{% endstep %}
 
-By using physical geometry rather than a list of indices, the navigation system remains robust even if you dynamically move or resize panels at runtime.
+{% step %}
+#### Inspect Cursor Position
+
+The `CursorScreenPos` used for scoring comes from `GetFocusedWindowCursorPosition()`, which queries the content widget's `GetCursorScreenPosition()` interface method.
+{% endstep %}
+
+{% step %}
+#### Check Direction Threshold
+
+Windows that are almost aligned might be filtered out. The 50-pixel threshold handles most cases, but extremely narrow windows might need adjustment.
+{% endstep %}
+{% endstepper %}
+
+By using physical geometry rather than hardcoded links, the navigation system remains robust even if you dynamically move or resize windows at runtime. Drag a window to a new position, and navigation automatically adapts.

@@ -46,11 +46,10 @@ sequenceDiagram
     Layer->>Shell: Create WindowShell
     Layer->>Content: Create Content Widget
     Shell->>Content: SetContent()
-    Content->>Content: SetContainerSource()
-    Content->>Content: SetWindowRouter()
-    Content->>Content: FinalizeWindowContent()
-    Layer->>Layer: Register with WindowManager
+    Shell->>Content: SetContainerSource(Source)
     Layer->>Layer: Position window
+    Layer->>Layer: Register in ActiveWindows
+    Layer->>Layer: FocusWindow()
 ```
 
 #### Content Widget Interface
@@ -60,16 +59,21 @@ Content widgets must implement `ILyraItemContainerWindowContentInterface`:
 ```cpp
 class ILyraItemContainerWindowContentInterface
 {
-    // Called to set the container source
+    // Called to set the container source - acquire ViewModel here
     virtual void SetContainerSource(const FInstancedStruct& Source) = 0;
 
-    // Called to provide the navigation router
-    virtual void SetWindowRouter(ULyraNavigationRouter* Router) = 0;
+    // Return the widget that should receive focus
+    virtual UWidget* GetFocusableContent() const = 0;
 
-    // Called after setup is complete
-    virtual void FinalizeWindowContent() = 0;
+    // Return current cursor position for cross-window navigation
+    virtual bool GetCursorScreenPosition(FVector2D& OutPos) const = 0;
+
+    // Position cursor when receiving focus from another window
+    virtual void ReceiveNavigationEntry(FIntPoint Direction, float ScreenCoordinate) = 0;
 };
 ```
+
+See [The Window Content Interface](the-window-content-interface.md) for details.
 
 ***
 
@@ -122,16 +126,19 @@ flowchart TB
 sequenceDiagram
     participant Trigger
     participant UIManager
+    participant Layer
     participant Shell
     participant Content
     participant ViewModel
 
     Trigger->>UIManager: RequestCloseWindow
-    UIManager->>Shell: BeginClose()
+    UIManager->>Layer: CloseWindow(Handle, Reason)
+    Layer->>Shell: BeginClose()
     Shell->>Content: Cleanup
-    Content->>ViewModel: Release ViewModel
+    Content->>ViewModel: Release ViewModel (automatic with lease)
     Shell->>Shell: Destroy Widget
-    UIManager->>UIManager: Unregister from session
+    Layer->>Layer: Remove from ActiveWindows
+    Layer->>Layer: Update focus to next window
 ```
 
 ***
@@ -142,19 +149,29 @@ sequenceDiagram
 
 Only one window has focus at a time. The focused window:
 
-* Receives keyboard input
+* Receives keyboard/controller input
 * Appears on top (highest z-order)
 * Shows focus visuals
 
 ```cpp
 // Bring window to front and focus
-WindowManager->SetFocusedWindow(WindowShell);
+Layer->FocusWindow(WindowHandle);
 
 // Get currently focused window
-ULyraItemContainerWindowShell* Focused = WindowManager->GetFocusedWindow();
+FItemWindowHandle Focused = Layer->GetFocusedWindow();
+
+// Get windows in focus order (oldest to newest)
+TArray<FItemWindowHandle> Windows = Layer->GetWindowsByFocusOrder();
 ```
 
 #### Z-Order
+
+The Layer tracks when each window was last focused and uses this for z-order:
+
+```cpp
+// Each window has a timestamp for when it was last focused
+TMap<FGuid, double> WindowFocusTimes;
+```
 
 Windows stack based on **last focus time**, most recently focused on top:
 
@@ -167,21 +184,33 @@ flowchart TB
     end
 ```
 
-#### Focus Events
+When a window is focused, the Layer:
 
-```cpp
-// Subscribe to focus changes
-WindowManager->OnWindowFocusChanged.AddDynamic(
-    this, &UMyWidget::HandleFocusChanged
-);
+{% stepper %}
+{% step %}
+#### Update focus timestamp
 
-void UMyWidget::HandleFocusChanged(
-    ULyraItemContainerWindowShell* OldFocus,
-    ULyraItemContainerWindowShell* NewFocus)
-{
-    // Update focus visuals
-}
-```
+The window's focus timestamp is updated.
+{% endstep %}
+
+{% step %}
+#### Recalculate z-order
+
+Z-order is recalculated for all windows based on focus times.
+{% endstep %}
+
+{% step %}
+#### Update Canvas ZOrder
+
+The `UCanvasPanelSlot::ZOrder` for each window is updated.
+{% endstep %}
+
+{% step %}
+#### Request content focus
+
+`Shell->RequestContentFocus()` is called to focus the window's content.
+{% endstep %}
+{% endstepper %}
 
 ***
 
@@ -197,31 +226,34 @@ Windows can be dragged by their title bar:
 | **Minimum visible** | At least N pixels must remain visible |
 | **Snap to edge**    | Optional snapping to screen edges     |
 
-#### Drag Events
+#### Drag Operations
+
+The Layer handles window drag operations:
 
 ```cpp
-// In WindowShell
-OnDragStarted.Broadcast();
-OnDragMoved.Broadcast(NewPosition);
-OnDragEnded.Broadcast();
+// Called by Shell when drag starts
+Layer->BeginWindowDrag(WindowHandle, StartPosition);
+
+// Called during drag
+Layer->UpdateWindowDrag(CurrentPosition);
+
+// Called when drag ends
+Layer->EndWindowDrag();
 ```
 
-#### Geometry Updates
+During dragging:
 
-When a window moves, its geometry must be updated for cross-window navigation:
-
-```cpp
-// Layer updates geometry after drag
-WindowManager->UpdateWindowGeometry(WindowShell, NewRect);
-```
+* The dragged window is brought to front
+* Position is clamped to canvas bounds
+* Coordinates are translated between screen and canvas local space
 
 ***
 
-### Opening Windows from Code
+### Opening Windows Example
 
 {% tabs %}
 {% tab title="Blueprints" %}
-<figure><img src="../../../../.gitbook/assets/image (26).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (194).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 
 {% tab title="C++" %}
@@ -249,7 +281,7 @@ void UMyGameplayCode::OpenInventoryWindow()
 
 ### Window Types (GameplayTags)
 
-Window types are identified by GameplayTags, this will be discussed in more detail in the [Item Container Layer](the-item-container-layer.md):
+Window types are identified by `GameplayTags`, this will be discussed in more detail in the [Item Container Layer](/broken/pages/3abc32b6a7989ab09aac6dda0a7f3992dc39bbbc):
 
 ```cpp
 // In your GameplayTags file

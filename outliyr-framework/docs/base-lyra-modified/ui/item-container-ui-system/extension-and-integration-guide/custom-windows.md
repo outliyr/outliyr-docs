@@ -2,8 +2,6 @@
 
 Beyond custom container types, you may need custom window layouts, comparison views, split panels, or windows without standard chrome. This guide covers window customization at every level.
 
-***
-
 ### Custom Window Scenarios
 
 | Scenario                          | Solution                     |
@@ -14,24 +12,25 @@ Beyond custom container types, you may need custom window layouts, comparison vi
 | Floating tooltip-style            | Lightweight overlay widget   |
 | Split view comparison             | Multi-panel content widget   |
 
-***
-
 ### The Window Content Interface
 
-All window content widgets must implement `ILyraItemContainerWindowContentInterface`. This interface has exactly **three methods**:
+All window content widgets must implement `ILyraItemContainerWindowContentInterface`. This interface has **four methods**:
 
 ```cpp
 class ILyraItemContainerWindowContentInterface
 {
 public:
-    // Called first: receive the container source to acquire your ViewModel
+    // Called to set the container source - acquire ViewModel here
     virtual void SetContainerSource(const FInstancedStruct& Source) = 0;
 
-    // Called second: receive the navigation router for panel registration
-    virtual void SetWindowRouter(ULyraNavigationRouter* Router) = 0;
+    // Return the widget that should receive focus
+    virtual UWidget* GetFocusableContent() const = 0;
 
-    // Called last: widget is in visual tree, geometry is valid
-    virtual void FinalizeWindowContent(UWidget* WindowRootWidget) = 0;
+    // Return current cursor position for cross-window navigation
+    virtual bool GetCursorScreenPosition(FVector2D& OutPos) const = 0;
+
+    // Position cursor when receiving focus from another window
+    virtual void ReceiveNavigationEntry(FIntPoint Direction, float ScreenCoordinate) = 0;
 };
 ```
 
@@ -46,16 +45,13 @@ sequenceDiagram
     Layer->>Shell: Create shell
     Layer->>Content: Create content widget
     Shell->>Content: SetContent()
-    Content->>Content: SetContainerSource(Source)
+    Shell->>Content: SetContainerSource(Source)
     Note right of Content: Acquire ViewModel here
-    Content->>Content: SetWindowRouter(Router)
-    Note right of Content: Store router reference
     Layer->>Layer: Add shell to canvas
-    Content->>Content: FinalizeWindowContent(WindowRoot)
-    Note right of Content: Register panels, geometry valid
+    Layer->>Layer: FocusWindow()
+    Shell->>Content: GetFocusableContent()
+    Note right of Content: Return focusable widget
 ```
-
-***
 
 ### Registering Window Types
 
@@ -101,7 +97,7 @@ The power of this system is that **the same content widget class works with diff
 | `UI.Window.Attachment` | `UAttachmentGridContent` | Gun attachments, armor mods, vehicle parts   |
 | `UI.Window.Equipment`  | `UEquipmentSlotsContent` | Player equipment, mannequin, loadout preview |
 
-The content widget doesn't care _which_ inventory it's showing,  it just receives a source via `SetContainerSource()` and displays it.
+The content widget doesn't care _which_ inventory it's showing—it just receives a source via `SetContainerSource()` and displays it.
 
 #### Example: One Grid Widget, Many Uses
 
@@ -137,8 +133,6 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Window_Trade, "UI.Window.Trade");
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Window_Crafting, "UI.Window.Crafting");
 ```
 
-***
-
 ### Custom Window Content Widget
 
 The most common customization: a different layout for an existing container type.
@@ -170,23 +164,27 @@ public:
         TilePanel->SetContainerViewModel(ContainerVM);
     }
 
-    virtual void SetWindowRouter_Implementation(ULyraNavigationRouter* InRouter) override
+    virtual UWidget* GetFocusableContent_Implementation() const override
     {
-        Router = InRouter;
+        return TilePanel;
     }
 
-    virtual void FinalizeWindowContent_Implementation(UWidget* WindowRootWidget) override
+    virtual bool GetCursorScreenPosition_Implementation(FVector2D& OutScreenPosition) const override
     {
-        // Register panel for navigation (geometry is now valid)
-        FBox2f PanelBounds = ULyraNavigationRouter::GetWidgetBoundsInRootSpace(
-            TilePanel, WindowRootWidget);
+        // Return position of currently selected slot
+        if (UWidget* SelectedSlot = TilePanel->GetSelectedSlot())
+        {
+            FGeometry Geom = SelectedSlot->GetCachedGeometry();
+            OutScreenPosition = Geom.GetAbsolutePositionAtCoordinates(FVector2D(0.5f, 0.5f));
+            return true;
+        }
+        return false;
+    }
 
-        PanelHandle = Router->RegisterPanel(
-            TilePanel,
-            TAG_Panel_Inventory,
-            PanelBounds,
-            true  // bIsDefaultFocus
-        );
+    virtual void ReceiveNavigationEntry_Implementation(FIntPoint Direction, float ScreenCoordinate) override
+    {
+        // Select slot nearest to the incoming coordinate
+        TilePanel->SelectSlotNearCoordinate(Direction, ScreenCoordinate);
     }
     //~ End interface
 
@@ -194,13 +192,8 @@ private:
     UPROPERTY()
     TObjectPtr<ULyraContainerViewModel> ContainerVM;
 
-    UPROPERTY()
-    TObjectPtr<ULyraNavigationRouter> Router;
-
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<ULyraTileInventoryPanel> TilePanel;
-
-    FNavigationPanelHandle PanelHandle;
 };
 ```
 
@@ -254,8 +247,6 @@ void UMyContent::SetContainerSource_Implementation(const FInstancedStruct& Sourc
     }
 }
 ```
-
-***
 
 ### Multi-Container Windows
 
@@ -379,51 +370,52 @@ public:
         TargetPanel->SetContainerViewModel(TargetVM);
     }
 
-    virtual void SetWindowRouter_Implementation(ULyraNavigationRouter* InRouter) override
+    virtual UWidget* GetFocusableContent_Implementation() const override
     {
-        Router = InRouter;
+        // Focus the player's panel by default
+        return PlayerPanel;
     }
 
-    virtual void FinalizeWindowContent_Implementation(UWidget* WindowRootWidget) override
+    virtual bool GetCursorScreenPosition_Implementation(FVector2D& OutScreenPosition) const override
     {
-        // Register both panels
-        FBox2f PlayerBounds = ULyraNavigationRouter::GetWidgetBoundsInRootSpace(
-            PlayerPanel, WindowRootWidget);
-        FBox2f TargetBounds = ULyraNavigationRouter::GetWidgetBoundsInRootSpace(
-            TargetPanel, WindowRootWidget);
+        // Return position from whichever panel is currently focused
+        if (UWidget* FocusedPanel = GetCurrentlyFocusedPanel())
+        {
+            if (UWidget* SelectedSlot = GetSelectedSlotFrom(FocusedPanel))
+            {
+                OutScreenPosition = SelectedSlot->GetCachedGeometry()
+                    .GetAbsolutePositionAtCoordinates(FVector2D(0.5f, 0.5f));
+                return true;
+            }
+        }
+        return false;
+    }
 
-        PlayerPanelHandle = Router->RegisterPanel(
-            PlayerPanel, TAG_Panel_PlayerInventory, PlayerBounds, true);
-        TargetPanelHandle = Router->RegisterPanel(
-            TargetPanel, TAG_Panel_TargetInventory, TargetBounds, false);
-
-        SetupCrossPanelNavigation();
+    virtual void ReceiveNavigationEntry_Implementation(FIntPoint Direction, float ScreenCoordinate) override
+    {
+        // Select appropriate panel based on entry direction
+        if (Direction.X > 0)  // Came from left
+        {
+            PlayerPanel->SelectSlotNearCoordinate(Direction, ScreenCoordinate);
+        }
+        else if (Direction.X < 0)  // Came from right
+        {
+            TargetPanel->SelectSlotNearCoordinate(Direction, ScreenCoordinate);
+        }
     }
 
 private:
-    void SetupCrossPanelNavigation()
-    {
-        Router->AddRouteOverride(PlayerPanelHandle, EUINavigation::Right, TargetPanelHandle);
-        Router->AddRouteOverride(TargetPanelHandle, EUINavigation::Left, PlayerPanelHandle);
-    }
-
     UPROPERTY()
     TObjectPtr<ULyraContainerViewModel> PlayerVM;
 
     UPROPERTY()
     TObjectPtr<ULyraContainerViewModel> TargetVM;
 
-    UPROPERTY()
-    TObjectPtr<ULyraNavigationRouter> Router;
-
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<ULyraInventoryListPanel> PlayerPanel;
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<ULyraInventoryListPanel> TargetPanel;
-
-    FNavigationPanelHandle PlayerPanelHandle;
-    FNavigationPanelHandle TargetPanelHandle;
 };
 ```
 
@@ -458,8 +450,6 @@ void OpenTradeWindow(ULyraInventoryManagerComponent* TargetInventory)
     UIManager->RequestOpenWindow(Spec);
 }
 ```
-
-***
 
 ### Custom Window Shell
 
@@ -552,9 +542,7 @@ TSubclassOf<ULyraItemContainerWindowShell> UMyLayer::GetWindowShellClass_Impleme
 }
 ```
 
-***
-
-## Item Tracking & Window Reparenting
+### Item Tracking & Window Reparenting
 
 Windows can track items and automatically respond when items move between containers.
 
@@ -599,84 +587,66 @@ void UMyContent::HandleSourceReparented(const FInstancedStruct& NewSlotDesc)
 }
 ```
 
-***
-
 ### Navigation in Custom Windows
 
-Custom content must register navigable panels for keyboard/gamepad support.
+For keyboard/controller navigation support, implement the navigation methods of the interface.
 
-#### Registering Panels
+#### `GetFocusableContent`
 
-In `FinalizeWindowContent()`, register each navigable panel:
+Return the widget that should receive focus when this window is focused:
 
 ```cpp
-void FinalizeWindowContent_Implementation(UWidget* WindowRootWidget)
+UWidget* UMyContent::GetFocusableContent_Implementation() const
 {
-    // Calculate panel bounds in window-local coordinates
-    FBox2f PanelBounds = ULyraNavigationRouter::GetWidgetBoundsInRootSpace(
-        MyPanel,
-        WindowRootWidget
-    );
+    // For a single-panel window
+    return MainPanel;
 
-    // Register with options
-    PanelHandle = Router->RegisterPanel(
-        MyPanel,                    // The navigable widget
-        TAG_Panel_MyPanel,          // Panel type tag
-        PanelBounds,                // Geometry for neighbor resolution
-        true                        // bIsDefaultFocus - receives initial focus
-    );
+    // For a multi-panel window, return the default panel
+    return PlayerPanel;
 }
 ```
 
-#### Updating Geometry
+#### `GetCursorScreenPosition`
 
-If your layout changes after initialization:
+Return the current selection/cursor position for cross-window alignment:
 
 ```cpp
-void OnLayoutChanged()
+bool UMyContent::GetCursorScreenPosition_Implementation(FVector2D& OutScreenPosition) const
 {
-    FBox2f NewBounds = ULyraNavigationRouter::GetWidgetBoundsInRootSpace(
-        MyPanel, GetWindowRootWidget());
-
-    Router->UpdatePanelGeometry(PanelHandle, NewBounds);
+    if (UWidget* SelectedSlot = GetCurrentlySelectedSlot())
+    {
+        FGeometry Geom = SelectedSlot->GetCachedGeometry();
+        OutScreenPosition = Geom.GetAbsolutePositionAtCoordinates(FVector2D(0.5f, 0.5f));
+        return true;
+    }
+    return false;  // Will use window center as fallback
 }
 ```
 
-#### Custom Navigation Rules
+#### `ReceiveNavigationEntry`
 
-For explicit panel-to-panel navigation (instead of geometry-based):
+Position your cursor when focus comes from another window:
 
 ```cpp
-void SetupNavigation()
+void UMyContent::ReceiveNavigationEntry_Implementation(FIntPoint Direction, float ScreenCoordinate)
 {
-    // Explicit: Right from LeftPanel always goes to RightPanel
-    Router->AddRouteOverride(LeftPanelHandle, EUINavigation::Right, RightPanelHandle);
-    Router->AddRouteOverride(RightPanelHandle, EUINavigation::Left, LeftPanelHandle);
-
-    // Down from either goes to ActionBar
-    Router->AddRouteOverride(LeftPanelHandle, EUINavigation::Down, ActionBarHandle);
-    Router->AddRouteOverride(RightPanelHandle, EUINavigation::Down, ActionBarHandle);
+    if (Direction.X != 0)
+    {
+        // Horizontal navigation - align with Y coordinate
+        // Select slot on the left edge if came from left, right edge if came from right
+        SelectSlotNearY(ScreenCoordinate, Direction.X > 0 ? EEdge::Left : EEdge::Right);
+    }
+    else if (Direction.Y != 0)
+    {
+        // Vertical navigation - align with X coordinate
+        SelectSlotNearX(ScreenCoordinate, Direction.Y > 0 ? EEdge::Top : EEdge::Bottom);
+    }
 }
 ```
-
-#### Focus Management
-
-```cpp
-// Programmatically set which panel has focus
-Router->SetActivePanel(TargetPanelHandle);
-
-// Or request focus (may be denied)
-Router->RequestPanelFocus(TargetPanelHandle);
-
-// Get current active panel
-FNavigationPanelHandle Active = Router->GetActivePanel();
-```
-
-***
 
 ### Opening Custom Windows
 
-#### The FItemWindowSpec Struct
+#### The `FItemWindowSpec` Struct
 
 All window creation goes through `FItemWindowSpec`:
 
@@ -755,8 +725,6 @@ void OpenCustomWindow()
 }
 ```
 
-***
-
 ### Comparison View Example
 
 A split window showing two items side-by-side:
@@ -803,24 +771,34 @@ public:
         CalculateAndShowDifferences();
     }
 
-    virtual void SetWindowRouter_Implementation(ULyraNavigationRouter* InRouter) override
+    virtual UWidget* GetFocusableContent_Implementation() const override
     {
-        Router = InRouter;
+        return KeepButton;  // Default to first action button
     }
 
-    virtual void FinalizeWindowContent_Implementation(UWidget* WindowRootWidget) override
+    virtual bool GetCursorScreenPosition_Implementation(FVector2D& OutScreenPosition) const override
     {
-        // Register action buttons for navigation
-        FBox2f KeepBounds = ULyraNavigationRouter::GetWidgetBoundsInRootSpace(
-            KeepButton, WindowRootWidget);
-        FBox2f EquipBounds = ULyraNavigationRouter::GetWidgetBoundsInRootSpace(
-            EquipButton, WindowRootWidget);
+        // Return position of focused button
+        if (UWidget* FocusedButton = GetFocusedButton())
+        {
+            OutScreenPosition = FocusedButton->GetCachedGeometry()
+                .GetAbsolutePositionAtCoordinates(FVector2D(0.5f, 0.5f));
+            return true;
+        }
+        return false;
+    }
 
-        KeepHandle = Router->RegisterPanel(KeepButton, TAG_Panel_Action, KeepBounds, true);
-        EquipHandle = Router->RegisterPanel(EquipButton, TAG_Panel_Action, EquipBounds, false);
-
-        Router->AddRouteOverride(KeepHandle, EUINavigation::Right, EquipHandle);
-        Router->AddRouteOverride(EquipHandle, EUINavigation::Left, KeepHandle);
+    virtual void ReceiveNavigationEntry_Implementation(FIntPoint Direction, float ScreenCoordinate) override
+    {
+        // Focus the button on the entry side
+        if (Direction.X > 0)  // Came from left
+        {
+            KeepButton->SetKeyboardFocus();
+        }
+        else if (Direction.X < 0)  // Came from right
+        {
+            EquipButton->SetKeyboardFocus();
+        }
     }
 
 private:
@@ -848,45 +826,35 @@ private:
     UPROPERTY()
     TObjectPtr<ULyraItemViewModel> NewItemVM;
 
-    UPROPERTY()
-    TObjectPtr<ULyraNavigationRouter> Router;
-
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UButton> KeepButton;
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UButton> EquipButton;
-
-    FNavigationPanelHandle KeepHandle;
-    FNavigationPanelHandle EquipHandle;
 };
 ```
-
-***
 
 ### Best Practices
 
 {% hint style="success" %}
-**Use ViewModel leasing.** Call `Shell->AcquireViewModelLease(Source)` instead of manual acquire/release. The shell handles cleanup automatically.
+Use ViewModel leasing. Call `Shell->AcquireViewModelLease(Source)` instead of manual acquire/release. The shell handles cleanup automatically.
 {% endhint %}
 
 {% hint style="success" %}
-**Register all navigable panels.** If your window has interactive elements, register them with the router in `FinalizeWindowContent()`.
+Implement all navigation methods. For full controller/keyboard support, implement `GetFocusableContent`, `GetCursorScreenPosition`, and `ReceiveNavigationEntry`.
 {% endhint %}
 
 {% hint style="success" %}
-**Update geometry when layout changes.** If panels resize or reposition, call `Router->UpdatePanelGeometry()`.
+Return meaningful cursor positions. The `GetCursorScreenPosition` method enables smooth cross-window navigation by aligning the cursor between windows.
 {% endhint %}
 
 {% hint style="warning" %}
-**Don't bypass sessions.** Even custom windows should belong to sessions for proper lifecycle management. Use `UIManager->CreateChildSession()` for external containers or item inspection.
+Don't bypass sessions. Even custom windows should belong to sessions for proper lifecycle management. Use `UIManager->CreateChildSession()` for external containers or item inspection.
 {% endhint %}
 
 {% hint style="warning" %}
-**Don't hardcode window positions.** Use placement options and let the system handle positioning for a consistent user experience.
+Don't hardcode window positions. Use placement options and let the system handle positioning for a consistent user experience.
 {% endhint %}
-
-***
 
 ### Summary
 
@@ -900,11 +868,12 @@ private:
 
 #### Key Interface Methods
 
-| Method                    | Purpose                         |
-| ------------------------- | ------------------------------- |
-| `SetContainerSource()`    | Acquire ViewModel(s)            |
-| `SetWindowRouter()`       | Store router reference          |
-| `FinalizeWindowContent()` | Register panels, geometry valid |
+| Method                      | Purpose                                |
+| --------------------------- | -------------------------------------- |
+| `SetContainerSource()`      | Acquire ViewModel(s)                   |
+| `GetFocusableContent()`     | Return widget to focus                 |
+| `GetCursorScreenPosition()` | Report cursor for cross-window nav     |
+| `ReceiveNavigationEntry()`  | Position cursor on incoming navigation |
 
 #### Key Shell Methods
 
@@ -913,16 +882,6 @@ private:
 | `AcquireViewModelLease()` | Auto-managed `ViewModel`       |
 | `SetTitle()`              | Set window title               |
 | `GetOwningWindowShell()`  | Static - find shell from child |
+| `RequestContentFocus()`   | Focus the content widget       |
 | `CanUserClose()`          | Check if closeable             |
 | `CanDrag()`               | Check if draggable             |
-
-#### Key Router Methods
-
-| Method                  | Purpose                   |
-| ----------------------- | ------------------------- |
-| `RegisterPanel()`       | Register navigable panel  |
-| `UpdatePanelGeometry()` | Update panel bounds       |
-| `AddRouteOverride()`    | Explicit navigation route |
-| `SetActivePanel()`      | Set focused panel         |
-
-***
