@@ -4,32 +4,42 @@ When navigating between windows, users expect the cursor to maintain spatial con
 
 This page explains how the **content interface methods** enable cursor alignment across windows.
 
-### The Alignment Problem
+#### The Alignment Problem
 
 Without alignment, cross-window navigation feels jarring:
 
 ```
-Before (Bad):
-┌───────────┐    ┌──────────┐
-│ ○ ○ ○ ○ ○ │    │ ○ ○ ○ ○ ○ │
-│ ○ ○ ○ ○ ○ │  → │ ● ○ ○ ○ ○ │  ← Jumped to top!
-│ ○ ○ ● ○ ○ │    │ ○ ○ ○ ○ ○ │
-│ ○ ○ ○ ○ ○ │    │ ○ ○ ○ ○ ○ │
-└───────────┘    └───────────┘
-    Source              Target
+                         Before (Bad)
+                   User presses D-Pad RIGHT
+                   ─────────────────────────►
+
+┌───────────────────────┐        ┌───────────────────────┐
+│   Source Window       │        │   Target Window       │
+│                       │        │                       │
+│   [ ] [ ] [ ] [ ]     │        │   [X] [ ] [ ] [ ]     │  ← Jumped to top!
+│   [ ] [ ] [ ] [ ]     │        │   [ ] [ ] [ ] [ ]     │
+│   [ ] [ ] [X] [ ]     │        │   [ ] [ ] [ ] [ ]     │
+│   [ ] [ ] [ ] [ ]     │        │   [ ] [ ] [ ] [ ]     │
+│                       │        │                       │
+└───────────────────────┘        └───────────────────────┘
 ```
 
 With alignment, navigation feels natural:
 
 ```
-After (Good):
-┌───────────┐    ┌───────────┐
-│ ○ ○ ○ ○ ○ │    │ ○ ○ ○ ○ ○ │
-│ ○ ○ ○ ○ ○ │ →  │ ○ ○ ○ ○ ○ │
-│ ○ ○ ● ○ ○ │    │ ● ○ ○ ○ ○ │  ← Same row!
-│ ○ ○ ○ ○ ○ │    │ ○ ○ ○ ○ ○ │
-└───────────┘    └───────────┘
-    Source              Target
+                         After (Good)
+                   User presses D-Pad RIGHT
+                   ─────────────────────────►
+
+┌───────────────────────┐        ┌───────────────────────┐
+│   Source Window       │        │   Target Window       │
+│                       │        │                       │
+│   [ ] [ ] [ ] [ ]     │        │   [ ] [ ] [ ] [ ]     │
+│   [ ] [ ] [ ] [ ]     │        │   [ ] [ ] [ ] [ ]     │
+│   [ ] [ ] [X] [ ] ────┼────────┼►  [X] [ ] [ ] [ ]     │  ← Same row!
+│   [ ] [ ] [ ] [ ]     │        │   [ ] [ ] [ ] [ ]     │
+│                       │        │                       │
+└───────────────────────┘        └───────────────────────┘
 ```
 
 ### The Interface Methods

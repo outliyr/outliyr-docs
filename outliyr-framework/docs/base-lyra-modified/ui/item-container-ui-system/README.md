@@ -117,7 +117,7 @@ flowchart TB
 This documentation is split into several detailed sections to help you navigate the architecture:
 
 * [**Core Architecture & Data Structures**](core-architecture-and-data-structures/) Explains the foundational types like `FInstancedStruct`, the ViewModel hierarchy, and the polymorphic descriptors that allow the system to be container-agnostic and gives an overview into the window model.
-* [**The Central Managers**](the-central-managers/) A deep dive into the subsystems that run the show: The **UI Manager** (Lifecycle & Leasing) and the **Window Manager** (Geometry & Z-Ordering).
+* [**Item Container UI Manager**](item-container-ui-manager/) A deep dive into the subsystem that run the show: The Item container UI Manager
 * [**The Data Layer (ViewModels)**](data-layers-view-models/) Learn how `ContainerViewModel`, `SlotViewModel`, and `ItemViewModel` work together to solve common UMG problems like "Null Bindings" and persistent selection states.
 * [**Interaction & Transactions**](interaction-and-transactions/) The complex logic behind moving items. Covers the Interaction ViewModel, UI Transaction Pipeline, and Context Actions.
 * [**The Windowing System**](the-windowing-system/) An overview of the optional windowing framework, including the Window Shell, Content Interfaces, and Dynamic Reparenting.
