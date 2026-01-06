@@ -333,25 +333,27 @@ Implement each interface event:
   * Call `AcquireViewModelLease` with the Source
   * Bind your UI to the returned `ViewModel`
 
-<figure><img src="../../../../.gitbook/assets/image (195).png" alt=""><figcaption><p>Exampl setting the content interface forr the equipment widget</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (195).png" alt=""><figcaption><p>Example setting the content interface for the equipment widget</p></figcaption></figure>
 
-* GetFocusableContent Function:
+* `GetFocusableContent` Function:
   * Return a reference to your main interactive widget (`ListView`, Grid, etc.)
 
 <figure><img src="../../../../.gitbook/assets/image (196).png" alt="" width="272"><figcaption></figcaption></figure>
 
-* GetCursorScreenPosition Function:
+* `GetCursorScreenPosition` Function:
   * Get your currently selected widget's geometry
   * Call `GetCachedGeometry->LocalToAbsolute(0.5, 0.5)`
   * Return true if you have a selection, false otherwise
 
 <figure><img src="../../../../.gitbook/assets/image (198).png" alt=""><figcaption><p>Pass the last focused equipment slot for better cursor position</p></figcaption></figure>
 
-* ReceiveNavigationEntry Event:
+* `ReceiveNavigationEntry` Event:
   * Check the Direction to determine which edge navigation came from
   * Select the appropriate slot/item based on `ScreenCoordinate`
 
+<figure><img src="../../../../.gitbook/assets/image (200).png" alt="" width="375"><figcaption></figcaption></figure>
 
+<figure><img src="../../../../.gitbook/assets/image (201).png" alt=""><figcaption><p>Example of equipment panel calculating the best slot to focus based on the entry parameters provided</p></figcaption></figure>
 
 ***
 
