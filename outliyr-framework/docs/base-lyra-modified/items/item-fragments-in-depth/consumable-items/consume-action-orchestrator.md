@@ -22,12 +22,22 @@ You don’t need a different ability for each item.
 All you need to do is:
 
 * Make sure the item definition has a valid `InventoryFragment_Consume`.
-* Set that item's **activation tag** to something like `Ability.Inventory.UseItem`.
+* Set that item's **activation tag** to  `Ability.Inventory.UseItem`.
 * Send a gameplay event (via Blueprint or C++) with a reference to the item’s **slot address**.
 
 That’s it. `ULyraGameplayAbility_Consume` takes over from there.
 
-<figure><img src="../../../../.gitbook/assets/image (48).png" alt=""><figcaption><p><code>W_InventoryActionMenu</code>  UseItem function.</p></figcaption></figure>
+<details>
+
+<summary>Directly calling the ability from UI</summary>
+
+
+
+</details>
+
+{% hint style="success" %}
+You do not need to call the ability from the UI because the item action menu already supports consuming items, so that is automatically handled. The item action menu under the hood also calls the ability. You can read this page for more info on the [Item action menu](../../../ui/item-container-ui-system/interaction-and-transactions/context-menus-and-action-logic.md).
+{% endhint %}
 
 ***
 
@@ -51,18 +61,40 @@ The orchestrator ability itself never removes items, applies buffs, plays montag
 
 ***
 
-### The hidden conductor: ActivateConsumeEffectAndWait
+### The hidden conductor: `ActivateConsumeEffectAndWait`
 
 The orchestrator delegates actual ability activation to an **internal Ability Task**. You won’t see it in your Blueprints. it’s used behind the scenes.
 
 Its job:
 
-| Phase        | Task Responsibility                                                                               |
-| ------------ | ------------------------------------------------------------------------------------------------- |
-| **Grant**    | Temporarily grants the `FromConsume` ability defined in the fragment.                             |
-| **Activate** | Activates the effect ability, passing in the item as the SourceObject.                            |
-| **Wait**     | <p>Listens for the ability to either:<br>• call <code>ConsumeItem()</code><br>• or end itself</p> |
-| **Finish**   | Unbinds delegates, clears the ability from the ASC, and reports completion to the orchestrator.   |
+{% stepper %}
+{% step %}
+#### **Grant**
+
+Temporarily grants the `FromConsume` ability defined in the fragment.
+{% endstep %}
+
+{% step %}
+#### **Activate**
+
+Activates the effect ability, passing in the item as the SourceObject.
+{% endstep %}
+
+{% step %}
+#### **Wait**
+
+Listens for the ability to either:
+
+* Call `ConsumeItem()`
+* Or end itself
+{% endstep %}
+
+{% step %}
+#### **Finish**
+
+Unbinds delegates, clears the ability from the ASC, and reports completion to the orchestrator.
+{% endstep %}
+{% endstepper %}
 
 ***
 
@@ -105,7 +137,6 @@ When you add a `ConsumeFragment` to an item:
 
 The only thing you need to implement is the **effect.** Everything else is handled.
 
-Now that you understand how the consume process is launched and managed, continue to the next section:\
-**Consumed Item Effect Logic** – where you’ll implement the actual gameplay logic for using an item.
+Now that you understand how the consume process is launched and managed, continue to the next section, where you’ll implement the actual gameplay effects when an item is consumed.
 
 ***

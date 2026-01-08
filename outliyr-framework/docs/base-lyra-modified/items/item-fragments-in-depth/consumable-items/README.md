@@ -35,13 +35,13 @@ The core goal is to provide a standardized and flexible way to:
 | Layer             | Your task                                                                             | Engine pieces                                      |
 | ----------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------- |
 | **Data**          | Add a **Consume Fragment** to the item definition and pick an _Effect Ability_ class. | `UInventoryFragment_Consume`                       |
-| **Orchestration** | Nothing—handled automatically when the player presses **Use**.                        | `ULyraGameplayAbility_Consume` (lightweight)       |
+| **Orchestration** | Nothing, handled automatically when the player presses **Use**.                       | `ULyraGameplayAbility_Consume` (lightweight)       |
 | **Effect**        | Build or tweak the Gameplay Ability that actually heals, spawns, throws, etc.         | `ULyraGameplayAbility_FromConsume` (your subclass) |
-| **Plumbing**      | Invisible; manages grant/activate/wait/cleanup.                                       | `UAbilityTask_ActivateConsumeEffectAndWait`        |
+| **Plumbing**      | Nothing, manages grant/activate/wait/cleanup.                                         | `UAbilityTask_ActivateConsumeEffectAndWait`        |
 
 ***
 
-## Life-of-a-consumable
+## Life of a consumable
 
 1. **UI** sends `Ability.Item.UseItem` event with the inventory slot.
 2. **GA\_Consume** (server predicted)
@@ -59,7 +59,7 @@ The core goal is to provide a standardized and flexible way to:
 
 <summary>Blueprint example of a Consumable Ability (<code>GA_Consume_DirtyWater</code>)</summary>
 
-<figure><img src="../../../../.gitbook/assets/image (45).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (202).png" alt=""><figcaption></figcaption></figure>
 
 </details>
 

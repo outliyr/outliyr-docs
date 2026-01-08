@@ -33,11 +33,15 @@ The **Consume Fragment** is the switch that turns a plain object into a “use-i
 
 ### Property reference (and why it matters)
 
-| Property                                                                    | What it means                                                                                                                                                                                                                                                                                                      | Typical choices                                                                                                                    |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| **Ability To Activate** \*(`TSubclassOf<ULyraGameplayAbility_FromConsume>`) | The Gameplay Ability that actually heals, throws, buffs…                                                                                                                                                                                                                                                           | `GA_Consume_Medkit`, `GA_Consume_FragGrenade`                                                                                      |
-| **Amount To Consume** _(int32, default 1)_                                  | How many units (stack/charges) are removed when **ConsumeItem()** is called inside the ability.                                                                                                                                                                                                                    | 1 for most items, 10 for “ammo boxes”, etc.                                                                                        |
-| **Finish Policy** _(enum)_                                                  | <p>How long other consumes are blocked:<br>• <strong>End Immediately</strong> – no block<br>• <strong>Wait for OnConsume</strong> – brief block until the ability calls <code>ConsumeItem()</code><br>• <strong>Block Until Ability Ends</strong> – full lock-in until ability finishes (montage, delay, etc.)</p> | <p>Food buff → <em>End Immediately</em><br>Grenade → <em>Wait for OnConsume</em><br>Medkit → <em>Block Until Ability Ends</em></p> |
+* **Ability To Activate**
+  * The Gameplay Ability that actually heals, throws, buffs…
+* **Amount To Consume**
+  * How many units are removed when **`ConsumeItem()`** is called inside the ability.
+* **Finish Policy**
+  * How long other consumes are blocked:
+    * `End Immediately` - no block
+    * `Wait for OnConsume` - brief block until the ability calls `ConsumeItem()`&#x20;
+    * `Block Until Ability Ends` - the consume ability can not be activated again until the ability finishes (montages, delays, etc)
 
 ***
 
@@ -66,7 +70,7 @@ No other system needs to know the details; the fragment carries everything.
 | Finish Policy       | **Block Until Ability Ends** |
 
 `GA_Consume_MedkitHeal` plays a 3-second montage, then calls `ConsumeItem()`, then `EndAbility()`.\
-During those 3 s the player cannot start another consume.
+During those 3 seconds the player cannot start another consume.
 
 </details>
 
@@ -81,7 +85,7 @@ During those 3 s the player cannot start another consume.
 | Finish Policy       | **End Immediately**      |
 
 The effect ability applies a buff and calls `ConsumeItem()` in the same tick.\
-The player can slam multiple drinks in rapid succession.
+The player can drink multiple drinks in rapid succession.
 
 </details>
 
@@ -89,11 +93,11 @@ The player can slam multiple drinks in rapid succession.
 
 ### Common mistakes & quick fixes
 
-| Symptom                             | Cause                                                                                   | Fix                                                                                |
-| ----------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Pressing **Use** does nothing       | Fragment missing or `Ability To Activate` unset                                         | Add fragment / pick ability class                                                  |
-| Item never leaves inventory         | Effect ability forgot to call  `ConsumeItem()` or forgot to override `OnConsumeItem()`  | Call `ConsumeItem()` where you want stack deducted, and populate `OnConsumeItem()` |
-| Player stuck, can’t use other items | Finish Policy set to _Block Until Ability Ends_ but ability never ends                  | Ensure ability calls `EndAbility()` (after montage, delay, etc.)                   |
+| Symptom                             | Cause                                                                  | Fix                                                              |
+| ----------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Pressing **Use** does nothing       | Fragment missing or `Ability To Activate` unset                        | Add fragment / pick ability class                                |
+| Item never leaves inventory         | Effect ability forgot to call  `ConsumeItem()`                         | Call `ConsumeItem()` where you want stack deducted               |
+| Player stuck, can’t use other items | Finish Policy set to _Block Until Ability Ends_ but ability never ends | Ensure ability calls `EndAbility()` (after montage, delay, etc.) |
 
 ***
 
