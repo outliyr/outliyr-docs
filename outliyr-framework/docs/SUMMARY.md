@@ -114,6 +114,7 @@
   * [World Interaction & Global Management](base-lyra-modified/items/world-interaction-and-global-management/README.md)
     * [Pickup System](base-lyra-modified/items/world-interaction-and-global-management/pickup-system.md)
     * [Dropping Items & World Collectable Lifecycle](base-lyra-modified/items/world-interaction-and-global-management/dropping-items-and-world-collectable-lifecycle.md)
+    * [Item Subsystem](base-lyra-modified/items/world-interaction-and-global-management/item-subsystem.md)
     * [Global Inventory manager](base-lyra-modified/items/world-interaction-and-global-management/global-inventory-manager.md)
   * [Item Query System](base-lyra-modified/items/item-query-system/README.md)
     * [ULyraInventoryQuery](base-lyra-modified/items/item-query-system/ulyrainventoryquery.md)
