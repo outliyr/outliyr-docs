@@ -42,7 +42,7 @@ _Example Configuration (`ID_Consumable_HealthPotion`):_
 
 The fragment's primary interaction happens during item instance creation:
 
-1. **Instance Creation:** When `UGlobalInventoryManager::CreateNewItem` (or a function calling it) creates a new `ULyraInventoryItemInstance`.
+1. **Instance Creation:** When `ItemSubsystem::CreateNewItem` creates a new `ULyraInventoryItemInstance`.
 2. **Fragment Iteration:** The creation process iterates through all fragments listed in the item's definition.
 3. **`OnInstanceCreated` Called:** For each fragment, including `UInventoryFragment_SetStats`, the `OnInstanceCreated(ULyraInventoryItemInstance* Instance)` virtual function is called.
 4. **Applying Stats:** The `UInventoryFragment_SetStats::OnInstanceCreated` implementation specifically iterates through its `InitialItemStats` map. For each Key-Value pair (Tag, Value), it calls `Instance->AddStatTagStack(Tag, Value)` on the newly created item instance.

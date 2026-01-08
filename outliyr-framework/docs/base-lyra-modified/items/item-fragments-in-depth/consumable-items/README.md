@@ -21,39 +21,84 @@ The **Consume Fragment** turns that expectation into a **data-driven pipeline**:
 
 The core goal is to provide a standardized and flexible way to:
 
-1. **Designate Items as Usable:** Mark specific item types as consumable or activatable.
-2. **Link Item to Effect:** Associate an item type with a specific Gameplay Ability that defines the _actual consequence_ of using the item (e.g., healing, applying a buff, etc).
-3. **Define Cost:** Specify how much of the item (e.g., stack count, charges) should be consumed _if_ the usage is successful.
-4. **Conditional Consumption:** Allow the specific effect ability to determine if the use was "successful" in a gameplay sense (e.g., health potion doesn't work if health is full), preventing unnecessary cost application.
-5. **Integrate with GAS:** Leverage the Gameplay Ability System for activation, permission checking, networking, and executing the effects.
-6. **Decouple Logic:** Separate the generic "use item" request (often from UI) from the specific item's effect and cost application logic.
+* **Designate Items as Usable:** Mark specific item types as consumable or activatable.
+* **Link Item to Effect:** Associate an item type with a specific Gameplay Ability that defines the _actual consequence_ of using the item (e.g., healing, applying a buff, etc).
+* **Define Cost:** Specify how much of the item (e.g., stack count, charges) should be consumed _if_ the usage is successful.
+* **Conditional Consumption:** Allow the specific effect ability to determine if the use was "successful" in a gameplay sense (e.g., health potion doesn't work if health is full), preventing unnecessary cost application.
+* **Integrate with GAS:** Leverage the Gameplay Ability System for activation, permission checking, networking, and executing the effects.
+* **Decouple Logic:** Separate the generic "use item" request (often from UI) from the specific item's effect and cost application logic.
+
+### What You Need to Know
+
+To make a consumable item, you only need to understand two things:
+
+| Component               | What It Does                                        | Your Task                                          |
+| ----------------------- | --------------------------------------------------- | -------------------------------------------------- |
+| **Consume Fragment**    | Marks an item as usable and configures its behavior | Add to item definition, set properties             |
+| **FromConsume Ability** | Defines what happens when the item is used          | Create a Blueprint subclass with your effect logic |
+
+That's it. Everything else (orchestration, networking, cleanup) is handled automatically.
 
 ***
 
-### Big-picture architecture
+### Quick Start
 
-| Layer             | Your task                                                                             | Engine pieces                                      |
-| ----------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| **Data**          | Add a **Consume Fragment** to the item definition and pick an _Effect Ability_ class. | `UInventoryFragment_Consume`                       |
-| **Orchestration** | Nothing, handled automatically when the player presses **Use**.                       | `ULyraGameplayAbility_Consume` (lightweight)       |
-| **Effect**        | Build or tweak the Gameplay Ability that actually heals, spawns, throws, etc.         | `ULyraGameplayAbility_FromConsume` (your subclass) |
-| **Plumbing**      | Nothing, manages grant/activate/wait/cleanup.                                         | `UAbilityTask_ActivateConsumeEffectAndWait`        |
+{% stepper %}
+{% step %}
+#### Make the Item Consumable
 
-***
+Add a **Consume Fragment** to your item definition.
 
-## Life of a consumable
+{% stepper %}
+{% step %}
+#### Open your item definition
 
-1. **UI** sends `Ability.Item.UseItem` event with the inventory slot.
-2. **GA\_Consume** (server predicted)
-   1. finds the item instance,
-   2. checks the **Consume Fragment**,
-   3. launches the **Ability Task** with the chosen policy.
-3. **Ability Task** grants & activates the **Effect Ability** (your subclass).
-4. **Effect Ability**
-   * performs its gameplay (heal, spawn, delay, etc.),
-   * when appropriate calls **`ConsumeItem()`** to deduct the stack,
-   * ends itself when finished.
-5. Ability Task fires a delegate → **GA\_Consume** ends → prediction resolves.
+Open your item definition asset (e.g., `ID_HealthPotion`).
+{% endstep %}
+
+{% step %}
+#### Add the fragment
+
+In the Fragments array, click **+** and select `InventoryFragment_Consume`.
+{% endstep %}
+
+{% step %}
+#### Set the properties
+
+* **Ability To Activate**: Your FromConsume ability class
+* **Amount To Consume**: How many to remove per use (usually 1)
+* **Finish Policy**: When the player can use another item
+{% endstep %}
+{% endstepper %}
+{% endstep %}
+
+{% step %}
+#### Implement the Effect
+
+Create a Blueprint that inherits from `ULyraGameplayAbility_FromConsume`.
+
+Example pseudocode/flow:
+
+```
+Event ActivateAbility
+  → Do your effect (apply GE, play montage, spawn actor, etc.)
+  → Call ConsumeItem() when the cost should be paid
+  → Call EndAbility() when done
+```
+
+Example - Instant Heal:
+
+```
+ActivateAbility → Apply Heal Effect → ConsumeItem() → EndAbility()
+```
+
+Example - Channeled Med-Kit:
+
+```
+ActivateAbility → Play Montage → Wait → Apply Heal → ConsumeItem() → EndAbility()
+```
+{% endstep %}
+{% endstepper %}
 
 <details>
 
@@ -63,44 +108,39 @@ The core goal is to provide a standardized and flexible way to:
 
 </details>
 
-### Simplified Workflow Diagram
+***
 
-```mermaid
-sequenceDiagram
-    participant UI as Player UI
-    participant GA_Consume as GA_Consume<br>(Orchestrator)
-    participant Task as UAbilityTask<br>_ActivateConsumeEffectAndWait
-    participant GA_Effect as FromConsume Ability<br>(e.g. GA_Consume_Heal)
+### What Happens When You Call `ConsumeItem()`
 
-    UI->>GA_Consume: Trigger "Use Item" Event
-    GA_Consume->>GA_Consume: Resolve Item + Check ConsumeFragment
-    GA_Consume->>Task: GrantAndActivateConsumeEffectAndWait(...)
-    Task->>GA_Effect: Grant & Activate Ability
-    GA_Effect->>GA_Effect: Perform effect (heal, throw, etc.)
+When your ability calls `ConsumeItem()`:
 
-    alt FinishPolicy == WaitForConsume
-        GA_Effect-->>Task: Call ConsumeItem()
-    else FinishPolicy == BlockUntilEnd
-        GA_Effect-->>Task: EndAbility()
-    else FinishPolicy == EndImmediately
-        Task-->>GA_Consume: Ends immediately after activation
-    end
+1. Stack Decremented - Item count reduced by `AmountToConsume`
+2. Auto-Removal - If stack reaches 0, item is automatically removed from inventory
+3. Effects Triggered - `PlayConsumeEffects()` fires for VFX/sounds
+4. Server Confirmation - Transaction sent to server for validation
+5. Result Callback - `OnConsumeSucceeded` or `OnConsumeFailed` fires
 
-    Task-->>GA_Consume: OnConsumeAbilityTaskEnded
-
-    GA_Consume->>GA_Consume: EndAbility()
-
-```
-
-### Structure of this Section
-
-The following pages will detail the components involved in this workflow:
-
-* **Consume Fragment: `UInventoryFragment_Consume`:** Configuring the item to be consumable.
-* **Consume Action Trigger: `ULyraGameplayAbility_Consume`** and  **`UAbilityTask_ActivateConsumeEffectAndWait`:** The generic ability handling the use request.
-* **Consumed Item Effect Base: `ULyraGameplayAbility_FromConsume`:** The base gameplay abiliy class for implementing the actual item effect.
+{% hint style="info" %}
+The item transaction uses client prediction for responsive gameplay. For details on how this works, see [Client Prediction](../../../item-container/prediction/).
+{% endhint %}
 
 ***
 
-This overview introduces the streamlined approach to consumable items, centered around the static `UInventoryFragment_Consume` providing data, a generic orchestrator ability (`ULyraGameplayAbility_Consume`) handling the request flow. \
-(`ULyraGameplayAbility_FromConsume` subclasses) performing the actual gameplay logic and item consume logic.
+### Finish Policy Options
+
+The **Finish Policy** controls when the player can use another consumable:
+
+| Policy                 | Behavior                                | Use Case                   |
+| ---------------------- | --------------------------------------- | -------------------------- |
+| `EndImmediately`       | Player can immediately use another item | Instant buffs, quick items |
+| `WaitForConsumeEffect` | Blocked until `ConsumeItem()` is called | Items with brief delay     |
+| `BlockOtherConsumes`   | Blocked until ability fully ends        | Channeled items, montages  |
+
+***
+
+## Subpages
+
+* [**Consume Fragment**](consume-fragment.md) - Step 1: Configuring items to be consumable
+* [**FromConsume Ability**](from-consume-ability.md) - Step 2: Implementing the effect logic
+* [**How It Works**](consume-action-orchestrator.md) - Optional: Internal architecture for curious developers
+

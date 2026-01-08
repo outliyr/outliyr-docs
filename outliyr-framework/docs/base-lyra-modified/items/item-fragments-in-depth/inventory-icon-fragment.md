@@ -6,9 +6,8 @@ The `UInventoryFragment_InventoryIcon` is a fundamental fragment, essential for 
 
 * **Basic Item Identity:** Provides the `Name` and `Description` used for display in UI tooltips or detail panels.
 * **Visual Representation:** Specifies the `InventoryIcon` texture used in inventory slots.
-* **Stacking Rules:** Contains the `MaxStackSize` property, which dictates if and how many units of this item can stack within a single inventory entry (`FLyraInventoryEntry`). This is critical for the `TryAddItem...` logic in the Inventory Manager.
+* **Stacking Rules:** Contains the `MaxStackSize` property, which dictates if and how many units of this item can stack within a single inventory entry (`FLyraInventoryEntry`).
 * **Base Weight:** Defines the `Weight` contributed by a single unit of this item type towards the inventory's total weight limit.
-* **Item Count Contribution:** Specifies that each instance/stack of this item contributes '1' towards the inventory's `ItemCountLimit`.
 * **UI Styling:** Includes a `BackgroundColour` property that UI systems can optionally use for styling inventory slots containing this item.
 
 ### Static Configuration (`UInventoryFragment_InventoryIcon`)
@@ -52,19 +51,19 @@ _Example Configuration (`ID_Rifle_Standard`):_
 
 ### Runtime Interaction
 
-* **Stacking Logic:** The `ULyraInventoryManagerComponent::TryAddItemDefinition` and `TryAddItemInstance` functions look for this fragment on the item being added. They use `MaxStackSize` to manage how items fill existing stacks before creating new `FLyraInventoryEntry` items. Items lacking this fragment are typically treated as unstackable.
-* **Weight Calculation:** `ULyraInventoryManagerComponent` calls `GetWeightContribution` on all fragments. This fragment's implementation returns its configured `Weight`.
-* **Item Count Calculation:** `ULyraInventoryManagerComponent` calls `GetItemCountContribution` on all fragments. This fragment's implementation returns `1`.
-* **UI Display:** UI widgets read this fragment (via `ItemInstance->FindFragmentByClass<UInventoryFragment_InventoryIcon>()`) to get the `InventoryIcon`, `Name`, `Description`, `BackgroundColour`, and stacking info (`MaxStackSize` combined with the instance's current `Lyra.Inventory.Item.Count` StatTag).
+* **Stacking Logic:** The item containers use the  `MaxStackSize` variable from this fragment to manage how items fill existing stacks before adding them to empty slots.
+* **Weight Calculation:** `ItemInstance` calls `GetWeightContribution` on all fragments. This fragment's implementation returns its configured `Weight * stack count`.
+* **Item Count Calculation:** `ItemInstance` calls `GetItemCountContribution` on all fragments. This fragment's implementation returns `stack count`.
+* **UI Display:** `ItemViewModel` read this fragment to get the `InventoryIcon`, `Name`, `Description`, `BackgroundColour`, and stacking info.
 
 ### Importance
 
-This fragment is **highly recommended** for nearly all items intended to be managed by the base `ULyraInventoryManagerComponent` and displayed in a typical inventory UI. Without it:
+This fragment is **highly recommended** for nearly all items intended to be managed by item containers. Without it:
 
-* Items generally won't stack using the standard `TryAddItem...` logic.
+* Items generally won't stack.
 * Items won't contribute correctly to weight or item count limits.
-* Inventory UI systems will lack the necessary data (icon, name, description, stack info) to display the item meaningfully.
+* UI systems will lack the necessary data (icon, name, description, stack info) to display the item meaningfully.
 
 ***
 
-The `InventoryFragment_InventoryIcon` serves as a cornerstone fragment, providing essential data for UI display, stacking behavior, and contribution to inventory limits within the base `ULyraInventoryManagerComponent`. Ensure it's configured appropriately for items needing these standard inventory features.
+The `InventoryFragment_InventoryIcon` serves as a cornerstone fragment, providing essential data for UI display, stacking behavior, and contribution to item instance weight and item count. Ensure it's configured appropriately for items needing these standard inventory features.

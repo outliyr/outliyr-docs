@@ -1,6 +1,6 @@
 # Pickup Item Fragment
 
-When an item needs to exist physically in the game world – either placed intentionally or dropped by a player – the `UInventoryFragment_PickupItem` defines how it should look and potentially some basic display information for interaction prompts.
+When an item needs to exist physically in the game world, either placed intentionally or dropped by a player, the `UInventoryFragment_PickupItem` defines how it should look and potentially some basic display information for interaction prompts.
 
 ### Purpose
 

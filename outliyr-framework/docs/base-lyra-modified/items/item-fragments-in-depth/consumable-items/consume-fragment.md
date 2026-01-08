@@ -1,23 +1,20 @@
 # Consume Fragment
 
-### “What makes this item usable?”
+The **Consume Fragment** is what turns a regular item into something the player can "use."
 
-When you drag a brand-new **Item Definition** into your project it is just data: e.g. name, icon, etc\
-One of the ways of letting a player _do_ something with it while it's in inventory is attaching exactly one extra fragment:
+When you add this fragment to an item definition, it:
+
+* **Points** to the ability that performs the effect
+* **Specifies** how many units to deduct when consumed
+* **Controls** whether the player is blocked from using other items
 
 ```
-ID_EnergyDrink
+ID_HealthPotion
 └─ Fragments
    ├─ InventoryFragment_Icon
    ├─ InventoryFragment_SetStats
-   └─ **InventoryFragment_Consume**   ← you add this
+   └─ InventoryFragment_Consume   ← this makes it usable
 ```
-
-The **Consume Fragment** is the switch that turns a plain object into a “use-item”:
-
-* **points** to the Ability that performs the effect;
-* **tells** the system how many units to deduct when consumed;
-* **chooses** whether the player is locked in place, briefly paused, or free to spam other items.
 
 <figure><img src="../../../../.gitbook/assets/image (47).png" alt=""><figcaption><p>Consumable Fragment</p></figcaption></figure>
 
@@ -31,74 +28,146 @@ The **Consume Fragment** is the switch that turns a plain object into a “use-i
 
 ***
 
-### Property reference (and why it matters)
+### Properties
 
-* **Ability To Activate**
-  * The Gameplay Ability that actually heals, throws, buffs…
-* **Amount To Consume**
-  * How many units are removed when **`ConsumeItem()`** is called inside the ability.
-* **Finish Policy**
-  * How long other consumes are blocked:
-    * `End Immediately` - no block
-    * `Wait for OnConsume` - brief block until the ability calls `ConsumeItem()`&#x20;
-    * `Block Until Ability Ends` - the consume ability can not be activated again until the ability finishes (montages, delays, etc)
+#### Ability To Activate
+
+The Gameplay Ability that defines what happens when the item is used.
+
+This must be a subclass of `ULyraGameplayAbility_FromConsume`. You'll implement your effect logic (healing, spawning, buffs, etc.) in this ability.
+
+#### Amount To Consume
+
+How many units are removed from the stack when `ConsumeItem()` is called in your ability.
+
+* Set to `1` for most items
+* Set higher for items that consume multiple per use
+
+#### Finish Policy
+
+Controls when the player can use another consumable:
+
+| Policy                 | Behavior                                | Example                      |
+| ---------------------- | --------------------------------------- | ---------------------------- |
+| `EndImmediately`       | No blocking - player can spam items     | Energy drinks, instant buffs |
+| `WaitForConsumeEffect` | Blocked until `ConsumeItem()` is called | Items with brief wind-up     |
+| `BlockOtherConsumes`   | Blocked until the ability fully ends    | Med-kits, channeled items    |
 
 ***
 
-### What happens at runtime
+## What Happens at Runtime
 
-1. Player presses **Use**, through some UI, and sends a gameplay event to run a `GA_Consume` ability.
-2. **GA\_Consume** looks for _InventoryFragment\_Consume_ on the target item.
-3. It spawns the _Ability To Activate_ picked in the fragment.
-4. The chosen **Finish Policy** tells GA\_Consume when to end:
-   * immediately,
-   * after `ConsumeItem()` fires, or
-   * after the ability fully ends.
-5. Inside your effect ability you call **`ConsumeItem()`** exactly when the cost should be paid.
-6. `OnConsumeItem` is called in the ability, which should be populated per consume ability.
+When the player uses an item with a Consume Fragment:
 
-No other system needs to know the details; the fragment carries everything.
+1. **UI triggers** the use action (sends `Ability.Inventory.UseItem` event)
+2. **Orchestrator** finds the item and reads the Consume Fragment
+3. **Your ability** is activated (the `Ability To Activate` you specified)
+4. **You call** `ConsumeItem()` when the effect should "cost" the item
+5. **System automatically**:
+   * Decrements stack by `Amount To Consume`
+   * Removes item if stack reaches 0
+   * Fires `PlayConsumeEffects()` for VFX/sounds
+   * Sends transaction to server for validation
+6. **Ability ends** when you call `EndAbility()`
+
+{% hint style="info" %}
+You don't need to manually remove items from inventory. Calling `ConsumeItem()` handles everything, including removing the item when the stack is depleted.
+{% endhint %}
+
+***
+
+### Examples
 
 <details>
 
-<summary>Example Medkit (channelled heal)</summary>
+<summary>Med-Kit (Channeled Heal)</summary>
 
-| Setting             | Value                        |
-| ------------------- | ---------------------------- |
-| Ability To Activate | `GA_Consume_MedkitHeal`      |
-| Amount To Consume   | 1                            |
-| Finish Policy       | **Block Until Ability Ends** |
+| Property            | Value                   |
+| ------------------- | ----------------------- |
+| Ability To Activate | `GA_Consume_MedkitHeal` |
+| Amount To Consume   | `1`                     |
+| Finish Policy       | `BlockOtherConsumes`    |
 
-`GA_Consume_MedkitHeal` plays a 3-second montage, then calls `ConsumeItem()`, then `EndAbility()`.\
-During those 3 seconds the player cannot start another consume.
+The ability plays a 3-second animation, applies healing, calls `ConsumeItem()`, then `EndAbility()`.
+
+During those 3 seconds, the player cannot use another consumable.
 
 </details>
 
 <details>
 
-<summary>Energy Drink (instant stamina buff)</summary>
+<summary>Energy Drink (Instant Buff)</summary>
 
-| Setting             | Value                    |
+| Property            | Value                    |
 | ------------------- | ------------------------ |
 | Ability To Activate | `GA_Consume_EnergyDrink` |
-| Amount To Consume   | 1                        |
-| Finish Policy       | **End Immediately**      |
+| Amount To Consume   | `1`                      |
+| Finish Policy       | `EndImmediately`         |
 
-The effect ability applies a buff and calls `ConsumeItem()` in the same tick.\
+The ability applies a stamina buff, calls `ConsumeItem()`, and ends in the same tick.
+
 The player can drink multiple drinks in rapid succession.
 
 </details>
 
-***
+<details>
 
-### Common mistakes & quick fixes
+<summary>Grenade (Throwable)</summary>
 
-| Symptom                             | Cause                                                                  | Fix                                                              |
-| ----------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Pressing **Use** does nothing       | Fragment missing or `Ability To Activate` unset                        | Add fragment / pick ability class                                |
-| Item never leaves inventory         | Effect ability forgot to call  `ConsumeItem()`                         | Call `ConsumeItem()` where you want stack deducted               |
-| Player stuck, can’t use other items | Finish Policy set to _Block Until Ability Ends_ but ability never ends | Ensure ability calls `EndAbility()` (after montage, delay, etc.) |
+| Property            | Value                     |
+| ------------------- | ------------------------- |
+| Ability To Activate | `GA_Consume_ThrowGrenade` |
+| Amount To Consume   | `1`                       |
+| Finish Policy       | `WaitForConsumeEffect`    |
 
-***
+The ability plays a throw animation, spawns the grenade actor, calls `ConsumeItem()`, then ends.
 
-The `UInventoryFragment_Consume` serves as the simple, static data link for consumable items. It points the generic "use" action towards the correct specific effect ability and defines the default cost associated with a successful use, enabling a data-driven approach to defining item consumption.
+The player is briefly blocked until the throw completes.
+
+</details>
+
+### Common Mistakes
+
+<details>
+
+<summary>Pressing Use does nothing</summary>
+
+Cause: Fragment missing or `Ability To Activate` not set
+
+Fix: Add fragment and set the ability class
+
+</details>
+
+<details>
+
+<summary>Item never leaves inventory</summary>
+
+Cause: Ability forgot to call `ConsumeItem()`
+
+Fix: Call `ConsumeItem()` in your ability
+
+</details>
+
+<details>
+
+<summary>Player stuck, can't use items</summary>
+
+Cause: Finish Policy is `BlockOtherConsumes` but ability never ends
+
+Fix: Ensure ability calls `EndAbility()`
+
+</details>
+
+<details>
+
+<summary>Item consumed but no effect</summary>
+
+Cause: Effect logic runs after `EndAbility()`
+
+Fix: Move effect logic before `EndAbility()`
+
+</details>
+
+### Next Step
+
+Now that your item is configured, you need to implement the effect ability. See [FromConsume Ability](/broken/pages/d83b9c81b46f68b42ac9e7e600db42ab1aa04def).
