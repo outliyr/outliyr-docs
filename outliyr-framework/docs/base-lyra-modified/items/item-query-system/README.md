@@ -1,6 +1,6 @@
 # Item Query System
 
-In many gameplay systems, it's not enough to do a one-time check for an item in a player's inventory—you often need to continuously track the presence or quantity of specific items as they change in real-time. Examples include:
+In many gameplay systems, it's not enough to do a one-time check for an item in a player's inventory, you often need to continuously track the presence or quantity of specific items as they change in real-time. Examples include:
 
 * A **weapon system** tracking compatible ammo as the player picks up or uses it.
 * A **crafting system** dynamically updating available recipes as the player's resources change.
