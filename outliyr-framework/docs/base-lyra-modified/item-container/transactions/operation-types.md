@@ -318,6 +318,9 @@ struct FItemTxOp_AddItem : public FItemTransactionOpBase
 
     // If true, merge with existing stacks before placing
     bool bMergeWithExistingStacks = false;
+
+    // Optional: source pickup actor for server validation
+    TWeakObjectPtr<AActor> SourcePickupActor;
 };
 ```
 
@@ -384,7 +387,56 @@ If source fully merged, adds to pending destruction.
 {% endstep %}
 {% endstepper %}
 
-### Validation
+#### **SourcePickupActor for World Pickups**
+
+When adding an item from an actor with IPickupable interface e.g. `AWorldCollectableBase`, set `SourcePickupActor` to enable server-side validation:
+
+```cpp
+FItemTxOp_AddItem AddOp;
+AddOp.DestSlot = EquipmentSlot;
+AddOp.SourcePickupActor = WorldCollectable;  // The pickup being picked up from
+AddOp.ItemDef = ItemDefClass;                // For template pickups
+// or
+AddOp.ExistingItem = ItemInstance;           // For instance pickups
+```
+
+**Server Validation Flow:**
+
+{% stepper %}
+{% step %}
+Server receives transaction with `SourcePickupActor` set
+{% endstep %}
+
+{% step %}
+Server validates the pickup actor exists and is valid
+{% endstep %}
+
+{% step %}
+Server calls `IPickupable::TakeItemInstance()` or `IPickupable::TakeTemplate()` to extract the item
+{% endstep %}
+
+{% step %}
+If validation succeeds, item is added to target container
+{% endstep %}
+
+{% step %}
+If validation fails (pickup destroyed, already empty, etc.), client prediction is rolled back
+{% endstep %}
+{% endstepper %}
+
+**Why This Matters:**
+
+Without `SourcePickupActor`, clients could potentially add items they don't have legitimate access to. By requiring the server to validate and extract from the actual pickup actor, the system ensures:
+
+* The pickup actually exists and has the expected item
+* The item is properly removed from the pickup (preventing duplication)
+* Race conditions between multiple players grabbing the same pickup are handled correctly
+
+{% hint style="info" %}
+`SourcePickupActor` is only processed during server execution. On clients, the field is ignored, the client optimistically assumes the item will be available.
+{% endhint %}
+
+#### Validation
 
 * Destination slot can accept item
 * For create: `ItemDef` is valid

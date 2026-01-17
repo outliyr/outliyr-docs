@@ -1,67 +1,124 @@
 # Spectator System
 
-This system goes beyond traditional spectating methods to provide players with a compelling, immersive view of their teammates (or opponents in certain scenarios like killcams) after being eliminated, mirroring the experience found in modern AAA shooters.
+When you die in a competitive shooter, you want to see the game through your teammate's eyes, not hover as a ghost with a detached free-cam. You want to see their weapon, their ammo count, their crosshair. You want to feel like you're watching _their_ screen.
 
-### Purpose: Beyond Simple Viewing
+The **Spectator System** provides exactly this: immersive POV spectating where the spectator's view mirrors the observed player's experience as closely as possible.
 
-Standard spectator systems in Unreal often provide a free-floating camera or a simple third-person follow-cam. This system's goal is **immersion**: when spectating another player (either a teammate after death or the killer during a killcam), the spectator should feel as though they are viewing the game directly through the spectated player's screen.
+### Why Immersive Spectating Matters
 
-The Immersive Spectator System aims to:
+Standard spectator systems give you a floating camera or a simple follow-cam. This system goes further:
 
-* **Maximize Immersion:** Allow the spectator to see the game through the eyes of the spectated player.
-* **Replicate Player Experience:** Display relevant UI elements and gameplay state indicators (equipped weapon, quickbar, ADS status, camera modes, ammo counts) belonging to the spectated player, making the spectator feel as if they are controlling that player.
-* **Provide Context:** Clearly show the spectated player's actions, perspective, and available resources.
-* **Unified Framework:** Offer a consistent system that can be leveraged for both live team spectating and killcam playback scenarios.
+* **Engagement**: Keeps eliminated players invested in the match
+* **Learning**: Watch how teammates handle situations
+* **Modern expectation**: Players expect Call of Duty/Apex-style spectating
+* **Information parity**: Spectators see exactly what the player sees (weapons, ammo, camera modes)
 
-This includes mimicking:
+***
 
-* **Viewpoint:** Matching the spectated player's camera location and rotation.
-* **Camera State:** Reflecting changes in camera modes (like Aim Down Sights (ADS) or specific weapon scopes) handled by the [`ULyraCameraComponent`](../../../base-lyra-modified/camera/).
-* **UI Replication:** Displaying the spectated player's relevant HUD information, such as their quickbar/weapon slots, currently held weapon, ammo counts, and potentially health/shield status, directly on the spectator's screen.
-* **Reticle/Crosshair:** Showing the appropriate crosshair based on the spectated player's weapon state (hip fire, ADS).
+### The Core Concept
 
-### Core Concepts
+```mermaid
+flowchart LR
+    A[Player Dies] --> B[Possess ATeammateSpectator]
+    B --> C[Subscribe to Target's Proxy]
+    C --> D[Receive Replicated State]
+    D --> E[Mirror View + UI]
+```
 
-To achieve this level of immersion, the system combines several key concepts:
+{% stepper %}
+{% step %}
+#### When death happens
 
-1. **Dedicated Spectator Pawn (`ATeammateSpectator`):** When spectating begins, the player's controller possesses a specialized pawn derived from `ASpectatorPawn`. This pawn contains its own camera system (`ULyraCameraComponent`) capable of mimicking the target's camera.
-2. **Data Proxy & Filtering (`USpectatorDataProxy`):** Every player state has a `USpectatorDataProxy` component. This acts as a gatekeeper, managing a list of subscribed spectators and ensuring that detailed gameplay state is replicated only to those who are actively watching. This is crucial for performance and prevents leaking unnecessary information across the network.
-3. **Replicated Data Container (`USpectatorDataContainer`):** Nested within the proxy, this replicated `UObject` holds the specific pieces of information needed by spectators (Quickbar slots, Active Slot Index, Camera Mode class, ADS state).
-4. **Selective Replication:** The proxy filters replication, ensuring the container and its data are primarily sent only to subscribed spectators. Details like inventory item instances within the quickbar are also carefully replicated, this helps reduce bandwidth since broadcasting client information to everyone can be expensive.
-5. **Client-Side Mimicking:** The `ATeammateSpectator` pawn receives the replicated data from the container (via `OnRep_` functions and local Gameplay Messages). It uses this information to update its own `ULyraCameraComponent` (setting the correct camera mode) and internal state.
-6. **UI Driven by Messages:** The spectator's UI widgets listen for the local Gameplay Messages broadcast by the `USpectatorDataContainer`'s `OnRep_` functions. When a message indicates a change (e.g., active weapon slot changed), the UI updates to reflect the spectated player's current state.
-7. **GAS Integration:** Gameplay Abilities (`GA_Spectate`, `GA_Killcam_Camera`) are used to initiate and manage the spectating process, handling pawn possession and initial target selection.
+When a player dies, they are switched to a specialized spectator flow:
 
-### Key Benefits
+* They possess a specialized spectator pawn (`ATeammateSpectator`).
+{% endstep %}
 
-* **Modern Spectator Experience:** Provides the same view that the spectated player is seeing, similar to what you'd expect from contemporary multiplayer shooters.
-* **Enhanced Engagement:** Keeps players invested even after elimination by giving them a clear view of ongoing action.
-* **Informative:** Allows players to learn by observing teammate or opponent gameplay directly.
-* **Performance Conscious:** Selective data replication managed by the proxy minimizes network overhead.
-* **Modular UI Integration:** Uses Gameplay Messages to decouple the core spectating logic from specific UI widget implementations.
+{% step %}
+#### Server subscription
 
-### Key Components Introduction
+The server subscribes the spectator to the target player's data proxy (`USpectatorDataProxy`). The proxy manages the "who's watching me" list.
+{% endstep %}
 
-* **`ATeammateSpectator`:** The pawn possessed or is the view target of the spectator's `PlayerController`, responsible for viewing and mimicking the target.
-* **`USpectatorDataProxy`:** The gatekeeper component on every player state, controlling data replication.
-* **`USpectatorDataContainer`:** The replicated object holding the mirrored gameplay state.
-* **`ULyraCameraComponent` / `ULyraCameraMode`:** Used on both player pawns and the spectator pawn to enable seamless camera state mimicking.
-* **`GA_Spectate`:** Gameplay Ability for initiating live teammate spectating (server-driven).
-* **`GA_Killcam_Camera`:** Gameplay Ability used by the Killcam system to initiate spectating the killer (client-driven within duplicate world).
-* **`LAS_ShooterBase_Spectating`:** The Lyra Action Set used to easily integrate the system into an Experience.
+{% step %}
+#### Replication
 
-### High-Level Flow Example (Live Spectating)
+The target player's gameplay state (quickbar, camera mode, ADS, etc.) is replicated selectively to subscribers via `USpectatorDataContainer`.
+{% endstep %}
 
-1. Player A dies.
-2. `GA_Spectate` activates on Player A's (server).
-3. Server spawns `ATeammateSpectator`, Player A possesses it.
-4. Server identifies living Teammate B as the initial target.
-5. Server tells Teammate B's `USpectatorDataProxy` to subscribe Player A's controller.
-6. Server tells `ATeammateSpectator` to observe Teammate B.
-7. Teammate B's `USpectatorDataProxy` replicates its `USpectatorDataContainer` (and relevant subobjects like Quickbar items) to Player A.
-8. Player A's `ATeammateSpectator` receives replicated data (e.g., B changes weapon).
-9. `OnRep_` function fires on Player A's client, broadcasting a local message (e.g., `ActiveIndexChanged`).
-10. Player A's HUD widgets catch the message and update to show B's currently selected weapon.
-11. Player A's `ATeammateSpectator` updates its camera based on B's replicated camera mode.
+{% step %}
+#### Mirror view + UI
 
-This overview sets the stage. The following pages will explore the roles of each component, the different spectating workflows, how the UI and camera immersion is achieved, and how to integrate the system using the provided Action Set.
+The spectator pawn and spectator UI update to mirror the observed player's view as closely as possible.
+{% endstep %}
+{% endstepper %}
+
+#### S**elective replication**
+
+Instead of broadcasting player state to everyone which is bandwith heavy, the system only sends data to players who are actively watching.
+
+***
+
+### System Components
+
+| Component                       | Role                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------- |
+| **`ATeammateSpectator`**        | The spectator pawn you possess, contains a camera that mimics the target's view |
+| **`USpectatorDataProxy`**       | Lives on every PlayerState, manages "who's watching me" subscription list       |
+| **`USpectatorDataContainer`**   | Holds the replicated state (quickbar, camera mode, ADS status)                  |
+| **`GA_Spectate`**               | The ability that initiates spectating, spawns the pawn, sets up subscriptions   |
+| **`GA_Spectate_Next/Previous`** | Input-driven abilities to cycle through teammates                               |
+
+***
+
+### Quick Integration
+
+Add spectating to your game mode in one step:
+
+{% stepper %}
+{% step %}
+Open your Experience Definition asset.
+{% endstep %}
+
+{% step %}
+Add `LAS_ShooterBase_Spectator` to the Action Sets array.
+{% endstep %}
+
+{% step %}
+Done, the Action Set grants the abilities, components, and input bindings.
+{% endstep %}
+{% endstepper %}
+
+See [Integration](integration.md) for details on what the Action Set includes and dependencies to verify.
+
+***
+
+### Documentation Guide
+
+| Page                                      | What You'll Learn                                                            |
+| ----------------------------------------- | ---------------------------------------------------------------------------- |
+| [Architecture](spectator-architecture.md) | How components connect, data flow, subscription model                        |
+| [Live Spectating](live-spectating.md)     | The workflow of how live spectating works                                    |
+| [Camera & UI](camera-and-ui.md)           | How camera mimicking and UI updates work                                     |
+| [Integration](integration.md)             | Step-by-step setup and extension points                                      |
+| [Advanced Usage](advanced-usage.md)       | Using components in other systems (e.g., how killcam uses TeammateSpectator) |
+
+***
+
+### Quick Reference
+
+**Key Classes:**
+
+* `ATeammateSpectator`
+* `USpectatorDataProxy`&#x20;
+* `USpectatorDataContainer`&#x20;
+
+**Message Tags:**
+
+* `ShooterGame.Spectator.Message.SlotsChanged` — Quickbar slots updated
+* `ShooterGame.Spectator.Message.ActiveIndexChanged` — Active weapon slot changed
+* `ShooterGame.Spectator.Message.CameraModeChanged` — Camera mode changed
+* `ShooterGame.Spectator.Message.ToggleADS` — ADS state changed
+* `ShooterGame.Spectator.Message.SpectatePlayerChanged` — Now watching a different player
+
+***

@@ -119,4 +119,58 @@ void UScoringComponent::UpdateTeamScore(int32 TeamId)
 
 ***
 
+### Change Notifications (Delegates)
+
+When team tag values change, the `ALyraTeamInfoBase` actor broadcasts a delegate to notify interested systems:
+
+```cpp
+UPROPERTY(BlueprintAssignable, Category="Teams|Tags")
+FOnGameplayTagStackChangedDynamic OnTeamTagChanged;
+```
+
+**Delegate Signature:**
+
+* `Tag` (`FGameplayTag`): The tag that changed
+* `NewCount` (`int32`): The new stack count
+* `OldCount` (`int32`): The previous stack count
+
+**Accessing the Delegate:**
+
+The delegate lives on the `ALyraTeamInfoBase` actor, not the subsystem. To bind to it:
+
+```cpp
+// Get the team info actor for a specific team
+ALyraTeamInfoBase* TeamInfo = TeamSubsystem->FindTeamFromTeamId(TeamId);
+if (TeamInfo)
+{
+    TeamInfo->OnTeamTagChanged.AddDynamic(this, &UMyWidget::HandleTeamTagChanged);
+}
+
+void UMyWidget::HandleTeamTagChanged(FGameplayTag Tag, int32 NewCount, int32 OldCount)
+{
+    if (Tag == TAG_Team_Objective_FlagsCaptured)
+    {
+        UpdateFlagCounter(NewCount);
+    }
+}
+```
+
+**Note:** Remember that both Public and Private Team Info actors exist per team. The delegate on each actor only fires for changes to that specific actor's `TeamTags` container.
+
+***
+
+#### Related Delegates
+
+The stat tag delegate pattern is used consistently across the framework:
+
+| Class                        | Delegate                 | Purpose                                      |
+| ---------------------------- | ------------------------ | -------------------------------------------- |
+| `ALyraTeamInfoBase`          | `OnTeamTagChanged`       | Team-level stats (objectives, resources)     |
+| `ALyraPlayerState`           | `OnPlayerStatTagChanged` | Player-level stats (kills, deaths, score)    |
+| `ULyraInventoryItemInstance` | `OnItemStatTagChanged`   | Item-level stats (ammo, durability, charges) |
+
+All three delegates share the same signature: `(FGameplayTag Tag, int32 NewCount, int32 OldCount)`
+
+***
+
 Team Tags provide a flexible, replicated mechanism for managing shared state or status effects associated with an entire team. By leveraging the `FGameplayTagStackContainer` on the `ALyraTeamInfoBase` actors and interacting via the `ULyraTeamSubsystem`, you can build sophisticated team-based gameplay logic and track team-wide conditions.

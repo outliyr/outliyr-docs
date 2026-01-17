@@ -13,7 +13,7 @@ You can open the Recoil Editor at any time from the main Unreal Engine menu bar:
 
 This will open the editor in a new tab.
 
-<figure><img src="../../../../.gitbook/assets/image (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Editor Interface Overview
 
@@ -26,7 +26,7 @@ The editor is composed of three main sections. Understanding each one is key to 
     * The top section lets you **select the weapon class** (`UGunWeaponInstance` Blueprint) you want to edit.
     * The bottom section displays all the properties from that weapon's Class Default Object (CDO), allowing you to see and modify other values like spread multipliers or recovery speeds right from the editor.
 
-    <figure><img src="../../../../.gitbook/assets/image (2) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+    <figure><img src="../../../../.gitbook/assets/image (2) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ***
 

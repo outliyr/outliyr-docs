@@ -22,15 +22,15 @@ Use this system when you need instance-specific data that:
 * Doesn't require complex UObject features like detailed replication graphs (`OnRep` functions on members), ticking, or extensive Blueprint exposure directly on the data payload itself.
 * Is logically tied to the functionality provided by a specific `ULyraInventoryItemFragment`.
 
-**Good Examples:**
+Good Examples:
 
 * **Unique ID/Seed:** Storing a generated unique ID or random seed for procedural aspects specific to this instance.
 *   **Simple State:** For tracking small flags or toggles specific to the instance (e.g., toggled on/off, selected state).
 
-    > _Note:_ `StatTags` were originally introduced in Lyra as a workaround for the lack of instance data. While `FTransientFragmentData` now fills that role more robustly, `StatTags` remain useful for lightweight counters or gameplay-relevant flags that benefit from tag-based systems and built-in networking support. Use `StatTags` if the value is an integer or should be part of tag-based queries.
-* **Cached References:** Storing temporary, non-replicated pointers related to the item's current state (use with caution regarding replication and lifecycle). **Make sure to destroy the reference when the item is destroyed using the `DestroyTransientFragment(ULyraInventoryItemInstance* ItemInstance)`  callback.**
+    > Note: `StatTags` were originally introduced in Lyra as a workaround for the lack of instance data. While `FTransientFragmentData` now fills that role more robustly, `StatTags` remain useful for lightweight counters or gameplay-relevant flags that benefit from tag-based systems and built-in networking support. Use `StatTags` if the value is an integer or should be part of tag-based queries.
+* **Cached References:** Storing temporary, non-replicated pointers related to the item's current state (use with caution regarding replication and lifecycle). Make sure to destroy the reference when the item is destroyed using the `DestroyTransientFragment(ULyraInventoryItemInstance* ItemInstance)` callback.
 
-**When to Consider `UTransientRuntimeFragment` Instead:**
+When to Consider `UTransientRuntimeFragment` Instead:
 
 * You need `UPROPERTY(ReplicatedUsing=...)` on specific data members within the payload.
 * You need complex UObject lifecycle functions (`BeginPlay`, `EndPlay`, Ticking).
@@ -44,64 +44,78 @@ Still unsure? Jump to the [instance-data comparison](creating-custom-fragments.m
 
 ### Implementation Steps
 
-1.  **Define the Data Struct:**
+{% stepper %}
+{% step %}
+#### Define the Data Struct
 
-    * Create a new `USTRUCT` that inherits directly from `FTransientFragmentData`.
-    * Add `UPROPERTY()` members to store your instance-specific data. Ensure they are replication-friendly types if needed (basic types, UObject pointers, other replicated structs).
-    * Optionally override the virtual functions (`DestroyTransientFragment`, `AddedToInventory`, `OnEquipped`, etc.) to add custom logic tied to the item instance's lifecycle events.
+* Create a new `USTRUCT` that inherits directly from `FTransientFragmentData`.
+* Add `UPROPERTY()` members to store your instance-specific data. Ensure they are replication-friendly types if needed (basic types, UObject pointers, other replicated structs).
+* Optionally override the virtual functions (`DestroyTransientFragment`, `AddedToInventory`, `OnEquipped`, etc.) to add custom logic tied to the item instance's lifecycle events.
 
-    ```cpp
-    // Example: Simple Durability Data
-    USTRUCT(BlueprintType)
-    struct FTransientFragmentData_Durability : public FTransientFragmentData
+```cpp
+// Example: Simple Durability Data
+USTRUCT(BlueprintType)
+struct FTransientFragmentData_Durability : public FTransientFragmentData
+{
+    GENERATED_BODY()
+
+public:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) // Replicated via the FInstancedStruct array
+    float CurrentDurability = 100.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float MaxDurability = 100.0f;
+
+    // Example Lifecycle Hook: Reset durability slightly when added?
+    virtual void AddedToInventory(UActorComponent* Inventory, ULyraInventoryItemInstance* ItemInstance) override
     {
-        GENERATED_BODY()
+        // Maybe some logic here...
+        // CurrentDurability = FMath::Min(CurrentDurability + 5.0f, MaxDurability);
+    }
 
-    public:
-        UPROPERTY(EditAnywhere, BlueprintReadWrite) // Replicated via the FInstancedStruct array
-        float CurrentDurability = 100.0f;
+    virtual void DestroyTransientFragment(ULyraInventoryItemInstance* ItemInstance) override
+    {
+        // Cleanup if needed when the item instance is fully destroyed
+    }
+};
+```
+{% endstep %}
 
-        UPROPERTY(EditAnywhere, BlueprintReadWrite)
-        float MaxDurability = 100.0f;
+{% step %}
+#### Link from the Static Fragment
 
-        // Example Lifecycle Hook: Reset durability slightly when added?
-        virtual void AddedToInventory(UActorComponent* Inventory, ULyraInventoryItemInstance* ItemInstance) override
-        {
-            // Maybe some logic here...
-            // CurrentDurability = FMath::Min(CurrentDurability + 5.0f, MaxDurability);
-        }
+* Open the corresponding `ULyraInventoryItemFragment` class (e.g., `UInventoryFragment_Durability`).
+* Override `GetTransientFragmentDataStruct()` to return the static struct type of your data struct.
 
-        virtual void DestroyTransientFragment(ULyraInventoryItemInstance* ItemInstance) override
-        {
-            // Cleanup if needed when the item instance is fully destroyed
-        }
-    };
-    ```
-2. **Link from the Static Fragment:**
-   * Open the corresponding `ULyraInventoryItemFragment` class (e.g., `UInventoryFragment_Durability`).
-   *   **Override `GetTransientFragmentDataStruct()`:** Return the static struct type of your data struct.
+```cpp
+virtual UScriptStruct* GetTransientFragmentDataStruct() const override
+{
+    return FTransientFragmentData_Durability::StaticStruct();
+}
+```
 
-       ```cpp
-       virtual UScriptStruct* GetTransientFragmentDataStruct() const override
-       {
-           return FTransientFragmentData_Durability::StaticStruct();
-       }
-       ```
-   *   **Override `CreateNewTransientFragment()`:** Instantiate your data struct and initialize the output `FInstancedStruct`.
+* Override `CreateNewTransientFragment()` to instantiate your data struct and initialize the output `FInstancedStruct`.
 
-       ```cpp
-       virtual bool CreateNewTransientFragment(AActor* ItemOwner, ULyraInventoryItemInstance* ItemInstance, FInstancedStruct& NewInstancedStruct) override
-       {
-           FTransientFragmentData_Durability DurabilityData;
-           // Perform any initial setup on DurabilityData based on ItemOwner or ItemInstance if needed
-           DurabilityData.MaxDurability = 100.0f; // Example default
-           DurabilityData.CurrentDurability = DurabilityData.MaxDurability;
+```cpp
+virtual bool CreateNewTransientFragment(AActor* ItemOwner, ULyraInventoryItemInstance* ItemInstance, FInstancedStruct& NewInstancedStruct) override
+{
+    FTransientFragmentData_Durability DurabilityData;
+    // Perform any initial setup on DurabilityData based on ItemOwner or ItemInstance if needed
+    DurabilityData.MaxDurability = 100.0f; // Example default
+    DurabilityData.CurrentDurability = DurabilityData.MaxDurability;
 
-           NewInstancedStruct.InitializeAs<FTransientFragmentData_Durability>(DurabilityData);
-           return true; // Indicate that transient data was created
-       }
-       ```
-3. **Add Static Fragment to Definition:** Ensure the `UInventoryFragment_Durability` fragment is added to the `Fragments` array of the relevant `ULyraInventoryItemDefinition` asset(s).
+    NewInstancedStruct.InitializeAs<FTransientFragmentData_Durability>(DurabilityData);
+    return true; // Indicate that transient data was created
+}
+```
+{% endstep %}
+
+{% step %}
+#### Add Static Fragment to Definition
+
+Ensure the `UInventoryFragment_Durability` fragment is added to the `Fragments` array of the relevant `ULyraInventoryItemDefinition` asset(s).
+{% endstep %}
+{% endstepper %}
 
 ***
 
@@ -124,7 +138,7 @@ if(auto* TransientFragmentGun = ItemInstance->ResolveTransientFragment<UInventor
 {% tab title="Blueprints" %}
 **From Blueprint/C++:** Use `ResolveStructTransientFragment(FragmentClass)` on the `ULyraInventoryItemInstance`. This returns an `FInstancedStruct`. You'll need to use `GetInstancedStructValue` and specific the transient struct from the wildcard `value` pin.
 
-<figure><img src="../../../.gitbook/assets/image (27) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
 
 {% hint style="danger" %}
 Ensure you select the **Corresponding Transient Struct** of the original fragment specified in `ResolveStructTransientFragment` for the wildcard `value` pin.
@@ -142,16 +156,13 @@ Ensure you select the **Corresponding Transient Struct** of the original fragmen
 
 The virtual functions within `FTransientFragmentData` allow you to react to key events in the owning item instance's lifecycle:
 
-* `DestroyTransientFragment(ULyraInventoryItemInstance* ItemInstance)`: Called when the owning item instance is being _permanently destroyed_ (via `DestroyItemInstance`), not just removed. Use for final cleanup related to this transient data.
-* `AddedToInventory(UActorComponent* Inventory, ULyraInventoryItemInstance* ItemInstance)`: Called when the item instance is added to an inventory component.
-* `RemovedFromInventory(UActorComponent* Inventory, ULyraInventoryItemInstance* ItemInstance)`: Called when the item instance is removed from an inventory component (but not necessarily destroyed).
-* `OnEquipped(APawn* Pawn, ULyraInventoryItemInstance* ItemInstance, ULyraEquipmentInstance* EquipmentInstance)`: Called when the item instance transitions to the Held state.
-* `OnUnequipped(APawn* Pawn, ULyraInventoryItemInstance* ItemInstance, ULyraEquipmentInstance* EquipmentInstance)`: Called when the item instance transitions out of the Held state.
-* `OnHolster(APawn* Pawn, ULyraInventoryItemInstance* ItemInstance, ULyraEquipmentInstance* EquipmentInstance)`: Called when the item instance transitions to the Holstered state.
-* `OnUnholster(APawn* Pawn, ULyraInventoryItemInstance* ItemInstance, ULyraEquipmentInstance* EquipmentInstance)`: Called when the item instance transitions out of the Holstered state.
-* `ItemMoved(ULyraInventoryItemInstance* ItemInstance, const FInstancedStruct& OldSlot, const FInstancedStruct& NewSlot)`: Called when the item instance's `CurrentSlot` changes (including on clients via `OnRep_CurrentSlot`). Allows reacting to location changes.
-
-Implement these in your derived struct as needed to manage state or perform actions related to the transient data.
+| Callback                                                                                                                | Description                                                                                                      |
+| ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `DestroyTransientFragment(ULyraInventoryItemInstance* ItemInstance)`                                                    | Called when the item instance is being _permanently destroyed_. Use for final cleanup.                           |
+| `AddedToContainer(UObject* Container, ULyraInventoryItemInstance* ItemInstance)`                                        | Called when the item is added to any container (inventory, equipment, attachment).                               |
+| `RemovedFromContainer(UObject* Container, ULyraInventoryItemInstance* ItemInstance)`                                    | Called when the item is removed from a container (but not necessarily destroyed).                                |
+| `ItemMoved(ULyraInventoryItemInstance* ItemInstance, const FInstancedStruct& OldSlot, const FInstancedStruct& NewSlot)` | Called when the item's `CurrentSlot` changes. Use to react to location changes.                                  |
+| `ReconcileWithPredictedFragment(FTransientFragmentData* PredictedFragment)`                                             | Called during prediction reconciliation to transfer local state from predicted to server-authoritative instance. |
 
 ***
 

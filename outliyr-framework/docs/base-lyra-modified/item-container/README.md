@@ -55,7 +55,7 @@ The result: you write container-specific logic once (how slots work, what items 
 
 ### What This Section Covers
 
-This documentation explains the **container-agnostic core**—the systems that make any container work. You'll learn:
+This documentation explains the **container-agnostic core**, the systems that make any container work. You'll learn:
 
 | Section             | What You'll Understand                                                       |
 | ------------------- | ---------------------------------------------------------------------------- |
@@ -74,19 +74,19 @@ Choose based on what you're trying to accomplish:
 
 #### "I want to understand the system"
 
-Start with The Container Contract to see what all containers have in common, then read How Transactions Work to understand how operations flow through the system.
+Start with [The Container Contract](item-container-architecture/the-container-contract.md) to see what all containers have in common, then read [How Transactions Work](transactions/how-transactions-work/) to understand how operations flow through the system.
 
 #### "I need to debug a multiplayer issue"
 
-Jump to The Overlay Model to understand how prediction works, then Reconciliation to see what happens when the server confirms or rejects.
+Jump to [The Overlay Model](prediction/the-overlay-model/) to understand how prediction works, then [Reconciliation](prediction/reconciliation/) to see what happens when the server confirms or rejects.
 
 #### "I want to create my own container type"
 
-Read the Architecture section first, then go to Implementing the Interface for a step-by-step guide.
+Read the [Architecture](item-container-architecture/) section first, then go to Implementing the Interface for a step-by-step guide.
 
 #### "I want to understand why it's designed this way"
 
-Design Philosophy explains the trade-offs and reasoning behind major architectural decisions.
+[Design Philosophy](item-container-architecture/design-philosophy.md) explains the trade-offs and reasoning behind major architectural decisions.
 
 ***
 

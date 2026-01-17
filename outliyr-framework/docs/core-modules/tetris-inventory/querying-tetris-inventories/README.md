@@ -12,7 +12,7 @@ This system builds upon the concepts of the base Lyra Item Query system. Familia
 * **Reactive Approach:** How queries listen for `StackChanged` messages instead of polling.
 * **Base Components:** The roles of `ULyraInventoryQuery` (C++) and `UAsyncAction_ItemQuery` (Blueprint Async Node).
 
-**(-> Please review the** [**Base Lyra Item Query System Documentation**](../../../base-lyra-modified/items/item-query-system/) **for details on the standard query system.)**
+**(-> Please review the** [**Base Lyra Item Query System Documentation**](../../../base-lyra-modified/inventory/item-query-system/) **for details on the standard query system.)**
 
 ### The Challenge of Nested Inventories
 

@@ -105,7 +105,7 @@ In your **Lyra Gameplay Ability** Blueprint:
 
 * Use the **Set Camera Mode** node to activate a specific camera mode
 
-<figure><img src="../../.gitbook/assets/image (3) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="375"><figcaption><p>Calling <code>Set Camera Mode</code> in an ability's ActivateAbility event</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (3) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="375"><figcaption><p>Calling <code>Set Camera Mode</code> in an ability's ActivateAbility event</p></figcaption></figure>
 
 #### Clearing the Camera Mode
 

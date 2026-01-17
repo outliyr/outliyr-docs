@@ -1,161 +1,285 @@
 # Quick Bar Component
 
-While the `ULyraEquipmentManagerComponent` handles the _actual_ equipping logic on the Pawn, the `ULyraQuickBarComponent` provides a common mechanism for players to _select_ which equippable item they want to **hold** actively. Think of it as the standard hotbar or weapon selection wheel interface component.
-
-**Key Characteristics:**
-
-* **Type:** `UControllerComponent`. It should be added to your **Controller** Blueprint or C++ class (e.g., `PlayerController_Default`, `AIController_Basic`).
-* **Purpose:** Manages a list of inventory items (`ULyraInventoryItemInstance` references) accessible for quick selection. It translates player input (like pressing '1', '2', '3' or scrolling the mouse wheel) into commands for the Pawn's `ULyraEquipmentManagerComponent`.
-* **Interaction:** Primarily communicates with the possessed Pawn's `ULyraEquipmentManagerComponent` to request `HoldItem` and `UnholdItem` actions.
-* **Replication:** Replicates its list of slotted items and the index of the currently active slot, allowing UI elements to accurately reflect the quick bar state.
-
-### Role & Responsibilities
-
-The Quick Bar component focuses on the player-facing selection aspect:
-
-1. **Storing Item References:** Maintains a replicated array (`Slots`) of `TObjectPtr<ULyraInventoryItemInstance>`. Each element represents a slot in the quick bar.
-2. **Tracking Active Slot:** Keeps track of the `ActiveSlotIndex` (integer), indicating which slot is currently selected by the player. An index of `-1` typically means no slot is active.
-3. **Handling Player Input:** Provides functions (`CycleActiveSlotForward`, `CycleActiveSlotBackward`, `SetActiveSlotIndex`) intended to be called from player input actions.
-4. **Communicating Hold/Unhold:** When the active slot changes, it instructs the controlled Pawn's `ULyraEquipmentManagerComponent` to:
-   * `UnholdItem` (if an item was previously held via the quick bar).
-   * `HoldItem` (for the item in the newly selected active slot).
-5. **Managing Quick Bar Contents:** Offers functions (`AddItemToSlot`, `RemoveItemFromSlot`) for external systems (like the inventory UI or pickup logic) to populate or clear the quick bar slots.
-6. **Broadcasting UI Updates:** Uses `OnRep` functions and Gameplay Messages to notify local systems (especially UI widgets) when the slots or the active index change.
+Press "1" for your rifle. Press "2" for your pistol. Scroll the mouse wheel to cycle weapons. The Quick Bar provides hotbar-style weapon selection, letting players quickly switch between equipped items with instant feedback, even across network latency.
 
 ***
 
-### Core Functions & Logic
+### Why It Lives on the Controller
 
-* `CycleActiveSlotForward()` / `CycleActiveSlotBackward()`
-  * **Action:** Finds the next/previous slot in the `Slots` array that actually contains a valid `ULyraInventoryItemInstance`. Wraps around if it reaches the end/beginning.
-  * **Logic:** If a valid next/previous slot is found, it calls `SetActiveSlotIndex` with the new index.
-  * **Intended Use:** Bind these to player inputs like Mouse Wheel Up/Down or Next/Previous Weapon keys.
-* `SetActiveSlotIndex(int32 NewIndex)`
-  * **Action:** Directly sets the active quick bar slot.
-  * **Type:** **Server RPC** (`Server, Reliable`). Player input should call this RPC to ensure the change is processed authoritatively.
-  * **Logic (Server-Side):**
-    1. Validates the `NewIndex`.
-    2. Checks if the `NewIndex` is different from the current `ActiveSlotIndex`.
-    3. **Unhold Previous:** If an item was previously held via the quick bar (`EquippedItem` pointer is valid), it calls `UnequipItemInSlot()` (internal helper function).
-    4. Updates the internal `ActiveSlotIndex` variable to `NewIndex`.
-    5. **Hold New:** Calls `EquipItemInSlot()` (internal helper function) to attempt holding the item in the new slot.
-    6. Calls `OnRep_ActiveSlotIndex()` locally on the server to immediately trigger UI updates/messages. Replication handles clients.
-  * **Intended Use:** Bind this to player inputs like number keys ('1', '2', '3', etc.), passing the corresponding slot index.
-* `AddItemToSlot(int32 SlotIndex, ULyraInventoryItemInstance* Item)`
-  * **Action:** Places an inventory item reference into a specific quick bar slot.
-  * **Authority:** **Authority Only.** Should only be called on the server (e.g., when dragging an item to the quick bar in UI, the UI sends an RPC to the server which then calls this).
-  * **Logic:**
-    1. Validates the `SlotIndex` and `Item`.
-    2. Checks if the target slot `Slots[SlotIndex]` is currently empty (`nullptr`).
-    3. If empty, assigns the `Item` to `Slots[SlotIndex]`.
-    4. Calls `OnRep_Slots()` locally to trigger server-side updates/messages. Replication handles clients.
-* `RemoveItemFromSlot(int32 SlotIndex)`
-  * **Action:** Removes an item reference from a specific quick bar slot.
-  * **Authority:** **Authority Only.** Similar authority requirements as `AddItemToSlot`.
-  * **Logic:**
-    1. Validates the `SlotIndex`.
-    2. **Unhold Check:** If the slot being removed _is_ the currently `ActiveSlotIndex`, it first calls `UnequipItemInSlot()` and resets `ActiveSlotIndex` to `-1`.
-    3. Retrieves the `ItemInstance` from `Slots[SlotIndex]`.
-    4. Sets `Slots[SlotIndex]` to `nullptr`.
-    5. Calls `OnRep_Slots()` locally. Replication handles clients.
-  * **Returns:** The `ULyraInventoryItemInstance*` that was removed, or `nullptr`.
+The Quick Bar sits on the **PlayerController**, not the Pawn. This is intentional:
+
+* **Input origin**: Player input comes through the controller
+* **Persistence across death**: When your pawn dies, the controller survives. Your weapon selection ("slot 0 was active") persists, ready for the next spawn
+* **Pawn can change**: Respawning, entering vehicles, possession - the controlled pawn changes, but your selection state stays
+
+The [Equipment Manager](equipment-manager-component.md) lives on the **Pawn** and handles actual behavior, spawning actors, granting abilities, managing held state. The Quick Bar handles **selection**, which weapon slot is active.
+
+When the pawn dies, equipment is destroyed. When the player respawns with a new pawn, the Quick Bar rebinds to the new Equipment Manager and syncs its state.
 
 ***
 
-### Interaction with Equipment Manager
+### Mirroring Equipment
 
-The Quick Bar **delegates** the actual equipping work. Its internal helper functions bridge the gap:
+Quick Bar slots don't own items, they **reference** items in the Equipment Manager. The Equipment Manager is the authoritative owner; the Quick Bar is a selection interface on top.
 
-* `EquipItemInSlot()` (**Private Helper**)
-  * Called by `SetActiveSlotIndex` after the index is updated.
-  * Checks if the `ActiveSlotIndex` is valid and points to a valid `ItemInstance` in the `Slots` array.
-  * Finds the controlled Pawn's `ULyraEquipmentManagerComponent` using `FindEquipmentManager()`.
-  * Calls `EquipmentManager->HoldItem(SlotItem)`.
-  * Stores the returned `ULyraEquipmentInstance` in the `EquippedItem` variable (a non-replicated pointer used internally to track what the quick bar is currently responsible for holding).
-* `UnequipItemInSlot()` (**Private Helper**)
-  * Called by `SetActiveSlotIndex` _before_ changing the index, and by `RemoveItemFromSlot` if removing the active slot.
-  * Checks if the internal `EquippedItem` pointer is valid.
-  * Finds the Pawn's `ULyraEquipmentManagerComponent`.
-  * Calls `EquipmentManager->UnholdItem(EquippedItem)`.
-  * Clears the internal `EquippedItem` pointer (`nullptr`).
-* `FindEquipmentManager()` (**Private Helper**)
-  * Gets the owning `AController`.
-  * Gets the `APawn` possessed by the controller.
-  * Finds and returns the `ULyraEquipmentManagerComponent` on that Pawn using `Pawn->FindComponentByClass()`.
+#### Equipment Slot Mapping
 
-**In essence: Quick Bar handles&#x20;**_**selection**_**&#x20;-> tells Equipment Manager to&#x20;**_**Hold/Unhold**_**.** It doesn't care about _how_ the holding happens, only that it needs to be initiated or stopped based on player selection.
-
-***
-
-### **Important Distinction: Holding vs. Slotting Equipment**
-
-* **Quick Bar's Role:** The `ULyraQuickBarComponent` is primarily concerned with selecting an item to be **actively held** by the character (e.g., a weapon in hand, a tool being used). When you add an item to the quick bar using `AddItemToSlot`, you are essentially marking it as a candidate for being held.
-* **Equipping to Specific Slots (e.g., Armor, Holstered Weapons):** If a player wants to equip an item into a specific, non-held equipment slot (like putting on a helmet, equipping armor, or placing a rifle on their back), this action is typically **not directly managed by the Quick Bar component.**
-  * This kind of "slotting" logic would usually be handled by your **Inventory UI**. For example, dragging a helmet icon from the inventory grid to a "Head Slot" UI element.
-  * The Inventory UI, upon such an action, would then activate a gameplay abillity to call`ULyraEquipmentManagerComponent::EquipItemToSlot(ItemInstance, TargetSlotTag)` on the server.
-* **Quick Bar Reflection (Optional):** Whether the Quick Bar UI also visually reflects items that are slotted but not held (e.g., showing a greyed-out icon for a holstered secondary weapon) is a design decision for your UI. The Quick Bar component itself focuses on the "held" state transition.
-
-***
-
-### Automatic Slot Assignment via Equipment Slot Mapping
-
-While the Quick Bar primarily handles "holding," it can assist in organizing items that are frequently held via the `EquipmentSlotMapping` property. This map allows for a predefined association between an item's equipment type (via a `GameplayTag`) and a specific quick bar slot index.
-
-**Purpose**:
-
-* Streamlines the initial population of the quick bar for items intended to be _held_, automatically assigning them to preferred quick bar slots when picked up or equipped. This is useful for default loadouts or standard "holdable" equipment (e.g., primary weapon in quick bar slot 1, secondary in slot 2).
-
-**Property**:
+For structured loadouts, you can map equipment slot tags to Quick Bar indices:
 
 ```cpp
 UPROPERTY(EditAnywhere, BlueprintReadWrite)
 TMap<FGameplayTag, int32> EquipmentSlotMapping;
 ```
 
-* **Behavior & UI/Gameplay Logic:**
-  * External systems (like inventory pickup logic or initial pawn setup) can consult this map.
-  * When an item is acquired, these systems can check if its `ULyraEquipmentDefinition` has a GameplayTag (e.g., `Lyra.Equipment.Slot.Weapon.Primary`, though this tag usually refers to an actual equipment slot, a more specific tag like `Item.Type.Weapon.PrimaryHoldable` might be used for the map key if distinction is needed) that maps to a quick bar index in `EquipmentSlotMapping`.
-  * If a mapping exists, the item can be automatically added to that quick bar slot using `ULyraQuickBarComponent::AddItemToSlot`.
-  * This mechanism provides a good example of how UI/gameplay logic can **bridge the gap between abstract `GameplayTags` (defined in `ULyraEquipmentDefinition` to categorize items) and concrete UI elements (quick bar indices).**
-* **Configuration:** This map is typically configured per game experience (e.g., in a `ULyraQuickBarComponent` subclass used by your [`ExperienceDefinition`](../gameframework-and-experience/experience-primary-assets/experience-definition.md)) to suit gameplay needs.
+Example configuration:
 
-{% hint style="danger" %}
-Slot conflicts (e.g., multiple items mapped to the same index) should be resolved by external logic before assigning items. This will automatically replace items in those slots. In this asset, logic using the EquipmentSlotMapping resides in  `GA_EquipTetrisItem::HandleHeldItems` (**TetrisInventory Plugin**), and is used in the **BattleRoyale Plugin** for mapping the primary and secondary slots.
+```
+Equipment.Slot.Weapon.Primary   → 0
+Equipment.Slot.Weapon.Secondary → 1
+Equipment.Slot.Throwable        → 2
+Equipment.Slot.Utility          → 3
+```
+
+With this mapping:
+
+* When a primary weapon is equipped, it automatically appears in Quick Bar slot 0
+* Pressing "1" always selects your primary weapon
+* The system enforces "one weapon per slot" naturally
+
+#### Auto-Sync with Equipment
+
+The Quick Bar subscribes to the Equipment Manager's `OnViewDirtied` delegate. Whenever equipment changes, i.e. through transactions, replication, or prediction reconciliation, the Quick Bar updates its slots to match.
+
+```cpp
+void ULyraQuickBarComponent::TryBindToEquipmentManager()
+{
+    if (ULyraEquipmentManagerComponent* EquipMgr = FindEquipmentManager())
+    {
+        EquipMgr->OnViewDirtied.AddUObject(this, &ULyraQuickBarComponent::OnEquipmentViewDirtied);
+    }
+}
+```
+
+When the controller's possessed pawn changes, the Quick Bar automatically rebinds to the new pawn's Equipment Manager.
+
+***
+
+### Slot Selection
+
+#### Basic Selection
+
+| Function                      | Purpose                                      |
+| ----------------------------- | -------------------------------------------- |
+| `SetActiveSlotIndex(int32)`   | Server RPC - switch to specific slot         |
+| `CycleActiveSlotForward()`    | Mouse wheel up - next valid slot             |
+| `CycleActiveSlotBackward()`   | Mouse wheel down - previous valid slot       |
+| `RevalidateActiveSelection()` | Find next valid slot when current disappears |
+
+#### Binding Input
+
+```cpp
+void AMyPlayerController::HandleWeaponSlot1()
+{
+    QuickBar->SetActiveSlotIndex(0);
+}
+
+void AMyPlayerController::HandleNextWeapon()
+{
+    QuickBar->CycleActiveSlotForward();
+}
+```
+
+The cycling functions skip empty slots and wrap around at the ends.
+
+<details>
+
+<summary>How Prediction Works</summary>
+
+When a player presses "2" to switch weapons, they expect instant feedback. The Quick Bar provides this through client-side prediction.
+
+**The Flow**
+
+1. **Client calls `SetActiveSlotIndex(1)`** - This is a Server RPC, but prediction kicks in before it reaches the server
+2. **`ExecutePredictedSlotChange()` runs locally** - The client doesn't wait. It immediately:
+   * Builds a transaction via `BuildEquipTransaction()`
+   * Executes on the local prediction overlay
+   * The Equipment Manager spawns predicted weapon actors
+3. **Server RPC executes** - The server validates the request and applies the authoritative change
+4. **Reconciliation happens invisibly** - When the server's response arrives:
+   * Predicted actors are destroyed
+   * Replicated actors are revealed
+   * The visual transition is seamless
+
+```cpp
+void ULyraQuickBarComponent::SetActiveSlotIndex(int32 NewIndex)
+{
+    // Client prediction happens before RPC reaches server
+    ExecutePredictedSlotChange(NewIndex);
+
+    // Then server processes authoritatively...
+}
+```
+
+From the player's perspective, the weapon was there the whole time.
+
+**Prerequisite**: See [The Overlay Model](../item-container/prediction/the-overlay-model/) for how prediction works across the container system.
+
+</details>
+
+***
+
+### Quick Swap Pickup
+
+For Instant weapon pickup with automatic swap, the Quick Bar provides specialized functions.
+
+#### From World Pickups
+
+```cpp
+FQuickSwapResult Result = QuickBar->TryQuickSwapPickupFromPickup(
+    WorldPickup,                                // The pickup actor
+    AStaticMeshCollectable::StaticClass(),      // For dropped static items
+    ASkeletalMeshCollectable::StaticClass(),    // For dropped skeletal items
+    EQuickSwapSlotPolicy::PreferActiveSlot,     // Slot selection policy
+    true,                                       // Auto-hold the new weapon
+    DropParams);                                // How to drop displaced items
+```
+
+This uses server validation, the client predicts the pickup, but the server validates that the pickup actor exists and the player can legitimately take it.
+
+#### From Existing Items
+
+```cpp
+FQuickSwapResult Result = QuickBar->TryQuickSwapPickup(
+    ItemInstance,                               // Item to add
+    StaticCollectableClass,
+    SkeletalCollectableClass,
+    EQuickSwapSlotPolicy::PreferActiveSlot,
+    true,
+    DropParams,
+    OverrideEquipmentSlot);                     // Optional: target specific slot
+```
+
+#### Slot Policies
+
+| Policy             | Behavior                                   | Best For                     |
+| ------------------ | ------------------------------------------ | ---------------------------- |
+| `SwapWithHeld`     | Only swap with currently held item         | Strict weapon swap           |
+| `PreferActiveSlot` | Try active slot first, then any valid slot | Classic weapon swap          |
+| `AnySlot`          | Use any available slot, swap if full       | Flexible loadouts            |
+| `AddOnly`          | Only add if empty slot exists, never swap  | Collecting without replacing |
+
+#### The Result Struct
+
+```cpp
+struct FQuickSwapResult
+{
+    bool bSuccess;                              // Did it work?
+    ULyraInventoryItemInstance* ItemPickedUp;   // What was picked up
+    ULyraInventoryItemInstance* ItemToDrop;     // What got displaced (may be null)
+    int32 SlotIndex;                            // Where it went (-1 if failed)
+    FGuid RequestId;                            // For async tracking
+    FText ErrorMessage;                         // Why it failed
+};
+```
+
+***
+
+### UI Integration
+
+The Quick Bar broadcasts gameplay messages when slots or selection changes.
+
+#### Message Types
+
+**Slots Changed:**
+
+```cpp
+USTRUCT(BlueprintType)
+struct FLyraQuickBarSlotsChangedMessage
+{
+    TObjectPtr<AActor> Owner;                           // The controller
+    TArray<TObjectPtr<ULyraInventoryItemInstance>> Slots;  // Updated slots
+};
+```
+
+**Active Selection Changed:**
+
+```cpp
+USTRUCT(BlueprintType)
+struct FLyraQuickBarActiveIndexChangedMessage
+{
+    TObjectPtr<AActor> Owner;
+    int32 ActiveIndex;
+};
+```
+
+#### Subscribing in Widgets
+
+```cpp
+void UQuickBarWidget::NativeConstruct()
+{
+    UGameplayMessageSubsystem& Msgs = UGameplayMessageSubsystem::Get(this);
+
+    Msgs.RegisterListener(TAG_Lyra_QuickBar_Message_SlotsChanged,
+        this, &UQuickBarWidget::OnSlotsChanged);
+
+    Msgs.RegisterListener(TAG_Lyra_QuickBar_Message_ActiveIndexChanged,
+        this, &UQuickBarWidget::OnActiveIndexChanged);
+}
+```
+
+***
+
+### Configuration
+
+| Property               | Default | Purpose                                               |
+| ---------------------- | ------- | ----------------------------------------------------- |
+| `NumSlots`             | 2       | Number of Quick Bar slots                             |
+| `EquipmentSlotMapping` | Empty   | Maps equipment slot tags to indices                   |
+| `bAutoSelectFirstItem` | true    | Auto-select first valid slot when nothing is selected |
+
+***
+
+#### Querying State
+
+```cpp
+// Get all slot contents
+TArray<ULyraInventoryItemInstance*> Slots = QuickBar->GetSlots();
+
+// Get currently selected index (-1 if none)
+int32 ActiveIndex = QuickBar->GetActiveSlotIndex();
+
+// Get item in active slot
+ULyraInventoryItemInstance* ActiveItem = QuickBar->GetActiveSlotItem();
+
+// Find first empty slot (-1 if all full)
+int32 FreeSlot = QuickBar->GetNextFreeItemSlot();
+```
+
+***
+
+#### Troubleshooting
+
+{% hint style="info" %}
+**Weapon switch feels delayed?** Verify that:
+
+* The Equipment Manager supports prediction (it should by default)
+* You're calling `SetActiveSlotIndex()` which triggers prediction, not directly manipulating slots
+{% endhint %}
+
+{% hint style="info" %}
+**Slots not matching equipment?** Check:
+
+* `EquipmentSlotMapping` maps the correct equipment tags to indices
+* The Quick Bar is bound to the Equipment Manager (happens automatically on possession)
+* The pawn has an Equipment Manager component
+{% endhint %}
+
+{% hint style="info" %}
+**Quick swap not working?** Verify:
+
+* You're passing valid collectable classes for dropped items
+* The item has a compatible equipment slot (check its Equipment Definition)
+* The policy allows the swap type you're attempting
 {% endhint %}
 
 ***
-
-### UI Updates & Replication
-
-Keeping the UI synchronized is crucial for a quick bar.
-
-* **Replication:**
-  * The `Slots` array (`TArray<TObjectPtr<ULyraInventoryItemInstance>>`) is replicated.
-  * The `ActiveSlotIndex` (`int32`) is replicated.
-* **OnRep Functions:**
-  * `OnRep_Slots()`: Called on clients when the `Slots` array changes. Broadcasts a `FLyraQuickBarSlotsChangedMessage`.
-  * `OnRep_ActiveSlotIndex()`: Called on clients when `ActiveSlotIndex` changes. Broadcasts a `FLyraQuickBarActiveIndexChangedMessage`.
-* **Gameplay Messages:**
-  * `FLyraQuickBarSlotsChangedMessage`: Contains the `Owner` (Controller) and the updated `Slots` array.
-  * `FLyraQuickBarActiveIndexChangedMessage`: Contains the `Owner` (Controller) and the new `ActiveIndex`.
-  * **Purpose:** UI Widgets should listen for these messages (using the `UGameplayMessageSubsystem`) specifically for the local player's controller. When a message is received, the UI can redraw itself to reflect the current quick bar items and highlight the active slot.
-
-***
-
-### Setup and Configuration
-
-1. **Add Component:** Add the `ULyraQuickBarComponent` to your Player Controller Blueprint (or C++ class). You might also add it to AI Controllers if they need similar quick-selection logic.
-2. **Configure Properties:**
-   * `NumSlots` (`int32`): Set the desired number of slots for the quick bar (e.g., 3, 10). The `Slots` array will be initialized to this size.
-3. **Bind Input:** In your input setup (e.g., Enhanced Input Actions), bind player actions (Number Keys, Mouse Wheel, etc.) to call the appropriate functions on the `ULyraQuickBarComponent` (`SetActiveSlotIndex` RPC, `CycleActiveSlotForward`/`Backward` locally which then call the RPC).
-4. **Connect Inventory UI:** Your inventory UI logic needs to:
-   * Call `AddItemToSlot` (via a server RPC) when the player assigns an item to a quick bar slot.
-   * Call `RemoveItemFromSlot` (via a server RPC) when the player removes an item.
-5. **Connect Quick Bar UI:** Your HUD/Quick Bar widget needs to:
-   * Get the local player's `ULyraQuickBarComponent`.
-   * Listen for `FLyraQuickBarSlotsChangedMessage` and `FLyraQuickBarActiveIndexChangedMessage` via the `UGameplayMessageSubsystem`.
-   * Update its visual representation based on the received messages (displaying item icons, highlighting the active index).
-
-***
-
-The `ULyraQuickBarComponent` serves as a vital bridge between player input and the underlying equipment mechanics, providing a standard way to manage item selection for active use. While optional (you could devise other ways to trigger `HoldItem`), it's the intended component for typical hotbar functionality.

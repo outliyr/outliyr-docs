@@ -1,38 +1,124 @@
-# Projectile System
+# Predictive Projectile System
 
-While hitscan weapons deal damage instantly along a line, many shooters rely on projectiles – objects that travel through the world over time, affected by gravity and velocity. Implementing projectiles effectively in a networked environment presents unique challenges, primarily related to latency and visual consistency.
+Networked projectiles present unique challenges: latency creates visible delays between firing and seeing the projectile, and the parallax between camera aim and muzzle position causes aiming errors. The Predictive Projectile System addresses both through client-side prediction and converging path trajectories.
 
-The ShooterBase Projectile System provides a robust solution designed to address these challenges, built around two key components (Not to be confused with the [Projectile Manager](../../projectile-manager/) designed for multiple, tiny, fast bullets):
+This documentation covers the foundation layer, the `AProjectileBase` actor and its supporting systems. For the gameplay ability that drives this system, see [Predictive Projectile Ability](../shooting-gameplay-abilities/predictive-projectile.md).
 
-1. **`AProjectileBase`:** An `AActor` class serving as the foundation for all simulated projectiles fired by weapons in ShooterBase. It incorporates logic for:
-   * Standard projectile movement (`UProjectileMovementComponent`).
-   * **Client-side prediction:** Spawning visual-only projectiles immediately on the firing client to hide latency.
-   * **Network synchronization:** Reconciling client-predicted projectiles with server-authoritative ones.
-   * **Merge Point Trajectory:** A sophisticated technique to visually blend the projectile's path from the weapon's muzzle location onto the player's true aiming line (the ballistic arc from the camera view), ensuring intuitive aiming.
-2. **`UProjectileFunctionLibrary`:** A collection of static Blueprint-callable utility functions specifically designed to aid in projectile calculations, most notably for determining the crucial "Merge Point" used in the trajectory blending system.
+{% hint style="info" %}
+Do not confuse this with with the [Projectile Manager](../../projectile-manager/), that system is designed for multiple, tiny, fast bullets. This system is design on slow moving projectiles that has arbitrary behaviour e.g sticky grenade, rocket launcher, etc. Or in other words non ballistic projectiles.
+{% endhint %}
+
+***
 
 ### Problems Addressed
 
-This system is specifically designed to tackle common issues with networked projectiles:
+#### Latency
 
-* **Latency:** In a typical client-server model, there's a delay between the client firing and the server spawning the authoritative projectile. Without prediction, the player perceives a noticeable lag before seeing their projectile appear.
-* **Trajectory Parallax:** A projectile's physical path starts at the weapon's muzzle, but the player's _intended_ path originates from their camera. These two ballistic arcs are offset. This parallax error causes frustrating misses in key scenarios like:
-  * **Compensating for bullet drop:** A player aiming high to hit a distant target would have their projectile follow a different arc than intended, missing the shot.&#x20;
-  * **Leading moving targets:** The projectile's path would not match the player's predicted lead, causing it to fly wide.
-* **Reliability:** Ensuring fast-moving projectiles replicate reliably and appear consistently for all clients can be tricky.
+In a typical client-server model, there's a delay between the client firing and the server spawning the authoritative projectile. Without prediction, the player perceives a noticeable lag before seeing their projectile appear, typically 50–150ms depending on network conditions.
 
-### Core Concepts
+#### Parallax
 
-The ShooterBase Projectile System employs several key concepts:
+A projectile's physical path starts at the weapon's muzzle, but the player's intended path originates from their camera. These two trajectories are offset. This parallax causes aiming errors in common scenarios:
 
-* **Client Prediction:** The firing client immediately spawns a non-colliding, visual-only "fake" projectile (`AProjectileBase` with `bIsFakeProjectile = true`). This provides instant visual feedback.
-* **Server Authority:** The server spawns the "real" projectile (`AProjectileBase` with `bIsFakeProjectile = false`) which handles actual collision and damage logic. This projectile is replicated to clients.
-* **Synchronization:** When the replicated server projectile arrives on the client, the system matches it with the corresponding fake projectile (using a prediction key as an ID) and smoothly interpolates the fake one to the server one's position before destroying the fake and revealing the real one.
-* **Converging Path System:** Instead of flying straight from the muzzle, the projectile can initially follow a precisely calculated, constant-acceleration curve (the **"Bridge Path"**). This curve starts at the muzzle and is designed to perfectly intercept the position and velocity of the player's true aiming trajectory (the **"True Path"** from the camera) at a specific point in time. This creates a visually intuitive path that guarantees the projectile aligns with the player's aim.
-* **Initial Replication Boost:** Special logic (`SendInitialReplication`) attempts to force fast-moving projectiles to replicate sooner, reducing the chance of clients being hit by "invisible" projectiles that were destroyed on the server before they could be replicated.
+* **Bullet drop compensation**: When aiming above a target to account for drop, the muzzle-fired projectile follows a different arc than intended.
+* **Leading moving targets**: The projectile's path deviates from the player's predicted intercept course.
+* **Shooting around cover**: At close range, projectiles hit cover that the player's camera view was clear of.
 
-By combining these techniques, the system aims to provide projectile behavior that feels responsive, looks visually correct, and functions reliably in a multiplayer setting.
+#### Reliability
 
-The following pages will delve into the implementation details of `AProjectileBase` and the utility functions in `UProjectileFunctionLibrary`.
+Fast-moving projectiles may spawn, hit something, and be destroyed on the server before the replication system sends spawn information to clients. This results in clients being hit by seemingly invisible projectiles.
 
 ***
+
+### System Components
+
+#### `AProjectileBase`
+
+The foundation actor class for all predicted projectiles. Handles:
+
+* Distinction between client-side "fake" projectiles (visual only) and server-authoritative "real" projectiles
+* Two-phase movement: Bridge path (custom trajectory) → True path (standard physics)
+* Network synchronization via catchup ticks
+* Initial replication boost for fast projectiles
+
+See [Projectile Actor](projectile-actor.md) for implementation details.
+
+#### `UProjectileFunctionLibrary`
+
+Static utility functions for trajectory calculations:
+
+* `CalculateMergePoint()`: Find where projectile should join aim line
+* `SuggestProjectileVelocity_CustomGravity()`: Ballistic targeting solver
+* `SuggestConvergingProjectileVelocity()`: Combined muzzle+camera arc solver
+
+See [Converging Path System](converging-path-system.md) for mathematical details.
+
+### Integration with `UGameplayAbility_PredictiveProjectile`
+
+The [Predictive Projectile ability](../shooting-gameplay-abilities/predictive-projectile.md) orchestrates the system:
+
+* Calculates launch parameters for converging paths
+* Spawns fake projectiles on client, real projectiles on server
+* Manages fake-to-real interpolation when server projectile replicates
+* Handles high-latency scenarios with delayed spawning
+
+***
+
+### Architecture Overview
+
+#### The Muzzle-Camera Offset Problem
+
+Projectiles spawn at the weapon muzzle, but players aim from their camera. In third-person games, these positions are offset by 30-50cm. If a projectile simply launched straight from the muzzle toward the aim point, it would follow a different arc than the player intended—especially noticeable when compensating for bullet drop or leading targets.
+
+{% stepper %}
+{% step %}
+### Bridge path
+
+For 0.15 seconds, the projectile follows a calculated curve from the muzzle that merges onto the camera's aim line.
+{% endstep %}
+
+{% step %}
+### True path
+
+After merging, standard `UProjectileMovementComponent` physics take over on the intended trajectory.
+{% endstep %}
+{% endstepper %}
+
+The result: projectiles visually come from the gun but functionally travel exactly where the player is aiming.
+
+#### Hiding Network Latency
+
+The firing client spawns an immediate visual-only "fake" projectile for instant feedback. The server spawns the authoritative "real" projectile that handles collision and damage. When the real projectile replicates back, the client smoothly transitions from fake to real.
+
+| Aspect      | Fake (Client)             | Real (Server)                    |
+| ----------- | ------------------------- | -------------------------------- |
+| Spawned by  | Firing client immediately | Server after receiving request   |
+| Collision   | Disabled                  | Enabled                          |
+| Authority   | Visual only               | Handles damage                   |
+| Replication | Not replicated            | Replicated to non-owning clients |
+
+#### Synchronizing Other Clients
+
+When other clients receive the replicated projectile, its position represents where it was when the server sent the packet, not where it is now. The projectile has moved further during network transit.
+
+Upon receiving a replicated projectile, clients calculate how far to simulate forward based on their latency, then advance the projectile to its estimated current position.
+
+```plaintext
+Client fires → Spawn fake (visual only)
+           → Send request to server
+
+Server receives → Spawn real (authoritative)
+              → Replicate to other clients
+
+Other clients receive → Calculate latency offset
+                     → CatchupTick() to advance position
+                     → Display at estimated server position
+```
+
+### Documentation Guide
+
+| Page                                                                                     | Content                                                              |
+| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| [Projectile Actor](projectile-actor.md)                                                  | `AProjectileBase` implementation, network mechanics, extension guide |
+| [Converging Path System](converging-path-system.md)                                      | Trajectory mathematics, utility functions, VFX integration           |
+| [Predictive Projectile Ability](../shooting-gameplay-abilities/predictive-projectile.md) | Gameplay ability, fake-to-real handoff, configuration                |

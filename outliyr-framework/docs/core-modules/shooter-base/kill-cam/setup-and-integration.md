@@ -1,85 +1,225 @@
-# Setup & Integration
+# Setup and Integration
 
-Integrating the Shooter Base Killcam system is streamlined using the provided Lyra Experience framework. While the underlying system is complex, enabling it for a specific gameplay experience primarily involves configuring the engine correctly and including a dedicated Action Set.
+This page provides a practical guide to enabling Kill Cam in your game experiences. The system is designed to integrate cleanly with Lyra's Experience framework.
 
-<figure><img src="../../../.gitbook/assets/image (185).png" alt=""><figcaption><p>Blueprint Killcam logic in ShooterBase</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (217).png" alt=""><figcaption><p>Blueprint killcam logic in ShooterBase</p></figcaption></figure>
 
-### 1. Engine Setup Requirement (ULyraGameEngine)
+***
 
-This is a **mandatory prerequisite** for the Killcam system to function. As detailed in "[Under the Hood: World Duplication](under-the-hood-world-duplication.md)," the system requires a custom UGameEngine class that overrides `Experimental_ShouldPreDuplicateMap` to return true.
+### Prerequisites
 
-* **Requirement:** Ensure your project uses `ULyraGameEngine` or a child class derived from it that preserves this override.
-*   **Configuration:** Verify that your `Config/DefaultEngine.ini` file has the correct configuration:
+#### Engine Configuration
 
-    ```ini
-    # Game Engine class points to the Lyra Game Engine
-    [/Script/Engine.Engine]
-    GameEngineClass=/Script/LyraGame.LyraGameEngine
+The Kill Cam requires a custom `UGameEngine` class that enables world duplication. This must be configured in your project's `Config/DefaultEngine.ini`:
 
-    # Add this section if using Unreal Engine 5.5 or later
-    [ConsoleVariables]
-    s.World.CreateStaticLevelCollection=1
-    ```
+```ini
+[/Script/Engine.Engine]
+GameEngineClass=/Script/LyraGame.LyraGameEngine
+```
 
-**Without this engine setup, world duplication will not occur in Standalone mode, and the Killcam system will fail.**
+**For Unreal Engine 5.5 and later**, add this additional section:
 
-### 2. Simplified Integration: `LAS_ShooterBase_Death_Killcam` Action Set
+```ini
+[ConsoleVariables]
+s.World.CreateStaticLevelCollection=1
+```
 
-The primary method for adding Killcam functionality to your game modes is by leveraging the provided Lyra Experience Action Set: **LAS\_ShooterBase\_Death\_Killcam**.
+{% hint style="danger" %}
+**Without this configuration, Kill Cam will not function.** World duplication only occurs when the engine is properly configured and the game runs in Standalone mode.
+{% endhint %}
 
-* **What is an Action Set?** It's a reusable data asset (`ULyraExperienceActionSet`) that bundles together multiple Game Feature Actions (like adding components or abilities) and required [Game Feature](../../../base-lyra-modified/gameframework-and-experience/game-features/) dependencies. (See separate [Experience Action Set](../../../base-lyra-modified/gameframework-and-experience/experience-primary-assets/experience-action-set.md) Documentation for more details).
-* **How to Use:**
-  1. Open the `ULyraExperienceDefinition` asset corresponding to the game mode or experience where you want Killcam enabled (e.g., `B_Experience_TeamDeathmatch`).
-  2. Find the **Action Sets** array property in the Details panel.
-  3. Click the **+** icon to add a new entry.
-  4. Select `LAS_ShooterBase_Death_Killcam` from the asset picker dropdown.
+#### Verify Engine Class
 
-By simply adding this Action Set to your Experience Definition, the necessary components, abilities, and input bindings will be automatically managed when that experience becomes active.
+The `ULyraGameEngine` class must override the experimental duplication function:
 
-### 3. What the Action Set Does (Breakdown)
+```cpp
+// LyraGameEngine.h
+UCLASS()
+class ULyraGameEngine : public UGameEngine
+{
+    GENERATED_BODY()
 
-The `LAS_ShooterBase_Death_Killcam` Action Set uses several standard Game Feature Actions to configure the player for killcam functionality:
+protected:
+    virtual bool Experimental_ShouldPreDuplicateMap(
+        const FName MapName) const override;
+};
 
-1. **Adds `UKillcamManager` Component:**
-   * Uses [`GameFeatureAction_AddComponent`](../../../base-lyra-modified/gameframework-and-experience/game-features/game-feature-actions/add-components.md).
-   * **Target:** `ALyraPlayerController` (or relevant subclass).
-   * **Context:** Client Only. This component manages the killcam logic on the client machine.
-2. **Adds `USpectatorDataProxy` Component:**
-   * Uses [`GameFeatureAction_AddComponent`](../../../base-lyra-modified/gameframework-and-experience/game-features/game-feature-actions/add-components.md).
-   * **Target:** `APlayerState` (or relevant subclass).
-   * **Context:** Client & Server.
-   * **Purpose:** This component is essential for viewing the killer's perspective and replicating relevant data (like ADS status, reticle state) during the killcam playback. It filters data replication, ensuring only necessary information is sent.
-   * **Uniqueness:** The action ensures only one instance is added, preventing conflicts if other spectating features (using the same proxy) are also active.
-   * (See separate [Spectator Data Proxy Documentation](../spectator-system/core-components/spectator-data-proxy.md) for details on how this component works).
-3. **Adds Core Killcam Abilities:**
-   * Uses [`GameFeatureAction_AddAbilities`](../../../base-lyra-modified/gameframework-and-experience/game-features/game-feature-actions/add-abilities.md).
-   * **Target:** `APlayerState` (or relevant subclass, must have an Ability System Component).
-   * **Granted Abilities:**
-     * `GA_killcam_Death`: This ability activates automatically upon receiving the death event (e.g., triggered by a `GameplayEvent.Death` tag). It handles the main killcam flow initiation on the client (sending the start message via RPC), manages temporary UI elements (like "Press X to Skip"), and adds/removes the necessary input mapping context for the skip action.
-     * `GA_killcam_Camera`: This ability is activated by the `TAG_GameplayEvent_Killcam` sent from `UKillcamPlayback` when playback is ready. It takes the Killer and Victim actors (from the duplicate world) provided in the event data, sets up the spectator view targeting the killer, and potentially displays contextual UI like a "You" indicator over the victim's replicated actor.
-     * `GA_Manual_Respawn`: This ability prevents the default Lyra auto-respawn behavior. It ensures the player only respawns when explicitly triggered, typically after the killcam ends or is skipped.
-4. **Adds Skip Killcam Input Ability & Binding:**
-   * **Grant Ability:** The Action Set grants an Ability Set (e.g., `GAS_Skip_Killcam`) via the [`GameFeatureAction_AddAbilities`](../../../base-lyra-modified/gameframework-and-experience/game-features/game-feature-actions/add-abilities.md). This Ability Set contains the `GA_Skip_Killcam` ability. An ability set is used so the `GA_Skip_Killcam` can be linked to a corresponding input tag (`InputTag.Ability.SkipKillcam`).
-   * **`GA_Skip_Killcam` Purpose:** This ability executes the logic when the player chooses to skip the killcam (e.g., sends the Stop message locally, potentially initiates the respawn flow early).
-   * **Input Binding:** The Action Set also includes a [`GameFeatureAction_AddInputBinding`](../../../base-lyra-modified/gameframework-and-experience/game-features/game-feature-actions/add-input-binding.md). This adds a `ULyraInputConfig` asset (e.g., `InputConfig_Killcam`) that maps a specific InputTag (e.g., `InputTag.UI.SkipCutscene` or a dedicated `InputTag.Killcam.Skip`) to the AbilityTag associated with `GA_Skip_Killcam`. This allows the player's physical input (defined in their Enhanced Input settings) to trigger the skip ability while the killcam is active (likely managed by the `GA_killcam_Death` ability adding/removing the mapping context).
+// LyraGameEngine.cpp
+bool ULyraGameEngine::Experimental_ShouldPreDuplicateMap(
+    const FName MapName) const
+{
+    return true;  // Enable for all maps
+}
+```
 
-### 4. Triggering the Killcam (Start / Stop Messages)
+***
 
-While the Action Set automates the setup, you still need to implement the logic that triggers the start and stop sequences:
+### Quick Integration: Action Sets
 
-* **Start Trigger** (`ShooterGame.KillCam.Message.Start`)**:**
-  * **Responsibility:** Server-side game logic (e.g., Game Mode) upon player death confirmation.
-  * **Action:** Send a Client RPC to the killed player's controller. The RPC function then broadcasts the Start message **locally** on that client, including the desired `KillCamStartTime` and `KillCamFullDuration`.
-* **Stop Trigger** (`ShooterGame.KillCam.Message.Stop`)**:**
-  * **Responsibility:** Client-side logic, typically coordinated with the respawn flow or the skip input.
-  * **Action:** Broadcast the Stop message **locally** just before respawn or when `GA_Skip_Killcam` is activated.
+The simplest way to add Kill Cam is through the provided Action Set.
 
-Refer to the "[Playback Process](playback-process.md)" page for more details on the message payloads and typical timing.
+{% stepper %}
+{% step %}
+#### Open Your Experience Definition
 
-### 5. Final Reminders
+Navigate to your Experience Definition asset (e.g., `B_Experience_TeamDeathmatch`).
+{% endstep %}
 
-* <mark style="color:red;">**TEST ONLY IN STANDALONE GAME MODE**</mark>. The system relies on world duplication unavailable in PIE.
-* <mark style="color:red;">**AVOID MODIFYING UKillcamPlayback**</mark>\*\* unless absolutely essential and with full understanding of the implications. Stick to configuring via the Action Set and triggering messages.
-* Ensure `LAS_ShooterBase_Death_Killcam` Action Set is in the experience you want to utilize the kill cam functionality in.
+{% step %}
+#### Add the Kill Cam Action Set
 
-By using the provided `LAS_ShooterBase_Death_Killcam` Action Set and implementing the simple start/stop message triggers, you can integrate the sophisticated Killcam system into your experiences with minimal direct setup, leveraging the power of the Lyra Experience framework.
+In the Details panel:
+
+* Find the **Action Sets** array
+* Click the **+** button to add a new entry
+* Select `LAS_ShooterBase_Death_Killcam`
+
+The Action Set handles all component and ability setup automatically.
+{% endstep %}
+{% endstepper %}
+
+***
+
+### What the Action Set Adds
+
+When `LAS_ShooterBase_Death_Killcam` activates, it adds several pieces:
+
+#### Components
+
+| Component                   | Added To         | Net Mode        | Purpose                            |
+| --------------------------- | ---------------- | --------------- | ---------------------------------- |
+| `UKillcamManager`           | PlayerController | Client Only     | Orchestrates kill cam flow         |
+| `UKillcamAimRecorder`       | PlayerController | Client Only     | Records aim data                   |
+| `UKillcamHitMarkerRecorder` | PlayerController | Client Only     | Records hit markers                |
+| `UKillcamCameraRecorder`    | PlayerController | Client Only     | Records camera state               |
+| `USpectatorDataProxy`       | PlayerState      | Client & Server | Replicates spectator-relevant data |
+
+#### Gameplay Abilities
+
+| Ability             | Granted To        | Purpose                                         |
+| ------------------- | ----------------- | ----------------------------------------------- |
+| `GA_Killcam_Death`  | PlayerState (ASC) | Handles death event, initiates kill cam         |
+| `GA_Killcam_Camera` | PlayerState (ASC) | Pawn tracking, victim indicator, spectator pawn |
+| `GA_Skip_Killcam`   | PlayerState (ASC) | Handles skip input                              |
+| `GA_Manual_Respawn` | PlayerState (ASC) | Controls respawn timing                         |
+
+#### Input Bindings
+
+The Action Set includes input configuration for the skip action, typically mapped to a common "interact" or "skip" input.
+
+***
+
+## Game Mode Variants
+
+Different game modes may need different kill cam behavior. The framework provides variant Action Sets:
+
+<table><thead><tr><th width="412.5333251953125">Action Set</th><th>Game Mode</th></tr></thead><tbody><tr><td><code>LAS_ShooterBase_Death_Killcam</code></td><td>Base shooter modes</td></tr><tr><td><code>LAS_ShooterBase_Death_Killcam_Arena</code></td><td>Arena/Duel</td></tr><tr><td><code>LAS_ShooterBase_Death_Killcam_Headquarters</code></td><td>Objective modes</td></tr><tr><td><code>LAS_ShooterBase_Death_Killcam_PropHunt</code></td><td>PropHunt</td></tr><tr><td><code>LAS_ShooterBase_Death_Killcam_SearchAndDestroy</code></td><td>Search &#x26; Destroy</td></tr></tbody></table>
+
+These variants typically use different `GA_Killcam_Death` implementations that handle mode-specific logic.
+
+{% stepper %}
+{% step %}
+#### Creating Your Own Variant — Duplicate Action Set
+
+Duplicate `LAS_ShooterBase_Death_Killcam`.
+{% endstep %}
+
+{% step %}
+#### Creating Your Own Variant — Create Custom Ability
+
+Create custom `GA_Killcam_Death_YourMode` ability.
+{% endstep %}
+
+{% step %}
+#### Creating Your Own Variant — Swap Ability
+
+Replace the death ability reference in your Action Set.
+{% endstep %}
+
+{% step %}
+#### Creating Your Own Variant — Add to Experience
+
+Add your Action Set to your Experience Definition.
+{% endstep %}
+{% endstepper %}
+
+***
+
+### Testing
+
+{% hint style="danger" %}
+**Kill Cam only works in Standalone mode.** PIE (Play In Editor) does not trigger world duplication.
+{% endhint %}
+
+#### Testing Steps
+
+1. Launch in Standalone Mode
+   * Use the Launch button targeting "Standalone Game"
+   * Or command line: `UnrealEditor.exe YourProject.uproject -game`
+2. Set Up Multiplayer Test
+   * Kill cam requires killer and victim to be different players
+   * Use `-server` + client instances, or dedicated server
+3. Trigger a Kill
+   * Have one player kill another
+   * Victim should see kill cam after death
+
+#### Common Testing Issues
+
+| Issue                                                    | Cause                          | Solution                             |
+| -------------------------------------------------------- | ------------------------------ | ------------------------------------ |
+| Kill cam never plays / normal death widget plays instead | Running in PIE                 | Use Standalone mode                  |
+| Black screen during kill cam                             | Duplicate world not created    | Verify engine config                 |
+| Camera doesn't follow killer                             | Actor not found in duplicate   | Check NetGUID caching                |
+| No aim overlay                                           | Data transfer failed           | Check network/RPC logs               |
+| Immediate return to live game                            | Playback allowed check failing | Check `IsPlaybackAllowed` conditions |
+
+#### Debug Logging
+
+Enable kill cam logging by using the `LogKillcam` category with Verbose level.
+
+***
+
+### Integration Checklist
+
+Use this checklist when integrating Kill Cam:
+
+* [ ] `DefaultEngine.ini` has `GameEngineClass=/Script/LyraGame.LyraGameEngine`
+* [ ] UE 5.5+: `s.World.CreateStaticLevelCollection=1` CVar set
+* [ ] Experience Definition includes Kill Cam Action Set
+* [ ] Client death triggers `ShooterGame.KillCam.Message.Start` on death
+* [ ] Client triggers `ShooterGame.KillCam.Message.Stop` when done
+* [ ] Testing performed in Standalone mode (not PIE)
+* [ ] Multiplayer testing with separate killer/victim
+
+***
+
+### Timing Configuration
+
+The default timing values work well for most shooters:
+
+```cpp
+float KillCamStartTime = 7.0f;   // How far back to rewind
+float KillCamFullDuration = 7.0f; // Total playback length
+```
+
+#### Adjusting Timing
+
+Shorter duration (faster paced):
+
+```cpp
+Message.KillCamStartTime = 4.0f;
+Message.KillCamFullDuration = 4.0f;
+```
+
+Longer duration (dramatic deaths):
+
+```cpp
+Message.KillCamStartTime = 10.0f;
+Message.KillCamFullDuration = 10.0f;
+```
+
+{% hint style="info" %}
+The replay buffer must be large enough to support your `KillCamStartTime`. The default 15-second buffer supports up to 15 seconds of rewind.
+{% endhint %}
+
+***

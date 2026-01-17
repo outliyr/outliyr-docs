@@ -30,7 +30,7 @@ This approach gives the illusion of _zero-latency_ hit detection, keeping gamepl
 
 ShooterBase’s lag-compensation framework is built around a clean separation of responsibility between **sources**, the **manager**, and a dedicated **worker thread**.
 
-<table><thead><tr><th width="246">Component</th><th>Role</th></tr></thead><tbody><tr><td><strong><code>ULagCompensationSource</code></strong></td><td>A lightweight component added to any actor that should be tracked historically (player pawns, AI, critical objects). Each source records its own snapshot every tick on the <strong>game thread</strong> — including timestamp, actor bounds, and either bone transforms (skeletal) or component transforms (static).</td></tr><tr><td><strong><code>ULagCompensationManager</code></strong></td><td>A singleton-like component on the GameState that owns the system. It gathers snapshots from all registered sources, feeds them to the worker thread, and exposes the public API (<code>RewindLineTrace</code>, <code>RewindSphereTrace</code>, etc.) used by gameplay code.</td></tr><tr><td><strong><code>FLagCompensationThreadRunnable</code></strong></td><td>The background worker responsible for the heavy lifting. It drains queued snapshots, maintains per-actor history buffers, expands shapes on demand, performs rewound traces, and fulfills async results, all without blocking the game thread.</td></tr></tbody></table>
+<table><thead><tr><th width="246">Component</th><th>Role</th></tr></thead><tbody><tr><td><strong><code>ULagCompensationSource</code></strong></td><td>A lightweight component added to any actor that should be tracked historically (player pawns, AI, critical objects). Each source records its own snapshot every tick on the <strong>game thread,</strong> including timestamp, actor bounds, and either bone transforms (skeletal) or component transforms (static).</td></tr><tr><td><strong><code>ULagCompensationManager</code></strong></td><td>A singleton-like component on the GameState that owns the system. It gathers snapshots from all registered sources, feeds them to the worker thread, and exposes the public API (<code>RewindLineTrace</code>, <code>RewindSphereTrace</code>, etc.) used by gameplay code.</td></tr><tr><td><strong><code>FLagCompensationThreadRunnable</code></strong></td><td>The background worker responsible for the heavy lifting. It drains queued snapshots, maintains per-actor history buffers, expands shapes on demand, performs rewound traces, and fulfills async results, all without blocking the game thread.</td></tr></tbody></table>
 
 #### Threading Model
 
@@ -46,6 +46,9 @@ ShooterBase’s lag-compensation framework is built around a clean separation of
 
 This design keeps all expensive math off the main thread while maintaining deterministic, server-authoritative results.
 
+
+
+{% hint style="danger" %}
 ### <mark style="color:red;">Target Audience & Disclaimer</mark>
 
 **This is an advanced, server-side system.**
@@ -55,7 +58,9 @@ This design keeps all expensive math off the main thread while maintaining deter
   * By using the `UAsyncAction_RewindLineTrace` Blueprint node for custom server-side logic requiring historical traces.
   * By adding the `ULagCompensationSource` component to actors that need to be considered for lag-compensated hit detection (typically player Pawns, potentially important AI or physics objects).
   * By using the Projectile Manager, which leverages this system internally for its collision checks.
-* **Modification Warning:** Modifying the core `ULagCompensationManager` or `FLagCompensationThreadRunnable` requires a deep understanding of C++, multi-threading, network synchronization, and 3D collision math. **Casual modification is strongly discouraged** as it can easily lead to performance issues, incorrect hit registration, or instability.
+* **Modification Warning:** Modifying the core `ULagCompensationManager` or `FLagCompensationThreadRunnable` requires a deep understanding of C++, multi-threading, network synchronization, and 3D collision math.&#x20;
+* **Casual modification is strongly discouraged** as it can easily lead to performance issues, incorrect hit registration, or instability.
+{% endhint %}
 
 ### Scope and Limitations
 
@@ -64,5 +69,14 @@ This design keeps all expensive math off the main thread while maintaining deter
 * **Focus:** The primary goal is accurate hit validation for client actions based on past world states.
 
 The following pages will delve into the specific components, data structures, workflow, and debugging features of this powerful system.
+
+## Documentation Guide
+
+| Page                              | Content                                                |
+| --------------------------------- | ------------------------------------------------------ |
+| [Architecture](architecture.md)   | Component overview, data flow, threading model         |
+| [Rewind Traces](rewind-traces.md) | C++ and Blueprint API, result handling, usage examples |
+| [Internals](thread-internals.md)  | History management, shape expansion, collision testing |
+| [Debugging](debugging.md)         | Debug tools, CVars, visualization, system limitations  |
 
 ***

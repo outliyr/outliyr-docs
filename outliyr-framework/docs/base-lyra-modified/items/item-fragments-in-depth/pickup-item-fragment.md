@@ -23,7 +23,7 @@ Add `InventoryFragment_PickupItem` to the Item Definition's `Fragments` array.
 {% endstep %}
 
 {% step %}
-### Key properties
+#### Key properties
 
 * `SkeletalMesh` (`TObjectPtr<USkeletalMesh>`): The skeletal mesh to use if the world representation should be animated or use physics simulation based on a skeletal structure. Usually only one of `SkeletalMesh` or `StaticMesh` is set.
 * `StaticMesh` (`TObjectPtr<UStaticMesh>`): The static mesh to use for the world representation. Common for simple objects like ammo boxes, potions, or non-animated gear.
@@ -86,6 +86,29 @@ Importance:
 
 * Visual Representation: Without this fragment, items dropped or placed in the world won't have a defined mesh or appearance.
 * Droppability: Game logic often uses the presence of this fragment as a prerequisite for allowing an item to be dropped from an inventory.
+{% endhint %}
+
+***
+
+### Action Menu Integration
+
+This fragment implements `IItemActionProvider` to add a **Drop** action to the item's context menu.
+
+| Action   | Tag                 | Quantity Input   |
+| -------- | ------------------- | ---------------- |
+| **Drop** | `Ability.Item.Drop` | Yes (for stacks) |
+
+**When enabled:** The action is enabled when the item has either a `SkeletalMesh` or `StaticMesh` defined. Without a mesh, the item cannot exist in the world, so dropping is not possible.
+
+**Quantity prompt:** For stackable items with a stack count > 1, the player is prompted to choose how many to drop:
+
+* `MinQuantity`: 1
+* `MaxQuantity`: Current stack count
+
+This allows players to drop part of a stack (e.g., drop 10 of 30 bullets) rather than the entire stack.
+
+{% hint style="info" %}
+For the full action menu system, see [Context Menus & Action Logic](../../ui/item-container-ui-system/interaction-and-transactions/context-menus-and-action-logic.md).
 {% endhint %}
 
 ***

@@ -1,86 +1,164 @@
 # Kill Cam
 
-This feature allows players, shortly after being eliminated, to witness their final moments from the perspective of their killer, providing valuable context and insight into the encounter.
+The Kill Cam transforms one of the most frustrating moments in multiplayer gaming, dying without understanding why, into a valuable and often entertaining experience. Instead of leaving players confused about how they were eliminated, the system replays the final moments from their killer's perspective, revealing positioning, tactics, and skill that led to the kill.
 
-### Purpose
+### Why Kill Cam Matters
 
-The primary goal of the Killcam system is to enhance the player experience after death by:
+A well-implemented kill cam serves multiple purposes that improve your game:
 
-* **Providing Context:** Showing the player _how_ they were eliminated, revealing the opponent's position, strategy, or skillful play.
-* **Reducing Frustration:** Understanding the circumstances of death can make it feel less arbitrary.
-* **Learning Opportunity:** Players can potentially learn from observing their opponent's actions.
-* **Highlighting Action:** Showcasing key moments and engagements from a different viewpoint.
+* **Reduces Frustration**: Understanding _how_ you died makes death feel less arbitrary and more fair
+* **Creates Learning Moments**: Players can observe enemy tactics, positioning, and aim patterns
+* **Showcases Skill**: Impressive kills become memorable highlights rather than anonymous deaths
+* **Builds Anticipation**: The brief pause before respawn creates natural tension and pacing
+* **Validates Hit Registration**: Players can verify that kills were legitimate, building trust in game systems
 
-### Core Concept
+### The Core Concept
 
-At its heart, the Killcam system leverages Unreal Engine's **Replay System** and an experimental **World Duplication** feature. Here's the high-level idea:
+At a high level, the Kill Cam system works through a clever combination of continuous recording and world duplication:
 
-1. **Record:** The game client constantly records recent gameplay activity into a short, in-memory replay buffer.
-2. **Duplicate:** When the game starts (**outside PIE**), the engine creates an invisible, in-memory duplicate of the current game world's dynamic level collection.
-3. **Trigger:** Upon player death, the system identifies the killer and victim and prepares for playback.
-4. **Playback:** When triggered, the system stops recording, activates the duplicated world, plays back the relevant segment of the recorded replay within this isolated world, focusing the camera appropriately (usually on the killer).
-5. **Switch View:** The player's viewport is temporarily switched to view the action unfolding in the duplicated world.
-6. **Restore:** After a set duration, playback stops, the duplicated world is hidden/cleaned up, the player's view is restored to the main game world, and recording resumes for the next potential death.
+```mermaid
+flowchart LR
+    A[Continuous Recording] --> B[Death Detected]
+    B --> C[Data Transfer]
+    C --> D[World Switch]
+    D --> E[Playback]
+    E --> F[Restore]
 
-### Key Benefit
+```
 
-The main advantage is offering players immediate visual feedback on their elimination, transforming a potentially frustrating moment into an informative or even impressive spectacle.
+{% stepper %}
+{% step %}
+#### Record
 
-### <mark style="color:red;">CRITICAL WARNINGS & LIMITATIONS</mark>
+Each client continuously records recent gameplay into an in-memory replay buffer.
+{% endstep %}
 
-<mark style="color:red;">**Please read these points carefully before using or attempting to modify the Killcam system:**</mark>
+{% step %}
+#### Capture
+
+When a player dies, the killer's perspective data (aim, camera, hit markers) is captured.
+{% endstep %}
+
+{% step %}
+#### Transfer
+
+This data is relayed through the server to the victim's client.
+{% endstep %}
+
+{% step %}
+#### Duplicate World
+
+An invisible, pre-created copy of the game world becomes active.
+{% endstep %}
+
+{% step %}
+#### Playback
+
+The replay plays in this isolated world while overlay data shows the killer's view.
+{% endstep %}
+
+{% step %}
+#### Restore
+
+After playback, the view returns to the live game and recording resumes.
+{% endstep %}
+{% endstepper %}
+
+The key innovation is the **world duplication approach**, rather than trying to replay within the live game (which would cause conflicts), the system plays back in a completely isolated copy of the world. This ensures the kill cam never interferes with ongoing gameplay.
+
+***
+
+## <mark style="color:red;">**Critical Limitations**</mark>
+
+<mark style="color:red;">**Read these carefully before using or modifying the Kill Cam system.**</mark>
 
 <details>
 
-<summary>Experimental Engine Feature Dependency</summary>
+<summary><strong>Standalone Mode ONLY</strong></summary>
 
-This system fundamentally relies on the engine's `Experimental_ShouldPreDuplicateMap` functionality within a custom `UGameEngine` class (`ULyraGameEngine` in this implementation). This feature is marked as experimental by Epic Games and its behavior, availability, or API **may change or be removed** in future Unreal Engine versions, potentially breaking this system.
+The Kill Cam system **will not function** in Play-In-Editor (PIE) mode. It **only works** when running as a Standalone executable:
+
+* Launch via command line with `-game`
+* Use the "Launch" button targeting Standalone Game
+* Run a packaged build
+
+This limitation exists because the system relies on world duplication, which the engine only performs during standalone startup. <mark style="color:red;">**This is an unreal engine limitation**</mark>.
 
 </details>
 
 <details>
 
-<summary>Standalone Mode ONLY</summary>
+<summary><strong>Experimental Engine API</strong></summary>
 
-Due to the reliance on world duplication via `Experimental_ShouldPreDuplicateMap`, the Killcam system **WILL NOT FUNCTION** in any Play-In-Editor (PIE) mode (Selected Viewport, New Editor Window, etc.). It **ONLY works** when the game is run as a **Standalone executable** (e.g., launched via the command line with `-game`, through the Launch button targeting Standalone Game, or in a packaged build). Testing requires launching in Standalone.
+This system depends on `Experimental_ShouldPreDuplicateMap`, an experimental Unreal Engine feature. This API:
+
+* May change in future engine versions
+* Could be deprecated or removed by Epic
+* Might behave differently across engine updates
+
+If upgrading to a new UE version, test kill cam functionality early in your validation process.
 
 </details>
 
 <details>
 
-<summary>High Complexity &#x26; Modification Risk</summary>
+<summary><strong>Standalone / Listen Server Host Limitation</strong></summary>
 
-The core logic, particularly within `UKillcamPlayback`, interacts with complex, low-level engine systems including replay streaming, world context management, level collections, actor spawning/destruction across worlds, and collision handling between duplicated and source actors. **Modifying this core logic is strongly discouraged** unless you possess a deep understanding of these Unreal Engine internals. Incorrect changes can easily lead to crashes, replication issues, visual artifacts, physics problems, or other unpredictable behavior.
+Players hosting a listen server **cannot use the kill cam**. When a client enters kill cam mode, its network driver temporarily switches to replay mode. For a listen server host, this would disconnect all connected clients.
+
+Standalone clients can use the killcam but gameplay cues won't show in the killcam. This is because the killcam records replicated data. GAS gameplay cues aren't detected in standalone game.
+
+The system automatically disables kill cam for non clients to preserve game integrity.
 
 </details>
 
-### Main Components
+<details>
 
-The system involves several key C++ classes working together:
+<summary><strong>Modification Risk</strong></summary>
 
-* **`ULyraGameEngine`:** (Engine Subclass) Enables the necessary world duplication via `Experimental_ShouldPreDuplicateMap`.
-* **`UKillcamManager`:** (Controller Component) The client-side coordinator. It listens for death events, manages the `UKillcamPlayback` instance, handles start/stop messages, and provides utility functions.
-* **`UKillcamPlayback`:** (Tickable UObject) The core engine performing the heavy lifting. Manages the duplicated world context, replay recording/playback via `UDemoNetDriver`, time scrubbing, view switching coordination, and collision handling between the source and duplicated worlds.
-* **Gameplay Messages:** (`FLyraVerbMessage` for eliminations, `FLyraKillCamMessage` for start/stop triggers) Used for communication.
-* **`ULyraExperienceManagerComponent`:** (Modified) Adapted to correctly handle loading logic in duplicated worlds.
+The core playback logic in `UKillcamPlayback` interacts with complex engine systems:
 
-### Simplified Flow
+* Replay streaming and `UDemoNetDriver`
+* World context and level collection management
+* Actor spawning across worlds
 
-Here’s a basic sequence of events for a successful Killcam playback:
+**Modifying `UKillcamPlayback` directly is strongly discouraged** unless you deeply understand these systems. Instead, customize through:
 
-1. **Game Start (Standalone):** `ULyraGameEngine` enables map duplication.
-2. **Experience Loads:** `UKillcamManager` initializes and starts `UKillcamPlayback` recording (using in-memory replay).
-3. **Player Death:** `UKillcamManager` listens for the elimination message and tells `UKillcamPlayback` to cache killer/victim info (GUIDs, death time).
-4. **Killcam Trigger:** Game logic sends a `ShooterGame.KillCam.Message.Start` message to the client.
-5. **Playback Begins:** `UKillcamManager` receives the start message and instructs `UKillcamPlayback` to start.
-6. `UKillcamPlayback` stops recording, ensures the duplicate world is ready, starts replay playback, and scrubs to the calculated start time (`DeathTime - KillCamStartTime`).
-7. **View Switched:** `UKillcamPlayback` makes the duplicate world visible, hides the source world, handles collision setup, and triggers logic (likely a Gameplay Ability) to set the player's view target to the killer in the duplicate world.
-8. **Playback Duration:** The replay plays for the specified `KillCamFullDuration`.
-9. **Killcam Stop:** Game logic sends a `ShooterGame.KillCam.Message.Stop` message (or playback ends naturally).
-10. **Playback Ends:** `UKillcamManager` receives the stop message and tells `UKillcamPlayback` to stop.
-11. **View Restored:** `UKillcamPlayback` cleans up the replay driver, hides/destroys the duplicate world actors, makes the source world visible again, restores collision, and triggers logic to restore the player's view in the source world (usually ready for respawn).
-12. **Recording Resumes:** `UKillcamManager` tells `UKillcamPlayback` to start recording again.
+* Gameplay Abilities (safe to modify)
+* Action Set configuration
+* Timing parameters
+* UI overlays
 
-This overview provides a conceptual understanding. Subsequent pages will delve into the technical details of world duplication, recording, playback, collision handling, and integration steps, always keeping the critical limitations in mind.
+</details>
+
+***
+
+### System Components
+
+| Component                | Role                                                               |
+| ------------------------ | ------------------------------------------------------------------ |
+| **`ULyraGameEngine`**    | Enables world duplication via `Experimental_ShouldPreDuplicateMap` |
+| **`UKillcamManager`**    | Client-side coordinator that orchestrates the entire kill cam flow |
+| **`UKillcamPlayback`**   | Core engine handling world switching, replay playback, and cleanup |
+| **`UKillcamEventRelay`** | Server-side relay that routes killer data to victims               |
+| **Recorder Components**  | Capture aim, hit markers, and camera state on each player          |
+| **Playback Components**  | Render the killer's perspective data during playback               |
+| **Gameplay Abilities**   | Handle death, camera control, skip input, and respawn              |
+
+***
+
+### Documentation Guide
+
+This documentation is organized to help you understand the system progressively:
+
+| Page                                                                                    | What You'll Learn                                                            |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| [Architecture Overview](architecture-overview.md)                                       | The big picture—how all components connect and data flows through the system |
+| [World Duplication Deep Dive](world-duplication-deep-dive.md)                           | The engine-level magic that makes isolated playback possible                 |
+| [Recording System](recording-system.md)                                                 | How gameplay data is continuously captured for potential kill cam use        |
+| [Data Transfer & Networking](data-transfer-and-networking.md)                           | How killer data moves from killer → server → victim                          |
+| [Playback System](playback-system.md)                                                   | The mechanics of world switching, time scrubbing, and view control           |
+| [Setup & Integration](../accolades/setup-and-integration.md)                            | Practical guide to enabling kill cam in your experiences                     |
+| [Customization & Extension](../gamestate-scoring-system/customization-and-extension.md) | Safe ways to modify behavior and add new features                            |
 
 ***

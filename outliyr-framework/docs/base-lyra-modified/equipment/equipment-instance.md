@@ -1,93 +1,228 @@
 # Equipment Instance
 
-While the `ULyraEquipmentDefinition` is the _recipe_, the `ULyraEquipmentInstance` is the _cooked dish_ currently being used by the Pawn. It's the actual, live representation of a piece of equipment that has been equipped via the `ULyraEquipmentManagerComponent`.
+When a player equips a weapon, something has to exist at runtime to represent that equipped state - to own the spawned actors, to receive held state changes, to act as the source for granted abilities. That something is the `ULyraEquipmentInstance`.
 
-**Key Characteristics:**
-
-* **Type:** `UObject`. **Crucially, it is&#x20;**_**not**_**&#x20;an Actor.** It doesn't exist independently in the world's actor hierarchy.
-* **Ownership:** Each `ULyraEquipmentInstance` is owned by the **Pawn** that has the equipment equipped.
-* **Lifetime:** Created by the `ULyraEquipmentManagerComponent` when an item is equipped (either Holstered or Held directly) and typically destroyed when fully unequipped (or when the owning Manager/Pawn is destroyed).
-* **Replication:** Replicated as a **subobject** of the `ULyraEquipmentManagerComponent`, ensuring clients have access to its state.
-
-### Role & Responsibilities
-
-The `ULyraEquipmentInstance` primarily serves to:
-
-1. **Represent Runtime State:** Hold data and logic specific to _this particular instance_ of the equipment while it's equipped (e.g., current heat level of _this_ gun, durability of _this_ armor piece).
-2. **Receive Lifecycle Events:** Act upon specific events triggered by the `ULyraEquipmentManagerComponent` as the equipment's state changes (Equipped, Unequipped, Holstered, Unholstered).
-3. **Manage Spawned Actors:** Keep track of any Actors spawned specifically for this equipment instance (like weapon meshes), although the spawning/destroying logic is usually initiated by the Manager based on the Definition.
-4. **Link to Inventory:** Typically holds a reference (`Instigator`) back to the original `ULyraInventoryItemInstance` it represents.
-5. **Provide Ability Source Context:** Acts as the `SourceObject` for Gameplay Abilities granted by this equipment.
+Think of it as the **live runtime object** that exists while gear is equipped. The `ULyraEquipmentDefinition` says "this rifle spawns this actor and grants these abilities" - the Equipment Instance is what actually makes that happen during gameplay.
 
 ***
 
-### Lifecycle Events & Callbacks
+### The Lifecycle
 
-The `ULyraEquipmentManagerComponent` notifies the `ULyraEquipmentInstance` of state changes by calling specific functions. You can hook into these in C++ or Blueprint to implement custom logic.
+Understanding when Equipment Instances exist clarifies their role:
 
-* `OnEquipped()` / `K2_OnEquipped()` (Blueprint Event)
-  * **Called When:** The item transitions to the **Held** state (actively wielded). This happens during `ULyraEquipmentManagerComponent::HoldItem`.
-  * **Use Case:** Initialize logic specific to being held, play equip animations/sounds on associated actors, apply device properties (like controller vibration patterns for a weapon).
-* `OnUnequipped()` / `K2_OnUnequipped()` (Blueprint Event)
-  * **Called When:** The item transitions _out_ of the **Held** state. This happens during `ULyraEquipmentManagerComponent::UnholdItem`.
-  * **Use Case:** Clean up held-state logic, stop equip animations/sounds, remove active device properties.
-* `OnHolster()` / `K2_OnHolster()` (Blueprint Event)
-  * **Called When:**
-    * The item is initially equipped into a slot (via `EquipItemToSlot`/`EquipItemDefToSlot`).
-    * The item transitions from Held back to its assigned slot (during `UnholdItem` if it has a valid `SlotTag`).
-  * **Use Case:** Initialize logic specific to being holstered (maybe passive effects), ensure the correct holstered visual mesh is active.
-* `OnUnHolster()` / `K2_OnUnHolster()` (Blueprint Event)
-  * **Called When:**
-    * The item is fully unequipped from a slot (via `UnequipItemFromSlot`).
-    * The item transitions from Holstered _to_ Held (during `HoldItem`).
-  * **Use Case:** Clean up any holstered-specific logic before the item is held or removed entirely.
+```
+                                    EQUIPMENT INSTANCE LIFETIME
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                 │
+│  Item in Inventory          Item Equipped              Item Unequipped          │
+│  ─────────────────          ─────────────              ────────────────         │
+│                                                                                 │
+│  ┌──────────────┐           ┌────────────────────┐      ┌──────────────┐        │
+│  │ No Equipment │ ──Equip─► │ Equipment Instance │ ─►   │ Instance     │        │
+│  │ Instance     │           │ EXISTS             │      │ Destroyed    │        │
+│  └──────────────┘           └────────────────────┘      └──────────────┘        │
+│                                    │                                            │
+│                                    ├── Holds SpawnedActors[]                    │
+│                                    ├── Receives held state changes              │
+│                                    ├── Acts as SourceObject for abilities       │
+│                                    └── Stores Tag Attributes                    │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+| Aspect          | Details                                            |
+| --------------- | -------------------------------------------------- |
+| **Type**        | `UObject` (not an Actor)                           |
+| **Owner**       | The Pawn via Equipment Manager                     |
+| **Created**     | When item moves to equipment container             |
+| **Destroyed**   | When item leaves equipment container               |
+| **Replication** | As a subobject of `ULyraEquipmentManagerComponent` |
+
+The Equipment Instance links back to the inventory item through its `Instigator` property - so abilities can access both runtime equipment state AND persistent item data (like ammo counts).
+
+***
+
+### The Two Actor Arrays Problem
+
+Here's a scenario: Player clicks to equip a weapon. They expect to see it immediately. But network latency means the server takes 100ms to process the request and replicate back.
+
+**Without prediction:** 100ms delay before the weapon appears. Feels sluggish.
+
+**With prediction:** Weapon appears instantly on the client. But now we have a problem - the client spawned a "fake" predicted actor, and soon the "real" replicated actor will arrive from the server.
+
+The Equipment Instance solves this with two separate actor arrays:
+
+#### SpawnedActors - The Truth
+
+```cpp
+UPROPERTY(ReplicatedUsing=OnRep_SpawnedActors)
+TArray<TObjectPtr<AActor>> SpawnedActors;
+```
+
+These are server-authoritative actors that replicate to all clients. They're the "real" equipment visuals that everyone sees.
+
+#### PredictedActors - The Instant Feedback
+
+```cpp
+UPROPERTY()
+TArray<TObjectPtr<AActor>> PredictedActors;
+```
+
+These are local-only actors spawned during prediction. They exist solely to give the owning client immediate visual feedback. They're never replicated and are destroyed once the real actors arrive.
+
+#### The Handoff
+
+{% stepper %}
+{% step %}
+When the server's replicated actor arrives, the predicted actor is still visible — the player continues to see their local weapon.
+{% endstep %}
+
+{% step %}
+The replicated actor arrives in a suppressed/hidden state so it doesn't immediately show up and create a visible double.
+{% endstep %}
+
+{% step %}
+Prediction is confirmed; the predicted (local) actor is destroyed.
+{% endstep %}
+
+{% step %}
+The replicated (authoritative) actor is revealed and becomes the visible representation.
+{% endstep %}
+{% endstepper %}
+
+From the player's perspective, the weapon was always there. No visual pop or double-spawn.
 
 {% hint style="info" %}
-The C++ functions (`OnEquipped`, etc.) provide base functionality (like calling item fragment callbacks) and then call the corresponding `K2_` Blueprint events. You should typically override the `K2_` events in Blueprint subclasses or the C++ functions if subclassing in C++. Remember to call `Super::FunctionName()` if overriding the C++ functions to maintain base functionality.
+For the full prediction model including how the Equipment Manager orchestrates this handoff, see [The Overlay Model](../item-container/prediction/the-overlay-model/).
 {% endhint %}
 
 ***
 
-### Linking Back: The Instigator
+### Visibility Suppression
 
-* `Instigator` (`TObjectPtr<UObject>`)
-  * This property is set by the `ULyraEquipmentManagerComponent` during the equip process.
-  * It typically points to the **`ULyraInventoryItemInstance`** that this equipment represents.
-  * **Importance:** Allows the equipment instance (and abilities originating from it) to access data stored on the underlying inventory item (like ammo counts, durability stored in item stat tags, or transient fragment data).
-* `OnRep_Instigator()` & `OnInstigatorReady` (Delegate)
-  * Since the `Instigator` is replicated, `OnRep_Instigator` is called on clients when the reference becomes valid.
-  * It broadcasts the `OnInstigatorReady` delegate, which can be useful for client-side logic that needs to wait until the link to the inventory item is established.
+During the prediction handoff, there's a brief window where both actors exist - the predicted one (about to be destroyed) and the replicated one (just arrived). Without careful management, players would see duplicate weapons.
 
-***
+```cpp
+// Hide actors and prevent OnRep from showing them
+void SuppressActorVisibility();
 
-### Visual Representation: Spawned Actors
+// Clear suppression and unhide actors
+void ClearActorVisibilitySuppression();
+```
 
-* `SpawnEquipmentActors(const TArray<FLyraEquipmentActorToSpawn>& ActorsToSpawn)`
-* `DestroyEquipmentActors()`
-* `SpawnedActors` (`TArray<TObjectPtr<AActor>>`)
+When `SuppressActorVisibility()` is called:
 
-While the `ULyraEquipmentDefinition` _defines_ which actors to spawn for Holstered/Held states, these functions on the `ULyraEquipmentInstance` actually perform the spawning (using `GetWorld()->SpawnActorDeferred`) and attachment logic.
+* All `SpawnedActors` become invisible
+* The suppression flag prevents `OnRep_SpawnedActors` from making them visible
+* Only `ClearActorVisibilitySuppression()` can reveal them
 
-They are typically **called by the `ULyraEquipmentManagerComponent`** at the appropriate times (during state transitions). The `SpawnedActors` array keeps track of the actors created by this instance so they can be properly destroyed later by `DestroyEquipmentActors`. You generally don't need to call these functions directly unless implementing very custom spawning logic within an instance subclass.
+This gives the Equipment Manager precise control over when replicated actors become visible, ensuring smooth prediction reconciliation.
 
 ***
 
-### Adding Custom Logic & State
+### Held State Change Notifications
 
-#### Subclassing for Behavior
+When equipment transitions between held and holstered states, the Equipment Manager calls `NotifyHeldStateChanged` on each affected Equipment Instance. This callback provides complete context about the change, what changed and how.
 
-You can extend `ULyraEquipmentInstance` to add specialized behavior:
+#### The `FHeldStateChangedEvent` Structure
 
-* **Blueprint Subclassing:** Create a Blueprint class inheriting from `ULyraEquipmentInstance` (or a more specific C++ subclass like `ULyraWeaponInstance`).
-  * Implement the `K2_OnEquipped`, `K2_OnUnequipped`, `K2_OnHolster`, `K2_OnUnHolster` events for Blueprint-based logic.
-  * Add Blueprint variables and functions specific to this equipment type.
-  * Remember to set the `Instance Type` in the corresponding `ULyraEquipmentDefinition` to your Blueprint class.
-* **C++ Subclassing:** Create a new C++ class inheriting from `ULyraEquipmentInstance`.
-  * Override the virtual functions (`OnEquipped`, etc.) for C++ logic (remember `Super::`).
-  * Add custom C++ properties and methods.
-  * Again, update the `Instance Type` in the `ULyraEquipmentDefinition`.
+```cpp
+USTRUCT(BlueprintType)
+struct FHeldStateChangedEvent
+{
+    // The type of change that occurred
+    EHeldStateChangeType ChangeType;
 
-### Managing Runtime State: Tag Attributes (`FGameplayTagAttributeContainer`)
+    // Held slot tags before this change
+    FGameplayTagContainer OldHeldSlotTags;
+
+    // Held slot tags after this change
+    FGameplayTagContainer NewHeldSlotTags;
+};
+```
+
+#### Change Types
+
+| Change Type    | Meaning                      | When It Happens             |
+| -------------- | ---------------------------- | --------------------------- |
+| `BecameHeld`   | Equipment just became held   | Player draws weapon         |
+| `BecameUnheld` | Equipment just became unheld | Player holsters weapon      |
+| `StillHeld`    | Equipment remains held       | Held slot changed           |
+| `NeverHeld`    | Equipment was never held     | Initialization or no change |
+
+#### The Callback
+
+```cpp
+virtual void NotifyHeldStateChanged(const FHeldStateChangedEvent& Event);
+```
+
+This callback is called by the Equipment Manager, you should never call it directly. The Equipment Manager buffers and sorts notifications to ensure deterministic broadcast order e.g. unheld before held.
+
+#### Implementation Pattern
+
+```cpp
+void UMyWeaponInstance::NotifyHeldStateChanged(const FHeldStateChangedEvent& Event)
+{
+    Super::NotifyHeldStateChanged(Event);
+
+    switch (Event.ChangeType)
+    {
+    case EHeldStateChangeType::BecameHeld:
+        // Weapon just became held - play draw animation, enable abilities
+        PlayDrawAnimation();
+        InitializeForCombat();
+        break;
+
+    case EHeldStateChangeType::BecameUnheld:
+        // Weapon just became unheld - stop effects, play holster
+        StopFiringEffects();
+        PlayHolsterAnimation();
+        break;
+
+    case EHeldStateChangeType::StillHeld:
+        // Held slot changed but still held - rare, usually no action needed
+        break;
+
+    case EHeldStateChangeType::NeverHeld:
+        // No held state change - ignore
+        break;
+    }
+}
+```
+
+#### Blueprint Implementation
+
+<figure><img src="../../.gitbook/assets/image (211).png" alt=""><figcaption></figcaption></figure>
+
+#### Native Delegate
+
+For C++ listeners that need to respond to held state changes without subclassing:
+
+```cpp
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHeldStateChanged, const FHeldStateChangedEvent&, Event);
+
+UPROPERTY(BlueprintAssignable, Category = Equipment)
+FOnHeldStateChanged OnHeldStateChanged;
+```
+
+#### Two-Handed Weapons
+
+For a two-handed rifle, `NewHeldSlotTags` might contain both `Held.Primary` and `Held.Secondary`. Check the container for specific slots:
+
+```cpp
+if (Event.NewHeldSlotTags.HasTag(TAG_Held_Primary))
+{
+    // Primary hand is holding this weapon
+}
+```
+
+#### Akimbo Support
+
+The callback tells you exactly which slot this particular instance occupies. For example with dual pistols, each pistol's instance receives only its specific held slot.&#x20;
+
+***
+
+### Tag Attributes: Flexible Parameters Without Subclassing
 
 A common challenge in equipment systems is managing stats or parameters that are specific to certain equipment _types_ or _abilities_ without cluttering the base class or creating complex inheritance chains. For example:
 
@@ -95,9 +230,9 @@ A common challenge in equipment systems is managing stats or parameters that are
 * A flamethrower's `GA_SpitFlame` ability needs `FlameWidth` and `FuelConsumptionRate`.
 * An attachment might need to modify the base `SpreadExponent` of a weapon.
 
-Putting all these variables directly in `ULyraEquipmentInstance` (or even `ULyraWeaponInstance`) leads to bloat. Creating subclasses for every variation (`ULyraLaserRifleInstance`, `ULyraShotgunInstance`) becomes unwieldy.
+Putting all these variables directly in `ULyraEquipmentInstance` (or even `ULyraWeaponInstance`) leads to bloat. Creating subclasses for every variation (`ULyraLaserRifleInstance`, `ULyraShotgunInstance`) becomes bloated and messy.
 
-**The Solution: Tag Attributes**
+#### **The Solution: Tag Attributes**
 
 The `ULyraEquipmentInstance` contains a replicated `FGameplayTagAttributeContainer` named `Attributes`.
 
@@ -105,47 +240,126 @@ The `ULyraEquipmentInstance` contains a replicated `FGameplayTagAttributeContain
 * **Purpose:** To store mutable, instance-specific parameters that are often introduced or modified by the Gameplay Abilities granted by the equipment, or by external systems like attachments.
 * **Replication:** Uses `FFastArraySerializer` for efficient network replication.
 
-**How it's Used:**
+```cpp
+// Add a parameter (authority only)
+void AddTagAttribute(FGameplayTag Tag, float InitialValue);
 
-1.  **Initialization:** Abilities granted by the equipment (via `ULyraAbilitySet` in the `ULyraEquipmentDefinition`) can add their relevant parameters to the container when the ability is granted, using `AddTagAttribute(FGameplayTag Tag, float InitialValue)`.
+// Modify with reversal tracking
+FFloatStatModification ModifyTagAttribute(FGameplayTag Tag, float Modifier, EFloatModOp Operation);
 
-    * Example: `GA_ReloadMagazine`'s `OnGranted` logic might call `EquipmentInstance->AddTagAttribute(TAG_Gun_Stat_ReloadSpeed, PlayRate)`.
+// Query current value
+float GetTagAttributeValue(FGameplayTag Tag) const;
+```
 
-    <figure><img src="../../.gitbook/assets/image (94).png" alt="" width="563"><figcaption><p>Add the reload speed stat to the equipment instance on ability added</p></figcaption></figure>
-2. **Modification:** Other systems can modify these values:
-   * A passive ability could temporarily boost a stat using `ModifyTagAttribute` and then use `ReverseTagAttributeModification` when the effect expires.
-   * Look at the [attachment utility ability documentation](../items/item-fragments-in-depth/attachment-system/provided-attachment-utility-abilities.md) for more indepth examples of modifications
-3.  **Querying:** Abilities or other systems can read the current value using `GetTagAttributeValue(FGameplayTag Tag)` or check for existence using `HasTagAttribute(FGameplayTag Tag)`.
+#### Typical Flow
 
-    * Example: `GA_ShootBullet` would call `EquipmentInstance->GetTagAttributeValue(TAG_Weapon_Stat_MuzzleVelocity)` to get the potentially modified velocity just before firing.
+{% stepper %}
+{% step %}
+#### Initialization
 
-    <figure><img src="../../.gitbook/assets/image (96).png" alt="" width="563"><figcaption><p>Using the tag attribute reload speed to modify montage play back rate</p></figcaption></figure>
-4.  **Cleanup:** When an ability is removed (e.g., when the item is unheld or unequipped), its `OnRemoved` logic should ideally call `RemoveTagAttribute(FGameplayTag Tag)` to clean up the parameters it introduced.
+Abilities granted by the equipment (via `ULyraAbilitySet` in the `ULyraEquipmentDefinition`) can add their relevant parameters to the container when the ability is granted.
 
-    <figure><img src="../../.gitbook/assets/image (95).png" alt="" width="563"><figcaption><p>Remove the reload speed stat from the equipment instance on ability remove</p></figcaption></figure>
+```cpp
+EquipmentInstance->AddTagAttribute(TAG_Weapon_SpreadExponent, 1.0f);
+```
 
-**Example Tags:**
+<figure><img src="../../.gitbook/assets/image (207).png" alt=""><figcaption></figcaption></figure>
+{% endstep %}
 
-* `Weapon.Stat.MuzzleVelocity`
-* `Weapon.Stat.SpreadExponent`
-* `Weapon.Stat.RateOfFire`
-* `Armor.Stat.DamageResistance.Physical`
-* `Gadget.Stat.EffectRadius`
+{% step %}
+#### Modification&#x20;
 
-**Tag Attributes vs. Item Stat Tags (`FGameplayTagStackContainer`)**
+Other systems can modify these values:
 
-It's vital to distinguish between the two state containers:
+* A passive ability could temporarily boost a stat using `ModifyTagAttribute` and then use `ReverseTagAttributeModification` when the effect expires.
+* Look at the [attachment utility ability documentation](../items/item-fragments-in-depth/attachment-system/provided-attachment-utility-abilities.md) for more indepth examples of modifications
 
-| Feature              | `Attributes` (on `ULyraEquipmentInstance`)                     | `StatTags` (on `ULyraInventoryItemInstance`)                    |
-| -------------------- | -------------------------------------------------------------- | --------------------------------------------------------------- |
-| **Data Type Stored** | `float`                                                        | `int32` (Stack Count)                                           |
-| **Lifetime**         | Tied to the **Equipment Instance** (while equipped/held)       | Tied to the **Inventory Item Instance** (persists in inventory) |
-| **Primary Use Case** | Mutable parameters for abilities, temporary mods (attachments) | Persistent counts (ammo, charges), durability, flags            |
-| **Replication**      | Via `FGameplayTagAttributeContainer` (Fast Array)              | Via `FGameplayTagStackContainer` (Fast Array)                   |
-| **Accessed Via**     | `ULyraEquipmentInstance*`                                      | `ULyraInventoryItemInstance*` (often via `Instigator`)          |
-| **Example**          | `Weapon.Stat.SpreadExponent = 1.5f`                            | `Inventory.Ammo.Rifle = 30` (stacks)                            |
+```cpp
+// Attachment reduces spread by 20%
+ModHandle = EquipmentInstance->ModifyTagAttribute(
+    TAG_Weapon_SpreadExponent, 0.8f, EFloatModOp::Multiply);
+```
+{% endstep %}
+
+{% step %}
+#### Query&#x20;
+
+Abilities or other systems can read the current value using `GetTagAttributeValue(FGameplayTag Tag)` or check for existence using `HasTagAttribute(FGameplayTag Tag)`.
+
+<figure><img src="../../.gitbook/assets/image (208).png" alt=""><figcaption></figcaption></figure>
+{% endstep %}
+
+{% step %}
+#### Cleanup
+
+When an ability is removed (e.g., when the item is unheld or unequipped), its `OnRemoved` logic should clean up the parameters it introduced.
+
+```cpp
+EquipmentInstance->RemoveTagAttribute(FGameplayTag Tag));
+```
+
+<figure><img src="../../.gitbook/assets/image (209).png" alt=""><figcaption></figcaption></figure>
+{% endstep %}
+{% endstepper %}
+
+#### Tag Attributes vs Item Stat Tags
+
+Both store tagged data, but they serve different purposes:
+
+| Aspect        | Tag Attributes                                                 | Item Stat Tags                                       |
+| ------------- | -------------------------------------------------------------- | ---------------------------------------------------- |
+| **Data Type** | `float`                                                        | `int32`                                              |
+| **Lives On**  | `ULyraEquipmentInstance`                                       | `ULyraInventoryItemInstance`                         |
+| **Lifetime**  | While equipped                                                 | Persists in inventory                                |
+| **Use Case**  | Mutable parameters for abilities, temporary mods (attachments) | Persistent counts (ammo, charges), durability, flags |
 
 **Use `Attributes` on the Equipment Instance for:** Values directly related to _how the equipment functions while active_, especially those introduced or modified by abilities or temporary attachments.**Use `StatTags` on the Inventory Item Instance for:** Values intrinsic to the _item itself_ that need to persist even when it's not equipped (like how much ammo is left in the magazine).
+
+***
+
+### Prediction Reconciliation
+
+When the server confirms a prediction, it creates its own authoritative Equipment Instance. The client's predicted instance is about to be destroyed - but it might have local state that matters (UI selections, local visual effects, aim offsets).
+
+```cpp
+virtual void ReconcileWithPredictedInstance(ULyraEquipmentInstance* PredictedInstance);
+```
+
+Override this to transfer local state before the predicted instance disappears:
+
+```cpp
+void UMyWeaponInstance::ReconcileWithPredictedInstance(ULyraEquipmentInstance* PredictedInstance)
+{
+    Super::ReconcileWithPredictedInstance(PredictedInstance);
+
+    if (UMyWeaponInstance* PredictedWeapon = Cast<UMyWeaponInstance>(PredictedInstance))
+    {
+        // Preserve the local aim offset the player was tracking
+        LocalAimOffset = PredictedWeapon->LocalAimOffset;
+    }
+}
+```
+
+***
+
+### The Instigator Link
+
+Every Equipment Instance maintains a link to its source inventory item:
+
+```cpp
+UPROPERTY(ReplicatedUsing=OnRep_Instigator)
+TObjectPtr<UObject> Instigator;
+
+// Convenience accessor
+ULyraInventoryItemInstance* GetItemInstance() const;
+```
+
+This link is essential for abilities that need both:
+
+* **Equipment state** (current spread, heat level) - from the Equipment Instance
+* **Persistent item data** (ammo count, attachments) - from the Inventory Item
+
+The `OnInstigatorReady` delegate fires when replication completes on clients.
 
 ***
 
@@ -221,13 +435,67 @@ By using `ULyraGameplayAbility_FromEquipment`, you streamline the process of wri
 
 ***
 
-### Replication Summary
+### When to Subclass
 
-* The `ULyraEquipmentInstance` itself is replicated as a subobject of the owning `ULyraEquipmentManagerComponent`.
-* Its `Instigator` property (pointing to the `ULyraInventoryItemInstance`) is replicated.
-* Its `Attributes` (`FGameplayTagAttributeContainer`) property is replicated using Fast Array Serialization.
-* Any `UPROPERTY(Replicated)` variables you add in C++ subclasses will also be replicated.
+The base `ULyraEquipmentInstance` handles most needs. Only subclass when you need:
+
+| Need                       | Why Subclass                                                    |
+| -------------------------- | --------------------------------------------------------------- |
+| **Tick-based logic**       | Heat dissipation, recoil recovery that can't use ability timers |
+| **Cross-ability state**    | Data multiple abilities need to share (beyond Tag Attributes)   |
+| **Frame-accurate updates** | Spread interpolation, precise timing                            |
+
+**Don't subclass** just to add variables (use Tag Attributes), handle action logic (use abilities), or store temporary state (use `InstancedPerActor` abilities).
+
+#### Examples in the Codebase
+
+| Class                       | Purpose                                           |
+| --------------------------- | ------------------------------------------------- |
+| `ULyraRangedWeaponInstance` | Per-frame heat and spread updates                 |
+| `UGunWeaponInstance`        | Recoil tracking with frame-accurate interpolation |
+
+#### Creating a Subclass
+
+{% stepper %}
+{% step %}
+Inherit from `ULyraEquipmentInstance` (C++ or Blueprint).
+{% endstep %}
+
+{% step %}
+Override `NotifyHeldStateChanged` for state-change logic.
+{% endstep %}
+
+{% step %}
+Override `ReconcileWithPredictedInstance` to preserve local state.
+{% endstep %}
+
+{% step %}
+Set `Instance Type` in your `ULyraEquipmentDefinition`.
+{% endstep %}
+{% endstepper %}
 
 ***
 
-The `ULyraEquipmentInstance` provides the essential runtime context for equipped items. By understanding its lifecycle, how it holds state (especially via Tag Attributes), its link to inventory via the Instigator, and how to best write abilities for it using `ULyraGameplayAbility_FromEquipment`, you can create complex and dynamic equipment behaviors.
+## Visual and Audio Feedback
+
+Add polish by responding to held state changes in Blueprint:
+
+```
+Event K2_OnHeldStateChanged (HeldSlotTags)
+├── Branch: Is HeldSlotTags Empty?
+│   ├── True (Holstered):
+│   │   ├── Stop firing effects
+│   │   └── Play holster sound
+│   └── False (Held):
+│       ├── Play equip montage
+│       └── Spawn attached sound
+```
+
+Common use cases:
+
+* Animation montages when weapons are drawn
+* Equip/holster sound effects
+* Particle effect toggling on spawned actors
+* Material parameter changes based on held state
+
+***

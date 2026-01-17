@@ -1,174 +1,648 @@
 # Equipment Manager Component
 
-The `ULyraEquipmentManagerComponent` is the primary runtime component responsible for managing all equipped items on a **single Pawn**. Think of it as the Pawn's personal loadout manager. It orchestrates the equipping, unequipping, and state changes (Holstered vs. Held) of gear.
+You pick up a rifle, equip it to your back, then draw it into your hands. The weapon mesh appears, firing abilities activate, and input bindings apply. You holster it - the mesh moves to your back, firing abilities disappear. How does the system know what to do in each state?
 
-**Key Characteristics:**
-
-* **Type:** `UPawnComponent`. It needs to be added directly to your Pawn Blueprint or C++ class.
-* **Authority-Driven:** Core logic operations (equipping, unequipping, holding) generally execute only on the server (or network authority).
-* **Replicated:** The component replicates the list of equipped items and their current state to all clients, ensuring everyone sees the correct loadout.
-* **Slot Agnostic:** Crucially, the Manager **does not define or limit the available slots itself.** It dynamically adapts to the slots specified in the `ULyraEquipmentDefinition` of the items being equipped. If an item is equipped to a `SlotTag` present in its definition's `EquipmentSlotDetails`, the manager will track it.
-
-### Role & Responsibilities
-
-The Manager component juggles several critical tasks:
-
-1. **Tracking Equipment:** Maintains a replicated list (`FLyraEquipmentList`) of all currently equipped items (`FLyraAppliedEquipmentEntry`), including their state (Slot `GameplayTag`, Held status). This list grows or shrinks based on equip/unequip actions, without predefined size or slot type limits in the manager.
-2. **Handling Requests:** Processes requests (usually initiated by game logic or player input via the Quick Bar) to:
-   * Equip items into specific slots.
-   * Unequip items from slots.
-   * Transition items to the "Held" state.
-   * Transition items out of the "Held" state (back to "Holstered" or removed).
-3. **Instance Management:** Creates (`NewObject`) and potentially destroys `ULyraEquipmentInstance` objects based on equip/unequip actions.
-4. **Applying Definitions:** Reads the `ULyraEquipmentDefinition` associated with an item to determine:
-   * Which abilities to grant/remove via GAS.
-   * Which actors to spawn/destroy.
-   * Whether a requested `SlotTag` is valid for that item.
-5. **GAS Coordination:** Interacts directly with the Pawn's Ability System Component (ASC) to grant and revoke `ULyraAbilitySet`s based on the equipment definition and the item's current state (Holstered/Held).
-6. **Replication:** Ensures the state of the `FLyraEquipmentList`, the `ULyraEquipmentInstance` subobjects, and their linked `ULyraInventoryItemInstance` instigators are correctly replicated to clients.
+The Equipment Manager handles this. It stores equipped items and applies different **behaviors** based on whether each item is held or holstered.
 
 ***
 
-### Core Functions (Authority Focus)
+### The Two-Level Slot Model
 
-These are the main functions you'll interact with to change the Pawn's equipped state. **They should generally only be called on the network authority (server).**
+Every equipped item has two slot properties - and understanding this distinction is key to understanding the entire equipment system.
 
-*   `EquipItemToSlot(ULyraInventoryItemInstance* ItemInstance, FGameplayTag SlotTag)`
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Equipment Entry                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│   SlotTag (Storage)              ActiveHeldSlot (State)      │
+│   ─────────────────              ─────────────────────       │
+│   Where the item LIVES           Which hand is HOLDING       │
+│                                                              │
+│   Examples:                      Examples:                   │
+│   • Equipment.Slot.Back          • Held.Primary              │
+│   • Equipment.Slot.Hip           • Held.Secondary            │
+│   • Equipment.Slot.Chest         • (empty = holstered)       │
+│                                                              │
+│   Changes when:                  Changes when:               │
+│   Moving to different slot       Hold or holster             │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
 
-    * **Action:** Attempts to equip an existing `ItemInstance` from an inventory into the specified `SlotTag`.
-    * **Checks:**
-      1. Is `ItemInstance` valid and does it have an `InventoryFragment_EquippableItem` with a valid `ULyraEquipmentDefinition`?
-      2. Is the provided `SlotTag` valid?
-      3. **Crucially:** Does the item's `ULyraEquipmentDefinition` define behavior for this `SlotTag` in its `EquipmentSlotDetails`? (This is checked implicitly by the logic, as an item can only be equipped to a slot it "knows" about). The function `UInventoryFragment_EquippableItem::IsCompatible` can be used for this check.
-      4. Is the `SlotTag` currently empty on this manager (checked via `FindEntryIndexBySlot`)?
-    * **Process (on Success):**
-      1. Adds a new `FLyraAppliedEquipmentEntry` to the `EquipmentList`.
-      2. Creates the `ULyraEquipmentInstance` (using the `InstanceType` from the Definition).
-      3. Sets the `ItemInstance` as the `Instigator` on the `ULyraEquipmentInstance`.
-      4. Applies **Holstered** behavior: Grants `AbilitySetsToGrant`, spawns `ActorsToSpawn`, and applies `Input Mappings` and `Input Config` defined for _this specific slot_ in the `EquipmentSlotDetails`.
-      5. Calls `OnHolster()` on the `ULyraEquipmentInstance`.
-      6. Updates the `ItemInstance`'s `CurrentSlot` data (using `FEquipmentAbilityData_SourceEquipment`).
-      7. Marks the list/entry for replication.
-    * **Returns:** The spawned `ULyraEquipmentInstance` on success, `nullptr` on failure.
+**SlotTag** is the storage location - where the item physically lives on the player's body. A rifle on your back has `SlotTag = Equipment.Slot.Back`. This doesn't change when you draw or holster the weapon.
 
-    <figure><img src="../../.gitbook/assets/image (93).png" alt="" width="375"><figcaption></figcaption></figure>
-*   `EquipItemDefToSlot(TSubclassOf<ULyraInventoryItemDefinition> ItemDef, FGameplayTag SlotTag)`
+**ActiveHeldSlot** is the held state - which hand (if any) is holding the item. When you draw the rifle, `ActiveHeldSlot = Held.Primary`. When you holster it, `ActiveHeldSlot` becomes invalid (empty).
 
-    * **Action:** Similar to `EquipItemToSlot`, but useful for initially spawning equipment without needing an existing inventory item.
-    * **Process:**
-      1. Creates a _new_ `ULyraInventoryItemInstance` from the provided `ItemDef` (using `UGlobalInventoryManager`).
-      2. Proceeds with the exact same logic as `EquipItemToSlot` using the newly created instance.
-    * **Returns:** The spawned `ULyraEquipmentInstance` on success, `nullptr` on failure.
+#### Why Two Levels?
 
-    <figure><img src="../../.gitbook/assets/image (89).png" alt="" width="375"><figcaption></figcaption></figure>
-*   `UnequipItemFromSlot(FGameplayTag SlotTag)`
+This separation exists because games need both pieces of information independently:
 
-    * **Action:** Removes the item currently equipped in the specified `SlotTag`.
-    * **Checks:** Is there an item in `SlotTag`?
-    * **Process (on Success):**
-      1. Finds the `FLyraAppliedEquipmentEntry` for the slot.
-      2. Retrieves the `ULyraEquipmentInstance`.
-      3. **Crucially, if the item is currently Held, it first calls `UnholdItem(EquipmentInstance)`** to ensure Held abilities/actors are removed correctly before proceeding.
-      4. Removes **Holstered** behavior: Takes back `AbilitySetsToGrant`, destroys `ActorsToSpawn`, and removes `Input Mappings` and `Input Config` associated with _this slot_.
-      5. Calls `OnUnHolster()` on the `ULyraEquipmentInstance`.
-      6. Sets the associated `ItemInstance`'s `CurrentSlot` back to a null/invalid state.
-      7. Removes the `FLyraAppliedEquipmentEntry` from the `EquipmentList`.
-      8. Marks the list for replication.
-      9. Removes the `ULyraEquipmentInstance` as a replicated subobject.
-    * **Returns:** The `ULyraInventoryItemInstance` that was unequipped, or `nullptr`.
+* For paperdoll UI: show where items are stored, regardless of what's currently held.
+* For weapon switching: storage slots remain the same while held state changes.
+* For akimbo weapons: multiple ActiveHeldSlot values (Primary, Secondary) while storage slots are independent.
 
-    <figure><img src="../../.gitbook/assets/image (90).png" alt="" width="375"><figcaption></figcaption></figure>
-*   `HoldItem(ULyraEquipmentInstance* EquipmentInstance)` / `HoldItem(ULyraInventoryItemInstance* ItemInstance)`
+<details>
 
-    * **Action:** Attempts to transition the specified equipment/item instance to the "Held" state.
-    * **Checks:**
-      1. Is another item already Held by this Manager? (Only one item can be held at a time).
-      2. Is the `EquipmentInstance` (or the one derived from `ItemInstance`) valid?
-      3. Does its `ULyraEquipmentDefinition` have `bCanBeHeld` set to `true`?
-    * **Process (on Success):**
-      1. Finds the `FLyraAppliedEquipmentEntry` (or creates a temporary one if holding directly from an inventory `ItemInstance` that wasn't previously slotted).
-      2. If the item was previously **Holstered** in a slot, its Holstered abilities/actors are removed first.
-      3. Applies **Held** behavior: Grants `AbilitySetsToGrant`, spawns `ActorsToSpawn`, and applies `Input Mappings` and `Input Config` defined in the `ActiveEquipmentDetails` of the Definition.
-      4. Calls `OnEquipped()` on the `ULyraEquipmentInstance`.
-      5. Sets `bIsHeld = true` in the `FLyraAppliedEquipmentEntry`.
-      6. Marks the entry for replication.
-    * **Returns:** `true` or the held `ULyraEquipmentInstance` on success, `false` or `nullptr` otherwise.
+<summary>Entry Structure Deep Dive</summary>
 
-    <figure><img src="../../.gitbook/assets/image (91).png" alt="" width="375"><figcaption></figcaption></figure>
-*   `UnholdItem(ULyraEquipmentInstance* EquipmentInstance)`
+Each equipment entry is stored as `FLyraAppliedEquipmentEntry`:
 
-    * **Action:** Takes the specified `EquipmentInstance` out of the "Held" state.
-    * **Checks:** Is this `EquipmentInstance` currently Held (`bIsHeld == true`)?
-    * **Process (on Success):**
-      1. Finds the `FLyraAppliedEquipmentEntry`.
-      2. Removes **Held** behavior: Takes back `AbilitySetsToGrant`, destroys `ActorsToSpawn`, and removes `Input Mappings` and `Input Config` associated with `ActiveEquipmentDetails`.
-      3. Calls `OnUnequipped()` on the `ULyraEquipmentInstance`.
-      4. Sets `bIsHeld = false`.
-      5. **Decision Point:**
-         * If the entry has a valid `SlotTag` (meaning it belongs to a slot), it transitions back to **Holstered**: Re-applies the slot-specific abilities/actors and calls `OnHolster()`.
-         * If the entry has _no_ valid `SlotTag` (meaning it was held directly from inventory), the `FLyraAppliedEquipmentEntry` is removed entirely from the `EquipmentList`, and the `ULyraEquipmentInstance` subobject replication is stopped.
-      6. Marks the entry/list for replication.
-    * **Returns:** `true` on success, `false` otherwise.
+```cpp
+struct FLyraAppliedEquipmentEntry : public FFastArraySerializerItem
+{
+    // The two-level slot model
+    FGameplayTag SlotTag;                    // Storage location (Back, Hip, etc.)
+    FGameplayTag ActiveHeldSlot;             // Which hand is holding (empty = holstered)
+    FGameplayTagContainer ClaimedHeldSlots;  // For two-handed: all slots claimed
 
-    <figure><img src="../../.gitbook/assets/image (92).png" alt="" width="375"><figcaption></figcaption></figure>
+    // The equipment
+    TObjectPtr<ULyraEquipmentInstance> Instance;  // Runtime state object
+    TObjectPtr<ULyraInventoryItemInstance> Instigator;  // The inventory item
+
+    // Behavior tracking (not replicated)
+    FLyraAbilitySet_GrantedHandles GrantedHandles;  // For cleanup on state change
+
+    // Prediction
+    FContainerPredictionStamp Prediction;  // For reconciliation
+};
+```
+
+**Why these fields?**
+
+* `ClaimedHeldSlots` tracks all slots a two-handed weapon is blocking, not just the primary slot
+* `Instigator` links back to the inventory item for persistent data like ammo count
+* `GrantedHandles` is local-only because abilities are granted per-client-authority
+
+</details>
 
 ***
 
-### State Management & The `FLyraEquipmentList`
+## Equipment States: Holstered vs Held
 
-The core of the Manager's state is the `FLyraEquipmentList` struct, which contains an array of `FLyraAppliedEquipmentEntry` structs.
+With the slot model understood, we can talk about equipment states. An item is in one of two states based on its `ActiveHeldSlot`:
 
-* **`FLyraAppliedEquipmentEntry`:** Represents one equipped item and stores:
-  * `EquipmentDefinition`: Which definition asset it uses.
-  * `Instance`: The pointer to the live `ULyraEquipmentInstance`.
-  * `SlotTag`: The slot it occupies (if any). Empty tag means it's held directly or has no assigned slot.
-  * `bIsHeld`: The crucial boolean indicating if it's currently Held or Holstered.
-  * `HolsteredGrantedHandles` / `HeldGrantedHandles`: Internal structs (`FLyraAbilitySet_GrantedHandles`) used by GAS to track granted abilities for efficient removal.
-  * `BindHandles`: Internal `TArray<uint32>` used by `ULyraHeroComponent` to track the applied `ULyraInputConfig` for efficient removal.
-  * `LastReplicatedState`: Non-replicated struct used internally by the replication system (FFastArraySerializer) to correctly manage transitions on clients (e.g., distinguishing between Unholding and fully Unequipping).
-* **`FLyraEquipmentList`:**
-  * Contains the `TArray<FLyraAppliedEquipmentEntry> Entries`.
-  * Implements `FFastArraySerializer` for efficient network replication of this array. This handles replicating adds, removes, and changes to the entries automatically.
+* **Holstered:** `ActiveHeldSlot` is invalid (empty) - the item is stored but not in hand
+* **Held:** `ActiveHeldSlot` is valid - the item is actively in the player's hand
+
+```mermaid
+stateDiagram-v2
+    rifle --> Holstered: EquipItem()
+    Holstered --> Held: HoldItem()
+    Held --> Holstered: HolsterItem()
+    Holstered --> [*]: UnequipItem()
+    Held --> [*]: UnequipItem()
+
+    note right of Holstered: Uses HolsteredBehaviors
+    note right of Held: Uses HeldBehaviors
+```
+
+#### What Changes Between States
+
+Each state applies a different set of **behaviors** from the Equipment Definition:
+
+| State     | Behavior Source                 | Typical Effects                                  |
+| --------- | ------------------------------- | ------------------------------------------------ |
+| Holstered | `HolsteredBehaviors[SlotTag]`   | Weapon mesh on back, no active abilities         |
+| Held      | `HeldBehaviors[ActiveHeldSlot]` | Weapon in hand, fire/reload/aim abilities active |
+
+The key rule: **equipment is always in exactly one state**. When state changes, the old behavior is fully removed before the new behavior applies. Your rifle's Fire ability disappears completely when holstered and reappears when held.
+
+{% hint style="info" %}
+For how behaviors are configured on Equipment Definitions, see [Defining Equippable Items](defining-equippable-items.md).
+{% endhint %}
+
+### Held State Change Notifications
+
+When equipment transitions between held and holstered states, the Equipment Manager notifies each affected Equipment Instance. This notification system includes buffering and sorting for deterministic behavior.
+
+#### The Notification Flow
+
+```mermaid
+sequenceDiagram
+    participant PE as Prediction Event
+    participant EM as Equipment Manager
+    participant EI as Equipment Instance
+
+    PE->>EM: HoldItem(A)
+    PE->>EM: HolsterItem(B)
+
+    Note over EM: Buffer pending changes
+    Note over EM: Sort: Unheld before Held
+
+    EM-->>EI: Broadcast in order
+    Note right of EI: Instance B<br/>Instance A
+```
+
+#### Notification Buffering
+
+When multiple equipment state changes happen in the same frame (common during weapon swaps), the Equipment Manager buffers notifications and broadcasts them in sorted order:
+
+1. **Collection Phase**: When prediction events apply, held state changes are added to a pending buffer
+2. **Sort Phase**: `BecameUnheld` notifications are sorted before `BecameHeld` notifications
+3. **Broadcast Phase**: `NotifyHeldStateChanged` is called on each Equipment Instance in sorted order
+
+This ordering ensures that the old weapon fully "puts away" before the new weapon starts its "draw" sequence, important for animation and ability coordination.
+
+#### Previous Held State Cache
+
+The Equipment Manager maintains a cache of previous held states for accurate change detection:
+
+```cpp
+TMap<FGuid, FGameplayTagContainer> PreviousHeldStateCache;
+```
+
+This cache enables the system to detect the actual change type:
+
+| Previous State | New State      | Change Type    |
+| -------------- | -------------- | -------------- |
+| Empty          | Has tags       | `BecameHeld`   |
+| Has tags       | Empty          | `BecameUnheld` |
+| Has tags       | Different tags | `StillHeld`    |
+| Empty          | Empty          | `NeverHeld`    |
+
+After broadcasting notifications, the cache is updated with the new held states.
+
+#### The `FHeldStateChangedEvent` Structure
+
+```cpp
+USTRUCT(BlueprintType)
+struct FHeldStateChangedEvent
+{
+    // The type of change that occurred
+    EHeldStateChangeType ChangeType;
+
+    // Held slot tags before this change
+    FGameplayTagContainer OldHeldSlotTags;
+
+    // Held slot tags after this change
+    FGameplayTagContainer NewHeldSlotTags;
+};
+
+enum class EHeldStateChangeType : uint8
+{
+    BecameHeld,    // Weapon just became held
+    BecameUnheld,  // Weapon just became unheld
+    StillHeld,     // Weapon remains held (slot may have changed)
+    NeverHeld      // Weapon was never held and still isn't
+};
+```
+
+#### Why This Matters
+
+Without buffering and sorting:
+
+* Weapon A might start its "draw" animation before Weapon B finishes "holstering"
+* Abilities could conflict if both weapons briefly grant the same input binding
+* Visual effects might overlap incorrectly
+
+With proper ordering:
+
+* Clean transitions between weapons
+* Deterministic ability grant/revoke sequences
+* Predictable animation state machine behavior
 
 ***
 
-### Replication Overview
+### How Equipment Gets Equipped
 
-* **What replicates:** `FLyraEquipmentList` (FastArray) + every live `ULyraEquipmentInstance`, its `Instigator` (`ULyraInventoryItemInstance`) and any `UTransientRuntimeFragment`s.
-* **Driver:** `ULyraEquipmentManagerComponent::ReplicateSubobjects` handles the sub-objects; FastArray callbacks (`PostReplicatedAdd/Change/Remove`) fire the correct `OnEquipped/Unequipped/Holster` transitions on clients.
-* **Input Handling:**&#x20;
-  * On the **listen server**, input mappings and configs are applied/removed directly by the `FLyraEquipmentList`'s internal functions (e.g., `ApplyActiveEquipmentBehavior`) when the equipment's state changes.&#x20;
-  * On **remote clients**, input mappings and configs are applied/removed by the `FLyraEquipmentList`'s `FFastArraySerializer` callbacks (`PostReplicatedAdd/Change/Remove`) in response to replicated state changes.&#x20;
-  * In both cases, checks ensure that input-specific logic only runs on the local player's controller.
-* **Authority only APIs:** `EquipItemToSlot`, `UnequipItemFromSlot`, `HoldItem`, `UnholdItem` run _server-side only_. UI or abilities should RPC/AbilityTask to reach them.
-* **Client-side listening:**
-  * Gameplay-Message tag **`TAG_Lyra_Equipment_Message_EquipmentChanged`** updates HUD/FX.
-  * `OnInstigatorReady` lets Blueprint wait until the inventory item is valid.
+Equipment enters through the container transaction system. When an item moves from inventory to an equipment slot:
 
-> See [**Advanced Concepts → Replication Deep Dive**](advanced-concepts-and-integration.md#replication-deep-dive) for packet-level details.
+{% stepper %}
+{% step %}
+#### Validation
+
+The system checks the item's Equipment Definition supports this storage slot.
+{% endstep %}
+
+{% step %}
+#### Entry Creation
+
+A new `FLyraAppliedEquipmentEntry` is created with the item.
+{% endstep %}
+
+{% step %}
+#### Behavior Application
+
+Holstered behavior is applied (items always start holstered, not held).
+{% endstep %}
+
+{% step %}
+#### Replication
+
+The entry replicates to clients.
+
+The item's `CurrentSlot` is updated to an `FEquipmentAbilityData_SourceEquipment` - a slot descriptor that contains both the storage slot tag and the held state.
+{% endstep %}
+{% endstepper %}
+
+{% hint style="info" %}
+For how transactions work across all containers, see [Item Container Transactions](../item-container/transactions/).
+{% endhint %}
+
+<details>
+
+<summary>Replication Internals</summary>
+
+Equipment uses a multi-layered replication strategy:
+
+**FastArray for Entries** The equipment list uses `FFastArraySerializer` for delta replication - only changed entries sync. This provides callbacks (`PostReplicatedAdd`, `PostReplicatedChange`, `PostReplicatedRemove`) that integrate with prediction.
+
+**Why ReplicateSubobjects Matters**
+
+Unlike Actor properties, `UObjects` don't replicate automatically. `ULyraEquipmentInstance` is a `UObject` owned by the component - it won't replicate unless explicitly registered with the replication system.
+
+The Equipment Manager overrides `ReplicateSubobjects` to handle this:
+
+```cpp
+bool ULyraEquipmentManagerComponent::ReplicateSubobjects(UActorChannel* Channel,
+    FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+    bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+    for (FLyraAppliedEquipmentEntry& Entry : EquipmentList.Entries)
+    {
+        if (Entry.Instance)
+        {
+            // Replicate the equipment instance
+            bWroteSomething |= Channel->ReplicateSubobject(Entry.Instance, *Bunch, *RepFlags);
+        }
+
+        if (Entry.Instigator)
+        {
+            // Replicate the backing inventory item
+            bWroteSomething |= Channel->ReplicateSubobject(Entry.Instigator, *Bunch, *RepFlags);
+
+            // And its runtime fragments (attachments, etc.)
+            for (UTransientRuntimeFragment* Fragment : Entry.Instigator->GetRuntimeFragments())
+            {
+                bWroteSomething |= Channel->ReplicateSubobject(Fragment, *Bunch, *RepFlags);
+            }
+        }
+    }
+    return bWroteSomething;
+}
+```
+
+Without this, clients would receive the FastArray entries (slot tags, held state) but the actual equipment instances would be null.
+
+**What Replicates vs Local-Only**
+
+| Data                  | Replicates | Notes                                   |
+| --------------------- | ---------- | --------------------------------------- |
+| Equipment entries     | Yes        | Via FastArray                           |
+| Equipment Instance    | Yes        | Via `ReplicateSubobjects`               |
+| Instigator (Item)     | Yes        | Via `ReplicateSubobjects`               |
+| SpawnedActors array   | Yes        | Server-authoritative actors             |
+| PredictedActors array | **No**     | Local to owning client                  |
+| GrantedHandles        | **No**     | Abilities granted locally per authority |
+
+**Note on SpawnedActors**
+
+The `SpawnedActors` array contains replicated Actors (like weapon meshes), not subobjects. These are spawned on the server and replicate through normal Actor replication. The Equipment Instance just holds references to them.
+
+</details>
 
 ***
 
-### Querying Equipment State
+### Holding and Holstering
 
-You can query the Manager to find out what the Pawn currently has equipped:
+Now that items are equipped (holstered), players need to hold them. When you hold an item:
 
-* `GetInstanceFromSlot(const FGameplayTag& SlotTag)`: Get the specific `ULyraEquipmentInstance*` in a given slot. Returns `nullptr` if the slot is empty.
-* `GetFirstHeldInstanceOfType(TSubclassOf<ULyraEquipmentInstance> InstanceType)`: Useful for checking if the player is currently holding a specific _type_ of item (e.g., `GetFirstHeldInstanceOfType(MyWeaponInstance::StaticClass())`). Returns the instance or `nullptr`.
-* `GetEquipmentInstancesOfType(TSubclassOf<ULyraEquipmentInstance> InstanceType)`: Get _all_ equipped instances (Held or Holstered) of a specific type.
-* `FindAvailableEquipmentSlots(TSubclassOf<ULyraEquipmentDefinition> EquipmentDefinition)`: Returns an array of `FGameplayTag`s representing slots that are _compatible_ with the given definition (based on its `EquipmentSlotDetails` keys) and are currently _empty_. Useful for UI or auto-equip logic.
-* `GetSlots()`: Returns an array of `FLyraEquipmentSlotFound` structs, giving a snapshot of all occupied slots, the instance, and its held status.
+{% stepper %}
+{% step %}
+#### Check availability
+
+Is the target held slot free?
+{% endstep %}
+
+{% step %}
+#### Switch behavior
+
+Remove holstered behavior, apply held behavior.
+{% endstep %}
+
+{% step %}
+#### Update state
+
+Set `ActiveHeldSlot` to the target slot.
+{% endstep %}
+
+{% step %}
+#### Apply effects
+
+Spawn held actor, grant abilities, bind input.
+{% endstep %}
+{% endstepper %}
+
+Holstering reverses this - held behavior is removed, holstered behavior applies, and `ActiveHeldSlot` is cleared.
+
+#### Two-Handed Weapons
+
+Some weapons need both hands. The Equipment Definition specifies a `HeldSlotPolicy`:
+
+| Policy      | Behavior                                         |
+| ----------- | ------------------------------------------------ |
+| `OneHanded` | Claims only the target held slot. Allows akimbo. |
+| `TwoHanded` | Claims all available held slots atomically.      |
+
+When a two-handed rifle is held:
+
+```
+Before: Dual pistols                After: Two-handed rifle
+───────────────────────            ─────────────────────────
+Pistol A → Held.Primary            Rifle → Held.Primary
+Pistol B → Held.Secondary                 (claims both slots)
+                                   Pistol A → Holstered
+                                   Pistol B → Holstered
+```
+
+The rifle's `ClaimedHeldSlots` array contains both Primary and Secondary, preventing any other item from being held until the rifle is holstered.
+
+#### Akimbo
+
+With one-handed weapons and multiple held slots (configured via `AvailableHeldSlots` on the Equipment Manager), players can hold multiple items simultaneously. A pistol in Primary, another in Secondary - both held, both applying their behaviors.
 
 ***
 
-### Initialization and Replication
+### Working with Equipment in Code
 
-* **Initialization:** The component initializes, typically setting up its replication parameters.
-* **Replication:**
-  * The `EquipmentList` uses Fast Array Serialization. When the list changes on the server, only the changed elements are efficiently sent to clients.
-  * The Manager overrides `ReplicateSubobjects`. This ensures that not only the list itself is replicated, but also each valid `ULyraEquipmentInstance*` within the list, _and_ the `ULyraInventoryItemInstance*` set as the instigator for each equipment instance (including any `UTransientRuntimeFragment`s the item might have). This is crucial for clients to have access to the full state of equipped items.
-  * The `ReadyForReplication` function ensures that any equipment already present when replication starts is registered correctly as a subobject.
+Now that you understand the model, here's how to query it.
+
+#### "What weapon is the player holding?"
+
+When you need the currently held weapon - for firing logic, UI display, or ability checks:
+
+```cpp
+// Get what's in the primary hand
+ULyraEquipmentInstance* Weapon = EquipmentManager->GetInstanceFromHeldSlot(TAG_Held_Primary);
+
+// Or get any weapon type that's held
+if (UWeaponInstance* Weapon = EquipmentManager->GetFirstHeldInstanceOfType<UWeaponInstance>())
+{
+    Weapon->StartFiring();
+}
+```
+
+#### "What's stored in a specific slot?"
+
+For paperdoll UI or checking slot availability:
+
+```cpp
+// What's on the player's back?
+ULyraEquipmentInstance* BackItem = EquipmentManager->GetInstanceFromSlot(TAG_Slot_Back);
+```
+
+#### "Get all equipped items for UI"
+
+For displaying all equipment in a character screen:
+
+```cpp
+const TArray<FLyraAppliedEquipmentEntry>& Entries = EquipmentManager->GetSlots();
+
+for (const FLyraAppliedEquipmentEntry& Entry : Entries)
+{
+    FGameplayTag StorageSlot = Entry.SlotTag;
+    bool bIsHeld = Entry.IsHeld();
+    ULyraEquipmentInstance* Instance = Entry.Instance;
+
+    // Display in UI...
+}
+```
+
+`GetSlots()` returns what we call the **effective view** - it shows what the player should actually see right now. On the server, this is just the authoritative equipment list. On the owning client, it includes any pending predictions that haven't been confirmed yet. This is why UI code doesn't need to track predictions separately - `GetSlots()` always returns the correct visual state.
 
 ***
 
-The `ULyraEquipmentManagerComponent` acts as the authoritative hub on each Pawn for its equipment. It interprets the data defined in `ULyraEquipmentDefinition` and translates it into runtime state changes, GAS interactions, and replicated data for clients. Understanding its role is key to customizing how equipment behaves in your game.
+### Writing Equipment Abilities
+
+When equipment grants abilities (like firing, reloading, or using a special feature), those abilities often need to interact with the equipment that granted them. A firing ability needs to know the weapon's damage, spread, and fire rate. A reload ability needs to access the magazine capacity and current ammo.
+
+`ULyraGameplayAbility_FromEquipment` solves this. It provides direct access to both the equipment instance and the underlying inventory item.
+
+#### Why Inherit From This Class?
+
+Without it, you'd need to manually find your equipment:
+
+```cpp
+// The hard way - don't do this
+void UMyAbility::ActivateAbility(...)
+{
+    APawn* Pawn = Cast<APawn>(GetAvatarActorFromActorInfo());
+    ULyraEquipmentManagerComponent* Equipment = Pawn->FindComponentByClass<ULyraEquipmentManagerComponent>();
+    ULyraEquipmentInstance* Weapon = Equipment->GetFirstHeldInstanceOfType<UWeaponInstance>();
+    // Hope this is the right weapon...
+}
+```
+
+With `ULyraGameplayAbility_FromEquipment`, the ability already knows which equipment granted it:
+
+```cpp
+// The right way
+void UMyAbility::ActivateAbility(...)
+{
+    ULyraEquipmentInstance* Equipment = GetAssociatedEquipment();
+    // This is guaranteed to be the equipment that granted this ability
+}
+```
+
+#### What It Provides
+
+| Method                     | Returns                       | Use Case                                                        |
+| -------------------------- | ----------------------------- | --------------------------------------------------------------- |
+| `GetAssociatedEquipment()` | `ULyraEquipmentInstance*`     | Access spawned actors, tag attributes, equipment-specific state |
+| `GetAssociatedItem()`      | `ULyraInventoryItemInstance*` | Access persistent data like ammo count, durability, stat tags   |
+
+#### Practical Example: Firing Ability
+
+```cpp
+UCLASS()
+class UGA_WeaponFire : public ULyraGameplayAbility_FromEquipment
+{
+    virtual void ActivateAbility(...) override
+    {
+        // Get the equipment instance for weapon-specific data
+        ULyraEquipmentInstance* Equipment = GetAssociatedEquipment();
+        float Damage = Equipment->GetTagAttributeValue(TAG_Weapon_Damage);
+        float FireRate = Equipment->GetTagAttributeValue(TAG_Weapon_FireRate);
+
+        // Get the inventory item for persistent state
+        ULyraInventoryItemInstance* Item = GetAssociatedItem();
+        int32 CurrentAmmo = Item->GetStatTagStackCount(TAG_Weapon_Ammo);
+
+        if (CurrentAmmo > 0)
+        {
+            // Consume ammo
+            Item->RemoveStatTagStack(TAG_Weapon_Ammo, 1);
+
+            // Fire the weapon...
+            PerformFire(Damage);
+        }
+    }
+};
+```
+
+#### The Instancing Requirement
+
+{% hint style="warning" %}
+Equipment abilities **must be instanced** (`InstancedPerActor` or `InstancedPerExecution`). The class validates this in the editor and will report an error if set to `NonInstanced`.
+{% endhint %}
+
+Why? The `GetAssociatedEquipment()` function retrieves the equipment from the ability spec's `SourceObject`. Non-instanced abilities don't have a reliable spec context during activation, so this lookup would fail.
+
+If you see "Equipment ability must be instanced" validation errors, check your ability's `Instancing Policy` property.
+
+***
+
+### Client Prediction
+
+When a player equips or holds a weapon, they expect immediate feedback. The Equipment Manager supports client-side prediction - actors appear instantly while the server validates.
+
+Here's what happens when you hold a weapon:
+
+{% stepper %}
+{% step %}
+#### Owning client
+
+Spawns a local predicted actor immediately.
+{% endstep %}
+
+{% step %}
+#### Server
+
+Validates and spawns the replicated actor.
+{% endstep %}
+
+{% step %}
+#### Reconciliation
+
+When the server actor arrives, the predicted actor is destroyed.
+{% endstep %}
+
+{% step %}
+#### Visual continuity
+
+Visibility suppression prevents the replicated actor from "popping" in.
+{% endstep %}
+{% endstepper %}
+
+This means weapon switching feels instant, even with network latency.
+
+{% hint style="info" %}
+For the complete prediction model, see [Prediction Architecture](../item-container/prediction/prediction-architecture.md).
+{% endhint %}
+
+<details>
+
+<summary>How Prediction is Wired for Equipment</summary>
+
+Equipment uses `FEquipmentPredictionRuntime`, a PIMPL wrapper around `TGuidKeyedPredictionRuntime`.
+
+**Two Actor Arrays** Equipment Instances maintain separate arrays for predicted vs replicated actors:
+
+```cpp
+SpawnedActors[]    // Replicated from server - the "truth"
+PredictedActors[]  // Local-only, spawned immediately for instant feedback
+```
+
+**Timeline of a Hold Operation**
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+
+    Client->>Client: HoldItem() predicted
+    Client->>Client: Spawn predicted actor
+    Client->>Server: RPC with prediction key
+    Server->>Server: Validate and apply
+    Server-->>Client: Entry replicates
+    Client->>Client: PostReplicatedChange fires
+    Client->>Client: Suppress replicated actor visibility
+    Client->>Client: Destroy predicted actor
+    Client->>Client: Unsuppress replicated actor
+```
+
+**Visibility Suppression** During reconciliation, both actors briefly exist. To prevent visual overlap:
+
+```cpp
+// Before predicted actor is destroyed
+EquipmentInstance->SuppressActorVisibility();  // Hides replicated actor
+
+// After predicted actor cleanup
+EquipmentInstance->ClearActorVisibilitySuppression();  // Reveals replicated
+```
+
+</details>
+
+***
+
+### Customization
+
+#### Adding New Storage Slots
+
+To add a new equipment location (like a utility belt):
+
+1. Create a new GameplayTag: `Lyra.Equipment.Slot.UtilityBelt`
+2. In Equipment Definitions, add `HolsteredBehaviors` entries for this slot
+3. UI can query for items via `GetInstanceFromSlot()`
+
+#### Adding More Held Slots
+
+To support three-weapon wielding or a shield slot:
+
+1. Add tags to `AvailableHeldSlots` on your Equipment Manager component
+2. Configure `HeldBehaviors` in Equipment Definitions to support these slots
+
+#### Custom Behavior on State Change
+
+Create a custom Equipment Instance class for special logic:
+
+```cpp
+UCLASS()
+class UMyWeaponInstance : public ULyraEquipmentInstance
+{
+    virtual void NotifyHeldStateChanged(const FGameplayTagContainer& HeldSlotTags) override
+    {
+        Super::NotifyHeldStateChanged(HeldSlotTags);
+
+        if (HeldSlotTags.IsEmpty())
+        {
+            // Holstered - stop active effects
+        }
+        else
+        {
+            // Held - start idle animations
+        }
+    }
+};
+```
+
+{% hint style="warning" %}
+Equipment Instances receive a single `NotifyHeldStateChanged()` callback, not separate hold/holster callbacks. Check `HeldSlotTags.IsEmpty()` to distinguish states.
+{% endhint %}
+
+***
+
+### Troubleshooting
+
+{% hint style="info" %}
+**Equipment not appearing?** Check:
+
+* Item definition has `UInventoryFragment_EquippableItem` fragment
+* Fragment references a valid Equipment Definition
+* Equipment Definition has `HolsteredBehaviors` entry for the storage slot tag
+* Socket name in `ActorToSpawn` exists on the character mesh
+{% endhint %}
+
+{% hint style="info" %}
+**Abilities not granting?** Check:
+
+* `AbilitySetsToGrant` is populated in the behavior
+* Operations are running on server (abilities require authority)
+* Ability is instanced if using `GetAssociatedEquipment()`
+{% endhint %}
+
+{% hint style="info" %}
+**Actors appearing at world origin?** The socket name doesn't exist on the skeletal mesh. Verify the socket name in your behavior configuration matches your character's skeleton.
+{% endhint %}

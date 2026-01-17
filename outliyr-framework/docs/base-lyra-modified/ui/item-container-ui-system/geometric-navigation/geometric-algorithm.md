@@ -1,6 +1,6 @@
 # Geometric Algorithm
 
-At the heart of cross-window navigation is the **Geometric Neighbor Search** implemented in `LyraItemContainerLayer::FindWindowInDirection`. While standard UMG navigation relies on simple center-to-center proximity, our algorithm uses a "Directional Lane" approach. This ensures that focus moves in a way that feels predictable and "aligned" to the human eye.
+At the heart of cross-window navigation is the **Geometric Neighbor Search** implemented in `LyraItemContainerLayer::FindWindowInDirection`. While standard UMG navigation relies on simple center-to-center proximity, the algorithm uses a "Directional Lane" approach. This ensures that focus moves in a way that feels predictable and "aligned" to the human eye.
 
 ### The Concept: Navigation Lanes
 
@@ -8,26 +8,27 @@ Imagine your UI as a series of lanes on a highway. When you press **Right**, you
 
 {% stepper %}
 {% step %}
-#### Direction Filtering
+**Direction Filtering**
 
 The algorithm first filters candidate windows to only include those actually in the requested direction.
 
-* Moving Right: Only consider windows whose left edge is to the right of the source window's right edge.
-* Moving Left: Only consider windows whose right edge is to the left of the source window's left edge.
-* Moving Up/Down: Similar logic for vertical movement.
+* Moving Right: Only consider windows whose left edge is to the right of the **cursor position** by more than the threshold.
+* Moving Left: Only consider windows whose right edge is to the left of the cursor position by more than the threshold.
+* Moving Up: Only consider windows whose bottom edge is above the cursor position by more than the threshold.
+* Moving Down: Only consider windows whose top edge is below the cursor position by more than the threshold.
 
-A small threshold (50 pixels) is used to handle edge cases where windows are nearly aligned.
+A threshold of 50 pixels prevents accidental selection of nearly-aligned windows. This cursor-based approach means navigation "starts" from where your selection is, not from the window boundary.
 {% endstep %}
 
 {% step %}
-#### Perpendicular Overlap
+**Scoring Alignment**
 
-The algorithm then checks if a candidate window overlaps with the cursor position along the axis perpendicular to movement.
+After filtering to valid candidates, the algorithm scores each window based on two factors:
 
-* Moving Horizontal (Left/Right): Does the candidate window share any vertical space with the cursor's Y position?
-* Moving Vertical (Up/Down): Does the candidate window share any horizontal space with the cursor's X position?
+* **Directional Distance**: Distance from the cursor to the target window's center along the navigation axis.
+* **Perpendicular Offset**: Distance from the cursor to the target window's center perpendicular to navigation.
 
-If they overlap, they are considered **Direct Neighbors**. If they don't overlap (e.g., a window shifted slightly higher or lower), they are **Diagonal Neighbors**.
+Both measurements use the target's **center point**, not its edges. This ensures consistent scoring regardless of window size.
 {% endstep %}
 {% endstepper %}
 
@@ -41,10 +42,12 @@ Score = DirectionalDistance + (PerpendicularOffset * 0.5f)
 
 #### Directional Distance
 
-We measure the gap between the boundaries in the direction of movement.
+We measure the distance from the cursor position to the target window's **center** along the movement axis.
 
-* If moving Right, we measure from the source window's right edge to the candidate's left edge.
-* This is crucial for windows of varying sizes; it ensures that a massive window doesn't "hog" focus just because its center is technically closer.
+* If moving Right, we measure `TargetCenterX - CursorX`.
+* If moving Left, we measure `CursorX - TargetCenterX`.
+
+**Important**: The direction _validation_ uses edge-to-cursor distance, but the _scoring_ uses center-to-cursor distance. This distinction prevents large windows from getting unfair advantage just because their edge is closer.
 
 #### Perpendicular Offset (Alignment Penalty)
 
@@ -60,38 +63,90 @@ The Result: A directly aligned window further away will beat a closer window tha
 
 ### The Implementation
 
+{% code title="ULyraItemContainerLayer::FindWindowInDirection (C++)" %}
 ```cpp
 FItemWindowHandle ULyraItemContainerLayer::FindWindowInDirection(
     FItemWindowHandle FromWindow,
     EUINavigation Direction,
     FVector2D CursorScreenPos) const
 {
-    float BestScore = FLT_MAX;
     FItemWindowHandle BestTarget;
+    float BestScore = TNumericLimits<float>::Max();
 
     for (const auto& Pair : ActiveWindows)
     {
         if (Pair.Key == FromWindow.WindowId) continue;
 
-        ULyraItemContainerWindowShell* CandidateShell = Pair.Value;
-        FGeometry CandidateGeom = CandidateShell->GetCachedGeometry();
-        FVector2D CandidatePos = CandidateGeom.GetAbsolutePosition();
-        FVector2D CandidateSize = CandidateGeom.GetAbsoluteSize();
+        ULyraItemContainerWindowShell* TargetShell = Pair.Value;
+        if (!TargetShell || !TargetShell->GetFocusableContent()) continue;
 
-        // Check if candidate is in the correct direction
-        // Calculate distance and perpendicular offset
-        // Score = DirectionalDistance + (PerpendicularOffset * 0.5f)
+        const FGeometry& TargetGeom = TargetShell->GetCachedGeometry();
+        const FVector2D TargetPos = TargetGeom.GetAbsolutePosition();
+        const FVector2D TargetSize = TargetGeom.GetAbsoluteSize();
+        const FVector2D TargetCenter = TargetPos + TargetSize * 0.5f;
 
-        if (Score < BestScore)
+        // Delta from cursor to target center (for scoring)
+        const FVector2D DeltaToCenter = TargetCenter - CursorScreenPos;
+
+        float DeltaToEdge = 0.0f;
+        bool bValidDirection = false;
+        float DirectionalDistance = 0.0f;
+        float PerpendicularDistance = 0.0f;
+
+        constexpr float DirectionThreshold = 50.0f;
+
+        switch (Direction)
         {
-            BestScore = Score;
-            BestTarget = FItemWindowHandle(Pair.Key);
+        case EUINavigation::Right:
+            // Validate: target's LEFT edge must be right of cursor
+            DeltaToEdge = TargetPos.X - CursorScreenPos.X;
+            bValidDirection = DeltaToEdge > DirectionThreshold;
+            // Score: distance to center
+            DirectionalDistance = DeltaToCenter.X;
+            PerpendicularDistance = FMath::Abs(DeltaToCenter.Y);
+            break;
+        case EUINavigation::Left:
+            DeltaToEdge = (TargetPos.X + TargetSize.X) - CursorScreenPos.X;
+            bValidDirection = DeltaToEdge < -DirectionThreshold;
+            DirectionalDistance = -DeltaToCenter.X;
+            PerpendicularDistance = FMath::Abs(DeltaToCenter.Y);
+            break;
+        // Up/Down follow the same pattern for Y axis
+        }
+
+        if (bValidDirection)
+        {
+            const float Score = DirectionalDistance + PerpendicularDistance * 0.5f;
+            if (Score < BestScore)
+            {
+                BestScore = Score;
+                BestTarget = FItemWindowHandle(Pair.Key);
+            }
         }
     }
 
     return BestTarget;
 }
 ```
+{% endcode %}
+
+### Two-Step Approach: Validation vs Scoring
+
+The algorithm separates **direction validation** from **scoring**:
+
+{% stepper %}
+{% step %}
+#### Validation
+
+Uses the target's closest edge to check if it's actually in the navigation direction. This prevents windows that extend back past the cursor from being considered.
+{% endstep %}
+
+{% step %}
+#### Scoring
+
+Uses the target's center to rank candidates. Using the center ensures large windows don't get unfair advantage just because their edge is closer.
+{% endstep %}
+{% endstepper %}
 
 ***
 
@@ -115,19 +170,19 @@ graph LR
 
 {% stepper %}
 {% step %}
-#### Check Window Geometry
+**Check Window Geometry**
 
 Windows must have valid cached geometry. If a window was just created, its geometry might not be available until the next frame.
 {% endstep %}
 
 {% step %}
-#### Inspect Cursor Position
+**Inspect Cursor Position**
 
 The `CursorScreenPos` used for scoring comes from `GetFocusedWindowCursorPosition()`, which queries the content widget's `GetCursorScreenPosition()` interface method.
 {% endstep %}
 
 {% step %}
-#### Check Direction Threshold
+**Check Direction Threshold**
 
 Windows that are almost aligned might be filtered out. The 50-pixel threshold handles most cases, but extremely narrow windows might need adjustment.
 {% endstep %}

@@ -99,4 +99,68 @@ The `StatTags` property (`FGameplayTagStackContainer`) on `ULyraInventoryItemIns
 
 ***
 
+#### Change Notifications (Delegates)
+
+When stat tag values change, item instances broadcast a delegate to notify interested systems like UI widgets:
+
+```cpp
+UPROPERTY(BlueprintAssignable, Category="Inventory|Stats")
+FOnGameplayTagStackChangedDynamic OnItemStatTagChanged;
+```
+
+**Delegate Signature:**
+
+* `Tag` (`FGameplayTag`): The tag that changed
+* `NewCount` (`int32`): The new stack count
+* `OldCount` (`int32`): The previous stack count
+
+**Usage Example (C++):**
+
+```cpp
+ItemInstance->OnItemStatTagChanged.AddDynamic(this, &UMyWidget::HandleStatChanged);
+
+void UMyWidget::HandleStatChanged(FGameplayTag Tag, int32 NewCount, int32 OldCount)
+{
+    if (Tag == TAG_Weapon_Ammo_Magazine)
+    {
+        UpdateAmmoDisplay(NewCount);
+    }
+}
+```
+
+**Usage Example (Blueprint):** Bind to the `OnItemStatTagChanged` event on your item instance reference to receive notifications when any stat tag changes.
+
+**Prediction Support**
+
+The item instance stat tag system includes prediction support for responsive UI updates:
+
+* **`RecordPredictedTagDelta(Tag, Delta, PredKeyId)`**: Records a predicted change that will be applied immediately to `GetStatTagStackCount()` results, allowing UI to show the predicted value before server confirmation.
+* **`PendingTagDeltas`**: Internal map tracking predicted changes keyed by prediction ID.
+* **`ClearPredictedDeltasForKey(PredKeyId)`**: Called when a prediction is confirmed or rejected to clean up pending deltas.
+
+**Prediction Behavior:**
+
+1. When a predicted delta is recorded, the delegate fires immediately with the predicted value
+2. The replicated value updates separately via server replication
+3. When prediction is cleared, the delegate fires with the final confirmed value
+4. If prediction is rejected, the rollback broadcasts the corrected value
+
+This allows UI to show immediate feedback (e.g., ammo decrementing when firing) while maintaining server authority over the actual values.
+
+***
+
+#### Related Delegates
+
+The stat tag delegate pattern is used consistently across the framework:
+
+| Class                        | Delegate                 | Purpose                                      |
+| ---------------------------- | ------------------------ | -------------------------------------------- |
+| `ULyraInventoryItemInstance` | `OnItemStatTagChanged`   | Item-level stats (ammo, durability, charges) |
+| `ALyraPlayerState`           | `OnPlayerStatTagChanged` | Player-level stats (kills, deaths, score)    |
+| `ALyraTeamInfoBase`          | `OnTeamTagChanged`       | Team-level stats (objectives, resources)     |
+
+All three delegates share the same signature: `(FGameplayTag Tag, int32 NewCount, int32 OldCount)`
+
+***
+
 In essence, `StatTags` provide a straightforward, networked way to manage simple integer states that belong intrinsically to an item instance and need to persist with it. They complement the more complex and flexible Transient Fragment system for handling other types of instance-specific data.

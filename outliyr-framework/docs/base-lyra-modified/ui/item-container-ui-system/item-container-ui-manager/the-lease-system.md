@@ -2,20 +2,29 @@
 
 The Lease System is the memory management backbone of the UI. It solves the problem of sharing expensive ViewModels across multiple widgets without creating duplicate logic or causing memory leaks.
 
-### The Concept
+Instead of "Creating" a ViewModel, a widget **"Acquires"** it. Instead of "Destroying" a ViewModel, a widget **"Releases"** it. It keeps track of how many widgets are currently using a specific ViewModel.
 
-Instead of "Creating" a ViewModel, a widget **"Acquires"** it. Instead of "Destroying" a ViewModel, a widget **"Releases"** it.
+{% hint style="success" %}
+You do not have to understand the internal system to use the view model system you can use the `LyraItemContainerUIManager`  to acquire and release view models.&#x20;
+{% endhint %}
 
-The UI Manager acts as the landlord. It keeps track of how many widgets are currently using a specific ViewModel.
+### Integration Example
 
-* **Ref Count 0 -> 1:** The ViewModel is created and initialized.
-* **Ref Count 1 -> 2:** The existing ViewModel is returned.
-* **Ref Count 2 -> 1:** Nothing happens.
-* **Ref Count 1 -> 0:** The ViewModel is uninitialized and destroyed.
+Here is how you use the lease system manually in a custom widget:
+
+<figure><img src="../../../../.gitbook/assets/image (212).png" alt=""><figcaption></figcaption></figure>
+
+{% hint style="success" %}
+If you are using the `LyraItemContainerWindowShell`, it handles this automatically via `AcquireViewModelLease`. It stores a list of all leases it opened and releases them all in `NativeDestruct`.
+{% endhint %}
+
+<figure><img src="../../../../.gitbook/assets/image (214).png" alt=""><figcaption></figcaption></figure>
+
+***
 
 ### The Mechanics
 
-#### 1. The Unified Cache Key (`FUnifiedVMCacheKey`)
+#### The Unified Cache Key (`FUnifiedVMCacheKey`)
 
 To share ViewModels, we need to know if two requests are asking for the "same" thing. Since `FInstancedStruct` can hold any type of data, we cannot just compare pointers. We use a composite key:
 
@@ -30,9 +39,9 @@ struct FUnifiedVMCacheKey
 };
 ```
 
-This allows us to cache _any_ type of source—Inventory, Equipment, or a custom Crafting Table—in a single map: `TMap<FUnifiedVMCacheKey, TObjectPtr<ULyraContainerViewModel>>`.
+This allows us to cache any type of source in a single map: `TMap<FUnifiedVMCacheKey, TObjectPtr<ULyraContainerViewModel>>`.
 
-#### 2. Acquiring a ViewModel
+#### Acquiring a ViewModel
 
 When `AcquireViewModel(Source)` is called:
 
@@ -46,7 +55,7 @@ When `AcquireViewModel(Source)` is called:
      * Set RefCount to 1.
 3. **Owner Tracking:** The Manager registers a "Destruction Listener" on the source's Owner (e.g., the `AActor`). If the Actor dies unexpectedly, the Manager can force-release the ViewModel.
 
-#### 3. Releasing a ViewModel
+#### Releasing a ViewModel
 
 When `ReleaseViewModel(Source)` is called:
 
@@ -58,6 +67,8 @@ When `ReleaseViewModel(Source)` is called:
      * Call `ViewModel->Uninitialize()` (Unbinds delegates, clears lists).
      * Remove from `UnifiedViewModelCache`.
      * Remove from `UnifiedVMRefCounts`.
+
+***
 
 ### Stale Data Protection
 
@@ -74,26 +85,4 @@ If the underlying Inventory Component (the Owner) is garbage collected, the Mana
 
 {% hint style="danger" %}
 The UI Manager cleanup is not infalliable, it is still advised to use `ReleaseViewModel` and not rely on the container/object being deleted for the view model to be cleaned up.
-{% endhint %}
-
-### Integration Example
-
-Here is how you use the lease system manually in a custom widget:
-
-```cpp
-// 1. Define the source
-FInventoryContainerSource InventorySrc(MyInventoryComponent);
-FInstancedStruct Source = FInstancedStruct::Make(InventorySrc);
-
-// 2. Lease the VM
-ULyraInventoryViewModel* VM = UIManager->AcquireViewModel(Source);
-
-// ... (Use the VM) ...
-
-// 3. Return the lease (Crucial!)
-UIManager->ReleaseViewModel(Source);
-```
-
-{% hint style="success" %}
-If you are using the `LyraItemContainerWindowShell`, it handles this automatically via `AcquireViewModelLease`. It stores a list of all leases it opened and releases them all in `NativeDestruct`.
 {% endhint %}

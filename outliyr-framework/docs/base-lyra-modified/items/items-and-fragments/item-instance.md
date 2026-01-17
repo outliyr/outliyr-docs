@@ -1,96 +1,300 @@
 # Item Instance
 
-While the `ULyraInventoryItemDefinition` is the static template, the `ULyraInventoryItemInstance` is the **dynamic, runtime object** representing a specific item that actually exists within the game world, an inventory, or equipped on a character. If a player has three Health Potions, there will be one `ID_Consumable_HealthPotion` _definition_, but potentially one or more `ULyraInventoryItemInstance` objects representing those potions (depending on stacking rules).
+An Item Definition says "this is an assault rifle." But when a player picks up that rifle, they get a _specific_ rifle - one with 24 rounds loaded, a red dot scope attached, and 80% durability. That specific rifle is an **Item Instance**.
+
+The `ULyraInventoryItemInstance` is the runtime object representing an item that actually exists in the game. If a player has three Health Potions, there's one definition but potentially multiple instances (depending on stacking).
 
 ***
 
-### Role and Purpose
+### The Lifecycle of an Item
 
-* **Runtime Representation:** Acts as the concrete object for an item during gameplay.
-* **Holds Instance State:** Crucially, it stores data unique to _this specific_ item instance, differentiating it from other instances of the same type. This includes:
-  * Stack counts or charges (`StatTags`).
-  * Durability, current ammo, unique modifiers, attached components (`TransientFragments` / `RuntimeFragments`).
-* **Links to Definition:** Contains a reference (`ItemDef`) back to the `ULyraInventoryItemDefinition` it's based on.
-* **Location Tracking:** Stores its current location (`CurrentSlot`) using an `FInstancedStruct` pointing to a `FAbilityData_SourceItem`-derived struct (e.g., identifying its inventory, equipment slot, or attachment chain).
-* **Networking:** Replicated as a subobject by its owning container (like `ULyraInventoryManagerComponent` or `ULyraEquipmentManagerComponent`) to ensure clients have access to its state.
+Understanding when items are created, where they live, and when they're destroyed clarifies the whole system.
 
-***
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         ITEM INSTANCE LIFECYCLE                          │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  CREATION                                                                │
+│  ────────                                                                │
+│  LyraItemSubsystem::CreateNewItem()                                      │
+│      │                                                                   │
+│      ├── Creates ULyraInventoryItemInstance                              │
+│      ├── Sets ItemDef reference                                          │
+│      ├── Initializes StatTags from SetStats fragment                     │
+│      ├── Creates TransientFragments from fragment definitions            │
+│      └── Creates RuntimeFragments from fragment definitions              │
+│                                                                          │
+│  RESIDENCE                                                               │
+│  ─────────                                                               │
+│  Item lives in a container, tracked by CurrentSlot:                      │
+│      │                                                                   │
+│      ├── Inventory → FInventoryAbilityData_SourceItem                    │
+│      ├── Equipment → FEquipmentAbilityData_SourceEquipment               │
+│      ├── Attachment → FAttachmentAbilityData_SourceAttachment            │
+│      └── World → FNullSourceSlot (or custom)                             │
+│                                                                          │
+│  MOVEMENT                                                                │
+│  ────────                                                                │
+│  When CurrentSlot changes:                                               │
+│      │                                                                   │
+│      ├── OnRep_CurrentSlot fires                                         │
+│      ├── All fragments receive ItemMoved(OldSlot, NewSlot)               │
+│      └── TAG_Lyra_Inventory_Message_ItemMoved broadcasts                 │
+│                                                                          │
+│  DESTRUCTION                                                             │
+│  ───────────                                                             │
+│  Explicit: Container calls DestroyItemInstance()                         │
+│      │                                                                   │
+│      ├── DestroyTransientFragment called on each fragment                │
+│      └── Item removed from container                                     │
+│                                                                          │
+│  Implicit: Owning container destroyed → standard GC                      │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+```
 
 ### Creation
 
-You typically **do not create Item Instances directly** in the editor. They are created at runtime, primarily by:
+Items are created through `ULyraItemSubsystem::CreateNewItem()`, not manually constructed. This function:
 
-1. **`UGlobalInventoryManager::CreateNewItem`:** The preferred centralized method for creating a fresh item instance from a definition. This function also handles initializing the instance's Fragments (both static and transient).
-2. **`ULyraInventoryManagerComponent::AddItemDefinition`:** Internally calls `UGlobalInventoryManager::CreateNewItem` when adding a new item type to an inventory.
-3. **Duplication:** `ULyraInventoryItemInstance::DuplicateItemInstance` can create a deep copy of an existing instance (useful for splitting stacks or transferring items where you need a new unique object).
+{% stepper %}
+{% step %}
+Creates the `ULyraInventoryItemInstance` UObject
+{% endstep %}
 
-***
+{% step %}
+Sets the `ItemDef` reference to the definition class
+{% endstep %}
 
-### Key Properties and Functionality
+{% step %}
+Calls each fragment's initialization hooks to set up instance data
+{% endstep %}
+{% endstepper %}
 
-* **`ItemDef` (`TSubclassOf<ULyraInventoryItemDefinition>`)**
-  * Replicated property storing the **Blueprint class** of the `ULyraInventoryItemDefinition` this instance is based on.
-  * Accessed via `GetItemDef()`. The static data is then typically read from the CDO of this class.
-* **`StatTags` (`FGameplayTagStackContainer`)**
-  * **Purpose:** Stores persistent, instance-specific **integer** counts associated with Gameplay Tags. Ideal for ammo, charges, stack quantity, durability points, etc.
-  * **Replication:** Uses `FFastArraySerializer` for efficient replication.
-  * **Access:**
-    * `AddStatTagStack(Tag, Count)` (Authority)
-    * `SetStatTagStack(Tag, Count)` (Authority)
-    * `RemoveStatTagStack(Tag, Count)` (Authority)
-    * `GetStatTagStackCount(Tag)` (Client/Server)
-    * `HasStatTag(Tag)` (Client/Server)
-  * **Key Tag:** `TAG_Lyra_Inventory_Item_Count` is conventionally used by many fragments (like `InventoryIcon`) to represent the primary stack count of the item within an inventory entry.
-  * _(See the dedicated "Stat Tags" page for more details)_.
-* **`TransientFragments` (`TArray<FInstancedStruct>`)**
-  * **Purpose:** Holds the instance-specific **struct** data payloads (`FTransientFragmentData`-derived) associated with fragments from the `ItemDef`.
-  * **Replication:** Replicated array. `FInstancedStruct` handles polymorphism.
-  * **Initialization:** Populated during item creation based on `ULyraInventoryItemFragment::CreateNewTransientFragment`.
-  * **Access:** Use `ResolveTransientFragment<T>()` (C++) or `ResolveStructTransientFragment()` (Blueprint/C++) to get a pointer/copy of the specific transient data struct. Use `SetTransientFragmentData()` to update it (usually on authority).
-  * _(See the dedicated "Transient Data Fragments" page for more details)_.
-* **`RuntimeFragments` (`TArray<TObjectPtr<UTransientRuntimeFragment>>`)**
-  * **Purpose:** Holds the instance-specific **UObject** payloads (`UTransientRuntimeFragment`-derived) associated with fragments from the `ItemDef`.
-  * **Replication:** Replicated array of UObject pointers (requires subobject replication setup by the owning component).
-  * **Initialization:** Populated during item creation based on `ULyraInventoryItemFragment::CreateNewRuntimeTransientFragment`.
-  * **Access:** Use `ResolveTransientFragment<T>()` (C++) or `ResolveRuntimeTransientFragment()` (Blueprint/C++) to get a pointer to the specific runtime fragment UObject.
-  * _(See the dedicated "Transient Runtime Fragments" page for more details)_.
-* **`CurrentSlot` (`FInstancedStruct`)**
-  * **Purpose:** Tracks the current location or context of this item instance. Uses `FInstancedStruct` to hold different data types depending on the location.
-  * **Types:**
-    * `FNullSourceSlot`: Item is not in a recognized slot (e.g., just created, being dropped).
-    * `FInventoryAbilityData_SourceItem`: Item is in a `ULyraInventoryManagerComponent` at a specific index.
-    * `FEquipmentAbilityData_SourceEquipment`: Item is equipped in a `ULyraEquipmentManagerComponent` slot.
-    * `FAttachmentAbilityData_SourceAttachment`: Item is attached to another item.
-  * **Replication:** Replicated using `OnRep_CurrentSlot`.
-  * **Access:** `GetCurrentSlot()`, `SetCurrentSlot()` (Authority Only).
-  * **`OnRep_CurrentSlot(const FInstancedStruct& OldSlot)`:** Called on clients when `CurrentSlot` changes. Crucially, it iterates through all `TransientFragments` and `RuntimeFragments` calling their `ItemMoved(this, OldSlot, CurrentSlot)` function, allowing fragment logic to react to location changes. It also broadcasts the `TAG_Lyra_Inventory_Message_ItemMoved` gameplay message.
-* **`bIsClientPredicted` (`bool`)**
-  * A flag used internally, often set to `true` for temporary item instances created on the client for prediction purposes (e.g., showing an item pickup immediately before server confirmation). These predicted instances are typically destroyed or replaced when the authoritative server state arrives.
-* **`FindFragmentByClass<T>()` / `FindFragmentByClass()`**
-  * Convenience function to find the _static_ `ULyraInventoryItemFragment` on the instance's `ItemDef` CDO. Useful for accessing static fragment data directly from an instance.
-* **`DuplicateItemInstance(UObject* NewOuter)`**
-  * Performs a deep copy of the item instance, including its Stat Tags and Transient/Runtime fragments.
-  * Essential for splitting stacks or transferring items where a new, unique instance is required.
+You don't typically call this directly - the item transaction system handles this internally.
+
+#### Where Items Live
+
+Items can exist in different container types:
+
+<table><thead><tr><th width="126.5333251953125">Container</th><th>CurrentSlot Type</th><th>Example</th></tr></thead><tbody><tr><td>Inventory</td><td><code>FInventoryAbilityData_SourceItem</code></td><td>Player backpack</td></tr><tr><td>Equipment</td><td><code>FEquipmentAbilityData_SourceEquipment</code></td><td>Equipped weapon</td></tr><tr><td>Attachment</td><td><code>FAttachmentAbilityData_SourceAttachment</code></td><td>Scope on a rifle</td></tr><tr><td>World/Transit</td><td><code>FNullSourceSlot</code></td><td>Being dropped</td></tr></tbody></table>
+
+The `CurrentSlot` uses `FInstancedStruct` to hold **any** of these types polymorphically. This is how one item type can exist in inventory, then equipment, then attached to another item - without the item itself needing to know about each container type. This prevents coupling the item instance to each item container.
+
+{% hint style="info" %}
+For more details on how the slot system works, see [Slot Descriptors](../../item-container/item-container-architecture/slot-descriptors.md).
+{% endhint %}
+
+#### Destruction
+
+Items are destroyed in two ways:
+
+Explicit destruction (consuming an item, deleting from inventory):
+
+```cpp
+ItemSubsystem->DestroyItem(ItemInstance);
+```
+
+This triggers `DestroyTransientFragment` on each fragment for cleanup.
+
+Implicit destruction happens when the owning container is destroyed (actor death, level transition) via standard garbage collection.
 
 ***
 
-### Lifecycle & Destruction
+## Where to Store Instance Data
 
-* **Creation:** Via `UGlobalInventoryManager` or duplication. Fragments are initialized.
-* **Management:** Held within `FLyraInventoryList` (Inventory Component) or tracked by other systems (Equipment Manager, World Collectable).
-* **Destruction:**
-  * Explicitly via `ULyraInventoryManagerComponent::DestroyItemInstance`. This function is intended for when an item is truly consumed or permanently removed (e.g., using a consumable). It triggers the `DestroyTransientFragment` callback on all associated fragments before removing the item instance from the inventory list.
-  * Implicitly when its owning container/actor is destroyed (standard UObject garbage collection).
-  * `BeginDestroy()`: Overridden to broadcast a `TAG_Lyra_Inventory_Message_ItemDestroyed` gameplay message when the instance UObject is being garbage collected.
+Items have three storage mechanisms for per-instance data. Choosing the right one matters.
+
+#### Decision Tree
+
+```
+What kind of data do you need to store?
+│
+├── Simple integer counts (ammo, durability, stack size)?
+│   └── Use StatTags
+│
+├── Struct data (complex state, multiple fields)?
+│   │
+│   ├── Needs tick or complex logic?
+│   │   └── Use RuntimeFragments (UObject)
+│   │
+│   └── Just data storage?
+│       └── Use TransientFragments (struct)
+│
+└── Complex object with its own subobjects/delegates?
+    └── Use RuntimeFragments (UObject)
+```
+
+#### StatTags: Integer Counts
+
+```cpp
+FGameplayTagStackContainer StatTags;
+```
+
+For simple integer values keyed by gameplay tags:
+
+```cpp
+// Add/modify (authority only)
+Item->AddStatTagStack(TAG_Item_Ammo, 30);
+Item->SetStatTagStack(TAG_Item_Durability, 100);
+Item->RemoveStatTagStack(TAG_Item_Ammo, 5);
+
+// Query (any context)
+int32 Ammo = Item->GetStatTagStackCount(TAG_Item_Ammo);
+bool HasAmmo = Item->HasStatTag(TAG_Item_Ammo);
+```
+
+Best for: Ammo counts, durability, charges, stack quantity (`TAG_Lyra_Inventory_Item_Count`).
+
+#### TransientFragments: Struct Data
+
+```cpp
+TArray<FInstancedStruct> TransientFragments;
+```
+
+For custom struct data per instance:
+
+```cpp
+// Define the struct
+USTRUCT()
+struct FTransientFragmentData_WeaponState : public FTransientFragmentData
+{
+    float CurrentHeat;
+    float SpreadMultiplier;
+    int32 ShotsFired;
+};
+
+// Access on the item
+FTransientFragmentData_WeaponState* State = Item->ResolveTransientFragment<FTransientFragmentData_WeaponState>();
+if (State)
+{
+    State->CurrentHeat = 0.5f;
+}
+```
+
+Best for: Multiple related values, complex data that doesn't need UObject features.
+
+#### RuntimeFragments: UObject Instances
+
+```cpp
+TArray<TObjectPtr<UTransientRuntimeFragment>> RuntimeFragments;
+```
+
+For complex logic requiring a UObject:
+
+```cpp
+// Define the class
+UCLASS()
+class UTransientRuntimeFragment_Attachment : public UTransientRuntimeFragment
+{
+    // Can have its own:
+    // - Tick function
+    // - Delegates
+    // - Subobjects
+    // - Complex logic
+};
+
+// Access on the item
+UTransientRuntimeFragment_Attachment* Attach = Item->ResolveTransientFragment<UTransientRuntimeFragment_Attachment>();
+```
+
+Best for: Attachment systems, container fragments (items holding items), anything needing tick or delegates.
+
+***
+
+### Reacting to Movement
+
+When an item moves between containers, its `CurrentSlot` changes. All fragments are notified:
+
+```cpp
+// Called on each TransientFragment and RuntimeFragment
+void ItemMoved(ULyraInventoryItemInstance* Item,
+               const FInstancedStruct& OldSlot,
+               const FInstancedStruct& NewSlot);
+```
+
+This is how:
+
+* Attachment fragments know when their parent item is equipped
+* Container fragments update their state
+* Fragments can apply/remove effects based on location
+
+A `TAG_Lyra_Inventory_Message_ItemMoved` gameplay message also broadcasts for external systems.
+
+***
+
+### Accessing Definition Data
+
+The instance links to its definition via `ItemDef`:
+
+```cpp
+// Get the definition class
+TSubclassOf<ULyraInventoryItemDefinition> Def = Item->GetItemDef();
+
+// Get the CDO for static data
+const ULyraInventoryItemDefinition* DefCDO = Def.GetDefaultObject();
+
+// Find a specific fragment on the definition
+const UInventoryFragment_InventoryIcon* IconFrag = Item->FindFragmentByClass<UInventoryFragment_InventoryIcon>();
+if (IconFrag)
+{
+    UTexture2D* Icon = IconFrag->Icon;
+}
+```
+
+The instance holds runtime state; the definition holds static configuration. Read static data from the definition, mutable data from the instance.
+
+***
+
+### Duplication
+
+When splitting a stack or transferring items, you may need a new instance:
+
+```cpp
+ULyraInventoryItemInstance* NewItem = OriginalItem->DuplicateItemInstance(NewOuter);
+```
+
+This performs a **deep copy**:
+
+* Copies all StatTags
+* Duplicates TransientFragments
+* Duplicates RuntimeFragments
+
+The new instance is independent - modifying one doesn't affect the other.
+
+***
+
+### Client Prediction
+
+For prediction support, items have:
+
+```cpp
+bool bIsClientPredicted;
+```
+
+Client-predicted items are temporary - they exist to provide instant feedback while waiting for server confirmation. When the server's authoritative item arrives, the predicted instance is replaced.
+
+{% hint style="info" %}
+For details on how prediction works, see [Prediction Architecture](../../item-container/prediction/prediction-architecture.md).
+{% endhint %}
 
 ***
 
 ### Networking
 
-* `IsSupportedForNetworking()`: Returns true.
-* **Replication:** As mentioned, Item Instances are replicated as **subobjects** of their containing component (`ULyraInventoryManagerComponent`, `ULyraEquipmentManagerComponent`, or potentially `ALyraWorldCollectable` if configured). This requires the owning component/actor to correctly handle subobject replication (overriding `ReplicateSubobjects`, using `AddReplicatedSubObject`, etc.).
-* **Properties:** Key properties like `ItemDef`, `StatTags`, `TransientFragments`, `RuntimeFragments`, and `CurrentSlot` are marked `UPROPERTY(Replicated)`. Runtime Fragments themselves need internal replication setup if they contain replicated properties.
+Items replicate as **subobjects** of their container:
+
+```cpp
+bool IsSupportedForNetworking() override { return true; }
+```
+
+The owning component (`ULyraInventoryManagerComponent`, `ULyraEquipmentManagerComponent`) handles subobject replication. This means:
+
+* `ItemDef` replicates (so clients know the item type)
+* `StatTags` replicate (so clients see stack counts)
+* `TransientFragments` replicate (so clients have struct data)
+* `RuntimeFragments` replicate as subobjects (so clients have UObject state)
+* `CurrentSlot` replicates (so clients know where items are)
 
 ***
-
-The `ULyraInventoryItemInstance` is the dynamic workhorse of the inventory system. It bridges the static definition with runtime state through its various containers (`StatTags`, `TransientFragments`, `RuntimeFragments`) and tracks its place in the game world via `CurrentSlot`. Understanding its properties and lifecycle is key to managing item state effectively.

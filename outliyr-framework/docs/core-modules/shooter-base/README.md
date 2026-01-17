@@ -41,7 +41,7 @@ This plugin builds directly upon the **Modified Base Lyra Game Core** provided w
 
 The ShooterBase plugin encompasses a diverse range of systems critical for modern shooter development. While interconnected in a live game, their documentation can largely be explored based on your immediate area of interest. Each major system listed below has its own dedicated section, providing an in-depth look at its purpose, core concepts, components, and customization options.
 
-Unlike **TetrisInventory** where a sequential reading is recommended, the systems within Shooter Base are largely independent. You are encouraged to explore the documentation for each system based on your project's current needs or your area of interest.:
+Unlike [**TetrisInventory**](../tetris-inventory/) where a sequential reading is recommended, the systems within Shooter Base are largely independent. You are encouraged to explore the documentation for each system based on your project's current needs or your area of interest.:
 
 * **Accolades:** Learn how to implement a data-driven system for rewarding players with visual and auditory feedback for in-game achievements like multi-kills, streaks, and assists.
 * **Aim Assist:** Discover the configurable input modifier system designed to help players (especially with gamepads) keep their reticle on or near targets through subtle pull and slowdown mechanics.

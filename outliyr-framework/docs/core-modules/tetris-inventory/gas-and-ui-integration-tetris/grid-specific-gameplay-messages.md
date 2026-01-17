@@ -95,6 +95,6 @@ This message signals a more significant change: the entire layout or structure o
 
 ### Other Potentially Relevant Messages
 
-The gameplay messages broadcast from the parent Base Lyra Inventory class would still be broadcasted. Listen to those broadcasts to respond to important inventory events. Go to [this page](../../../base-lyra-modified/items/inventory-manager-component/broadcasted-gameplay-messages.md) to get more details on Base Lyra Inventory gameplay messages.
+The gameplay messages broadcast from the parent Base Lyra Inventory class would still be broadcasted. Listen to those broadcasts to respond to important inventory events. Go to [this page](/broken/pages/0hMTSdqOWkyfWiUpU7yH) to get more details on Base Lyra Inventory gameplay messages.
 
 By listening for these grid-specific messages alongside the base inventory messages, your UI can stay accurately synchronized with the spatial state and structural changes of the `ULyraTetrisInventoryManagerComponent`.

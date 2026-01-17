@@ -54,7 +54,38 @@ _Example Configuration (`ID_Rifle_Standard`):_
 * **Stacking Logic:** The item containers use the  `MaxStackSize` variable from this fragment to manage how items fill existing stacks before adding them to empty slots.
 * **Weight Calculation:** `ItemInstance` calls `GetWeightContribution` on all fragments. This fragment's implementation returns its configured `Weight * stack count`.
 * **Item Count Calculation:** `ItemInstance` calls `GetItemCountContribution` on all fragments. This fragment's implementation returns `stack count`.
-* **UI Display:** `ItemViewModel` read this fragment to get the `InventoryIcon`, `Name`, `Description`, `BackgroundColour`, and stacking info.
+* **UI Display:** `ItemViewModel` read this fragment to get the `InventoryIcon`, `Name`, `Description`, `BackgroundColour`, and stacking info.#
+* **UI Display:** UI widgets read this fragment (via `ItemInstance->FindFragmentByClass<UInventoryFragment_InventoryIcon>()`) to get the `InventoryIcon`, `Name`, `Description`, `BackgroundColour`, and stacking info (`MaxStackSize` combined with the instance's current `Lyra.Inventory.Item.Count` StatTag).
+
+***
+
+#### Action Menu Integration
+
+This fragment implements `IItemActionProvider` to add a **Split Stack** action to the item's context menu.
+
+| Action          | Tag                       | Quantity Input |
+| --------------- | ------------------------- | -------------- |
+| **Split Stack** | `Ability.Item.SplitStack` | Yes            |
+
+**When shown:** The action only appears when:
+
+* `MaxStackSize > 1` (the item is defined as stackable)
+* Current stack count > 1 (there are items to split)
+
+If either condition is false, the action is not shown at all.
+
+**Quantity prompt:** When splitting, the player chooses how many items to split off:
+
+* `MinQuantity`: 1
+* `MaxQuantity`: Current stack count - 1 (can't split the entire stack)
+
+For example, with 30 bullets, the player can split off 1-29 bullets into a new stack.
+
+{% hint style="info" %}
+For the full action menu system, see [Context Menus & Action Logic](../../ui/item-container-ui-system/interaction-and-transactions/context-menus-and-action-logic.md).
+{% endhint %}
+
+***
 
 ### Importance
 

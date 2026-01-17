@@ -197,5 +197,3 @@ This `FRotator` (RotationalVelocity) is then converted back into an `FInputActio
 This final, modified `FInputActionValue` is what `ModifyRaw_Implementation` returns, and it's this value that the Enhanced Input system will then use to update the player's view. The journey is complete, and the player experiences a subtly assisted aiming experience.
 
 ***
-
-This is a dense page, but it covers the entire core logic flow! The next page will focus on how developers can configure and customize this system.

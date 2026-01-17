@@ -55,7 +55,32 @@ Controls when the player can use another consumable:
 
 ***
 
-## What Happens at Runtime
+#### Action Menu Integration
+
+This fragment implements `IItemActionProvider` to add a **Use** action to the item's context menu.
+
+| Action  | Tag                | Customization                                 |
+| ------- | ------------------ | --------------------------------------------- |
+| **Use** | `Ability.Item.Use` | Display name via `ActionDisplayName` property |
+
+**Default display name:** "Use"
+
+**Custom display names:** Set `ActionDisplayName` to customize what the button says. Examples:
+
+* "Eat" for food items
+* "Drink" for beverages
+* "Apply" for bandages
+* "Inject" for syringes
+
+**When enabled:** The action is enabled when the item's stack count >= `AmountToConsume`. If you have 1 medkit and `AmountToConsume` is 1, the action is enabled. If `AmountToConsume` is 2, it would be disabled.
+
+{% hint style="info" %}
+For the full action menu system, see [Context Menus & Action Logic](../../../ui/item-container-ui-system/interaction-and-transactions/context-menus-and-action-logic.md).
+{% endhint %}
+
+***
+
+### What Happens at Runtime
 
 When the player uses an item with a Consume Fragment:
 
@@ -167,7 +192,3 @@ Cause: Effect logic runs after `EndAbility()`
 Fix: Move effect logic before `EndAbility()`
 
 </details>
-
-### Next Step
-
-Now that your item is configured, you need to implement the effect ability. See [FromConsume Ability](/broken/pages/d83b9c81b46f68b42ac9e7e600db42ab1aa04def).
