@@ -82,7 +82,7 @@ flowchart TD
 
 {% tabs %}
 {% tab title="QuickBarOnly" %}
-**Use Case:** TDM, Arena, Gun Game
+**Use Case:** Regular shooter game modes, e.g. TDM, Arena
 
 All items route directly to the QuickBar (equipment slots). If the target slot is occupied, the existing item is swapped out and dropped to the world.
 

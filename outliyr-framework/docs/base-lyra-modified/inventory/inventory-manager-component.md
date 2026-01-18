@@ -133,6 +133,69 @@ This allows flexible configuration:
 
 ***
 
+### Auto-Compaction
+
+When items are removed from the inventory, gaps can appear in the slot indices. The auto-compact feature automatically shifts items to fill these gaps.
+
+#### Enabling Auto-Compaction
+
+```cpp
+// Items automatically fill gaps when removed
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory|Behavior")
+bool bAutoCompactOnRemoval = false;
+```
+
+When enabled, removing an item triggers compaction:
+
+```
+Before removal (removing slot 2):
+Slot 0    Slot 1    Slot 2    Slot 3    Slot 4
+┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐
+│Rifle│  │Ammo │  │Meds │  │Armor│  │Food │
+└─────┘  └─────┘  └─────┘  └─────┘  └─────┘
+
+After removal with bAutoCompactOnRemoval = true:
+Slot 0    Slot 1    Slot 2    Slot 3
+┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐
+│Rifle│  │Ammo │  │Armor│  │Food │
+└─────┘  └─────┘  └─────┘  └─────┘
+
+After removal with bAutoCompactOnRemoval = false:
+Slot 0    Slot 1    Slot 2    Slot 3    Slot 4
+┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐
+│Rifle│  │Ammo │  │     │  │Armor│  │Food │
+└─────┘  └─────┘  └─────┘  └─────┘  └─────┘
+```
+
+#### Use Cases
+
+**Auto-compact ON:**
+
+* List-based inventories (like Apex Legends)
+* Simple bag inventories where slot position doesn't matter
+
+**Auto-compact OFF:**
+
+* Grid inventories where players arrange items manually
+* Hotbar-style inventories where slot = keybind
+* Games where item position has gameplay meaning
+
+#### Prediction Support
+
+Auto-compaction is fully client-predicted. When you remove an item:
+
+1. The removal AND all slot shifts happen with the same prediction key
+2. UI updates immediately show compacted state
+3. Server validates and confirms (or rejects both together)
+
+This means drag-and-drop and item removal feel instant, even in networked games.
+
+{% hint style="info" %}
+Manual slot rearrangement can be controlled via the permission system (`UItemPermissionComponent`). Auto-compaction only affects removal, it doesn't prevent players from manually arranging items.
+{% endhint %}
+
+***
+
 ### Item Filtering
 
 You can restrict what items can enter the inventory:
