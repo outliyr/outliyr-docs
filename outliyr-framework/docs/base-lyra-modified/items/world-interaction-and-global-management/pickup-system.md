@@ -157,4 +157,10 @@ The `InventoryFragment_PickupItem` plays a key role in the intended workflow for
 
 ***
 
-The `IPickupable` interface and `AWorldCollectableBase` hierarchy provide the standard mechanism for items to exist and be interacted with in the game world, bridging the gap between the abstract inventory system and the physical level environment. The `InventoryFragment_PickupItem` is the key data source for defining how an item appears when it takes this physical form.
+The `IPickupable` interface and `AWorldCollectableBase` hierarchy provide the standard mechanism for items to exist and be interacted with in the game world, bridging the gap between the abstract inventory system and the physical level environment. The `InventoryFragment_PickupItem` is the key data source for defining _how_ an item appears when it takes this physical form.
+
+{% hint style="info" %}
+**Looking for client-predicted pickups?**
+
+For responsive pickups with automatic rollback and game-mode specific routing, see Client-Predicted Pickup Ability.
+{% endhint %}

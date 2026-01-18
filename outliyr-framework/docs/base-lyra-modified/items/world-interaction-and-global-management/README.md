@@ -5,7 +5,7 @@ While inventory components manage items _within_ containers (like a player's bac
 * Representing Items in the World: How items dropped or placed in the level are handled.
 * Picking Up Items: The mechanism for transferring world items into an inventory component.
 * Centralized Item Creation: The `ULyraItemSubsystem` ensuring item instances are created consistently with proper fragment initialization.
-* Tracking World Containers: Managing inventories that aren't directly attached to players or standard actors (relevant for persistence or complex world simulation).
+* Tracking World Containers: Managing inventories that aren't directly attached to players or standard actors.
 
 ### Items in the World: Pickups
 
@@ -73,17 +73,25 @@ For managing world containers that aren't directly attached to players:
 {% endstep %}
 {% endstepper %}
 
+{% hint style="info" %}
+**Want responsive pickups?**
+
+The example above is server-authoritative and introduces latency. For fast-paced games, use the [Client-Predicted Pickup Ability](client-predicted-pickup-ability.md) which provides instant feedback with automatic rollback on rejection, plus configurable routing policies for different game modes.
+{% endhint %}
+
 ### Structure of this Section
 
 The following sub-pages will detail these components:
 
-* Pickup System: Interfaces and Core Actor
+* **Pickup System: Interfaces and Core Actor**
   * Explaining the `IPickupable` interface, data structures, and the `AWorldCollectableBase` actor hierarchy for item pickups.
-* Dropping Items & World Collectable Lifecycle
+* **Dropping Items & World Collectable Lifecycle**
   * Detailing the `UPickupableStatics` library, `FDropParams` struct, the dynamic visual and physics management of world collectables, and the full workflow from dropping to settling.
-* Item Subsystem (`ULyraItemSubsystem`)
+* **Client-Predicted Pickup Ability**
+  * The `ULyraGameplayAbility_FromPickup` base class for creating responsive, game-mode specific pickup abilities with configurable routing policies.
+* **Item Subsystem (`ULyraItemSubsystem`)**
   * Detailing its role in item creation, GUID tracking, and lifecycle management.
-* Global Inventory Manager (`UGlobalInventoryManager`)
+* **Global Inventory Manager (`UGlobalInventoryManager`)**
   * Detailing its role in managing world container inventories.
 
 ***

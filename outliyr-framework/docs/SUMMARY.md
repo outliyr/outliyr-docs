@@ -116,6 +116,7 @@
   * [World Interaction & Global Management](base-lyra-modified/items/world-interaction-and-global-management/README.md)
     * [Pickup System](base-lyra-modified/items/world-interaction-and-global-management/pickup-system.md)
     * [Dropping Items & World Collectable Lifecycle](base-lyra-modified/items/world-interaction-and-global-management/dropping-items-and-world-collectable-lifecycle.md)
+    * [Client Predicted Pickup Ability](base-lyra-modified/items/world-interaction-and-global-management/client-predicted-pickup-ability.md)
     * [Item Subsystem](base-lyra-modified/items/world-interaction-and-global-management/item-subsystem.md)
     * [Global Inventory manager](base-lyra-modified/items/world-interaction-and-global-management/global-inventory-manager.md)
   * [Modularity: Fragment Injector](base-lyra-modified/items/modularity-fragment-injector/README.md)
