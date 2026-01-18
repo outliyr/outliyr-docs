@@ -4,7 +4,7 @@ As your project grows, especially when incorporating plugins or Unreal Engine's 
 
 The **Fragment Injector** system provides an elegant solution to this problem, allowing you to **dynamically inject new fragments into, or remove existing fragments from, item definitions at runtime**, decoupling feature additions/removals from the base item assets.
 
-<figure><img src="../../../.gitbook/assets/image (71).png" alt="" width="375"><figcaption><p>Example of injecting a battle royale category to a weapon</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (71).png" alt="" width="563"><figcaption><p>Example of injecting a battle royale category to a weapon</p></figcaption></figure>
 
 ### Purpose: Decoupling & Extensibility
 
