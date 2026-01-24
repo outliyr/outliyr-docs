@@ -51,7 +51,7 @@ The spatial presence of an item in the Tetris inventory grid is determined entir
     * `BooleanRow` (Inner TArray - 1 element for 1 column)
       * `[0]` = `true`&#x20;
 
-<figure><img src="../../../../.gitbook/assets/image (3) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (3) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 </details>
 

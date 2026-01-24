@@ -132,7 +132,7 @@ struct FInventoryAbilityData_SourceItem : public FAbilityData_InventorySourceIte
 };
 ```
 
-<figure><img src="../../../.gitbook/assets/image (6) (1) (1) (1) (1) (1).png" alt="" width="316"><figcaption><p>Inventory Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (6) (1) (1) (1) (1) (1).png" alt="" width="473"><figcaption><p>Inventory Source Slot</p></figcaption></figure>
 
 Inventory slots are simple: a reference to the inventory component and an integer index.
 
@@ -155,7 +155,7 @@ struct FEquipmentAbilityData_SourceEquipment : public FAbilityData_EquipmentSour
 };
 ```
 
-<figure><img src="../../../.gitbook/assets/image (27).png" alt=""><figcaption><p>Equipment Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (27).png" alt="" width="391"><figcaption><p>Equipment Source Slot</p></figcaption></figure>
 
 Equipment slots use gameplay tags. Notice `ActiveHeldSlot`, this represents a _state_ (is the item being held?), not a separate location. The item always lives in `EquipmentSlot`; `ActiveHeldSlot` indicates whether it's currently in-hand.
 
@@ -183,7 +183,7 @@ struct FAttachmentAbilityData_SourceAttachment : public FAbilityData_SourceItem
 };
 ```
 
-<figure><img src="../../../.gitbook/assets/image (8) (1) (1) (1) (1).png" alt="" width="375"><figcaption><p>Attachment Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (8) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p>Attachment Source Slot</p></figcaption></figure>
 
 Attachments are more complex because they can nest. A scope attached to a weapon that's equipped requires:
 
@@ -197,9 +197,41 @@ A scope attached to a weapon attached to another weapon (attachment chains):
 * ContainerAttachmentPath: `[UnderbarrelAttachment]` (path to reach the attached weapon)
 * AttachmentSlot: The scope attachment point
 
+#### Pickup Slots
+
+```cpp
+USTRUCT(BlueprintType)
+struct FPickupAbilityData_SourceItem : public FAbilityData_PickupSourceItem
+{
+    // The world collectable actor containing the items
+    UPROPERTY(BlueprintReadWrite)
+    TWeakObjectPtr<AWorldCollectableBase> Pickup;
+
+    // Index within the Templates or Instances array
+    UPROPERTY(BlueprintReadWrite)
+    int32 ItemIndex = INDEX_NONE;
+
+    // Whether this is a template (definition + count) or an instance (actual UObject)
+    UPROPERTY(BlueprintReadWrite)
+    bool bIsTemplate = false;
+};
+```
+
+<figure><img src="../../../.gitbook/assets/image.png" alt="" width="536"><figcaption><p>Pickup Source Slot</p></figcaption></figure>
+
+Pickup slots reference items within a world collectable's `FItemPickup`:
+
+* **Pickup**: The world collectable actor containing the items
+* **ItemIndex**: Index within the `Templates` or `Instances` array
+* **bIsTemplate**: Whether this is a template (definition + count) or an instance (actual UObject)
+
+{% hint style="info" %}
+Unlike other slot types, pickup slots distinguish between templates and instances. Templates are lightweight data (item definition + stack count) while instances are full `ULyraInventoryItemInstance` objects. This matters because templates are created on-the-fly during pickup while instances are transferred directly.
+{% endhint %}
+
 ### Marker Base Structs
 
-Notice the intermediate structs like `FAbilityData_InventorySourceItem` and `FAbilityData_EquipmentSourceItem`. These are marker structs, they contain no data but establish a type hierarchy.
+Notice the intermediate structs like `FAbilityData_InventorySourceItem` , `FAbilityData_EquipmentSourceItem` and `FAbilityData_PickupSourceItem`  These are marker structs, they contain no data but establish a type hierarchy.
 
 ```cpp
 // Can ask "is this an inventory-type slot?" without knowing the concrete type

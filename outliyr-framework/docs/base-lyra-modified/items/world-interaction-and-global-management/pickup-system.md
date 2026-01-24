@@ -51,26 +51,62 @@ The world collectable system uses an abstract base class with concrete subclasse
 
 The abstract base class providing common functionality for all world collectables.
 
-Features
+#### Features
 
-* Inheritance: Inherits from `AActor`, `IInteractableTarget`, and `IPickupable`.
-* Storage: Contains a replicated `FItemPickup` property named `StaticInventory` to hold the item data.
-* Interaction Profile: Uses `UPickupInteractionProfile` to configure interaction options.
-* Interaction Widget: Contains an `InteractionWidgetComponent` for displaying interaction UI in world space.
-* Physics Settling: Server-side monitoring to detect when items have settled and should stop simulating physics.
-* Pure Virtual Methods: Subclasses must implement:
+* **Inheritance:** Inherits from `AActor`, `IInteractableTarget`, `IPickupable`, and `ILyraItemContainerInterface`.
+* **Storage:** Contains a replicated `FItemPickup` property named `StaticInventory` to hold the item data.
+* **Container Interface:** Implements `ILyraItemContainerInterface` for unified container operations, allowing pickups to participate in the transaction system.
+* **Interaction Profile:** Uses `UPickupInteractionProfile` to configure interaction options.
+* **Interaction Widget:** Contains an `InteractionWidgetComponent` for displaying interaction UI in world space.
+* **Physics Settling:** Server-side monitoring to detect when items have settled and should stop simulating physics.
+* **ViewModel Support:** Broadcasts `OnInventoryChanged` delegate when inventory contents change.
+* **Client Prediction:** Supports `HideForPrediction()` and `RestoreFromRejectedPrediction()` for responsive pickup feedback.
+* **Pure Virtual Methods:** Subclasses must implement:
   * `GetMeshComponent()` - Returns the active mesh component.
   * `RebuildVisual()` - Rebuilds the visual representation from inventory data.
 
-Key Properties
+#### Key Properties
 
-* `InteractionProfile` (`UPickupInteractionProfile*`): Data asset configuring interaction options.
-* `InteractionWidgetComponent` (`UWidgetComponent*`): Widget for interaction dot/icon display.
-* `DefaultInteractionWidgetClass`: The widget class to use for the interaction dot.
-* `InteractionDotOffset` (`FVector`): Manual offset for the interaction widget position.
-* `StaticInventory` (`FItemPickup`): The replicated inventory this collectable represents.
-* `SettlingVelocityThresholdSq`: Squared velocity threshold for settling detection (default: 16 cm²/s²).
-* `SettlingTimeRequiredSeconds`: Time below threshold before freezing physics (default: 0.5s).
+* **`InteractionProfile` (`UPickupInteractionProfile*`):** Data asset configuring interaction options.
+* **`InteractionWidgetComponent` (`UWidgetComponent*`):** Widget for interaction dot/icon display.
+* **`DefaultInteractionWidgetClass`:** The widget class to use for the interaction dot.
+* **`InteractionDotOffset` (`FVector`):** Manual offset for the interaction widget position.
+* **`StaticInventory` (`FItemPickup`):** The replicated inventory this collectable represents.
+* **`SettlingVelocityThresholdSq`:** Squared velocity threshold for settling detection (default: 16 cm²/s²).
+* **`SettlingTimeRequiredSeconds`:** Time below threshold before freezing physics (default: 0.5s).
+* **`OnInventoryChanged`:** Delegate broadcast when items are added or removed (for ViewModel updates).
+
+#### ILyraItemContainerInterface Implementation:
+
+`AWorldCollectableBase` implements `ILyraItemContainerInterface`, allowing pickups to participate in the unified item container and transaction system:
+
+| Method                 | Behavior                                                   |
+| ---------------------- | ---------------------------------------------------------- |
+| `CanAcceptItem()`      | Returns max stack size for any valid item                  |
+| `CanRemoveItem()`      | Returns quantity for any instance item                     |
+| `AddItemToSlot()`      | Adds item to pickup, sets item's CurrentSlot               |
+| `RemoveItemFromSlot()` | Removes instance from pickup (templates cannot be removed) |
+| `GetItemInSlot()`      | Returns item at specified index                            |
+| `ForEachItem()`        | Iterates all instances in the pickup                       |
+| `FindAvailableSlot()`  | Returns next available index                               |
+
+#### **Slot Descriptor:**
+
+Pickup slots use `FPickupAbilityData_SourceItem`:
+
+```cpp
+USTRUCT(BlueprintType)
+struct FPickupAbilityData_SourceItem : public FAbilityData_SourceItem
+{
+    TWeakObjectPtr<AWorldCollectableBase> Pickup;  // The pickup actor
+    int32 ItemIndex = INDEX_NONE;                  // Index in StaticInventory
+    bool bIsTemplate = false;                      // Template vs Instance
+};
+```
+
+{% hint style="info" %}
+Unlike other slot types, pickup slots distinguish between templates and instances. Templates are lightweight data (item definition + stack count) while instances are full `ULyraInventoryItemInstance` objects.
+{% endhint %}
 
 #### `AWorldCollectable_Static`
 

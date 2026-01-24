@@ -306,6 +306,56 @@ Called immediately after prediction executes. Use for:
 
 ***
 
+### Selective Pickup
+
+Beyond picking up everything at once, the ability supports selecting specific items from a pickup (useful for death boxes or loot containers with multiple items).
+
+#### How It Works
+
+Pass a slot descriptor through the event's ContextHandle using the existing infrastructure:
+
+<figure><img src="../../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+
+#### Pickup Modes
+
+| Mode          | Trigger                                          | Behavior                                              |
+| ------------- | ------------------------------------------------ | ----------------------------------------------------- |
+| **Bulk**      | No slot in ContextHandle                         | Picks up everything that fits based on routing policy |
+| **Selective** | `FPickupAbilityData_SourceItem` in ContextHandle | Picks up only the specified item                      |
+
+#### Partial Pickup Handling
+
+When picking up from a multi-item pickup (like a death box), the ability handles partial pickups intelligently:
+
+```mermaid
+flowchart TD
+    A[Build Transaction] --> B{All items fit?}
+    B -->|Yes| C[HideForPrediction]
+    B -->|No| D[Keep Pickup Visible]
+    C --> E[Execute Transaction]
+    D --> E
+    E --> F[Result includes RemainingTemplates/Instances]
+```
+
+The pickup is only hidden for prediction when **all** items will be taken. Partial pickups keep the actor visible with remaining items.
+
+#### `FPickupAbilityResult` Fields
+
+| Property             | Type                                    | Description                                         |
+| -------------------- | --------------------------------------- | --------------------------------------------------- |
+| `bSuccess`           | `bool`                                  | Whether the pickup succeeded                        |
+| `bPartialPickup`     | `bool`                                  | True if some items couldn't fit (capacity exceeded) |
+| `bInventoryFull`     | `bool`                                  | True if inventory was completely full               |
+| `ItemsPickedUp`      | `TArray<ULyraInventoryItemInstance*>`   | Items successfully added                            |
+| `ItemsDropped`       | `TArray<ULyraInventoryItemInstance*>`   | Items that were swapped out                         |
+| `RemainingTemplates` | `TArray<FPickupTemplate>`               | Templates that didn't fit                           |
+| `RemainingInstances` | `TArray<FPickupInstance>`               | Instances that didn't fit                           |
+| `RemainingPickup`    | `TWeakObjectPtr<AWorldCollectableBase>` | Pickup actor if still valid                         |
+| `ErrorMessage`       | `FText`                                 | Error description if failed                         |
+| `RequestId`          | `FGuid`                                 | Transaction ID for tracking                         |
+
+***
+
 ### Creating a Game-Mode Pickup Ability
 
 {% stepper %}

@@ -48,15 +48,15 @@ The `ULyraTeamDisplayAsset` provides several Blueprint-callable helper functions
 
 * `ApplyToMaterial(UMaterialInstanceDynamic* Material)`: Sets scalar, vector (color), and texture parameters directly on a specific Dynamic Material Instance.
 
-<figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="363"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="363"><figcaption></figcaption></figure>
 
 * `ApplyToMeshComponent(UMeshComponent* MeshComponent)`: Iterates through the materials on the mesh component. For scalar and vector parameters, it calls `SetScalar/VectorParameterValueOnMaterials`. For texture parameters, it creates Dynamic Material Instances if needed and sets the texture parameters on them individually.
 
-<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="321"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="321"><figcaption></figcaption></figure>
 
 * `ApplyToNiagaraComponent(UNiagaraComponent* NiagaraComponent)`: Sets corresponding User Exposed variables (float, LinearColor, Texture Object) on the Niagara component. Parameter names must match the Niagara variable names.
 
-<figure><img src="../../../.gitbook/assets/image (3) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="357"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (3) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="357"><figcaption></figcaption></figure>
 
 * `ApplyToActor(AActor* TargetActor, bool bIncludeChildActors = true)`: A convenience function that iterates through all components (optionally including children) on the target actor and calls `ApplyToMeshComponent` or `ApplyToNiagaraComponent` as appropriate for each Mesh or Niagara component found.
 

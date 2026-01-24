@@ -231,7 +231,7 @@ Traits are the bridge between your container-specific types and the generic pred
 
 #### Required Trait Methods
 
-<table><thead><tr><th width="176.27276611328125">Category</th><th width="279.5455322265625">Methods</th><th>Purpose</th></tr></thead><tbody><tr><td><strong>Types</strong></td><td>Type aliases for Owner, <code>Payload</code>, <code>ServerEntry</code>, <code>ViewEntry</code></td><td>Let runtime know your types</td></tr><tr><td><strong>GUID</strong></td><td><code>GetGuid</code>, <code>GetGuidFromServerEntry</code></td><td>Extract stable identifier</td></tr><tr><td><strong>Server Access</strong></td><td><code>GetServerEntries</code>, <code>FindServerEntryByGuidMutable</code></td><td>Read/write server array</td></tr><tr><td><strong>View Conversion</strong></td><td><code>PayloadToViewEntry</code>, <code>ServerEntryToViewEntry</code></td><td>Build unified view</td></tr><tr><td><strong>Item Access</strong></td><td><code>GetInventoryItemFromPayload</code>, <code>GetInventoryItemFromServerEntry</code></td><td>Get item instances</td></tr><tr><td><strong>Authority</strong></td><td><code>IsAuthority</code></td><td>Route operations correctly</td></tr><tr><td><strong>Direct Operations</strong></td><td><code>DirectAddEntry</code>, <code>DirectRemoveEntry</code>, <code>DirectChangeEntry</code></td><td>Server-side array mutations</td></tr><tr><td><strong>State Transfer</strong></td><td><code>TransferPredictionState</code></td><td>Move state from overlay to server entry on confirmation</td></tr><tr><td><strong>Stamping</strong></td><td><code>GetPredictionStampMutable</code>, <code>MarkEntryDirty</code></td><td>Access prediction stamp</td></tr></tbody></table>
+<table><thead><tr><th width="176.27276611328125">Category</th><th width="279.5455322265625">Methods</th><th>Purpose</th></tr></thead><tbody><tr><td><strong>Types</strong></td><td>Type aliases for Owner, <code>Payload</code>, <code>ServerEntry</code>, <code>ViewEntry</code></td><td>Let runtime know your types</td></tr><tr><td><strong>GUID</strong></td><td><code>GetGuid</code>, <code>GetGuidFromServerEntry</code></td><td>Extract stable identifier</td></tr><tr><td><strong>Server Access</strong></td><td><code>GetServerEntries</code>, <code>FindServerEntryByGuidMutable</code></td><td>Read/write server array</td></tr><tr><td><strong>View Conversion</strong></td><td><code>PayloadToViewEntry</code>, <code>ServerEntryToViewEntry</code></td><td>Build unified view</td></tr><tr><td><strong>Item Access</strong></td><td><code>GetInventoryItemFromPayload</code>, <code>GetInventoryItemFromServerEntry</code></td><td>Get item instances</td></tr><tr><td><strong>Authority</strong></td><td><code>IsAuthority</code></td><td>Route operations correctly</td></tr><tr><td><strong>Direct Operations</strong></td><td><code>DirectAddEntry</code>, <code>DirectRemoveEntry</code>, <code>DirectChangeEntry</code></td><td>Server-side array mutations</td></tr><tr><td><strong>Replication</strong></td><td><code>TearOffItemReplication</code></td><td>Clear item's NetGUID association on removal</td></tr><tr><td><strong>State Transfer</strong></td><td><code>TransferPredictionState</code></td><td>Move state from overlay to server entry on confirmation</td></tr><tr><td><strong>Stamping</strong></td><td><code>GetPredictionStampMutable</code>, <code>MarkEntryDirty</code></td><td>Access prediction stamp</td></tr></tbody></table>
 
 #### Traits Implementation
 
@@ -347,6 +347,24 @@ struct FMyContainerTraits
             return Entry;
         }
         return nullptr;
+    }
+    
+    // ===== Replication TearOff =====
+
+    static void TearOffItemReplication(TOwner* Owner, ULyraInventoryItemInstance* Item)
+    {
+        if (!Owner || !Item) return;
+
+        // TearOff runtime fragments first
+        for (UTransientRuntimeFragment* Fragment : Item->RuntimeFragments)
+        {
+            if (Fragment)
+            {
+                Owner->TearOffReplicatedSubObjectOnRemotePeers(Fragment);
+            }
+        }
+        // TearOff the item itself
+        Owner->TearOffReplicatedSubObjectOnRemotePeers(Item);
     }
 
     // ===== Prediction State Transfer =====
