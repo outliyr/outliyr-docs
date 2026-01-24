@@ -30,7 +30,13 @@ The system works based on these principles:
 4. **Temporary Change:** These modifications to the CDO are **runtime-only**.
 5. **Restoration:** The system includes logic (`RestoreOriginalFragments`) to revert the CDO modifications when the game ends or the relevant context is unloaded.
 
-**Analogy:** Imagine a car blueprint (`ULyraInventoryItemDefinition`). A separate "Turbocharger" plugin wants to add a turbo to specific car models without editing the original blueprints. The plugin provides an "Injector Spec" (`UFragmentInjector`) saying "Add Turbocharger Part (`ULyraInventoryItemFragment`) to Blueprint 'SportsCarModel'". At runtime, when the plugin is active, a mechanic (`UFragmentInjectorManager`) temporarily adds the "Turbocharger Part" to the 'SportsCarModel' blueprint's parts list before building any new cars. When the plugin is deactivated, the mechanic removes the temporary addition from the blueprint.
+### **Analogy**
+
+Imagine LEGO building instructions (`ULyraInventoryItemDefinition`) for a "Spaceship" set. The instructions have sections (`ULyraInventoryItemFragment`) like "Cockpit", "Wings", and "Thrusters".
+
+Now imagine an "Space Battle Expansion Pack" game mode wants to add "Laser Cannons" to certain ships without reprinting the original instructions. The expansion provides a card (`UFragmentInjector`) that says: "When playing Space Battle mode, add the 'Laser Cannon' building steps to the Spaceship instructions."
+
+When you start playing Space Battle mode, a coordinator (`UFragmentInjectorManager`) temporarily inserts those extra steps into the instructions. Any spaceships built during the game will have laser cannons. When you switch to a different game mode, the coordinator removes those steps, and the instructions return to their original form.
 
 ### Key Components
 
