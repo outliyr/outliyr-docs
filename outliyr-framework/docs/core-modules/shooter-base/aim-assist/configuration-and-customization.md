@@ -6,6 +6,8 @@ Understanding how the Aim Assist system works internally is one part of the equa
 
 ### Setting Up the Aim Assist Input Modifier
 
+<figure><img src="../../../.gitbook/assets/image (227).png" alt=""><figcaption></figcaption></figure>
+
 The `UAimAssistInputModifier` is the primary interface for integrating aim assist into your player's input. Here’s how you set it up:
 
 1. **Add to Input Mapping Context (IMC):**
