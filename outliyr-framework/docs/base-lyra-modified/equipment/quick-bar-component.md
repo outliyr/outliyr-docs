@@ -128,6 +128,12 @@ From the player's perspective, the weapon was there the whole time.
 
 ***
 
+{% hint style="info" %}
+**Want weapon switch animations?** By default, predicted weapon actors appear/disappear instantly during cycling. To sync visibility with equip/unequip montages, enable `bUseDeferredVisibility` on your Equipment Instance and place `AnimNotify_CommitEquipVisibility` notifies on your montages. See [Equipment Instance: Deferred Visibility](equipment-instance.md#deferred-visibility-montage-driven-transitions) for setup details.
+{% endhint %}
+
+***
+
 ### Quick Swap Pickup
 
 For Instant weapon pickup with automatic swap, the Quick Bar provides specialized functions.

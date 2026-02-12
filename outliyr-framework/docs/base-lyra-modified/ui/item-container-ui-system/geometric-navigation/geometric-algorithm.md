@@ -1,152 +1,288 @@
 # Geometric Algorithm
 
-At the heart of cross-window navigation is the **Geometric Neighbor Search** implemented in `LyraItemContainerLayer::FindWindowInDirection`. While standard UMG navigation relies on simple center-to-center proximity, the algorithm uses a "Directional Lane" approach. This ensures that focus moves in a way that feels predictable and "aligned" to the human eye.
+At the heart of cross-window navigation is `LyraItemContainerLayer::FindWindowInDirection`. The algorithm uses **Exit/Entry Point scoring**. A geometric approach that measures the distance between where the cursor "leaves" one window and where it would "enter" each candidate, rewarding candidates that share perpendicular alignment. The result is a scoring system that "just feels right", it naturally prefers aligned, nearby windows without any magic numbers or hand-tuned thresholds.
 
-### The Concept: Navigation Lanes
+### The Concept: Exit and Entry Points
 
-Imagine your UI as a series of lanes on a highway. When you press **Right**, you aren't just looking for the closest window; you are looking for the best window that sits in your current "Lane."
+Imagine every window has a **doorway on each edge**. When you press Right, the algorithm imagines the cursor stepping out through the source window's right-side doorway and looking for the closest doorway to step into on a neighboring window's left side. The position of each doorway is aligned with where the cursor currently sits, so if you're on row three, the exit doorway is at row three's height on the source edge, and the entry doorway is at the same height on the target edge.
 
 {% stepper %}
 {% step %}
-**Direction Filtering**
+**Direction Filtering (Edge-to-Edge)**
 
-The algorithm first filters candidate windows to only include those actually in the requested direction.
+Before scoring, the algorithm filters candidates using the source and target `FBox2D` rects. The target must be **strictly beyond** the source's edge in the navigation direction:
 
-* Moving Right: Only consider windows whose left edge is to the right of the **cursor position** by more than the threshold.
-* Moving Left: Only consider windows whose right edge is to the left of the cursor position by more than the threshold.
-* Moving Up: Only consider windows whose bottom edge is above the cursor position by more than the threshold.
-* Moving Down: Only consider windows whose top edge is below the cursor position by more than the threshold.
+* Moving Right: Target's left edge must be at or past the source's right edge.
+* Moving Left: Target's right edge must be at or before the source's left edge.
+* Moving Up: Target's bottom edge must be at or above the source's top edge.
+* Moving Down: Target's top edge must be at or below the source's bottom edge.
 
-A threshold of 50 pixels prevents accidental selection of nearly-aligned windows. This cursor-based approach means navigation "starts" from where your selection is, not from the window boundary.
+There is no arbitrary threshold, the comparison is purely geometric, rect-to-rect. This means the cursor position does not influence which windows are considered valid; only the window boundaries matter.
 {% endstep %}
 
 {% step %}
-**Scoring Alignment**
+**Spatial Scoring**
 
-After filtering to valid candidates, the algorithm scores each window based on two factors:
+After filtering to valid candidates, each window is scored with four components. The window with the **lowest** score wins:
 
-* **Directional Distance**: Distance from the cursor to the target window's center along the navigation axis.
-* **Perpendicular Offset**: Distance from the cursor to the target window's center perpendicular to navigation.
+```
+Score = A + B + C - D
+```
 
-Both measurements use the target's **center point**, not its edges. This ensures consistent scoring regardless of window size.
+* **A**: Euclidean distance from exit point to entry point (straight-line distance).
+* **B**: Distance along the navigation axis (how far you have to travel).
+* **C**: Distance perpendicular to the navigation axis (lateral offset).
+* **D**: Overlap bonus, rewards windows that share perpendicular space with the source.
+
+The first three components are penalties (higher = worse). The fourth is a reward (higher = better, so it is subtracted).
 {% endstep %}
 {% endstepper %}
 
 ### The Scoring Formula
 
-To decide between multiple candidates, the Layer calculates a **Cost Score**. The window with the **lowest** score wins.
-
-```cpp
-Score = DirectionalDistance + (PerpendicularOffset * 0.5f)
+```
+Score = A + B + C - D   (lower is better)
 ```
 
-#### Directional Distance
+#### A — Euclidean Distance
 
-We measure the distance from the cursor position to the target window's **center** along the movement axis.
+The straight-line distance between the exit point on the source and the entry point on the target:
 
-* If moving Right, we measure `TargetCenterX - CursorX`.
-* If moving Left, we measure `CursorX - TargetCenterX`.
+```cpp
+const float A = FVector2D::Distance(ExitPoint, EntryPoint);
+```
 
-**Important**: The direction _validation_ uses edge-to-cursor distance, but the _scoring_ uses center-to-cursor distance. This distinction prevents large windows from getting unfair advantage just because their edge is closer.
+This captures the overall "closeness" of the two windows from the cursor's perspective.
 
-#### Perpendicular Offset (Alignment Penalty)
+#### B — Navigation Axis Distance
 
-We penalize windows that are offset from the cursor's current position.
+The distance along the direction of travel. For horizontal navigation, this is the X-axis gap; for vertical, the Y-axis gap:
 
-* A window that perfectly aligns with your cursor's row or column gets no penalty.
-* Windows that are offset get a penalty proportional to the distance from the cursor.
-* The 0.5 multiplier makes perpendicular offset less important than direct distance.
+```cpp
+B = FMath::Abs(EntryPoint.X - ExitPoint.X);  // Horizontal navigation
+B = FMath::Abs(EntryPoint.Y - ExitPoint.Y);  // Vertical navigation
+```
 
-The Result: A directly aligned window further away will beat a closer window that's significantly offset. This creates the "sticky lane" feeling.
+This heavily penalizes windows that are far away in the direction you're pressing.
+
+#### C — Perpendicular Axis Distance
+
+The distance on the axis perpendicular to navigation. For horizontal movement, this is the Y-axis offset; for vertical, the X-axis offset:
+
+```cpp
+C = FMath::Abs(EntryPoint.Y - ExitPoint.Y);  // Horizontal navigation
+C = FMath::Abs(EntryPoint.X - ExitPoint.X);  // Vertical navigation
+```
+
+This penalizes windows that are offset from the cursor's current row or column.
+
+#### D — Overlap Bonus (Subtracted)
+
+The perpendicular overlap between source and target windows, square-rooted for diminishing returns:
+
+```cpp
+const float D = CalculatePerpendicularOverlap(Source, Target, Direction);
+```
+
+{% hint style="info" %}
+Why subtract D? The overlap bonus is a reward, not a penalty. A target window that shares vertical space (for horizontal navigation) with the source gets a lower score, making it more likely to be selected. This creates the "sticky lane" feelingm windows aligned in the same row are strongly preferred over windows that are offset.
+{% endhint %}
+
+The combined effect: a directly aligned window further away will beat a closer window that's significantly offset. Navigation feels predictable and spatially consistent.
+
+***
+
+### Exit and Entry Points
+
+The exit and entry points are the anchor coordinates for the A, B, and C distance calculations. They represent where the cursor "leaves" the source and "arrives" at the target.
+
+**Exit Point** — On the source window's edge facing the navigation direction. The perpendicular coordinate is clamped to the source rect so the point always sits on the window's boundary:
+
+```cpp
+// Navigating Right: exit from the right edge, Y aligned with cursor
+FVector2D(Rect.Max.X, FMath::Clamp(CursorPos.Y, Rect.Min.Y, Rect.Max.Y))
+```
+
+**Entry Point** — On the target window's edge opposite to the navigation direction. Same perpendicular clamping ensures alignment:
+
+```cpp
+// Navigating Right: enter on the left edge, Y aligned with cursor
+FVector2D(Rect.Min.X, FMath::Clamp(CursorPos.Y, Rect.Min.Y, Rect.Max.Y))
+```
+
+```
+                       Navigating Right
+              ─────────────────────────────────►
+
+┌─────────────────────┐              ┌─────────────────────┐
+│   Source Window     │              │   Target Window     │
+│                     │              │                     │
+│                     │              │                     │
+│  [Cursor at row 3] -Exit──────Entry─►[Land here]         │
+│                     │  (right      │ (left               │
+│                     │   edge)      │  edge)              │
+│                     │              │                     │
+└─────────────────────┘              └─────────────────────┘
+
+   Exit Point:  (Source.Max.X, CursorY)
+   Entry Point: (Target.Min.X, CursorY)
+```
+
+Both points share the same Y coordinate (clamped to their respective window bounds), so the cursor maintains its vertical position across the transition.
+
+***
+
+### Perpendicular Overlap
+
+`CalculatePerpendicularOverlap` measures how much two windows share along the axis perpendicular to navigation. For horizontal movement, it checks Y-axis overlap; for vertical, X-axis overlap.
+
+```cpp
+float ULyraItemContainerLayer::CalculatePerpendicularOverlap(
+    const FBox2D& Source, const FBox2D& Target, EUINavigation Direction) const
+{
+    float OverlapStart, OverlapEnd;
+
+    if (Direction == EUINavigation::Left || Direction == EUINavigation::Right)
+    {
+        // Horizontal navigation - perpendicular is Y axis
+        OverlapStart = FMath::Max(Source.Min.Y, Target.Min.Y);
+        OverlapEnd = FMath::Min(Source.Max.Y, Target.Max.Y);
+    }
+    else
+    {
+        // Vertical navigation - perpendicular is X axis
+        OverlapStart = FMath::Max(Source.Min.X, Target.Min.X);
+        OverlapEnd = FMath::Min(Source.Max.X, Target.Max.X);
+    }
+
+    const float Overlap = FMath::Max(0.0f, OverlapEnd - OverlapStart);
+    return FMath::Sqrt(Overlap);  // Square root for diminishing returns
+}
+```
+
+The square root provides **diminishing returns**. A window that overlaps by 100 pixels is not ten times better than one overlapping by 10 pixels, it is roughly three times better. This prevents very tall or wide windows from dominating scoring purely through size.
 
 ***
 
 ### The Implementation
 
-{% code title="ULyraItemContainerLayer::FindWindowInDirection (C++)" %}
 ```cpp
 FItemWindowHandle ULyraItemContainerLayer::FindWindowInDirection(
-    FItemWindowHandle FromWindow,
-    EUINavigation Direction,
-    FVector2D CursorScreenPos) const
+    FItemWindowHandle FromWindow, EUINavigation Direction, FVector2D CursorScreenPos) const
 {
+    // Spatial navigation algorithm
+    // Scores candidates using exit/entry point distances and perpendicular overlap
+
+    ULyraItemContainerWindowShell* FromShell = GetWindowShell(FromWindow);
+    if (!FromShell)
+    {
+        return FItemWindowHandle();
+    }
+
+    const FGeometry& SourceGeom = FromShell->GetCachedGeometry();
+    const FBox2D SourceRect = GetWindowRect(SourceGeom);
+
     FItemWindowHandle BestTarget;
     float BestScore = TNumericLimits<float>::Max();
 
     for (const auto& Pair : ActiveWindows)
     {
-        if (Pair.Key == FromWindow.WindowId) continue;
-
-        ULyraItemContainerWindowShell* TargetShell = Pair.Value;
-        if (!TargetShell || !TargetShell->GetFocusableContent()) continue;
-
-        const FGeometry& TargetGeom = TargetShell->GetCachedGeometry();
-        const FVector2D TargetPos = TargetGeom.GetAbsolutePosition();
-        const FVector2D TargetSize = TargetGeom.GetAbsoluteSize();
-        const FVector2D TargetCenter = TargetPos + TargetSize * 0.5f;
-
-        // Delta from cursor to target center (for scoring)
-        const FVector2D DeltaToCenter = TargetCenter - CursorScreenPos;
-
-        float DeltaToEdge = 0.0f;
-        bool bValidDirection = false;
-        float DirectionalDistance = 0.0f;
-        float PerpendicularDistance = 0.0f;
-
-        constexpr float DirectionThreshold = 50.0f;
-
-        switch (Direction)
+        if (Pair.Key == FromWindow.WindowId)
         {
-        case EUINavigation::Right:
-            // Validate: target's LEFT edge must be right of cursor
-            DeltaToEdge = TargetPos.X - CursorScreenPos.X;
-            bValidDirection = DeltaToEdge > DirectionThreshold;
-            // Score: distance to center
-            DirectionalDistance = DeltaToCenter.X;
-            PerpendicularDistance = FMath::Abs(DeltaToCenter.Y);
-            break;
-        case EUINavigation::Left:
-            DeltaToEdge = (TargetPos.X + TargetSize.X) - CursorScreenPos.X;
-            bValidDirection = DeltaToEdge < -DirectionThreshold;
-            DirectionalDistance = -DeltaToCenter.X;
-            PerpendicularDistance = FMath::Abs(DeltaToCenter.Y);
-            break;
-        // Up/Down follow the same pattern for Y axis
+            continue; // Skip self
         }
 
-        if (bValidDirection)
+        ULyraItemContainerWindowShell* TargetShell = Pair.Value;
+        UWidget* FocusableContent = TargetShell ? TargetShell->GetFocusableContent() : nullptr;
+
+        if (!TargetShell || !FocusableContent)
         {
-            const float Score = DirectionalDistance + PerpendicularDistance * 0.5f;
-            if (Score < BestScore)
-            {
-                BestScore = Score;
-                BestTarget = FItemWindowHandle(Pair.Key);
-            }
+            continue; // Skip non-focusable windows
+        }
+
+        const FBox2D TargetRect = GetWindowRect(TargetShell->GetCachedGeometry());
+
+        // Check if target is in the navigation direction (no arbitrary threshold!)
+        if (!IsInNavigationDirection(SourceRect, TargetRect, Direction))
+        {
+            continue;
+        }
+
+        // Calculate score: A + B + C - D (lower is better)
+        const float Score = CalculateSpatialNavigationScore(
+            SourceRect, TargetRect, CursorScreenPos, Direction);
+
+        if (Score < BestScore)
+        {
+            BestScore = Score;
+            BestTarget = FItemWindowHandle(Pair.Key);
         }
     }
 
     return BestTarget;
 }
 ```
-{% endcode %}
 
-### Two-Step Approach: Validation vs Scoring
+### Direction Validation: Edge-to-Edge
 
-The algorithm separates **direction validation** from **scoring**:
+`IsInNavigationDirection` uses `FBox2D` comparisons with no threshold. The target window must be **strictly beyond** the source's boundary:
 
-{% stepper %}
-{% step %}
-#### Validation
+```cpp
+bool ULyraItemContainerLayer::IsInNavigationDirection(
+    const FBox2D& Source, const FBox2D& Target, EUINavigation Direction) const
+{
+    switch (Direction)
+    {
+    case EUINavigation::Left:
+        return Target.Max.X <= Source.Min.X;
+    case EUINavigation::Right:
+        return Target.Min.X >= Source.Max.X;
+    case EUINavigation::Up:
+        return Target.Max.Y <= Source.Min.Y;
+    case EUINavigation::Down:
+        return Target.Min.Y >= Source.Max.Y;
+    default:
+        return false;
+    }
+}
+```
 
-Uses the target's closest edge to check if it's actually in the navigation direction. This prevents windows that extend back past the cursor from being considered.
-{% endstep %}
+{% hint style="warning" %}
+Overlapping windows are filtered out by design. If a window's edge falls within the source bounds, it will never pass direction validation in any direction. This is intentional, overlapping windows should be accessed via [shoulder button cycling](window-cycling.md), not directional navigation. Spatial navigation only targets windows that are fully clear of the source in the requested direction.
+{% endhint %}
 
-{% step %}
-#### Scoring
+### Score Calculation
 
-Uses the target's center to rank candidates. Using the center ensures large windows don't get unfair advantage just because their edge is closer.
-{% endstep %}
-{% endstepper %}
+```cpp
+float ULyraItemContainerLayer::CalculateSpatialNavigationScore(
+    const FBox2D& Source, const FBox2D& Target,
+    FVector2D CursorPos, EUINavigation Direction) const
+{
+    const FVector2D ExitPoint = GetExitPoint(Source, CursorPos, Direction);
+    const FVector2D EntryPoint = GetEntryPoint(Target, CursorPos, Direction);
+
+    // A: Euclidean distance
+    const float A = FVector2D::Distance(ExitPoint, EntryPoint);
+
+    // B and C: Axis-aligned distances
+    float B, C;
+    if (Direction == EUINavigation::Left || Direction == EUINavigation::Right)
+    {
+        B = FMath::Abs(EntryPoint.X - ExitPoint.X);  // Navigation axis
+        C = FMath::Abs(EntryPoint.Y - ExitPoint.Y);  // Perpendicular axis
+    }
+    else
+    {
+        B = FMath::Abs(EntryPoint.Y - ExitPoint.Y);  // Navigation axis
+        C = FMath::Abs(EntryPoint.X - ExitPoint.X);  // Perpendicular axis
+    }
+
+    // D: Overlap bonus
+    const float D = CalculatePerpendicularOverlap(Source, Target, Direction);
+
+    return A + B + C - D;
+}
+```
 
 ***
 
@@ -154,15 +290,14 @@ Uses the target's center to rank candidates. Using the center ensures large wind
 
 ```mermaid
 graph LR
-    subgraph Search ["Geometric Search Logic"]
-        A[Check Direction] --> B{In Direction?}
-        B -->|Yes| C[Calculate Directional Distance]
-        B -->|No| X[Skip Window]
-
-        C --> D[Calculate Perpendicular Offset]
-        D --> E[Compute Score]
-        E --> F[Compare to Best Score]
-        F --> G[Select Lowest Score]
+    subgraph Search ["Spatial Navigation Scoring"]
+        A[Get Source FBox2D] --> B[For Each Candidate Window]
+        B --> C{IsInNavigationDirection?}
+        C -->|No| D[Skip]
+        C -->|Yes| E[Calculate Exit & Entry Points]
+        E --> F["Score = A + B + C - D"]
+        F --> G[Compare to Best Score]
+        G --> H[Return Lowest Score]
     end
 ```
 
@@ -178,14 +313,20 @@ Windows must have valid cached geometry. If a window was just created, its geome
 {% step %}
 **Inspect Cursor Position**
 
-The `CursorScreenPos` used for scoring comes from `GetFocusedWindowCursorPosition()`, which queries the content widget's `GetCursorScreenPosition()` interface method.
+The `CursorScreenPos` used for exit/entry point calculation comes from `GetFocusedWindowCursorPosition()`, which queries the content widget's `GetCursorScreenPosition()` interface method.
 {% endstep %}
 
 {% step %}
-**Check Direction Threshold**
+**Check for Overlapping Windows**
 
-Windows that are almost aligned might be filtered out. The 50-pixel threshold handles most cases, but extremely narrow windows might need adjustment.
+If navigation seems to skip a window, check whether it overlaps the source window. `IsInNavigationDirection` uses `<=` / `>=` comparisons, so windows that share exactly one edge point (touching but not overlapping) are still considered valid targets. Windows that overlap by even one pixel are filtered out.
+{% endstep %}
+
+{% step %}
+**Understand the Score Components**
+
+If navigation picks an unexpected target, log the A, B, C, and D values for each candidate. A high C value means the target is offset from the cursor's lane. A low D value means little perpendicular overlap. The Euclidean component A acts as a tiebreaker when B and C are similar.
 {% endstep %}
 {% endstepper %}
 
-By using physical geometry rather than hardcoded links, the navigation system remains robust even if you dynamically move or resize windows at runtime. Drag a window to a new position, and navigation automatically adapts.
+By using geometric scoring with `FBox2D` rects rather than hardcoded links or thresholds, the navigation system remains robust even when you dynamically move or resize windows at runtime. Drag a window to a new position, and navigation automatically adapts.

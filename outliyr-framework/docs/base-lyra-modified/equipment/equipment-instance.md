@@ -120,6 +120,140 @@ This gives the Equipment Manager precise control over when replicated actors bec
 
 ***
 
+### Deferred Visibility (Montage-Driven Transitions)
+
+Client prediction makes gameplay feel instant, when a player switches weapons, input bindings and abilities change immediately. But that same speed works against visual polish: the old weapon disappears and the new weapon appears before equip/unequip montages can play.
+
+Deferred visibility solves this. Gameplay changes happen instantly during prediction. Actor visibility changes are held until the right moment in the animation.
+
+#### The Problem
+
+{% tabs %}
+{% tab title="Simple" %}
+```
+WITHOUT deferred visibility:
+
+Frame 0:  Player presses weapon cycle
+Frame 1:  ┌─ Prediction applies ──────────────────────────┐
+          │ Old weapon mesh DESTROYED                     │
+          │ New weapon mesh SPAWNED (visible)             │
+          │ Input/abilities switched                      │
+          └───────────────────────────────────────────────┘
+Frame 2:  Blueprint receives K2_OnHeldStateChanged
+Frame 3:  Montage starts playing... but weapons already swapped visually
+```
+{% endtab %}
+
+{% tab title="Complex" %}
+```
+sequenceDiagram
+    participant EM as Equipment Manager
+    participant OW as Old Weapon Actors
+    participant NW as New Weapon Actors
+    participant BP as Blueprint
+
+    Note over EM: Player presses weapon cycle
+    EM->>OW: Destroy predicted actors
+    EM->>NW: Spawn predicted actors (visible)
+    EM->>EM: Switch input & abilities
+    EM->>BP: K2_OnHeldStateChanged (next tick)
+    BP->>BP: Start montage...
+    Note over OW,NW: Weapons already swapped visually before montage plays
+```
+{% endtab %}
+{% endtabs %}
+
+#### The Solution
+
+{% tabs %}
+{% tab title="Simple" %}
+```
+WITH deferred visibility (bUseDeferredVisibility = true):
+
+Frame 0:  Player presses weapon cycle
+Frame 1:  ┌─ Prediction applies ──────────────────────────┐
+          │ Old weapon mesh STAYS VISIBLE                 │
+          │ New weapon mesh spawned but HIDDEN            │
+          │ Input/abilities switched instantly            │
+          └───────────────────────────────────────────────┘
+Frame 2:  Blueprint receives K2_OnHeldStateChanged
+Frame 3:  Unequip montage starts playing
+  ...
+Frame 15: AnimNotify(PendingHide) → old weapon disappears
+  ...
+Frame 25: AnimNotify(PendingShow) → new weapon appears
+```
+{% endtab %}
+
+{% tab title="Complex" %}
+```
+sequenceDiagram
+    participant EM as Equipment Manager
+    participant OW as Old Weapon Actors
+    participant NW as New Weapon Actors
+    participant BP as Blueprint
+    participant AN as AnimNotify
+
+    Note over EM: Player presses weapon cycle
+    EM->>OW: BeginDeferred(PendingHide) — stays visible
+    EM->>NW: Spawn predicted actors (hidden)
+    EM->>NW: BeginDeferred(PendingShow)
+    EM->>EM: Switch input & abilities instantly
+    EM->>BP: K2_OnHeldStateChanged (next tick)
+    BP->>BP: Start unequip + equip montages
+    Note over AN: Unequip montage reaches notify
+    AN->>EM: Commit(PendingHide)
+    EM->>OW: Hide / destroy
+    Note over AN: Equip montage reaches notify
+    AN->>EM: Commit(PendingShow)
+    EM->>NW: Reveal actors
+```
+{% endtab %}
+{% endtabs %}
+
+The player sees smooth draw/holster animations with weapons appearing at exactly the right moments.
+
+#### Setup
+
+**1. Enable on Equipment Instance**
+
+In your weapon's Equipment Instance Blueprint (or C++ subclass), set:
+
+```cpp
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Equipment|Visuals")
+bool bUseDeferredVisibility = true;
+```
+
+**2. Place AnimNotifies on Montages**
+
+In your **equip montage**, add `AnimNotify_CommitEquipVisibility` at the frame where the weapon should appear:
+
+* Set `ActionToCommit = PendingShow`
+
+In your **unequip montage**, add `AnimNotify_CommitEquipVisibility` at the frame where the weapon should disappear:
+
+* Set `ActionToCommit = PendingHide`
+
+That's it, no Blueprint graph wiring or C++ code needed.
+
+#### Blueprint Alternative
+
+Instead of using the AnimNotify, you can call `CommitDeferredVisibility()` directly on the Equipment Instance from any Blueprint event, after a delay, after a custom event, or from your own AnimNotify subclass.
+
+#### Edge Cases
+
+| Situation                                  | What Happens                                                                                        |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| Rapid weapon cycling (montage interrupted) | The Equipment Manager force-commits any pending deferred action before starting the next transition |
+| Prediction rejected by server              | `CancelDeferredVisibility` forces the correct final visibility state                                |
+| Equipment without montages                 | Leave `bUseDeferredVisibility = false` (the default) for instant behavior                           |
+
+{% hint style="warning" %}
+If `bUseDeferredVisibility` is enabled but no AnimNotify or Blueprint ever calls `CommitDeferredVisibility()`, actors will stay hidden/visible indefinitely until the next prediction event for that equipment entry forces a commit.
+{% endhint %}
+
+***
+
 ### Held State Change Notifications
 
 When equipment transitions between held and holstered states, the Equipment Manager calls `NotifyHeldStateChanged` on each affected Equipment Instance. This callback provides complete context about the change, what changed and how.

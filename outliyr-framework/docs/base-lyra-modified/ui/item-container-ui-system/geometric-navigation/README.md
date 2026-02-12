@@ -10,7 +10,7 @@ In a standard UMG layout, you can use Unreal's built-in navigation (Up, Down, Le
 
 Unreal's default focus system doesn't know about these spatial relationships. To solve this, we built navigation directly into the **Item Container Layer**.
 
-### The Philosophy: "Eyes, not Indices"
+### The Philosophy
 
 Instead of relying on hardcoded tab-indices or explicit "Up/Down" links, this system "looks" at the screen. It treats your UI as a 2D map and calculates the best neighbor based on **Geometry**.
 
@@ -20,7 +20,7 @@ Imagine two windows side-by-side. The Inventory window is 10 pixels higher than 
 
 #### Why Geometric Navigation Wins
 
-Our system uses a **Perpendicular Overlap** algorithm. It asks: _"If I am moving Right, which window has the most vertical overlap with my current cursor position and is the shortest distance away?"_ This makes navigation feel intuitive, "sticky," and professional, similar to the cursor logic found in high-budget RPGs like _Destiny_ or _The Division_.
+Our system uses a **spatial navigation algorithm.** It asks: _"If I am moving Right, which window's entry point is closest to my cursor's exit point, with a bonus for perpendicular alignment?"_ This makes navigation feel intuitive, "sticky," and professional, similar to the cursor logic found in high-budget RPGs like _Destiny_ or _The Division_.
 
 ### The Architecture
 
@@ -86,7 +86,7 @@ The Layer uses `FindWindowInDirection()` to find the best target window based on
 {% step %}
 #### Focus Transfer
 
-The Layer calls `FocusWindow()` which triggers `Shell->RequestContentFocus()` on the target.
+The Layer defers focus to the next frame via a next-tick timer, then calls `FocusWindow()` which triggers `Shell->RequestContentFocus()` on the target.
 {% endstep %}
 
 {% step %}
@@ -121,10 +121,10 @@ When a window opens, it automatically receives focus on its content widget—no 
 
 * [The Geometric Algorithm](geometric-algorithm.md)
   * Deep dive into `FindWindowInDirection`.
-  * How we score distance vs. alignment between windows.
+  * How we the algorithm handles distance, alignment, and overlap.
 * [Cross-Window Navigation](cross-window-navigation.md)
   * How the Layer intercepts escaped navigation.
-  * The pending navigation context system.
+  * The deferred focus pattern and pending navigation context system.
 * [Cursor Alignment](cursor-alignment.md)
   * Using `GetCursorScreenPosition` and `ReceiveNavigationEntry` to align cursors.
   * Screen coordinate translation between windows.
