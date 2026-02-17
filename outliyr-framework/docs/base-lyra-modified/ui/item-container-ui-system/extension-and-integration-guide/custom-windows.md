@@ -87,6 +87,8 @@ TSubclassOf<UUserWidget> UMyItemContainerLayer::GetContentWidgetClassForWindowTy
 }
 ```
 
+<figure><img src="../../../../.gitbook/assets/image (231).png" alt=""><figcaption></figcaption></figure>
+
 #### Reusable Window Content
 
 The power of this system is that **the same content widget class works with different container sources**. For example:

@@ -18,7 +18,7 @@ Without alignment, cross-window navigation feels jarring:
 │                       │        │                       │
 │   [ ] [ ] [ ] [ ]     │        │   [X] [ ] [ ] [ ]     │  ← Jumped to top!
 │   [ ] [ ] [ ] [ ]     │        │   [ ] [ ] [ ] [ ]     │
-│   [ ] [ ] [X] [ ]     │        │   [ ] [ ] [ ] [ ]     │
+│   [ ] [ ] [ ] [X]     │        │   [ ] [ ] [ ] [ ]     │
 │   [ ] [ ] [ ] [ ]     │        │   [ ] [ ] [ ] [ ]     │
 │                       │        │                       │
 └───────────────────────┘        └───────────────────────┘
@@ -36,7 +36,7 @@ With alignment, navigation feels natural:
 │                       │        │                       │
 │   [ ] [ ] [ ] [ ]     │        │   [ ] [ ] [ ] [ ]     │
 │   [ ] [ ] [ ] [ ]     │        │   [ ] [ ] [ ] [ ]     │
-│   [ ] [ ] [X] [ ] ────┼────────┼►  [X] [ ] [ ] [ ]     │  ← Same row!
+│   [ ] [ ] [ ] [X] ────┼────────┼►  [X] [ ] [ ] [ ]     │  ← Same row!
 │   [ ] [ ] [ ] [ ]     │        │   [ ] [ ] [ ] [ ]     │
 │                       │        │                       │
 └───────────────────────┘        └───────────────────────┘
@@ -169,7 +169,7 @@ int32 TargetColumn = FMath::Clamp(FMath::FloorToInt(RelativeX * NumColumns), 0, 
 
 ### Blueprint Implementation
 
-Use the stepper below to implement these interface methods in Blueprint.
+Implement these interface methods in Blueprint.
 
 {% stepper %}
 {% step %}
@@ -178,6 +178,8 @@ Use the stepper below to implement these interface methods in Blueprint.
 1. Get your widget's absolute position and size using `GetCachedGeometry`.
 2. Calculate the cursor cell's center in screen space.
 3. Return `true` and set `OutScreenPosition`.
+
+<figure><img src="../../../../.gitbook/assets/image (228).png" alt=""><figcaption></figcaption></figure>
 {% endstep %}
 
 {% step %}
@@ -186,6 +188,16 @@ Use the stepper below to implement these interface methods in Blueprint.
 1. Use the `Direction` to determine which edge you're entering from.
 2. Use `ScreenCoordinate` to calculate the best entry position.
 3. Set your cursor/selection to that position.
+
+{% tabs %}
+{% tab title="Interface Function" %}
+<figure><img src="../../../../.gitbook/assets/image (229).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+
+{% tab title="Focus Entry Widget" %}
+<figure><img src="../../../../.gitbook/assets/image (230).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+{% endtabs %}
 {% endstep %}
 {% endstepper %}
 

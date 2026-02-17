@@ -167,60 +167,30 @@ The square root provides **diminishing returns**. A window that overlaps by 100 
 ### The Implementation
 
 ```cpp
-FItemWindowHandle ULyraItemContainerLayer::FindWindowInDirection(
-    FItemWindowHandle FromWindow, EUINavigation Direction, FVector2D CursorScreenPos) const
-{
-    // Spatial navigation algorithm
-    // Scores candidates using exit/entry point distances and perpendicular overlap
+FindWindowInDirection(FromWindow, Direction, CursorScreenPos):
 
-    ULyraItemContainerWindowShell* FromShell = GetWindowShell(FromWindow);
-    if (!FromShell)
-    {
-        return FItemWindowHandle();
-    }
+    SourceRect = GetWindowRect(FromWindow)
+    BestTarget = none
+    BestScore  = infinity
 
-    const FGeometry& SourceGeom = FromShell->GetCachedGeometry();
-    const FBox2D SourceRect = GetWindowRect(SourceGeom);
+    for each CandidateWindow in ActiveWindows:
+        if CandidateWindow == FromWindow: skip
+        if CandidateWindow has no focusable content: skip
 
-    FItemWindowHandle BestTarget;
-    float BestScore = TNumericLimits<float>::Max();
+        TargetRect = GetWindowRect(CandidateWindow)
 
-    for (const auto& Pair : ActiveWindows)
-    {
-        if (Pair.Key == FromWindow.WindowId)
-        {
-            continue; // Skip self
-        }
+        // Direction filter — target must be fully past source's edge
+        if not IsInNavigationDirection(SourceRect, TargetRect, Direction): skip
 
-        ULyraItemContainerWindowShell* TargetShell = Pair.Value;
-        UWidget* FocusableContent = TargetShell ? TargetShell->GetFocusableContent() : nullptr;
+        // Score: A + B + C - D (lower is better)
+        Score = CalculateSpatialNavigationScore(
+                    SourceRect, TargetRect, CursorScreenPos, Direction)
 
-        if (!TargetShell || !FocusableContent)
-        {
-            continue; // Skip non-focusable windows
-        }
+        if Score < BestScore:
+            BestScore  = Score
+            BestTarget = CandidateWindow
 
-        const FBox2D TargetRect = GetWindowRect(TargetShell->GetCachedGeometry());
-
-        // Check if target is in the navigation direction (no arbitrary threshold!)
-        if (!IsInNavigationDirection(SourceRect, TargetRect, Direction))
-        {
-            continue;
-        }
-
-        // Calculate score: A + B + C - D (lower is better)
-        const float Score = CalculateSpatialNavigationScore(
-            SourceRect, TargetRect, CursorScreenPos, Direction);
-
-        if (Score < BestScore)
-        {
-            BestScore = Score;
-            BestTarget = FItemWindowHandle(Pair.Key);
-        }
-    }
-
-    return BestTarget;
-}
+    return BestTarget
 ```
 
 ### Direction Validation: Edge-to-Edge
