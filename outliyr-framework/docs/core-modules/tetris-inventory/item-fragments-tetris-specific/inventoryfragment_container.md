@@ -1,120 +1,238 @@
 # InventoryFragment\_Container
 
-This fragment is the key to creating nested inventories. By adding `InventoryFragment_Container` to an item definition, you allow instances of that item (like backpacks, chests, weapon cases) to possess and manage their own internal `ULyraTetrisInventoryManagerComponent`.
+A backpack that holds items. A locked case with its own grid. A pouch inside a rucksack inside a player's main inventory, three layers deep, each with its own layout, weight limits, and item restrictions. That is what `InventoryFragment_Container` enables.
+
+Add this fragment to any item definition and each instance of that item gets its own fully functional `ULyraTetrisInventoryManagerComponent`, a real, independent inventory with its own grid, constraints, and contents. Drag an item onto the container in the grid and it moves inside. Open the container and you see its contents in a separate inventory window.
+
+***
+
+### What It Does
+
+* **Nested Inventories** - Every container item instance owns a dedicated `ULyraTetrisInventoryManagerComponent` with its own grid layout.
+* **Hierarchical Storage** - Containers can hold other containers, creating arbitrarily deep parent-child inventory trees.
+* **Drag-to-Store** - Drop an item onto a container in the grid and it transfers inside automatically.
+* **Weight & Count Propagation** - Configure whether a container's contents contribute to the parent inventory's limits.
+* **Item Filtering** - Whitelist or blacklist which item types a container accepts.
+* **Self-Reference Protection** - Built-in guards prevent placing a container inside itself or into any of its descendants.
+
+***
+
+### Transient Data: `FTransientFragmentData_Container`
+
+Each container item _instance_ gets its own child inventory at runtime. The reference to that inventory is stored in struct-based transient data:
+
+* **`ChildInventory`** - Pointer to the `ULyraTetrisInventoryManagerComponent` that belongs to this specific container instance.
+
+This transient data is created when the item instance is spawned and destroyed when the item is removed.
+
+{% hint style="info" %}
+The child inventory is resolved at runtime by the parent item's **GUID**, not by a direct pointer. This is because of the item container client prediction system. Using a **GUID** provides a stable identity. GUID-based resolution ensures the parent always finds the correct child inventory even after a reconciliation pass. See [Prediction Architecture](../../../base-lyra-modified/item-container/prediction/prediction-architecture.md) for details on how the prediction system handles this.
+{% endhint %}
+
+***
+
+### Configuration
+
+Add `InventoryFragment_Container` to a `ULyraInventoryItemDefinition` and configure the following properties.
 
 <figure><img src="../../../.gitbook/assets/image (12) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
-### Purpose
+#### Container Identity and Layout
 
-* **Nested Inventories:** Enables items to function as containers holding other items.
-* **Hierarchical Storage:** Creates parent-child relationships between inventory components.
-* **Encapsulated Configuration:** Defines the layout, limits, and starting items specifically for the container's internal inventory.
-* **Interaction Gateway:** Handles interactions like moving items _into_ the container.
-* **Weight/Count Contribution:** Manages how the container's internal contents contribute to the parent inventory's weight and item count limits.
-
-### Transient Data (`FTransientFragmentData_Container`)
-
-This fragment utilizes struct-based transient data to store the reference to the unique child inventory component created for each container item instance.
-
-* **`ChildInventory`:** The crucial pointer to the dynamically created `ULyraTetrisInventoryManagerComponent` associated _only_ with this specific container item instance.
-
-### How to Configure
-
-To turn an item into a functioning container (e.g., backpack, crate, pouch), add the `InventoryFragment_Container` to its `ULyraInventoryItemDefinition` and configure the following properties:
-
-**1. Set Container Identity and Layout**
-
-* **`ContainerName`**:\
-  A user-facing label for the container's internal inventory (e.g., `"Backpack Interior"`). Appears in UI titles.
-*   **`InventoryLayout`** (Required):\
-    Defines the internal grid layout of the container. Use one or more `FInventoryLayoutCreator` entries to configure rows, columns, and layout groups.
-
-    > This must be set; a container without layout will not function correctly.
+| Property              | Description                                                                                                         |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **`ContainerName`**   | A display name for the container's internal inventory (e.g., `"Backpack Interior"`). Shown in UI titles.            |
+| **`InventoryLayout`** | Defines the internal grid using `FInventoryLayoutCreator` entries,  rows, columns, and layout groups. **Required.** |
 
 {% hint style="success" %}
-There is a Blueprint editor Utility Widget that can be used to easily create an inventory layout. This is the preferred way rather than trying to visualise the layout in your head and translating that to a 3D array. [Read this page](../tetris-inventory-manager-component/grid-layout.md#best-practice-using-the-layout-editor-utility-widget) to see how it works
+There is a Blueprint editor Utility tool that makes it easy to visually design inventory layouts instead of manually configuring the 3D array. See [Configuration and Starting Items](../tetris-inventory-manager-component/configuration-and-starting-items.md) for how to use it.
 {% endhint %}
 
-**2. Prepopulate the Container (Optional)**
+#### Starting Items (Optional)
 
-* **`StartingItems`**:\
-  An array of `FInventoryStartItemDetails` defining which items should spawn inside the container when it's first created.
+| Property            | Description                                                                                                      |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| **`StartingItems`** | Array of `FTetrisInventoryStartingItem` defining items that spawn inside the container when it is first created. |
 
-**3. Set Storage Rules**
+#### Storage Limits
 
-* **`MaxWeight`**:\
-  Total weight capacity of this container. Set to `0` to disable weight limits.
-* **`ItemCountLimit`**:\
-  Maximum number of item stacks allowed. Set to `0` to disable count limits.
+| Property             | Description                                                                       |
+| -------------------- | --------------------------------------------------------------------------------- |
+| **`MaxWeight`**      | Maximum total weight the container can hold. Set to `0` to disable weight limits. |
+| **`ItemCountLimit`** | Maximum number of item stacks allowed inside. Set to `0` to disable.              |
 
-**4. Control Child Inventory Contribution**
+#### Parent Inventory Contribution
 
-These options determine how this container's **contents** affect its **parent inventory** (the one this container is stored in).
+These flags control whether the container's **contents** count toward the **parent** inventory's limits:
 
-* **`bIgnoreChildInventoryWeights`**:\
-  If `true`, items inside this container won’t add to the parent inventory’s total weight.
-* **`bIgnoreChildInventoryItemCounts`**:\
-  If `true`, items inside this container won’t count toward the parent’s item stack limit.
-* **`bIgnoreChildInventoryItemLimits`**:\
-  If `true`, the container will not enforce specific per-item stack limits on its child containers.
+| Flag                                  | Effect when `true`                                                                        |
+| ------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **`bIgnoreChildInventoryWeights`**    | Items inside this container do not add to the parent inventory's total weight.            |
+| **`bIgnoreChildInventoryItemCounts`** | Items inside this container do not count toward the parent's stack limit.                 |
+| **`bIgnoreChildInventoryItemLimits`** | The container does not enforce per-item stack limits from its parent's child inventories. |
 
-**5. Restrict Allowed Items (Optional)**
+#### Item Filtering (Optional)
 
-Use these to define what _can_ or _cannot_ go inside the container:
+| Property              | Description                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------- |
+| **`AllowedItems`**    | Whitelist,  only these item definitions can be stored. Leave empty to allow everything.   |
+| **`DisallowedItems`** | Blacklist, these item definitions are always rejected, even when `AllowedItems` is empty. |
 
-* **`AllowedItems`**:\
-  Only these item definitions are allowed. If non-empty, acts as a whitelist.
-* **`DisallowedItems`**:\
-  These item definitions are blocked. Acts as a blacklist (useful even when `AllowedItems` is empty).
+#### Per-Item Limits (Optional)
 
-**6. Set Per-Item Limits (Optional)**
+| Property                      | Description                                                                      |
+| ----------------------------- | -------------------------------------------------------------------------------- |
+| **`SpecificItemCountLimits`** | Per-item-type stack limits using `FPickupTemplate` entries for granular control. |
 
-*   **`SpecificItemCountLimits`**:\
-    Define item-specific stack limits for contents. Use `FPickupTemplate` entries for granular control.
-
-    > 💡 Don't set an item to 0 here — use `DisallowedItems` instead.
-
-**7. Test Container Interactions**
-
-After configuring:
-
-* Try dragging an item onto the container to confirm it accepts and stores the item.
-* Ensure constraints like weight, allowed items, and layout are respected.
-* Verify items cannot be placed into themselves or recursive loops (e.g., a backpack inside itself).
+{% hint style="warning" %}
+Do not set a limit of 0 for an item in `SpecificItemCountLimits`, use `DisallowedItems` instead to block it outright.
+{% endhint %}
 
 ***
 
 ### Runtime Logic & Lifecycle
 
-* **Creation (`CreateNewTransientFragment` Override):**
-  1. Called when a container item instance is created.
-  2. Uses `UGlobalInventoryManager::Get(World)` to access the central manager.
-  3. Creates a **new instance** of `ULyraTetrisInventoryManagerComponent` using `NewObject`, typically outered to the `GlobalInventoryManager`'s owner.
-  4. Calls `NewInventoryManager->InitialiseTetrisInventoryComponent`, passing all the configuration properties defined on _this fragment_.
-  5. Sets the `NewInventoryManager->InventoryContainer` pointer back to this fragment instance (useful for the child to know its origin config).
-  6. Registers the new inventory with the `GlobalInventoryManager` (`AddNewInventory`).
-  7. Creates the `FTransientFragmentData_Container` struct, storing the pointer to the `NewInventoryManager` in its `ChildInventory` member.
-  8. Initializes the output `FInstancedStruct` with this transient data.
-* **Moving Items Into Container (`CombineItems` Override):**
-  1. Called when another item (`SourceInstance`) is dropped onto the container item (`DestinationInstance`).
-  2. Resolves the `FTransientFragmentData_Container` for the `DestinationInstance`.
-  3. Gets the `ChildInventory` pointer from the transient data.
-  4. Checks that the `SourceInventory` is not the `ChildInventory` itself (preventing internal moves via combine).
-  5. Calls `ChildInventory->CanAddItem` to check if the `SourceInstance` can fit (considering weight, count, type, _and potential parent constraints of the ChildInventory itself_).
-  6. If allowed, calls `ChildInventory->FindAvailableSlotsForItem` to find space _inside the container_.
-  7. If space is found, calls `SourceInventory->MoveItemExternally` to transfer the item _from_ the source inventory _into_ the `ChildInventory` at the found available slot.
-  8. Returns `true` if items were successfully moved into the container.
-* **Preventing Self-Addition (`CanAddItemToInventory` Override):**
-  1. Called when _this container item_ is about to be added to another inventory (`Inventory`).
-  2. Checks if the target `Inventory` is the same as this item's _own_ `ChildInventory` (retrieved via `ResolveTransientFragment`). If so, denies addition (`AllowedAmount = 0`).
-  3. Checks if the target `Inventory` is a _descendant_ of this item's `ChildInventory` (using `DestinationInventory->IsInParentInventory(MyChildInventory)`). If so, denies addition. Prevents placing a backpack inside a pouch that's already inside that same backpack.
-* **Weight/Count Contribution (`GetWeightContribution`, `GetItemCountContribution` Overrides):**
-  1. Called by the _parent_ inventory when calculating its total weight/count.
-  2. Checks the parent's `bIgnoreChildInventoryWeights` / `bIgnoreChildInventoryItemCounts` flags. If `true`, returns 0 contribution for the child's contents.
-  3. If `false`, resolves the `FTransientFragmentData_Container`, gets the `ChildInventory`, and returns the child's current `GetInventoryWeight()` or `GetInventoryItemCount()`.
-* **Lifecycle Management (Transient Data Overrides):**
-  * `DestroyTransientFragment`: When the container item instance is destroyed, this tells the `GlobalInventoryManager` to destroy the associated `ChildInventory` component, ensuring cleanup. It also broadcasts a message (`ClientCloseInventoryWindow`) to force-close any UI windows looking at the child inventory.
-  * `AddedToInventory`: When the container item is added to a parent, this sets the `ChildInventory->ParentInventory` pointer to the new parent. It also cascades the `AddedToInventory` call to items _inside_ the child inventory.
-  * `RemovedFromInventory`: When the container item is removed, this potentially clears the `ChildInventory->ParentInventory` pointer (if removed from its current parent). It cascades the `RemovedFromInventory` call to items inside.
+#### Container Creation
 
-The `InventoryFragment_Container` is the linchpin for nested inventories, bridging the item instance with its own dedicated inventory component and managing the crucial interactions and lifecycle events between parent and child inventories.
+When a container item instance is spawned, `CreateNewTransientFragment` fires:
+
+{% stepper %}
+{% step %}
+#### Access Global Manager
+
+Calls `UGlobalInventoryManager::Get(World)` to retrieve the central inventory manager.
+{% endstep %}
+
+{% step %}
+#### Create Child Inventory
+
+Creates a new `ULyraTetrisInventoryManagerComponent` via `NewObject`, outered to the `GlobalInventoryManager`'s owner.
+{% endstep %}
+
+{% step %}
+#### Initialize the Component
+
+Calls `InitialiseTetrisInventoryComponent` on the new inventory, passing all configuration from this fragment (layout, limits, starting items, allowed items, etc.).
+{% endstep %}
+
+{% step %}
+#### Link Back to Fragment
+
+Sets `NewInventoryManager->InventoryContainer` to point back to this fragment, so the child inventory knows its configuration source.
+{% endstep %}
+
+{% step %}
+#### Register with Global Manager
+
+Calls `AddNewInventory` on the `GlobalInventoryManager` to register the child for GUID-based resolution and network replication.
+{% endstep %}
+
+{% step %}
+#### Store in Transient Data
+
+Creates `FTransientFragmentData_Container` with the `ChildInventory` pointer and writes it into the item instance's `FInstancedStruct`.
+{% endstep %}
+{% endstepper %}
+
+***
+
+### Moving Items Into the Container (`CombineItems`)
+
+When a player drags an item onto a item with a container fragment in the grid:
+
+1. Resolves the `FTransientFragmentData_Container` for the destination container instance.
+2. Gets the `ChildInventory` pointer from the transient data.
+3. Validates that the source inventory is not the child inventory itself (prevents circular internal moves).
+4. Calls `ChildInventory->CanAddItem`, checks weight, count, type restrictions, and any parent-level constraints.
+5. Calls `ChildInventory->FindAvailableSlotsForItem` to locate space inside the container's grid.
+6. Calls `SourceInventory->MoveItemExternally` to transfer the item from its current inventory into the child inventory.
+7. Returns `true` on success.
+
+***
+
+### Self-Addition Prevention (`CanAddItemToInventory`)
+
+When a container item is about to be placed into an inventory, this override runs two checks:
+
+1. **Direct self-reference** - Is the target inventory this container's own `ChildInventory`? If yes, deny.
+2. **Descendant check** - Is the target inventory a descendant of this container's `ChildInventory`? Uses `DestinationInventory->IsInParentInventory(MyChildInventory)` to walk up the chain. If yes, deny.
+
+This prevents paradoxes like placing a backpack inside a pouch that is already inside that backpack.
+
+***
+
+### Weight & Count Contribution
+
+When the parent inventory calculates its totals, it asks each container fragment for contributions:
+
+* **`GetWeightContribution`** - Returns `ChildInventory->GetInventoryWeight()` unless `bIgnoreChildInventoryWeights` is `true` on the parent, in which case it returns 0.
+* **`GetItemCountContribution`** - Returns `ChildInventory->GetInventoryItemCount()` unless `bIgnoreChildInventoryItemCounts` is `true` on the parent, in which case it returns 0.
+
+***
+
+### GUID-Based Resolution & Prediction Reconciliation
+
+In a networked game, prediction reconciliation can destroy and recreate inventory components. A raw pointer to a child inventory would become dangling after reconciliation.
+
+Instead, the system resolves child inventories by the parent item's GUID through the `GlobalInventoryManager`. When a component is recreated during reconciliation:
+
+1. The new component is registered with the same GUID.
+2. Any parent looking up its child inventory resolves the GUID and gets the new, valid component.
+3. `TransferPredictionOverlaysFrom()` is called to migrate pending prediction state from the old component to the new one, so in-flight predictions are not lost.
+
+This architecture means containers work seamlessly with the [Reconcilation](../../../base-lyra-modified/item-container/prediction/reconciliation/) system, no special handling required from gameplay code.
+
+***
+
+### Lifecycle Cleanup
+
+<details>
+
+<summary><strong>DestroyTransientFragment</strong></summary>
+
+When a container item is destroyed, this override tells the `GlobalInventoryManager` to destroy the associated `ChildInventory` component. It also broadcasts `ClientCloseInventoryWindow` to force-close any UI windows that were displaying the child inventory's contents.
+
+</details>
+
+<details>
+
+<summary><strong>AddedToInventory</strong></summary>
+
+When the container item is placed into a parent inventory, this sets `ChildInventory->ParentInventory` to the new parent. It also cascades the `AddedToInventory` call to every item inside the child inventory, so they can update their own state.
+
+</details>
+
+<details>
+
+<summary><strong>RemovedFromInventory</strong></summary>
+
+When the container item is removed from an inventory, this clears `ChildInventory->ParentInventory` (if removed from its current parent). It cascades the `RemovedFromInventory` call to all items inside the child inventory.
+
+</details>
+
+***
+
+## Architecture Overview
+
+```
+Player Inventory (ULyraTetrisInventoryManagerComponent)
+│
+├── Sword
+├── Shield
+└── Backpack (has InventoryFragment_Container)
+    │
+    └── Child Inventory (ULyraTetrisInventoryManagerComponent)
+        │   resolved by Backpack's GUID
+        │
+        ├── Bandages
+        ├── Ammo
+        └── Pouch (has InventoryFragment_Container)
+            │
+            └── Child Inventory (ULyraTetrisInventoryManagerComponent)
+                │   resolved by Pouch's GUID
+                │
+                ├── Gold Coins
+                └── Key
+```
+
+Each container item owns an independent inventory component. The parent-child chain can nest arbitrarily deep, and the GUID-based resolution ensures stability across network prediction cycles.

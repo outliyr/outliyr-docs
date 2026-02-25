@@ -1,61 +1,149 @@
 # Scene Capture
 
-Once the `APocketLevelStageManager` has set up the 3D scene within the pocket level, the next step is to render that scene into 2D textures (`UTextureRenderTarget2D`) that can be used by the UI (for live inspection) or read back for icon generation. This rendering process is handled by the `UPocketCapture` object, managed by the `UPocketCaptureSubsystem`.
+The Stage Manager has built a 3D scene inside the pocket level, meshes spawned, attachments socketed, camera positioned. Now that scene needs to become a 2D texture that UMG can display or the icon generator can read back. That translation from 3D world to 2D image is what `UPocketCapture` handles, managed by `UPocketCaptureSubsystem`.
+
+Think of it like a virtual photography studio: the Stage Manager arranges the subject and lights, while the capture system operates the camera and develops the photos.
+
+***
 
 ### `UPocketCaptureSubsystem`
 
-This `UWorldSubsystem` is responsible for managing the lifecycle of `UPocketCapture` objects.
+This `UWorldSubsystem` manages the lifecycle of all `UPocketCapture` objects in the world.
 
-* **Purpose:** Provides a centralized point for creating and destroying the capture objects used for rendering pocket world scenes. It also includes logic to help manage texture streaming for the captured components.
-* **Key Functions:**
-  * `CreateThumbnailRenderer(TSubclassOf<UPocketCapture>)`: Creates a new instance of the specified `UPocketCapture` class (or a derived class). It assigns a unique index to the renderer and calls its `Initialize` function. This is typically called once by the `APocketLevelStageManager` during its `BeginPlay`.
-  * `DestroyThumbnailRenderer(UPocketCapture*)`: Destroys the provided `UPocketCapture` instance, calling its `Deinitialize` function and removing it from the subsystem's tracking.
-* **Texture Streaming Management:**
-  * `StreamThisFrame(TArray<UPrimitiveComponent*>&)`: This function is called internally by `UPocketCapture::CaptureScene`. It marks the primitive components being rendered with `bForceMipStreaming = true` for the current frame.
-  * **Tick Logic:** The subsystem keeps track of components streamed in the last frame. In its `Tick` function, it resets `bForceMipStreaming = false` for components that were streamed last frame but _not_ requested for the current frame. This helps ensure textures for the actively rendered objects remain loaded without keeping textures loaded indefinitely for objects no longer being viewed.
+#### What It Does
+
+* **Creates and destroys** capture objects via `CreateThumbnailRenderer` and `DestroyThumbnailRenderer`
+* **Manages texture streaming** so materials on rendered objects stay loaded at the right mip level
+
+#### Key Functions
+
+| Function                                               | Purpose                                                                                                                                                             |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CreateThumbnailRenderer(TSubclassOf<UPocketCapture>)` | Creates a new `UPocketCapture` instance, assigns it a unique index, and calls `Initialize`. Typically called once by `APocketLevelStageManager` during `BeginPlay`. |
+| `DestroyThumbnailRenderer(UPocketCapture*)`            | Calls `Deinitialize` on the capture object, removes it from tracking, and destroys it.                                                                              |
+
+<details>
+
+<summary>Texture streaming management details</summary>
+
+The subsystem ensures that textures on rendered objects stay loaded at full resolution while they are being captured:
+
+* **`StreamThisFrame(TArray<UPrimitiveComponent*>&)`** - Called internally by `UPocketCapture::CaptureScene`. Marks the rendered primitive components with `bForceMipStreaming = true` for the current frame.
+* **Tick logic** - The subsystem tracks which components were streamed last frame. During `Tick`, it resets `bForceMipStreaming = false` for any component that was streamed previously but was not requested this frame. This keeps textures loaded for actively rendered objects without indefinitely forcing mip streaming on objects that are no longer being captured.
+
+</details>
+
+***
 
 ### `UPocketCapture`
 
-This object encapsulates the configuration and execution of a single scene capture operation. Each `APocketLevelStageManager` typically owns one `UPocketCapture` instance.
+Each `APocketLevelStageManager` owns one `UPocketCapture` instance. This object encapsulates the configuration and execution of scene capture operations.
 
-* **Purpose:** To render a specific scene (defined by actors and a camera view provided by its "Capture Target") onto designated Render Target textures.
-* **Internal Component:** Contains a `USceneCaptureComponent2D` instance which performs the actual rendering work. This component is configured dynamically based on the capture settings.
-* **Initialization & Lifecycle:**
-  * `Initialize(UWorld*, int32 RendererIndex)`: Called by the subsystem upon creation. Sets up the internal `USceneCaptureComponent2D`.
-  * `Deinitialize()`: Called by the subsystem upon destruction. Cleans up the internal capture component.
-* **Configuration:**
-  * `SetRenderTargetSize(int32 Width, int32 Height)`: Defines the resolution for the output `UTextureRenderTarget2D`s. Resizes existing render targets if necessary.
-  * `SetCaptureTarget(AActor* InCaptureTarget)`: **Crucial.** Sets the Actor whose perspective should be used for rendering. This is typically the `APocketLevelStageManager`. The function finds the `UCameraComponent` within this target actor to define the view settings (location, rotation, FOV, post-processing).
-  * `SetAlphaMaskedActors(const TArray<AActor*>& InActors)`: Specifies the list of actors that should be rendered _solidly_ during the `CaptureAlphaMask` pass. This usually includes the main item mesh and all its attached actors.
-* **Render Target Access:**
-  * `GetOrCreateDiffuseRenderTarget()`: Returns a `UTextureRenderTarget2D` (Format: `RTF_RGBA8`) used for the main color pass. Creates it if it doesn't exist.
-  * `GetOrCreateAlphaMaskRenderTarget()`: Returns a `UTextureRenderTarget2D` (Format: `RTF_R8` - single channel) used for the alpha mask pass. Creates it if it doesn't exist.
-  * `GetOrCreateEffectsRenderTarget()`: Returns a `UTextureRenderTarget2D` (Format: `RTF_R8`) intended for capturing specific effects (less commonly used in the base inspection/icon system). Creates it if it doesn't exist.
-* **Capture Execution Functions:**
-  * `CaptureDiffuse()`: Renders the full scene (all attached actors of the `CaptureTarget`) into the Diffuse Render Target using standard rendering (`SCS_FinalColorLDR`).
-  * `CaptureAlphaMask()`: Renders _only_ the actors specified via `SetAlphaMaskedActors` into the Alpha Mask Render Target. It uses an `OverrideMaterial` (`AlphaMaskMaterial`, typically a simple unlit white material) and captures scene color (`SCS_SceneColorHDR`). The result is effectively a silhouette mask used for transparency.
-  * `CaptureEffects()`: Intended to capture specific visual effects using the `EffectMaskMaterial`.
-* **Internal Rendering (`CaptureScene` function):**
-  1. Takes the target `UTextureRenderTarget2D`, the list of actors to render (`InCaptureActors`), the capture source (`ESceneCaptureSource`), and an optional `OverrideMaterial`.
-  2. Gets the `UCameraComponent` from the `CaptureTarget` (the `APocketLevelStageManager`).
-  3. Sets the internal `USceneCaptureComponent2D`'s `TextureTarget` to the provided render target.
-  4. Copies camera settings (view info, post-processing) from the target's camera to the internal capture component.
-  5. Sets `ShowOnlyActors` on the internal capture component to the provided `InCaptureActors`.
-  6. **Optimizes Show Flags:** Disables many computationally expensive rendering features (like DoF, Motion Blur, AO, GI, Fog, etc.) on the internal capture component for performance and clarity in the thumbnail render.
-  7. Sets the `CaptureSource` and applies the `OverrideMaterial` if provided.
-  8. Calls `CaptureScene()` on the internal `USceneCaptureComponent2D` to perform the render.
-  9. If an `OverrideMaterial` was used, it restores the original materials on the primitive components.
-  10. Calls `UPocketCaptureSubsystem::StreamThisFrame` to manage texture streaming for the rendered components.
+#### Core Concept
+
+`UPocketCapture` wraps an internal `USceneCaptureComponent2D` and exposes a simplified interface. You tell it what to render (actors), from what perspective (camera), and it outputs the result onto `UTextureRenderTarget2D` textures.
+
+#### Setup and Configuration
+
+```cpp
+// Define the output resolution
+SetRenderTargetSize(int32 Width, int32 Height);
+
+// Set which actor provides the camera view (typically the Stage Manager)
+SetCaptureTarget(AActor* InCaptureTarget);
+
+// Specify which actors appear in the alpha mask pass
+SetAlphaMaskedActors(const TArray<AActor*>& InActors);
+```
+
+`SetCaptureTarget` is the crucial call, it finds the `UCameraComponent` within the target actor and uses its location, rotation, FOV, and post-processing settings to define the capture view.
+
+#### Render Targets
+
+The capture system produces up to three render targets, created on demand:
+
+| Render Target  | Format      | Purpose                                         |
+| -------------- | ----------- | ----------------------------------------------- |
+| **Diffuse**    | `RTF_RGBA8` | Full-color render of the scene                  |
+| **Alpha Mask** | `RTF_R8`    | Single-channel silhouette mask for transparency |
+| **Effects**    | `RTF_R8`    | Optional channel for specific visual effects    |
+
+```cpp
+UTextureRenderTarget2D* GetOrCreateDiffuseRenderTarget();
+UTextureRenderTarget2D* GetOrCreateAlphaMaskRenderTarget();
+UTextureRenderTarget2D* GetOrCreateEffectsRenderTarget();
+```
+
+#### Capture Execution
+
+Three functions trigger rendering, each targeting a different render target:
+
+* **`CaptureDiffuse()`** - Renders the full scene (all attached actors of the capture target) into the diffuse render target using `SCS_FinalColorLDR`.
+* **`CaptureAlphaMask()`** - Renders only the actors set via `SetAlphaMaskedActors` into the alpha mask render target. Uses an override material (typically a simple unlit white material) and captures via `SCS_SceneColorHDR` to produce a clean silhouette.
+* **`CaptureEffects()`** - Renders using the `EffectMaskMaterial` for specialized effect passes.
+
+<details>
+
+<summary>Inside the CaptureScene function</summary>
+
+All three capture functions call a shared internal `CaptureScene` method. Here is what happens under the hood:
+
+1. Receives the target `UTextureRenderTarget2D`, actor list, capture source mode, and optional override material
+2. Gets the `UCameraComponent` from the capture target (`APocketLevelStageManager`)
+3. Sets the internal `USceneCaptureComponent2D`'s `TextureTarget` to the provided render target
+4. Copies camera settings (view info, post-processing) from the target's camera to the internal capture component
+5. Sets `ShowOnlyActors` to the provided actor list
+6. **Optimizes show flags** - Disables expensive rendering features (DoF, Motion Blur, AO, GI, Fog, etc.) for performance and clarity in thumbnail renders
+7. Sets the `CaptureSource` and applies the override material if provided
+8. Calls `CaptureScene()` on the internal `USceneCaptureComponent2D` to execute the render
+9. If an override material was used, restores the original materials on the primitive components
+10. Calls `UPocketCaptureSubsystem::StreamThisFrame` to manage texture streaming
+
+</details>
+
+{% hint style="info" %}
+The show flag optimizations in step 6 are important, they strip away visual effects that look great in gameplay but add noise and cost to item thumbnails. The result is a clean, fast render focused entirely on the item's geometry and materials.
+{% endhint %}
+
+***
 
 ### Interaction Flow
 
-1. `APocketLevelStageManager` creates a `UPocketCapture` instance via `UPocketCaptureSubsystem::CreateThumbnailRenderer` during its setup.
-2. The Stage Manager configures the `UPocketCapture` instance (sets render target size, sets itself as the `CaptureTarget`).
-3. When a render is needed (e.g., initial view, after rotation/zoom, for icon snapshot):
-   * The requesting system (e.g., `UInventoryRepresentationWidget`, `UItemIconGeneratorComponent`) gets the `UPocketCapture` instance from the Stage Manager (`GetPocketCapture()`).
-   * For alpha masks, the Stage Manager calls `SetAlphaMaskedActors` on the `UPocketCapture` instance with the relevant actors (base mesh + attachments).
-   * The requesting system calls `CaptureDiffuse()` and/or `CaptureAlphaMask()` on the `UPocketCapture` instance.
-   * These calls trigger the internal `CaptureScene` logic, rendering the view from the Stage Manager's camera onto the appropriate `UTextureRenderTarget2D`.
-   * The requesting system then accesses the updated render targets using `GetOrCreateDiffuseRenderTarget()` / `GetOrCreateAlphaMaskRenderTarget()` for display (UMG) or readback (Icon Generator).
+{% stepper %}
+{% step %}
+#### Creation
 
-This separation allows the `APocketLevelStageManager` to focus on scene setup and interaction, while the `UPocketCapture` object, managed by its subsystem, handles the specifics of the rendering pipeline to the target textures.
+During its `BeginPlay`, the `APocketLevelStageManager` creates a `UPocketCapture` instance via `UPocketCaptureSubsystem::CreateThumbnailRenderer`.
+{% endstep %}
+
+{% step %}
+#### Configuration
+
+The Stage Manager configures the capture instance: sets the render target size, sets itself as the `CaptureTarget` (providing the camera view), and specifies alpha-masked actors (base mesh + all attachments).
+{% endstep %}
+
+{% step %}
+#### Rendering
+
+When a render is needed, initial view, after a rotation/zoom change, or for an icon snapshot, the requesting system gets the `UPocketCapture` from the Stage Manager via `GetPocketCapture()`.
+{% endstep %}
+
+{% step %}
+#### Capture
+
+The requesting system calls `CaptureDiffuse()` and/or `CaptureAlphaMask()`. These trigger the internal `CaptureScene` logic, rendering the Stage Manager's camera view onto the appropriate render targets.
+{% endstep %}
+
+{% step %}
+#### Consumption
+
+The requesting system accesses the updated render targets:
+
+* **Live inspection:** `UInventoryRepresentationWidget` samples the render targets through a UMG material, the image updates automatically.
+* **Icon generation:** `UItemIconGeneratorComponent` reads back the pixel data asynchronously to create a static `UTexture2D`.
+{% endstep %}
+{% endstepper %}
+
+***
+
+This separation of concerns keeps the system clean: the `APocketLevelStageManager` focuses on scene setup and interaction, while `UPocketCapture` handles the rendering pipeline. Neither needs to know the details of the other's job.

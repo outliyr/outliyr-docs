@@ -1,241 +1,179 @@
 # Attachment Viewmodels
 
-You're building a weapon customization screen. The player opens it, sees their rifle with its current attachments, drags a new scope onto the scope slot, and sees it update immediately. Behind the scenes, prediction is happening, the transaction system is validating, and eventually the server confirms - but the player doesn't care about any of that. They just want to see their scope appear.
-
-ViewModels exist to bridge that gap. They give your UI widgets a clean, reactive interface to attachment state while handling all the underlying complexity.
-
-***
-
-### Why Not Use the Runtime Container Directly?
-
-You could bind your widgets directly to `UTransientRuntimeFragment_Attachment`. But you'd need to:
-
-* Subscribe to `OnViewDirtied` delegates and rebuild on every change
-* Understand prediction overlays and effective views
-* Construct slot descriptors for the transaction system
-* Track container paths for nested attachment hierarchies
-* Handle slots that don't exist yet (empty slots still need widgets)
-
-ViewModels handle all of this. Your widgets just read properties and respond to changes.
+The player opens a weapon customization screen, sees their rifle with its current attachments, and drags a new scope onto the scope slot, the scope appears immediately, predicted on the client and eventually confirmed by the server. ViewModels give widgets a clean interface to attachment state, handling prediction, slot paths, and change tracking behind the scenes.
 
 {% hint style="info" %}
-You can read on this section to better understand [View models](../../../ui/item-container-ui-system/core-architecture-and-data-structures/mvvm.md). This is page is specific to the attachment view model
+For the underlying MVVM architecture and why ViewModels exist, see [MVVM](../../../ui/item-container-ui-system/core-architecture-and-data-structures/mvvm.md) and [Data Layers (View Models)](../../../ui/item-container-ui-system/data-layers-view-models/). ViewModels are acquired and released through the [Item Container UI Manager](../../../ui/item-container-ui-system/item-container-ui-manager/).
 {% endhint %}
 
 ***
 
-### Getting ViewModels: The UI Manager
+### Class Hierarchy
 
-Use the `ULyraItemContainerUIManager` subsystem rather than creating ViewModels manually.
-
-The UI Manager provides a **lease system**:
-
-```cpp
-void UWeaponCustomizationWidget::SetSource(const FInstancedStruct& Source)
-{
-    ULyraItemContainerUIManager* Manager = GetOwningLocalPlayer()->GetSubsystem<ULyraItemContainerUIManager>();
-
-    // Acquire a shared ViewModel
-    AttachmentVM = Manager->AcquireContainerViewModel(Source);
-}
-
-void UWeaponCustomizationWidget::NativeDestruct()
-{
-    if (AttachmentVM)
-    {
-        GetManager()->ReleaseContainerViewModel(Source);
+```mermaid
+classDiagram
+    class ULyraContainerViewModel {
+        +ContainerName
+        +Items[]
+        +FocusedItem
+        +OnItemsChanged
     }
-    Super::NativeDestruct();
-}
+
+    class ULyraAttachmentViewModel {
+        +ContainerItemInstance
+        +AttachmentContainerPath
+        +GetSlotViewModel(Tag)
+        +GetAllSlotViewModels()
+        +GetItemInSlot(Tag)
+        +BuildSlotDescriptor()
+    }
+
+    class ULyraAttachmentSlotViewModel {
+        +SlotTag
+        +bIsOccupied
+        +ParentActiveState
+        +bIsFocused
+        +bIsSelected
+        +ContainerPath
+    }
+
+    ULyraContainerViewModel <|-- ULyraAttachmentViewModel
 ```
 
-{% hint style="info" %}
-If you use the provided `ULyraItemContainerWindowShell`, acquire/release is handled automatically. You can read [item container lease system](../../../ui/item-container-ui-system/item-container-ui-manager/the-lease-system.md) for more information
-{% endhint %}
+`ULyraAttachmentViewModel` inherits the shared container properties (items list, focused item, change delegates) and layers on tag-based slot management, parent state awareness, and nested container path tracking.
 
 ***
 
-### The Attachment ViewModel
+### Tag-Based Slots
 
-`ULyraAttachmentViewModel` wraps a weapon's (or any host item's) attachment container.
-
-#### Manual Creation (For Understanding)
-
-For simple cases or learning:
+Like equipment, attachment slots are identified by GameplayTag. The ViewModel exposes slot access through a straightforward API:
 
 ```cpp
-AttachmentVM = NewObject<ULyraAttachmentViewModel>(this);
-AttachmentVM->InitializeForItem(WeaponItem);
-```
-
-{% hint style="warning" %}
-Manual creation is fine for prototyping, but production UI should use the UI Manager.
-{% endhint %}
-
-The ViewModel automatically:
-
-* Finds the attachment runtime fragment on the item
-* Creates slot ViewModels for every defined slot (scope, grip, magazine, etc.)
-* Subscribes to the prediction runtime for live updates
-* Computes the container path for nested scenarios
-
-Now your widgets can query the ViewModel:
-
-```cpp
-// Get all slot ViewModels (even empty ones)
-TArray<ULyraAttachmentSlotViewModel*> AllSlots = AttachmentVM->GetAllSlotViewModels();
-
 // Get a specific slot
 ULyraAttachmentSlotViewModel* ScopeSlot = AttachmentVM->GetSlotViewModel(TAG_Attachment_Slot_Scope);
 
-// Check what's attached
+// Get all slot ViewModels
+TArray<ULyraAttachmentSlotViewModel*> AllSlots = AttachmentVM->GetAllSlotViewModels();
+
+// Check what's attached (nullptr if empty)
 ULyraItemViewModel* AttachedScope = AttachmentVM->GetItemInSlot(TAG_Attachment_Slot_Scope);
 ```
 
-***
+Slot ViewModels exist even when empty, an empty scope slot still renders as a "drop scope here" target. When the player attaches something, the same ViewModel updates; you do not create a new one.
 
-### Slot ViewModels Always Exist
-
-This is important: **slot ViewModels exist even when the slot is empty**.
-
-Your UI needs widgets for all attachment slots, not just occupied ones. An empty scope slot still needs to render as a "drop scope here" target. The `ULyraAttachmentSlotViewModel` for that slot exists and has:
-
-* `bIsOccupied = false`
-* `ItemIcon = nullptr`
-* `SlotDescriptor` ready for drop operations
-
-When the player attaches something, the same ViewModel updates - you don't create a new one.
+{% hint style="info" %}
+This follows the same pattern used by equipment slots. See [Persistent Slot Pattern](../../../ui/item-container-ui-system/data-layers-view-models/persistent-slot-pattern.md) for the general approach.
+{% endhint %}
 
 ***
 
-## Practical Example: Weapon Customization Screen
+### The `ParentActiveState` Property
 
-Here's how you might build a weapon customization widget:
+This is what makes attachment slots unique. Attachments inherit behavior from their parent item's equipment state:
 
 ```cpp
-void UWeaponCustomizationWidget::NativeConstruct()
-{
-    Super::NativeConstruct();
+// Rifle is in inventory -- attachments are inactive
+ScopeSlot->ParentActiveState  // EAttachmentActiveState::Inactive
 
-    // Get the weapon we're customizing
-    ULyraInventoryItemInstance* WeaponItem = GetSelectedWeapon();
+// Rifle is equipped but holstered
+ScopeSlot->ParentActiveState  // EAttachmentActiveState::Holstered
 
-    // Create the attachment ViewModel
-    AttachmentVM = NewObject<ULyraAttachmentViewModel>(this);
-    AttachmentVM->InitializeForItem(WeaponItem);
-
-    // Bind each slot widget to its ViewModel
-    ScopeSlotWidget->BindToSlot(AttachmentVM->GetSlotViewModel(TAG_Attachment_Slot_Scope));
-    GripSlotWidget->BindToSlot(AttachmentVM->GetSlotViewModel(TAG_Attachment_Slot_Grip));
-    MagazineSlotWidget->BindToSlot(AttachmentVM->GetSlotViewModel(TAG_Attachment_Slot_Magazine));
-}
+// Rifle is in the player's hands
+ScopeSlot->ParentActiveState  // EAttachmentActiveState::Equipped
 ```
 
-Each slot widget binds to its ViewModel and updates when it changes:
-
-```cpp
-void UAttachmentSlotWidget::BindToSlot(ULyraAttachmentSlotViewModel* SlotVM)
-{
-    CachedSlotVM = SlotVM;
-
-    // Initial display
-    RefreshDisplay();
-
-    // The ViewModel notifies on changes via FieldNotify,
-    // or you can poll on tick for simpler implementations
-}
-
-void UAttachmentSlotWidget::RefreshDisplay()
-{
-    if (!CachedSlotVM) return;
-
-    // Show the attachment icon if something's attached
-    if (CachedSlotVM->bIsOccupied)
-    {
-        ItemIcon->SetBrushFromTexture(CachedSlotVM->ItemIcon);
-        ItemIcon->SetVisibility(ESlateVisibility::Visible);
-    }
-    else
-    {
-        ItemIcon->SetVisibility(ESlateVisibility::Collapsed);
-    }
-
-    // Ghost styling for predicted (unconfirmed) attachments
-    SetRenderOpacity(CachedSlotVM->bIsGhost ? 0.5f : 1.0f);
-}
-```
+Use this for visual feedback, glow when the parent weapon is held, dim when holstered, hidden when inactive.
 
 ***
 
-## Responding to Changes
+### Slot Properties
 
-{% stepper %}
-{% step %}
-### Transaction flow and UI update
+**Slot State:**
 
-* Transaction executes (predicted on client)
-* Prediction runtime updates effective view
-* ViewModel refreshes from new state
-* FieldNotify properties broadcast changes
-* Bound widgets update automatically
-{% endstep %}
-{% endstepper %}
+| Property            | Type                     | Description                                                 |
+| ------------------- | ------------------------ | ----------------------------------------------------------- |
+| `SlotTag`           | `FGameplayTag`           | Attachment slot tag (Scope, Grip, Magazine)                 |
+| `bIsOccupied`       | `bool`                   | Whether an attachment is in this slot                       |
+| `ParentActiveState` | `EAttachmentActiveState` | Parent item's equipment state (Inactive/Holstered/Equipped) |
+| `bIsFocused`        | `bool`                   | Navigation cursor is here                                   |
+| `bIsSelected`       | `bool`                   | Selected for interaction                                    |
+| `bIsGhost`          | `bool`                   | Predicted but unconfirmed                                   |
 
-If you're using traditional binding instead of UMG View Binding:
+**Proxied Item Data (when occupied):**
 
-```cpp
-// Subscribe to the container ViewModel's change delegate
-AttachmentVM->OnChanged.AddUObject(this, &UMyWidget::HandleAttachmentsChanged);
+| Property          | Type          | When Empty |
+| ----------------- | ------------- | ---------- |
+| `ItemIcon`        | `UTexture2D*` | nullptr    |
+| `ItemDisplayName` | `FText`       | Empty text |
+| `StackCount`      | `int32`       | 0          |
 
-void UMyWidget::HandleAttachmentsChanged()
-{
-    // Refresh all slot widgets
-    for (auto* SlotWidget : SlotWidgets)
-    {
-        SlotWidget->RefreshDisplay();
-    }
-}
-```
+**Path & Transaction:**
+
+| Property         | Type                   | Description                                     |
+| ---------------- | ---------------------- | ----------------------------------------------- |
+| `ContainerPath`  | `TArray<FGameplayTag>` | Nesting depth in the attachment hierarchy       |
+| `SlotDescriptor` | `FInstancedStruct`     | Pre-built descriptor for the transaction system |
 
 ***
 
-## Parent State Awareness
+### Nested Attachments
 
-Slot ViewModels track `ParentActiveState` - whether the host item is inactive, holstered, or held. This lets you show visual feedback:
-
-```cpp
-// Highlight slots when weapon is actively held
-bool bIsActive = SlotVM->ParentActiveState == EAttachmentActiveState::Equipped;
-ActiveGlow->SetVisibility(bIsActive ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-```
-
-***
-
-## Nested Attachments
-
-When a scope has its own attachments (like a laser sight), the system tracks the path:
+Attachments can have their own attachments. A tactical scope might have a laser sight module:
 
 ```
 Rifle
-├── Scope (path: [])
-│   └── Laser (path: [Scope])
-└── Grip (path: [])
++-- Scope (ContainerPath: [])
+|   +-- Laser (ContainerPath: [Scope])
++-- Grip (ContainerPath: [])
 ```
 
-The `ContainerPath` property on slot ViewModels reflects this hierarchy. When building UI for nested attachments, create a new `ULyraAttachmentViewModel` for the attachment item itself:
+The `ContainerPath` property on slot ViewModels reflects nesting depth. To display a sub-attachment's own slots, acquire a ViewModel for the attachment item itself:
 
 ```cpp
-// Get the attached scope
 ULyraInventoryItemInstance* ScopeItem = ScopeSlotVM->GetItemInstance();
+if (ScopeItem)
+{
+    ScopeAttachmentVM = Manager->AcquireContainerViewModel(ScopeAttachmentSource);
+    LaserSlotWidget->BindToSlot(ScopeAttachmentVM->GetSlotViewModel(TAG_Attachment_Slot_Illumination));
+}
+```
 
-// Create a ViewModel for the scope's own attachments
-ScopeAttachmentVM = NewObject<ULyraAttachmentViewModel>(this);
-ScopeAttachmentVM->InitializeForItem(ScopeItem);
+***
 
-// Now you can display laser slot, etc.
-LaserSlotWidget->BindToSlot(ScopeAttachmentVM->GetSlotViewModel(TAG_Attachment_Slot_Illumination));
+### Dynamic Context Updates
+
+When the parent item moves (e.g., a rifle moves from the player's hands to the backpack), the path to every attachment changes. The ViewModel detects the move, recalculates the `ContainerPath` and `SlotDescriptor` for every slot, and propagates the update. Drag-and-drop operations continue to work seamlessly even if the parent item is moved while the attachment window is open.
+
+{% hint style="info" %}
+For how the transaction system handles nested container paths, see [Runtime Container](runtime-container.md).
+{% endhint %}
+
+***
+
+### Delegates
+
+| Delegate    | Signature | Fires When                                                 |
+| ----------- | --------- | ---------------------------------------------------------- |
+| `OnChanged` | `()`      | Any attachment slot changes (attach, detach, parent state) |
+
+***
+
+### Drag-Drop
+
+Slot ViewModels carry a pre-built `SlotDescriptor` that plugs directly into the transaction system:
+
+```cpp
+FInstancedStruct SourceSlot = SourceSlotVM->SlotDescriptor;
+FInstancedStruct DestSlot = AttachmentSlotVM->SlotDescriptor;
+ItemTransactionAbility->MoveItem(SourceSlot, DestSlot);
 ```
 
 {% hint style="info" %}
-For the general MVVM architecture used across containers, see the [ViewModels and UI](/broken/pages/fc9f3f8a27b83d7f32f5149fa05eb38231dd0fc3) section. The patterns are consistent - attachment ViewModels follow the same conventions as inventory and equipment ViewModels.
+For the full drag-and-drop flow, see [UI Transaction Pipeline](/broken/pages/ee5ae57a62fa7edb6e3fba0277b6baab5b1d6979).
+{% endhint %}
+
+***
+
+{% hint style="info" %}
+For the shared ViewModel architecture used across all container types, see [Data Layers (View Models)](../../../ui/item-container-ui-system/data-layers-view-models/). For ghost state styling during prediction, see [Prediction & Visuals](../../../ui/item-container-ui-system/data-layers-view-models/prediction-and-visuals.md).
 {% endhint %}

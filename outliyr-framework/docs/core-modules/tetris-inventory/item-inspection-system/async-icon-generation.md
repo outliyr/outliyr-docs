@@ -1,64 +1,174 @@
 # Async Icon Generation
 
-While `UInventoryRepresentationWidget` provides live, interactive previews, the `UItemIconGeneratorComponent` offers a mechanism to generate static 2D `UTexture2D` icons for items asynchronously using the same PocketWorlds rendering infrastructure. This is particularly valuable for generating accurate icons for items whose appearance changes (e.g., due to attachments) or when a high-quality, pre-rendered snapshot is preferred over live rendering in certain UI contexts (like inventory grids).
+A weapon's icon needs to show its current attachments, a red dot sight, suppressor, and extended magazine. Pre-made icons cannot capture every possible combination. With three attachment slots and five options each, that is 125 unique icons for a single weapon. Add more weapons and the number explodes.
 
-### Purpose
-
-* **Asynchronous Operation:** Generates icons in the background without stalling the game thread, crucial for maintaining responsiveness.
-* **High-Quality Snapshots:** Renders the item's detailed 3D model (including attachments) from a specific pose defined in the item's configuration (`InventoryFragment_Inspect::InventoryIconImage`).
-* **Visual Consistency:** Ensures icons match the appearance configured via `InventoryFragment_Inspect` and can reflect the item's current visual state if its appearance can change.
-* **Optional Caching:** Can cache the generated pixel data for specific item _definitions_ to avoid redundant generation, saving resources for items that don't change visually instance-to-instance (unless attachments are involved in a way that changes the base definition's desired icon).
-
-### Workflow Overview
-
-1. **Setup:** Add the `UItemIconGeneratorComponent` to a relevant Controller or Player State Blueprint using [the experience system](../../../base-lyra-modified/gameframework-and-experience/game-features/game-feature-actions/add-components.md). Configure its `IconPocketLevelDefinition` property to point to the same `UIdentifyingPocketLevel` used for regular inspection.
-2. **Initialization:** The component automatically spawns its _own dedicated_ Pocket Level instance using the specified definition (distinct from any instance used by `UInventoryRepresentationWidget`). It keeps this instance loaded but streamed out initially.
-3. **Request (`GenerateItemIcon`):** An external system (e.g., inventory UI needing an icon for a slot) calls `GenerateItemIcon`, providing:
-   * The `ULyraInventoryItemInstance` to generate an icon for.
-   * The desired `ImageSizeX` and `ImageSizeY` for the output icon texture.
-   * A delegate (`FOnIconReadyDelegate`) to call back when the icon `UTexture2D` is ready.
-4. **Caching Check:** The component checks if caching is enabled (`InventoryIconImage.bCacheRenderTarget` in the item's `InventoryFragment_Inspect`) and if a cached icon exists for the item's definition in `CachedIconPixels`. If found, it immediately recreates the texture from cached pixels and executes the callback.
-5. **Queueing:** If no cache hit, the request (`FIconRequest`) is added to an internal `IconRequestQueue`.
-6. **Processing (`ProcessNextIconRequest`):** If not already busy (`!bIsGeneratingIcon`), the component dequeues the next request, sets `bIsGeneratingIcon = true`, and stores the request details.
-7. **Pocket Level Ready (`OnPocketLevelReady`):** Ensures the dedicated pocket level instance, `APocketLevelStageManager`, and `UPocketCapture` are initialized and ready. This happens once after `BeginPlay`.
-8. **Staging (`CaptureIcon` -> `DelayedCapture`):**
-   * Calls `PocketLevelStageManager->InitialiseSnapCaptor`, passing the `ItemInstance` and target `ImageSize`. This uses the specific `ImageRotation` and `FitToScreenRatio` from the item's `InventoryIconImage` settings (`InventoryFragment_Inspect`) to pose the item correctly for the snapshot.
-   * Sets up alpha masking actors.
-   * Calls `PocketCaptureInstance->CaptureDiffuse()` and `CaptureAlphaMask()` to render the staged item onto its internal Render Targets.
-9. **GPU Readback (`StartAsyncReadback` -> `PollFence` -> `OnReadPixelsComplete`):**
-   * **Crucial Step:** Initiates an **asynchronous GPU readback** operation. This is essential to avoid stalling the game thread while waiting for the GPU to finish rendering and transferring pixel data.
-   * `StartAsyncReadback`: Enqueues render commands to copy the Diffuse and AlphaMask Render Targets to temporary "staging" textures accessible by the CPU. It also creates and writes to a `FGPUFence`.
-   * `PollFence`: A timer periodically checks if the `FGPUFence` has been signaled by the GPU, indicating the copy operation is complete.
-   * `OnReadPixelsComplete`: Once the fence is signaled, this function (called back on the game thread via `AsyncTask`):
-     * Maps the staging textures to access their pixel data.
-     * Reads the raw `FColor` data (Diffuse) and `uint8` data (Alpha).
-     * Combines the Diffuse (RGB) and Alpha data into a final `TArray<FColor>`.
-     * Creates a new transient `UTexture2D` (`CapturedTexture`).
-     * Copies the combined pixel data into the new texture.
-     * Updates the texture resource.
-     * **Caching:** If caching is enabled for this item type, stores the raw pixel data (`DiffusePixels`, `AlphaPixels`, Width, Height) in the `CachedIconPixels` map using the item definition class as the key.
-     * Calls `OnIconGenerationComplete` with the new `CapturedTexture`.
-10. **Callback & Next Request (`OnIconGenerationComplete`):**
-    * Executes the original `IconReadyCallback` delegate provided in the request, passing the newly generated `UTexture2D`.
-    * Resets state (`bIsGeneratingIcon = false`, clears pending request data).
-    * Calls `ProcessNextIconRequest` to handle the next item in the queue, if any.
-11. **Cleanup (`EndPlay`):** Destroys the dedicated pocket level instance used by the generator component.
-
-### Key Mechanisms
-
-* **Asynchronous GPU Readback:** The use of staging textures and `FGPUFence` is vital for performance. It prevents the game thread from waiting idly for the GPU, allowing icon generation to happen truly in the background.
-* **Dedicated Pocket World:** Using a separate pocket world instance (identified by its own tag via the `UPocketLevelBridgeSubsystem`) prevents conflicts if the player is simultaneously using the main live inspection view (which uses a different, unique pocket world instance).
-* **`InitialiseSnapCaptor`:** The specific `APocketLevelStageManager` function tailored for posing items according to icon snapshot settings (`ImageRotation`, `FitToScreenRatio`) found in `InventoryFragment_Inspect::InventoryIconImage`.
-* **`FIconCache`:** A simple struct holding raw pixel data (`TArray<FColor>`, `TArray<uint8>`) and dimensions. This allows efficient storage in the `CachedIconPixels` map and fast recreation of `UTexture2D` objects without storing bulky texture assets directly in the cache.
-* **Request Queue (`TQueue<FIconRequest>`):** Ensures icon generation requests are processed one at a time, preventing race conditions or overwhelming the single pocket world instance dedicated to icon generation.
-
-### Usage Considerations
-
-* **Performance:** While asynchronous, generating many unique, non-cacheable icons (especially complex items with many attachments) still consumes GPU rendering time and CPU time for readback/texture creation.
-* **Memory:** Caching icons (`bCacheRenderTarget = true`) consumes memory to store the raw pixel data in the `CachedIconPixels` map. Balance cache benefits against memory usage. Caching is most effective for item _definitions_ whose icons are always the same, regardless of instance data.
-* **Setup:** Requires adding the component, configuring the `IconPocketLevelDefinition`, and ensuring items have a correctly configured `InventoryFragment_Inspect` with appropriate `InventoryIconImage` settings (including `bUseAsInventoryImage = true`).
-* **Callback Handling:** The system requesting an icon _must_ handle the asynchronous nature. The icon texture is provided via the `FOnIconReadyDelegate` callback, which might execute much later than the initial `GenerateItemIcon` call. UI updates should only happen within the callback.
+`UItemIconGeneratorComponent` solves this by generating icons on the fly. It uses the same PocketWorlds rendering pipeline as live inspection, but instead of displaying a live render target, it performs an asynchronous GPU readback to produce a static `UTexture2D`, complete with optional caching so the same icon is not generated twice.
 
 ***
 
-The `UItemIconGeneratorComponent` provides a powerful, albeit complex, method for generating high-quality 2D icons from your 3D item assets on the fly, leveraging the PocketWorlds infrastructure for background rendering and caching.
+### What It Provides
+
+* **Asynchronous operation** - Icons generate in the background without stalling the game thread
+* **High-quality snapshots** - Renders the full 3D model (with attachments) from a pose defined in `InventoryFragment_Inspect::InventoryIconImage`
+* **Visual accuracy** - Icons reflect the item's current visual state, not a generic pre-made image
+* **Optional caching** - Stores raw pixel data per item definition to skip redundant generation
+
+***
+
+### The 11-Step Workflow
+
+{% stepper %}
+{% step %}
+#### Setup
+
+Add `UItemIconGeneratorComponent` to a relevant Controller or Player State Blueprint using [the experience system](../../../base-lyra-modified/gameframework-and-experience/). Configure its `IconPocketLevelDefinition` property to point to a `UIdentifyingPocketLevel` asset.
+{% endstep %}
+
+{% step %}
+#### Initialization
+
+The component automatically spawns its own dedicated pocket level instance using the specified definition. This instance is separate from any pocket world used by `UInventoryRepresentationWidget`. It starts loaded but streamed out.
+{% endstep %}
+
+{% step %}
+#### Request
+
+An external system (e.g., inventory UI needing a slot icon) calls `GenerateItemIcon`, providing:
+
+* The `ULyraInventoryItemInstance` to generate an icon for
+* The desired `ImageSizeX` and `ImageSizeY`
+* A delegate (`FOnIconReadyDelegate`) to call when the `UTexture2D` is ready
+{% endstep %}
+
+{% step %}
+#### Cache Check
+
+The component checks if caching is enabled (`InventoryIconImage.bCacheRenderTarget` in the item's `InventoryFragment_Inspect`) and if cached pixel data exists for this item's definition in `CachedIconPixels`. On a cache hit, it immediately recreates the texture from stored pixels and fires the callback.
+{% endstep %}
+
+{% step %}
+#### Queueing
+
+On a cache miss, the request (`FIconRequest`) is added to the internal `IconRequestQueue`.
+{% endstep %}
+
+{% step %}
+#### Processing
+
+If not already busy (`!bIsGeneratingIcon`), the component dequeues the next request, sets `bIsGeneratingIcon = true`, and stores the request details.
+{% endstep %}
+
+{% step %}
+#### Pocket Level Ready
+
+Ensures the dedicated pocket level, Stage Manager, and `UPocketCapture` are initialized. This happens once after `BeginPlay` via the `OnPocketLevelReady` callback.
+{% endstep %}
+
+{% step %}
+#### Staging and Capture
+
+Calls `PocketLevelStageManager->InitialiseSnapCaptor`, passing the item instance and target image size. The Stage Manager uses `ImageRotation` and `FitToScreenRatio` from the item's `InventoryIconImage` settings to pose the item. Then sets up alpha masking actors and calls `CaptureDiffuse()` / `CaptureAlphaMask()` to render onto render targets.
+{% endstep %}
+
+{% step %}
+#### GPU Readback
+
+Initiates an asynchronous GPU readback, the critical step that avoids stalling the game thread while the GPU finishes rendering and transfers pixel data.
+{% endstep %}
+
+{% step %}
+#### Texture Creation
+
+Once the GPU fence signals completion, pixel data is read back and a transient `UTexture2D` is created. If caching is enabled, the raw pixel data is stored in `CachedIconPixels` keyed by item definition class.
+{% endstep %}
+
+{% step %}
+#### Callback and Next Request
+
+The original `FOnIconReadyDelegate` fires with the new texture. State resets (`bIsGeneratingIcon = false`), and `ProcessNextIconRequest` is called to handle the next item in the queue.
+{% endstep %}
+{% endstepper %}
+
+***
+
+### GPU Readback - The Technical Core
+
+The asynchronous readback is what makes this system production-viable. Without it, the game thread would stall waiting for the GPU to finish rendering every icon.
+
+<details>
+
+<summary>How the async readback works internally</summary>
+
+**StartAsyncReadback:**
+
+1. Enqueues render commands to copy the Diffuse and AlphaMask render targets to temporary "staging" textures that the CPU can access
+2. Creates and writes to an `FGPUFence`
+
+**PollFence:**
+
+1. A timer periodically checks if the `FGPUFence` has been signaled by the GPU, indicating the copy is complete
+2. This polling avoids blocking the game thread
+
+**OnReadPixelsComplete (called via AsyncTask on the game thread):**
+
+1. Maps the staging textures to access their pixel data
+2. Reads raw `FColor` data (Diffuse) and `uint8` data (Alpha)
+3. Combines RGB from Diffuse with the Alpha channel into a final `TArray<FColor>`
+4. Creates a new transient `UTexture2D`
+5. Copies the combined pixel data into the texture and updates its resource
+6. If caching is enabled, stores the raw pixel data (`DiffusePixels`, `AlphaPixels`, Width, Height) in the `CachedIconPixels` map
+7. Calls `OnIconGenerationComplete` with the finished texture
+
+</details>
+
+***
+
+### Key Mechanisms
+
+#### Dedicated Pocket World
+
+The icon generator uses its own pocket level instance, separate from any live inspection widget. This prevents conflicts if the player is inspecting an item while icons are being generated in the background. Both are tracked independently through the `UPocketLevelBridgeSubsystem`.
+
+#### Request Queue
+
+```
+TQueue<FIconRequest> IconRequestQueue
+```
+
+Icon requests are processed one at a time. This prevents race conditions and avoids overwhelming the single pocket world instance dedicated to icon generation. When one icon finishes, `ProcessNextIconRequest` dequeues the next.
+
+#### FIconCache
+
+A lightweight struct holding raw pixel data (`TArray<FColor>`, `TArray<uint8>`) and dimensions. This allows efficient storage in the `CachedIconPixels` map and fast recreation of `UTexture2D` objects without storing full texture assets in memory.
+
+#### Cleanup
+
+During `EndPlay`, the component destroys its dedicated pocket level instance through the bridge subsystem.
+
+***
+
+### Performance and Memory Considerations
+
+{% hint style="warning" %}
+**Performance:** While asynchronous, generating many unique, non-cacheable icons (especially complex items with many attachments) still consumes GPU rendering time and CPU time for readback/texture creation. Profile if you are generating large batches simultaneously.
+{% endhint %}
+
+{% hint style="info" %}
+**Memory:** Caching icons (`bCacheRenderTarget = true`) consumes memory to store raw pixel data in the `CachedIconPixels` map. Caching works best for item definitions whose icons are always the same regardless of instance data. For items where every instance looks different (e.g., weapons with varying attachments), caching at the definition level may not help.
+{% endhint %}
+
+{% hint style="info" %}
+**Setup checklist:**
+
+* Add `UItemIconGeneratorComponent` to the appropriate Blueprint
+* Configure `IconPocketLevelDefinition` to point to a valid `UIdentifyingPocketLevel`
+* Ensure items have `InventoryFragment_Inspect` with `InventoryIconImage` settings configured (including `bUseAsInventoryImage = true`)
+{% endhint %}
+
+{% hint style="warning" %}
+**Callback handling:** The icon texture arrives via `FOnIconReadyDelegate`, which may fire well after the initial `GenerateItemIcon` call. UI updates should only happen inside the callback -- never assume the texture is available synchronously.
+{% endhint %}
+
+***
+
+The `UItemIconGeneratorComponent` turns the PocketWorlds rendering pipeline into a background icon factory. Every possible attachment combination gets an accurate, high-quality icon, generated on demand, cached where it makes sense, and delivered asynchronously without interrupting gameplay.

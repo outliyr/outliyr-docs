@@ -1,36 +1,66 @@
 # Item Fragments (Tetris Specific)
 
-Item Fragments are the modular building blocks that define an item's behavior and properties. While the Tetris Inventory system relies heavily on fragments defined in the base Lyra system (like `InventoryFragment_InventoryIcon` and `InventoryFragment_SetStats`), it also introduces new fragments and significantly enhances others to enable its unique spatial and interactive features.
+A sword is a 1x3 vertical strip. A health potion is a single 1x1 cell. A backpack is a 2x3 rectangle that _also contains its own grid inside_. A scope can be dropped onto a rifle to combine them into a new weapon.
 
-This section focuses on these **Tetris-specific fragments**. It details how they configure items for grid interaction, enable container nesting, facilitate item combining, and provide data for the 3D inspection system.
+How does one system express all of these behaviors? **Fragments.**
 
-### Prerequisite: Understanding Base Fragments
+Each item in the Tetris Inventory is composed from small, self-contained building blocks called Item Fragments. A fragment defines one aspect of an item, its grid shape, its ability to hold other items, its combination recipes, or its 3D inspection data. Stack the right fragments onto an Item Definition and you get exactly the item behavior you need, without touching C++.
 
-Before diving into the specifics below, it's essential to understand the fundamental concepts of the Item Fragment system established in the base Lyra inventory:
+***
 
-* **What Fragments Are:** Reusable UObjects added to Item Definitions to compose functionality.
-* **Static vs. Instance Data:** How fragments define static data and can provide templates for instance-specific data.
-* **Transient Data:** The mechanisms for storing instance-specific data:
-  * `FTransientFragmentData` (Struct-based, lightweight).
-  * `UTransientRuntimeFragment` (UObject-based, full features like replication/BP exposure).
-* **Core Fragment Functions:** Key virtual functions like `OnInstanceCreated`, `CreateNewTransientFragment`, `GetWeightContribution`, etc.
+### Base Fragments vs. Tetris Fragments
 
-**Please review the** [**Item Fragments Documentation**](../../../base-lyra-modified/items/items-and-fragments/item-fragments.md) **for a detailed explanation of these core concepts before proceeding.**
+The Tetris Inventory builds on the same fragment architecture used across the entire Lyra item system. Fragments like `InventoryFragment_InventoryIcon` (display icon) and `InventoryFragment_SetStats` (stat tags) work identically here, every Tetris item will use these.
 
-### Tetris-Specific Fragments Overview
+{% hint style="info" %}
+If you're new to fragments, start with the [Item Fragments Documentation](../../../base-lyra-modified/items/items-and-fragments/) first. It covers what fragments are, static vs. instance data, transient data patterns, and core virtual functions. Everything below assumes you're comfortable with those concepts.
+{% endhint %}
 
-The following subpages detail the fragments crucial for the Tetris Inventory system:
+This section focuses on the **four fragments unique to the Tetris Inventory plugin**, the ones that give items their spatial, interactive, and visual behaviors on the grid.
 
-1. **`InventoryFragment_Tetris`:**
-   * **Purpose:** Defines the fundamental spatial footprint (Shape) of an item on the grid. Essential for any item intended to be placed spatially.
-2. **`InventoryFragment_Combine`:**
-   * **Purpose:** Enables items to define recipes for combining with other specific items when dropped onto each other within the grid.
-   * **Functionality:** Stores combination rules (required ingredients, resulting item) and implements the `CombineItems` logic to execute the combination process, including consuming ingredients and attempting to place the result.
-3. **`InventoryFragment_Container`:**
-   * **Purpose:** Allows an item instance to host its own nested `ULyraTetrisInventoryManagerComponent`. This is the key to creating backpacks, cases, etc.
-   * **Functionality:** Defines the child inventory's layout and rules. Creates and manages the child component via `FTransientFragmentData_Container`. Handles moving items _into_ the container and manages the parent-child relationship for constraint propagation.
-4. **`InventoryFragment_Inspect`:**
-   * **Purpose:** Provides the necessary configuration data (meshes, rotation/zoom limits, FOV) for displaying an item in the 3D Item Inspection system (which uses PocketWorlds).
-   * **Functionality:** Holds static and skeletal mesh references, camera control parameters, and settings for generating cached icon snapshots.
+***
 
-By combining these fragments (along with necessary base fragments like `InventoryFragment_InventoryIcon`), you can create items with complex spatial behaviors, nested storage, combination potential, and detailed 3D previews, fully leveraging the capabilities of the Tetris Inventory Plugin. Explore the subpages for detailed configuration and usage information for each fragment.
+### Tetris-Specific Fragments at a Glance
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                     Item Definition                                  │
+│                                                                      │
+│   Base Fragments (Lyra)         Tetris-Specific Fragments            │
+│   ─────────────────────         ─────────────────────────            │
+│   InventoryFragment_Icon        InventoryFragment_Tetris             │
+│   InventoryFragment_SetStats    InventoryFragment_Container          │
+│   InventoryFragment_Equippable  InventoryFragment_Combine            │
+│   ...                           InventoryFragment_Inspect            │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+| Fragment                                                        | What It Does                                               | When You Need It                                              |
+| --------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------- |
+| [`InventoryFragment_Tetris`](inventoryfragment_tetris.md)       | Defines the 2D grid shape and rotation rules               | Every item that exists on a spatial grid                      |
+| [`InventoryFragment_Container`](inventoryfragment_container.md) | Gives an item its own nested inventory grid                | Backpacks, cases, ammo boxes, any item that holds other items |
+| [`InventoryFragment_Combine`](inventoryfragment_combine.md)     | Defines drag-and-drop combination recipes                  | Crafting, attachments, merging stackables                     |
+| [`InventoryFragment_Inspect`](inventoryfragment_inspect.md)     | Provides 3D mesh and camera data for the inspection viewer | Any item you want players to rotate and examine in 3D         |
+
+***
+
+### How They Work Together
+
+Most items use `InventoryFragment_Tetris` as their foundation, without it, an item has no spatial presence and can't be placed on a grid. From there, you layer on additional fragments as needed.
+
+A few common compositions:
+
+**Simple consumable** (health potion): `Tetris` (1x1 shape) + base icon/stats fragments.
+
+**Weapon with inspection**: `Tetris` (1x3 shape) + `Inspect` (3D model, camera limits) + base fragments.
+
+**Backpack**: `Tetris` (2x3 shape) + `Container` (nested 6x4 grid inside) + base fragments.
+
+**Craftable attachment**: `Tetris` (1x1 shape) + `Combine` (recipe: scope + rifle = scoped rifle) + base fragments.
+
+{% hint style="info" %}
+The [Item Container](../../../base-lyra-modified/item-container/) system handles the underlying storage and transaction logic. Fragments configure _how_ items behave within that system, they don't replace it.
+{% endhint %}
+
+Explore each fragment's subpage below for configuration details, code examples, and editor workflows.

@@ -202,7 +202,7 @@ You can restrict what items can enter the inventory:
 
 #### Allowlist
 
-If non-empty, ONLY these items can be added:
+If non-empty, **ONLY** these items can be added:
 
 ```cpp
 TArray<ULyraInventoryItemDefinition*> AllowedItems;
@@ -211,7 +211,7 @@ TArray<ULyraInventoryItemDefinition*> AllowedItems;
 
 #### Denylist
 
-These items can NEVER be added:
+These items can **NEVER** be added:
 
 ```cpp
 TArray<ULyraInventoryItemDefinition*> DisallowedItems;
@@ -231,7 +231,7 @@ Use cases:
 
 ### How Items Enter and Move
 
-Items don't just appear in inventory - they arrive through the transaction system. When a pickup adds an item:
+Items don't just appear in inventory, they arrive through the transaction system. When a pickup adds an item:
 
 {% stepper %}
 {% step %}
@@ -390,9 +390,111 @@ for (const FLyraInventoryEntry& Entry : Entries)
 }
 ```
 
-`GetEntries()` returns the effective view — what the player should actually see right now. On the server, this is the authoritative inventory. On the owning client, it combines server state with any pending predictions. When you drag an item to a new slot, `GetEntries()` immediately reflects the new position — even before the server confirms — because the prediction is part of the effective view.
+`GetEntries()` returns the effective view, what the player should actually see right now. On the server, this is the authoritative inventory. On the owning client, it combines server state with any pending predictions. When you drag an item to a new slot, `GetEntries()` immediately reflects the new position, even before the server confirms, because the prediction is part of the effective view.
 
 This is why drag-and-drop feels instant.
+
+***
+
+### Starting Items
+
+A shop NPC needs a fixed inventory of goods for sale. A loot chest needs pre-determined contents. A player's backpack starts with a medkit and some ammo. Rather than writing custom spawn logic for each case, the Inventory Manager has a `DefaultStartingItems` array that populates items automatically during initialization.
+
+#### **The Starting Item Structure**
+
+Each entry describes one item to add:
+
+```cpp
+USTRUCT(BlueprintType)
+struct FInventoryStartingItem
+{
+    // Which item to create
+    TSubclassOf<ULyraInventoryItemDefinition> ItemDef;
+
+    // How many items in this stack (default 1)
+    int32 StackCount = 1;
+
+    // Target slot index (-1 = first available)
+    int32 SlotIndex = INDEX_NONE;
+
+    // Per-instance overrides applied when the item is created
+    TArray<FInstancedStruct> FragmentInitData;
+};
+```
+
+| Field              | Purpose                                                                         |
+| ------------------ | ------------------------------------------------------------------------------- |
+| `ItemDef`          | The item definition class to instantiate                                        |
+| `StackCount`       | Number of items in this stack (clamped to minimum 1)                            |
+| `SlotIndex`        | Specific slot to place in, or `INDEX_NONE` to auto-place in first available     |
+| `FragmentInitData` | Polymorphic per-instance overrides applied before the item enters the inventory |
+
+#### **Slot Placement**
+
+When `SlotIndex` is left at its default (`INDEX_NONE`), the item is placed in the first available slot. Set it to a specific number to control exact placement, useful for shop inventories or containers where item position matters.
+
+#### **Fragment Init Data**
+
+`FragmentInitData` lets you customize each starting item without creating a separate item definition for every variation. The same medkit definition can start with different durability values. The same rifle can start with different ammo counts or attachments.
+
+Each entry is an `FInstancedStruct` derived from `FLyraFragmentInitBase`. When the item is created, each init struct's `ApplyToItem()` is called to modify the instance before it enters the inventory.
+
+For the full details on available init types and how to create custom ones, see Fragment Initialization.
+
+#### **The Flow**
+
+```
+BeginPlay (server-authority only)
+       │
+       ▼
+AddStartingItems()
+       │
+       ▼
+┌──────────────────────────────────────────────┐
+│  For each FInventoryStartingItem:            │
+│                                              │
+│  1. Create item instance from ItemDef        │
+│  2. Apply FragmentInitData to the instance   │
+│  3. Add to inventory (bForceAdd = true)      │
+│     └─ SlotIndex or first available          │
+│                                              │
+└──────────────────────────────────────────────┘
+```
+
+Starting items bypass normal capacity checks (`bForceAdd = true`) since they represent the designed initial state of the container. They only run on the server, clients receive the items through normal replication.
+
+#### **Practical Example**
+
+A shop NPC selling medical supplies and ammunition:
+
+```
+DefaultStartingItems:
+┌─────────────────────────────────────────────────────────────────┐
+│ [0] Medkit                                                      │
+│     ItemDef:        ID_Consumable_Medkit                        │
+│     StackCount:     3                                           │
+│     SlotIndex:      0                                           │
+│     FragmentInitData: (empty - use definition defaults)         │
+│                                                                 │
+│ [1] Assault Rifle                                               │
+│     ItemDef:        ID_Rifle_Assault                            │
+│     StackCount:     1                                           │
+│     SlotIndex:      1                                           │
+│     FragmentInitData:                                           │
+│       └─ FStatTagsFragmentInit { Ammo.Magazine: 30,             │
+│                                  Ammo.Reserve: 120 }            │
+│                                                                 │
+│ [2] Ammo Box                                                    │
+│     ItemDef:        ID_Ammo_Rifle                               │
+│     StackCount:     60                                          │
+│     SlotIndex:      INDEX_NONE  (auto-place)                    │
+│     FragmentInitData: (empty)                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+{% hint style="info" %}
+`DefaultStartingItems` is configured directly on the Inventory Manager Component in your Blueprint. Different Blueprints (shop NPCs, loot chests, player backpacks) can each have different starting item configurations without any code changes.
+{% endhint %}
 
 ***
 

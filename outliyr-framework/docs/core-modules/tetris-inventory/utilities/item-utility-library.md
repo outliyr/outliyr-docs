@@ -1,10 +1,14 @@
 # Item Utility Library
 
-This Blueprint Function Library provides more general-purpose utility functions that can be useful in conjunction with the inventory system, particularly for scenarios involving item placement or spawning in the game world, but are not strictly tied to the core inventory management logic itself.
+You've placed a loot chest in your level. Around it, you want 20 scattered items, ammo, health packs, loose coins, randomly distributed across an irregularly-shaped cave floor. You could hand-place them all, or you could define the area with a spline and let the system distribute them for you.
+
+`UItemUtilityLibrary` is a Blueprint Function Library for general-purpose item utilities that complement the inventory system. These functions are not tied to grid logic, they handle the world-space side of items, particularly spawning and placement.
+
+***
 
 ### `GetRandomPointsInSplineArea`
 
-This function is designed to find random locations within a 2D area defined by a closed `USplineComponent`.
+Generates random world-space positions inside the area enclosed by a closed `USplineComponent`. The points are uniformly distributed across the surface area, larger regions of the spline get proportionally more points, so you never end up with everything clustered in one corner.
 
 {% tabs %}
 {% tab title="C++" %}
@@ -13,10 +17,10 @@ This function is designed to find random locations within a 2D area defined by a
  * Sample random points inside a closed spline using triangulation.
  * Projects the spline onto the XY plane for calculation.
  *
- * @param SplineComponent The closed USplineComponent defining the area boundary.
- * @param NumPoints The number of random points to generate inside the area.
- * @param RandomPoints (Output) TArray of FVectors representing the generated points (Z coordinate will match the spline's points).
- * @return True if points were successfully generated, false otherwise (e.g., invalid spline, not enough points to triangulate).
+ * @param SplineComponent  The closed USplineComponent defining the area boundary.
+ * @param NumPoints        The number of random points to generate inside the area.
+ * @param RandomPoints     (Output) Array of FVectors for the generated points.
+ * @return True if points were generated successfully, false otherwise.
  */
 UFUNCTION(BlueprintCallable, Category = "Item|ItemSpawning")
 static UE_API bool GetRandomPointsInSplineArea(
@@ -28,31 +32,67 @@ static UE_API bool GetRandomPointsInSplineArea(
 {% endtab %}
 
 {% tab title="Blueprint" %}
-<figure><img src="../../../.gitbook/assets/image (165).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (234).png" alt=""><figcaption><p>Example of ItemZoneSpawner spawning items in a random point in the spline</p></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 
-**Logic Breakdown:**
+***
 
-1. **Validation:** Checks if the `SplineComponent` is valid and `NumPoints` is positive.
-2. **PolyPath Conversion:** Converts the `SplineComponent` into a `FGeometryScriptPolyPath` by sampling points along its length. Assumes the spline is closed and operates primarily on the XY plane.
-3. **Triangulation:** Uses the `AppendDelaunayTriangulation2D` function from the Geometry Scripting plugin to triangulate the 2D polygon defined by the PolyPath vertices. This breaks the potentially complex area into a set of simple triangles.
-4. **Area Calculation:** Calculates the surface area of each generated triangle.
-5. **Weighted Triangle Selection:** Calculates the total area of all triangles. To ensure points are distributed evenly across the entire spline area (not clustered in smaller triangles), it randomly selects triangles based on their area (larger triangles are proportionally more likely to be chosen).
-6. **Point Sampling:** For each of the `NumPoints` requested:
-   * Selects a random triangle using the weighted method described above.
-   * Generates a random point _within_ the bounds of that selected triangle using barycentric coordinates.
-   * Adds the generated `FVector` (with its Z coordinate likely matching the original spline points on the XY plane) to the `RandomPoints` output array.
-7. **Return:** Returns `true` if the process completed successfully and generated points, `false` if the spline was invalid or triangulation failed.
+### How It Works
 
-**Use Cases:**
+{% stepper %}
+{% step %}
+**Validation**
 
-* **Procedural Loot Spawning:** Define loot spawn zones in your level using closed Spline Components. Use this function to get random locations within those zones to spawn `ALyraWorldCollectable` actors (dropped items).
-* **AI Patrol Points:** Generate random points within a defined area for AI navigation or patrol routes.
-* **Visual Effects:** Scatter visual effect emitters randomly within a designated zone.
+Checks that the `SplineComponent` is valid and `NumPoints` is positive. Returns `false` immediately if either check fails.
+{% endstep %}
 
-**Dependencies:**
+{% step %}
+**Polygon Conversion**
 
-* Requires the **GeometryScripting** plugin to be enabled in your project (it's often enabled by default in recent engine versions).
+Samples points along the spline to create an `FGeometryScriptPolyPath`, a 2D polygon projected onto the XY plane. The spline must be closed for this to produce a valid boundary.
+{% endstep %}
 
-While not directly manipulating inventory slots, functions like this in `UItemUtilityLibrary` provide valuable tools for integrating the inventory system with the broader game world, especially concerning the physical placement and spawning of items.
+{% step %}
+**Triangulation**
+
+Uses `AppendDelaunayTriangulation2D` from the Geometry Scripting plugin to break the polygon into a set of triangles. This handles arbitrary spline shapes, concave, convex, or complex.
+{% endstep %}
+
+{% step %}
+**Area-Weighted Selection**
+
+Calculates the surface area of each triangle. When selecting a triangle for point placement, larger triangles are proportionally more likely to be chosen. This is what ensures uniform distribution across the entire area rather than clustering.
+{% endstep %}
+
+{% step %}
+**Point Sampling**
+
+For each requested point, randomly selects a triangle (weighted by area) and generates a random position inside it using barycentric coordinates. The Z coordinate matches the original spline's height.
+{% endstep %}
+{% endstepper %}
+
+***
+
+### Use Cases
+
+* **Procedural loot spawning** - Define loot zones with closed splines in your level. Generate random positions to spawn `ALyraWorldCollectable` actors (dropped items) within those zones.
+* **AI patrol points** - Create randomized waypoints within a bounded patrol area.
+* **Visual effects** - Scatter emitters, decals, or debris randomly within a designated region.
+* **Environmental storytelling** - Distribute props like spent shell casings, scattered papers, or broken glass across an irregularly-shaped room.
+
+{% hint style="warning" %}
+This function requires the **GeometryScripting** plugin to be enabled in your project. It is enabled by default in recent engine versions, but verify this if you encounter linker errors.
+{% endhint %}
+
+***
+
+<details>
+
+<summary>Why barycentric coordinates?</summary>
+
+A naive approach might pick random X and Y values within a triangle's bounding box and discard points that fall outside. This is wasteful for thin triangles and produces uneven distribution.
+
+Barycentric coordinates guarantee that every generated point falls inside the triangle with uniform probability. Two random values are generated and transformed so the resulting point is always within the triangle's bounds, no rejection sampling needed, no wasted computation.
+
+</details>

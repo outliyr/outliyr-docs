@@ -204,6 +204,114 @@ With proper ordering:
 
 ***
 
+### Starting Equipment
+
+Most games don't start players empty-handed. The Equipment Manager has a `StartingEquipment` array that automatically equips items when the experience loads.
+
+#### **Why This Exists**
+
+Without starting equipment, you'd need a separate Actor or GameMode blueprint to spawn items, add them to inventory, then move them to equipment slots. That's fragile and experience-specific. `StartingEquipment` keeps loadout configuration on the component that owns the equipment, right where you'd look for it.
+
+#### **The Starting Item Structure**
+
+Each entry in the array describes one item to equip:
+
+```cpp
+USTRUCT(BlueprintType)
+struct FEquipmentStartingItem
+{
+    // Which item to create
+    TSubclassOf<ULyraInventoryItemDefinition> ItemDef;
+
+    // Which storage slot to equip it into (e.g., Equipment.Slot.Back)
+    FGameplayTag EquipmentSlot;
+
+    // Should this item be immediately held after equipping?
+    bool bAutoHold = false;
+
+    // Per-instance data to apply to fragments (ammo, attachments, etc.)
+    TArray<FInstancedStruct> FragmentInitData;
+};
+```
+
+| Field              | Purpose                                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------------------- |
+| `ItemDef`          | The item definition class to instantiate                                                            |
+| `EquipmentSlot`    | Storage slot tag, must match a `HolsteredBehaviors` entry on the item                               |
+| `bAutoHold`        | If `true`, the item is held immediately instead of starting holstered, this matches `HeldBehaviour` |
+| `FragmentInitData` | Polymorphic fragment overrides applied before equipping                                             |
+
+#### **The `bAutoHold` Flag**
+
+By default, starting items are equipped in the holstered state - a rifle on your back, a pistol on your hip. Setting `bAutoHold = true` skips that and puts the item directly into the player's hand.
+
+This is how you give a player a weapon that's ready to fire the moment they spawn. Only one item should typically have `bAutoHold` enabled (unless you're supporting akimbo weapons with multiple held slots).
+
+{% hint style="info" %}
+Be sure to add [equipment mapping](quick-bar-component.md#auto-sync-with-equipment) to the quick bar component as well, so it automatically syncs the equipment to the quick bar slots, or the quick bar slots would appear empty.
+{% endhint %}
+
+#### **Fragment Init Data**
+
+`FragmentInitData` lets you customize each starting item without needing a separate item definition for every loadout variation. Want the same rifle definition but with different ammo counts or attachments per experience? Use init data.
+
+Each entry is an `FInstancedStruct` containing a fragment-specific data payload. When the item is created, these payloads are applied to matching fragments before the item is equipped.
+
+For the full details on how fragment initialization works, see Fragment Initialization.
+
+#### **The Flow**
+
+```
+Experience Loads
+       │
+       ▼
+AddStartingEquipment()
+       │
+       ▼
+┌──────────────────────────────────────────┐
+│  For each FEquipmentStartingItem:        │
+│                                          │
+│  1. Create item instance from ItemDef    │
+│  2. Apply FragmentInitData to fragments  │
+│  3. Equip item into EquipmentSlot        │
+│  4. If bAutoHold → hold immediately      │
+│                                          │
+└──────────────────────────────────────────┘
+```
+
+**Practical Example**
+
+A typical shooter loadout - primary rifle in hand, backup pistol holstered:
+
+```
+StartingEquipment:
+┌─────────────────────────────────────────────────────────────────┐
+│ [0] Assault Rifle                                               │
+│     ItemDef:       ID_Rifle_Assault                             │
+│     EquipmentSlot: Equipment.Slot.Back                          │
+│     bAutoHold:     true                                         │
+│     FragmentInitData:                                           │
+│       ├─ FAmmoInitData { MagazineAmmo: 30, ReserveAmmo: 60 }    │
+│       └─ FAttachmentInitData { Optic: RedDot }                  │
+│                                                                 │
+│ [1] Pistol                                                      │
+│     ItemDef:       ID_Pistol_Standard                           │
+│     EquipmentSlot: Equipment.Slot.Hip                           │
+│     bAutoHold:     false                                        │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+Result on spawn:
+  Back slot  → Rifle (HELD in primary hand, ready to fire)
+  Hip slot   → Pistol (holstered, with default ammo)
+```
+
+{% hint style="info" %}
+`StartingEquipment` is configured directly on the Equipment Manager Component. Each experience can use a different equipment manager component with different starting loadouts.
+{% endhint %}
+
+***
+
 ### How Equipment Gets Equipped
 
 Equipment enters through the container transaction system. When an item moves from inventory to an equipment slot:

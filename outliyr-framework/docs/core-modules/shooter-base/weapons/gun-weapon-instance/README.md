@@ -8,7 +8,7 @@ While you can use Lyra's base classes, `UGunWeaponInstance` is the recommended s
 For a refresher on the base weapon functionalities, you can refer to the core documentation for [`ULyraWeaponInstance`](../../../../base-lyra-modified/weapons/weapon-instance.md) and [`ULyraRangedWeaponInstance`](../../../../base-lyra-modified/weapons/range-weapon-instance.md).
 {% endhint %}
 
-<figure><img src="../../../../.gitbook/assets/image (4) (1) (1).png" alt=""><figcaption><p>Rifle Gun Instance</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (4) (1) (1) (1).png" alt=""><figcaption><p>Rifle Gun Instance</p></figcaption></figure>
 
 ### The Predictive Recoil Philosophy
 

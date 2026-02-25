@@ -115,6 +115,10 @@ DefaultAttachments:
 
 When the rifle instance is created, the iron sights automatically attach. The player can still swap them for a different scope.
 
+{% hint style="info" %}
+**Overriding defaults at spawn time:** When spawning items through starting item entries (on Equipment, Inventory, or Tetris components), you can use `FAttachmentFragmentInit` in the `FragmentInitData` array to replace the default attachments with custom ones, including nested init data on the attachments themselves. See [Fragment Initialization](../../items-and-fragments/fragment-initialization.md) for details.
+{% endhint %}
+
 ***
 
 ### How It Creates the Runtime Container

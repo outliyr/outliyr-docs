@@ -1,10 +1,14 @@
 # Data Types
 
-This page documents the core data structures and enumerations defined within the `InventoryDataLibrary` (or equivalent header) that are fundamental to the operation and configuration of the Tetris Inventory system.
+Every grid cell, item shape, and placement operation in the Tetris Inventory passes through a handful of core data structures. You will see these types in function signatures, component properties, and UI logic constantly, understanding them upfront saves you from guessing what a `TArray<F1DBooleanRow>` means the fifth time you encounter one.
+
+This page documents every struct and enum defined in `TetrisInventoryDataLibrary.h`.
+
+***
 
 ### `EItemRotation`
 
-Defines the possible cardinal orientations for an item within the grid.
+The four cardinal orientations an item can have within the grid.
 
 ```cpp
 UENUM(BlueprintType)
@@ -17,101 +21,129 @@ enum class EItemRotation : uint8
 };
 ```
 
-* **Usage:** Used by `InventoryFragment_Tetris` to specify allowed rotations, by `FGridCellInfo` to store the placed rotation, and by placement/utility functions (`RotateShape`, `MoveItemInternally`, etc.) to handle orientation.
+This enum shows up everywhere: the `InventoryFragment_Tetris` uses it to define which rotations an item supports, `FTetrisPlacement` stores the placed rotation, and utility functions like `RotateShape` and `GetCellPositionAfterRotation` accept it as a parameter.
+
+{% hint style="info" %}
+Items don't have to support all four rotations. The Tetris fragment lets you restrict allowed rotations per item definition, a symmetric 2x2 block might only allow `Rotation_0`, while an L-shaped piece allows all four.
+{% endhint %}
+
+***
 
 ### `F1DBooleanRow`
 
-A helper struct used to represent a single row within a 2D boolean grid (primarily for defining item shapes and clump layouts). Necessary because `TArray<TArray<bool>>` is not directly editable as a UPROPERTY.
+A single row within a 2D boolean grid. This struct exists because Unreal's property system cannot directly expose `TArray<TArray<bool>>` as a UPROPERTY, so a row wrapper provides the same capability with full editor and Blueprint support.
 
 ```cpp
 USTRUCT(BlueprintType)
 struct F1DBooleanRow
 {
     GENERATED_BODY()
+
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<bool> BooleanRow;
 
-    // Operator overloads and helper functions ([], Add, Num, SetNum, Init, etc.)
-    // ... (See Header for full list) ...
+    // Operator[], Add, Num, SetNum, Init, IsValidIndex, ==, !=
 };
 ```
 
-* **Usage:** Used within `FInventoryLayoutCreator::ClumpGrid` and `InventoryFragment_Tetris::Shape`.
+**Where you'll see it:**
+
+* **Item shapes -** `InventoryFragment_Tetris::Shape` is a `TArray<F1DBooleanRow>` where `true` means "this cell is occupied."
+* **Clump layouts -** `FInventoryLayoutCreator::ClumpGrid` uses the same pattern to define which cells are accessible within a grid section.
+* **Utility functions** - Nearly every function in `UTetrisUtilityLibrary` takes a shape as `TArray<F1DBooleanRow>`.
+
+The operator overloads let you treat it like a regular array in C++:
+
+```cpp
+// Access a cell directly: Shape[Row][Column]
+bool occupied = MyShape[2][3];
+```
+
+***
 
 ### `F1DIntegerRow`
 
-Similar to `F1DBooleanRow`, but holds a row of integers. Primarily used internally for the `GridCellIndexMap`.
+The integer counterpart to `F1DBooleanRow`. Holds a row of `int32` values, primarily used for internal index mapping.
 
 ```cpp
 USTRUCT(BlueprintType)
 struct F1DIntegerRow
 {
     GENERATED_BODY()
+
 public:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) // Usually not directly edited
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<int32> IntegerRow;
 
-    // Operator overloads and helper functions...
-    // ... (See Header for full list) ...
+    // Operator[], Add, Num, SetNum, Init, IsValidIndex
 };
 ```
 
-* **Usage:** Used within `FInventoryClumpIndexMapping::ClumpGrid`.
+**Where you'll see it:** Inside `FInventoryClumpIndexMapping`, where it maps 2D grid coordinates to flat array indices.
+
+***
 
 ### `FInventoryClumpIndexMapping`
 
-Represents the 2D index map for a single inventory clump, mapping coordinates `[RowY][ColX]` to the index within the flat `FGridCellInfoList::GridCells` array.
+Maps 2D coordinates within a single clump to indices in the flat `FGridCellInfoList::GridCells` array. Each entry at `[Row][Column]` holds the index into the flat cell array, or `-1` for inaccessible cells.
 
 ```cpp
 USTRUCT(BlueprintType)
 struct FInventoryClumpIndexMapping
 {
     GENERATED_BODY()
+
 public:
-    // The 2D grid mapping coordinates to GridCells indices (-1 for invalid/inaccessible cells).
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) // Usually not directly edited
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<F1DIntegerRow> ClumpGrid;
 
-    // Operator overloads and helper functions...
-    // ... (See Header for full list) ...
+    // Operator[], Add, Num, SetNum, Init, IsValidIndex
 };
 ```
 
-* **Usage:** Used internally by `FGridCellInfoList::GridCellIndexMap` for fast coordinate lookups.
+This struct is managed internally by the inventory grid system. You generally don't create or modify these directly, the grid builds them from your `FInventoryLayoutCreator` definitions. Understanding that they exist helps when debugging grid coordinate lookups.
+
+***
 
 ### `FInventoryLayoutCreator`
 
-Defines a single "Clump" or section of an inventory's grid layout. An array of these defines the full inventory structure.
+Defines a single "clump" (section) of an inventory's grid layout. An inventory's full layout is a `TArray<FInventoryLayoutCreator>`, one entry per clump, each positioned at a different origin.
 
 ```cpp
 USTRUCT(BlueprintType)
 struct FInventoryLayoutCreator
 {
     GENERATED_BODY()
+
 public:
-    // X-coordinate origin of this clump.
+    // X-coordinate origin of this clump
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 ClumpX;
 
-    // Y-coordinate origin of this clump.
+    // Y-coordinate origin of this clump
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 ClumpY;
 
-    // The boolean grid defining accessible cells within this clump (relative to ClumpX, ClumpY).
+    // Boolean grid defining accessible cells (relative to ClumpX, ClumpY)
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<F1DBooleanRow> ClumpGrid;
 
-    // Operator overloads and helper functions...
-    // ... (See Header for full list) ...
+    // Operator[], Add, Num, SetNum, Init, IsValidIndex
 };
 ```
 
-* **Usage:** Used in `ULyraTetrisInventoryManagerComponent::InventoryLayout` to configure the grid structure. Detailed on the Grid Layout Core Concept page.
+**Example:** A player inventory with a main 8x6 grid and a separate 2x2 "quick slot" section would use two `FInventoryLayoutCreator` entries, one at `(0,0)` with an 8x6 boolean grid, and one at `(9,0)` with a 2x2 grid.
+
+{% hint style="info" %}
+The layout is configured on `ULyraTetrisInventoryManagerComponent::InventoryLayout`. For a deep dive into how clumps compose into a full grid, see the [Grid System](../tetris-inventory-manager-component/the-grid-system.md) page.
+{% endhint %}
+
+***
 
 ### `FFoundCells`
 
-A general-purpose struct, potentially used by UI or other systems to store information about a set of cells related to an item interaction (e.g., the cells an item would occupy during a drag operation). _Note: Review if this struct is actively used in the final implementation or if it was part of earlier development._
+A context bundle that groups everything relevant to a cell-based item interaction, the cells involved, the item, both source and destination inventories, and the rotation state.
 
 ```cpp
 USTRUCT(BlueprintType)
@@ -119,106 +151,95 @@ struct FFoundCells
 {
     GENERATED_BODY()
 
-    // List of cell coordinates involved.
+    // The grid cells involved in this interaction
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FIntPoint> CellPositions;
 
-    // Clump ID these cells belong to.
+    // Which clump these cells belong to
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 CellClumpID = -1;
 
-    // Root cell coordinate for the related item interaction.
+    // The root cell (top-left anchor) for placement
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FIntPoint RootCell = FIntPoint(0, 0);
 
-    // Rotation involved in the interaction.
+    // The rotation state for this interaction
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     EItemRotation CellRotation = EItemRotation::Rotation_0;
 
-    // The item instance involved.
+    // The item instance being interacted with
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TObjectPtr<ULyraInventoryItemInstance> ItemInstance;
 
-    // Target inventory for the interaction.
+    // Where the item is going
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TObjectPtr<ULyraInventoryManagerComponent> DestinationInventoryManager;
 
-    // Source inventory for the interaction.
+    // Where the item is coming from
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TObjectPtr<ULyraInventoryManagerComponent> SourceInventoryManager;
 
-    // Was the source item inside the inventory? (Potentially for external drags)
+    // Was the source item already inside an inventory? (false for external/world pickups)
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     bool SourceItemInsideInventory = true;
 };
 ```
 
-* **Usage:** May be used by UI drag/drop operations or placement previews to bundle relevant contextual information. Check specific UI implementation details.
+UI drag-and-drop operations use this struct to pass placement context through the interaction chain. When a player drags an item from one inventory to another, `FFoundCells` bundles the source inventory, destination inventory, target cells, rotation, and item reference into a single package.
 
-### `FInventoryStartItemDetails`
+***
 
-Used within `ULyraTetrisInventoryManagerComponent::StartingItems` to define items that should automatically populate the inventory on initialization.
+### `FTetrisInventoryStartingItem`
+
+Defines an item that should populate an inventory when it initializes. Configured on the `ULyraTetrisInventoryManagerComponent::StartingItems` array (and on `InventoryFragment_Container` for container items).
 
 ```cpp
 USTRUCT(BlueprintType)
-struct FInventoryStartItemDetails
+struct FTetrisInventoryStartingItem
 {
     GENERATED_BODY()
 
-    // Item definition to add.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    // The item definition to add
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
     TSubclassOf<ULyraInventoryItemDefinition> ItemDef;
 
-    // Quantity to add (respects stacking).
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 AmountToAdd = 0;
+    // Amount to add (obeys stacking rules)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item", meta = (ClampMin = "1"))
+    int32 AmountToAdd = 1;
 
-    // Target position (ClumpID, (X,Y)). (-1,-1) for auto-placement.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    // Grid position -- (-1, -1) means auto-place in the next available slot
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Placement")
     FIntPoint Position = FIntPoint(-1);
 
-    // Target Clump ID. Used if Position is specific.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    // Which clump to place into (auto-selected if Position is (-1, -1))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Placement")
     int32 Clump = 0;
 
-    // Target rotation. Used if Position is specific, or as a suggestion for auto-placement.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    // Item rotation in the grid
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Placement")
     EItemRotation ItemRotation = EItemRotation::Rotation_0;
+
+    // Per-instance fragment overrides applied when this item is created
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragments",
+        meta = (BaseStruct = "FLyraFragmentInitBase"))
+    TArray<FInstancedStruct> FragmentInitData;
 };
 ```
 
-* **Usage:** Configured on the `ULyraTetrisInventoryManagerComponent` to define its initial contents.
+The `FragmentInitData` array is the key to customization. Each entry is a polymorphic `FInstancedStruct` that overrides a specific fragment's defaults when the item is created. For example, you could add a `FContainerFragmentInit` to give a starting backpack a different grid layout than its definition's default, or a durability init to start a weapon at 50% condition.
 
-### `FInventorySlotFound`
+{% hint style="info" %}
+Leave `Position` at `(-1, -1)` for auto-placement. The system finds the first available slot that fits the item's shape and rotation. Set an explicit position only when you need deterministic layouts.
+{% endhint %}
 
-Returned by `ULyraTetrisInventoryManagerComponent::FindAvailableSlotsForItem` to indicate a potential location where an item can be placed or stacked.
+<details>
 
-```cpp
-USTRUCT(BlueprintType)
-struct FInventorySlotFound
-{
-    GENERATED_BODY()
+<summary>How FragmentInitData works at runtime</summary>
 
-    // Coordinate of the root slot for placement/stacking.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FIntPoint RootIndex;
+When the inventory processes a starting item, it creates the item instance from `ItemDef` and then iterates through `FragmentInitData`. Each `FInstancedStruct` is checked against registered fragment init types (structs derived from `FLyraFragmentInitBase`). If a match is found, the corresponding fragment on the new item instance receives the override data before the item is placed into the grid.
 
-    // The rotation that allows the item to fit (if placing in empty slot) or the existing item's rotation (if stacking).
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    EItemRotation SupportedRotation;
+This means you can configure per-instance differences directly in the editor, no subclassing, no runtime Blueprint logic. The init data travels with the starting item definition and applies automatically.
 
-    // Clump ID where the RootIndex is located.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 ClumpID;
+</details>
 
-    // How many units can be added to this slot (remaining stack space or MaxStackSize for empty slots).
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 AllowedAmount;
-
-    // Constructors...
-};
-```
-
-* **Usage:** Result type for finding available space. Used by `TryAddItemDefinition`/`TryAddItemInstance` logic.
-
-These data structures provide the necessary building blocks and data carriers for defining layouts, item shapes, tracking grid state, and managing inventory initialization and placement operations within the Tetris Inventory system.
+***

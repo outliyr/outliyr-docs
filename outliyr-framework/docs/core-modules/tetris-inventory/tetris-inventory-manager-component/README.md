@@ -1,51 +1,76 @@
-# Tetris Inventory manager Component
+# Tetris Inventory Manager Component
 
-The `ULyraTetrisInventoryManagerComponent` is the central component responsible for managing items within a spatial, grid-based inventory. It extends the functionality of the base `ULyraInventoryManagerComponent`, adding the necessary logic to handle grid layouts, item shapes, rotations, and placement within a defined 2D space.
+You open a backpack and see a grid of cells. A rifle takes up a 1x4 strip, ammo boxes are 2x1, and a medkit fills a 2x2 square. You rotate the medkit 90 degrees and slide it into a gap. How does the system know what fits where, and keep it all in sync across the network?
 
-### Overview & Inheritance
+The Tetris Inventory Manager handles this. `ULyraTetrisInventoryManagerComponent` extends the base `ULyraInventoryManagerComponent` and implements `ILyraItemContainerInterface`, adding spatial awareness to every inventory operation.
 
-* **Inheritance:** This component derives directly from `ULyraInventoryManagerComponent`. This means it inherits all the core features of the base inventory system, including:
-  * Basic item storage (`FLyraInventoryList`).
-  * Weight and global item count limits (`MaxWeight`, `ItemCountLimit`).
-  * Allowed/Disallowed item type filtering.
-  * Network replication of items and core properties.
-  * Access Rights and Permissions management.
-  * Integration with the GAS layer via Gameplay Messages and Abilities.
-* **Core Addition: Spatial Awareness:** The key difference is that `ULyraTetrisInventoryManagerComponent` introduces **spatial awareness**. It doesn't just track _what_ items are present, but _where_ they are located within a configurable 2D grid layout, considering their shape and rotation.
+***
 
-### Key Functionalities Added
+### What It Inherits
 
-Building upon the base component, `ULyraTetrisInventoryManagerComponent` adds specific capabilities for grid management:
+Because it derives from the base Inventory Manager, every Tetris inventory inherits the full set of container features for free:
 
-* **Grid Representation:** Manages the inventory grid structure (`FGridCellInfoList`), mapping grid coordinates to item instances and their states (rotation, root cell).
-* **Layout Definition:** Configured via the `InventoryLayout` property (using `FInventoryLayoutCreator` structs) to define complex grid shapes.
-* **Spatial Placement:** Implements logic (`FindAvailableSlotsForItem`, `CanPlaceItemInEmptySlot`) to find valid locations where an item's shape (considering its rotation) fits within the grid layout without overlapping other items.
-* **Grid-Specific Operations:** Provides functions to add/remove items directly to/from specific grid coordinates (`TryAddItem...ToSlot`, `RemoveItemFromSlot`).
-* **Item Movement:** Handles moving items both within the same grid (`MoveItemInternally`) and between different Tetris inventories (`MoveItemExternally`), respecting spatial constraints.
-* **Container Nesting:** Supports hierarchical inventories where items with the `InventoryFragment_Container` can contain child `ULyraTetrisInventoryManagerComponent` instances. It manages the propagation of weight/count constraints up the hierarchy.
-* **Resizing:** Allows dynamically changing the inventory layout at runtime (`ResizeInventory`) and attempts to refit existing items.
+* Weight limits, item count limits, slot limits
+* Allowed/disallowed item type filtering
+* Access rights and permission checks
+* Network replication of items via FastArray
+* GAS integration through Gameplay Messages and Abilities
 
-### Relationship to Base Component
+These limits still apply alongside spatial constraints. An item must pass both the base capacity checks **and** fit within the grid.
 
-It's crucial to understand that the Tetris component **augments, not replaces,** the base functionality:
+### What It Adds
 
-* **Dual Storage:** It maintains _both_ the base `FLyraInventoryList` (for tracking all item instances present) _and_ the `FGridCellInfoList` (for spatial grid information). These are kept synchronized.
-* **Base Limits Still Apply:** The standard `MaxWeight`, `ItemCountLimit`, and item type filtering rules from the base component are still enforced _in addition_ to the spatial constraints of the grid.
-* **Base Fragments Needed:** Items intended for the Tetris grid generally still require base fragments like `InventoryFragment_InventoryIcon` (for stacking rules, base weight/count contribution) alongside the `InventoryFragment_Tetris` (for shape).
-* **GAS Integration:** Uses the same GAS layer and `UInventoryAbilityFunctionLibrary` as the base system. The key difference is the use of `FInventoryAbilityData_SourceTetrisItem` to specify grid locations in GAS event payloads.
+On top of that foundation, the Tetris Inventory Manager introduces:
 
-### Structure of this Section
+* **Spatial placement** - items have a shape, a root slot, a clump, and a rotation
+* **Clump-based grid layouts** - grids built from independent rectangular sections that support complex shapes
+* **Dual-data architecture** - `FTetrisPlacementList` (replicated authority) plus `FGridCellInfoList` (local derived cache), rebuilt from the effective view
+* **GUID-keyed client prediction** - drag-and-drop and item placement feel instant; the grid always reflects predicted state on the owning client and authoritative state on everyone else
+* **Nested containers** - items can contain child inventories with weight and count propagation up the hierarchy
+* **Runtime resizing** - change the grid layout at runtime and automatically refit existing items
 
-This section dives deep into the `ULyraTetrisInventoryManagerComponent`. The following subpages provide detailed explanations:
+***
 
-1. **Grid Representation (`FGridCellInfoList`):** How the grid state is stored and replicated.
-2. **Configuration & Initialization:** Setting up the component's layout, limits, and starting items.
-3. **Adding & Removing Items (Grid Logic):** Grid-aware item addition and removal functions.
-4. **Spatial Placement & Querying:** Finding space and checking grid locations.
-5. **Item Movement (Internal & External):** Moving items within and between grids.
-6. **Stacking & Splitting (Grid Context):** Combining and splitting item stacks on the grid.
-7. **Container Integration (Parent/Child):** Managing nested inventories and constraint propagation.
-8. **Access Rights & Permissions (Tetris Context):** How permissions work with nested inventories.
-9. **Resizing the Inventory:** Dynamically changing the grid layout.
+### Structure of This Section
 
-By exploring these subpages, you'll gain a comprehensive understanding of how to configure, interact with, and leverage the spatial capabilities of the `ULyraTetrisInventoryManagerComponent`.
+{% hint style="info" %}
+Each subpage focuses on one aspect of the component. Read them in order for a full picture, or jump to the topic you need.
+{% endhint %}
+
+{% stepper %}
+{% step %}
+### The Grid System
+
+[**The Grid System**](the-grid-system.md) - Clumps, `FInventoryLayoutCreator`, and the dual-data architecture that keeps placements and grid cells in sync.
+{% endstep %}
+
+{% step %}
+### Configuration & Starting Items
+
+[**Configuration & Starting Items**](configuration-and-starting-items.md) - Setting up layouts, limits, and the visual starting items editor.
+{% endstep %}
+
+{% step %}
+### Working with Items
+
+[**Working with Items**](working-with-items.md) - Adding, removing, moving, stacking, combining, and querying items within the grid.
+{% endstep %}
+
+{% step %}
+### Nested Containers
+
+[**Nested Containers**](nested-containers.md) - Parent-child inventory hierarchies and constraint propagation.
+{% endstep %}
+
+{% step %}
+### Client Prediction
+
+[**Client Prediction**](client-prediction.md) - How GUID-keyed prediction keeps the grid responsive during network play.
+{% endstep %}
+
+{% step %}
+### Resizing the Inventory
+
+[**Resizing the Inventory**](resizing-the-inventory.md) - Changing the layout at runtime and refitting items with heuristics.
+{% endstep %}
+{% endstepper %}

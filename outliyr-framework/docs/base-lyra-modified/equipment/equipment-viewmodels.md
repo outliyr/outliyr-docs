@@ -1,379 +1,176 @@
 # Equipment ViewModels
 
-You're building a paperdoll screen showing where items are equipped on the player's body. Back slot, hip slot, chest slot - each needs to show what's equipped there, and whether the item is currently held or holstered. When the player draws their weapon, the UI should update.
-
-ViewModels give your widgets a clean interface to equipment state, handling the two-level slot model and change tracking behind the scenes.
+You're building a paperdoll screen showing where items are equipped on the player's body, back slot, hip slot, chest slot. Each needs to show what's equipped there and whether the item is currently held or holstered. ViewModels give your widgets a clean interface to this state without coupling to the equipment system's internals.
 
 {% hint style="info" %}
-For the underlying MVVM architecture and why ViewModels exist, see [MVVM](../ui/item-container-ui-system/core-architecture-and-data-structures/mvvm.md) and [Data Layers (View Models)](../ui/item-container-ui-system/data-layers-view-models/).
+For the underlying MVVM architecture and why ViewModels exist, see [MVVM](../ui/item-container-ui-system/core-architecture-and-data-structures/mvvm.md) and [Data Layers (View Models)](../ui/item-container-ui-system/data-layers-view-models/). ViewModels are acquired and released through the [Item Container UI Manager](../ui/item-container-ui-system/item-container-ui-manager/).
 {% endhint %}
 
 ***
 
-### Quick Start: Getting a ViewModel
+### Class Hierarchy
 
-Use the `ULyraItemContainerUIManager` to acquire ViewModels:
-
-```cpp
-void UPaperdollWidget::SetSource(const FInstancedStruct& Source)
-{
-    ULyraItemContainerUIManager* Manager = GetOwningLocalPlayer()->GetSubsystem<ULyraItemContainerUIManager>();
-
-    CachedSource = Source;
-    EquipmentVM = Manager->AcquireContainerViewModel(Source);
-
-    // Subscribe to changes
-    EquipmentVM->OnEquipmentChanged.AddDynamic(this, &ThisClass::OnEquipmentChanged);
-
-    // Bind slot widgets
-    BindSlotWidgets();
-}
-
-void UPaperdollWidget::NativeDestruct()
-{
-    if (EquipmentVM)
-    {
-        ULyraItemContainerUIManager* Manager = GetOwningLocalPlayer()->GetSubsystem<ULyraItemContainerUIManager>();
-        Manager->ReleaseContainerViewModel(CachedSource);
+```mermaid
+classDiagram
+    class ULyraContainerViewModel {
+        +ContainerName
+        +Items[]
+        +FocusedItem
+        +Capacity
+        +ItemCount
+        +TotalWeight / MaxWeight
+        +OnItemsChanged
     }
-    Super::NativeDestruct();
-}
+
+    class ULyraEquipmentViewModel {
+        +GetOrCreateSlotViewModel(Tag)
+        +GetAllEquipmentSlotViewModels()
+        +FocusedSlotTag
+        +OnEquipmentChanged
+    }
+
+    class ULyraEquipmentSlotViewModel {
+        +SlotTag
+        +bIsOccupied
+        +bIsHeld
+        +bIsFocused
+        +bIsSelected
+        +EquipmentInstance
+    }
+
+    ULyraContainerViewModel <|-- ULyraEquipmentViewModel
 ```
 
-{% hint style="info" %}
-For details on the lease system, see [Item Container UI Manager](../ui/item-container-ui-system/item-container-ui-manager/).
-{% endhint %}
+`ULyraEquipmentViewModel` inherits the shared container properties (items list, weight, capacity, focused item) and layers on tag-based slot management and held-state tracking.
 
 ***
 
-### Container ViewModel: The Collection
+### Tag-Based Slots
 
-`ULyraEquipmentViewModel` wraps an `ULyraEquipmentManagerComponent` and provides:
-
-#### "Get all equipped items"
+Equipment slots are identified by `FGameplayTag`, not by index. This means your paperdoll layout is completely decoupled from how the equipment system stores data internally, you request the slots your UI cares about, and each one is created on demand.
 
 ```cpp
-const TArray<ULyraItemViewModel*>& Items = EquipmentVM->GetItems();
-```
-
-#### "Get slot ViewModels for paperdoll"
-
-```cpp
-// Get or create slot ViewModels by tag
+// Get or create a slot ViewModel by tag
 ULyraEquipmentSlotViewModel* BackSlotVM = EquipmentVM->GetOrCreateSlotViewModel(TAG_Equipment_Slot_Back);
-ULyraEquipmentSlotViewModel* HipSlotVM = EquipmentVM->GetOrCreateSlotViewModel(TAG_Equipment_Slot_Hip);
 
 // Get all slot ViewModels
 TArray<ULyraEquipmentSlotViewModel*> AllSlots = EquipmentVM->GetAllEquipmentSlotViewModels();
 ```
 
-#### "Track focused item"
+Requesting a slot that doesn't exist yet creates it. Different UI layouts can request only the slots they care about, a minimal HUD might request only the weapon slot, while a full paperdoll requests every slot on the body.
 
-```cpp
-// Get currently focused slot
-FGameplayTag FocusedTag = EquipmentVM->GetFocusedSlotTag();
-
-// Set focus programmatically
-EquipmentVM->SetFocusedSlot(TAG_Equipment_Slot_Back);
-
-// React to focus changes
-EquipmentVM->OnFocusedItemChanged.AddDynamic(this, &ThisClass::HandleFocusChanged);
-```
-
-#### "Know when to refresh"
-
-```cpp
-EquipmentVM->OnEquipmentChanged.AddDynamic(this, &ThisClass::OnEquipmentChanged);
-
-void UMyWidget::OnEquipmentChanged()
-{
-    RefreshAllSlotWidgets();
-}
-```
+{% hint style="info" %}
+See [Persistent Slot Pattern](../ui/item-container-ui-system/data-layers-view-models/persistent-slot-pattern.md) for why slot ViewModels persist even when their slot is empty.
+{% endhint %}
 
 ***
 
-### Slot ViewModel: Individual Positions
+### The `bIsHeld` Property
 
-`ULyraEquipmentSlotViewModel` represents a single equipment slot - **whether it's occupied or empty**.
-
-#### Equipment-Specific: Tag-Based
-
-Unlike inventory (index-based), equipment slots are identified by GameplayTag:
+This is what makes equipment slots unique. Equipment has two visual states: **holstered** (on your back, in its slot) and **held** (actively in the character's hands).
 
 ```cpp
-SlotVM->SlotTag  // Equipment.Slot.Back, Equipment.Slot.Hip, etc.
-```
-
-#### The `bIsHeld` Property
-
-This is what makes equipment slots unique. Equipment has two states: **holstered** (on your back) and **held** (in your hands).
-
-```cpp
-// The rifle is equipped on back, currently in hand
-BackSlotVM->bIsOccupied  // true - something's in the back slot
-BackSlotVM->bIsHeld      // true - that item is currently held
+// Rifle equipped on back, currently in hand
+BackSlotVM->bIsOccupied  // true
+BackSlotVM->bIsHeld      // true
 
 // Player holsters the rifle
-BackSlotVM->bIsOccupied  // true - still equipped
+BackSlotVM->bIsOccupied  // true
 BackSlotVM->bIsHeld      // false - now holstered
 ```
 
-Use this for visual feedback:
+Use this for visual feedback, glow or highlight when held, dim or desaturate when holstered. The property updates automatically when the equipment system changes held state.
 
-```cpp
-void UEquipmentSlotWidget::RefreshDisplay()
-{
-    if (SlotVM->bIsOccupied)
-    {
-        ItemIcon->SetBrushFromTexture(SlotVM->ItemIcon);
-        ItemIcon->SetVisibility(ESlateVisibility::Visible);
+***
 
-        // Glow when held
-        if (SlotVM->bIsHeld)
-        {
-            HeldGlow->SetVisibility(ESlateVisibility::Visible);
-            HeldGlow->PlayAnimation(PulseAnimation);
-        }
-        else
-        {
-            HeldGlow->SetVisibility(ESlateVisibility::Collapsed);
-        }
-    }
-    else
-    {
-        ItemIcon->SetVisibility(ESlateVisibility::Collapsed);
-        HeldGlow->SetVisibility(ESlateVisibility::Collapsed);
-    }
+### Slot Properties
 
-    // Ghost styling for predictions
-    SetRenderOpacity(SlotVM->bIsGhost ? 0.5f : 1.0f);
-}
-```
+`ULyraEquipmentSlotViewModel` exposes everything a slot widget needs through FieldNotify-enabled properties.
 
-📸 SCREENSHOT PLACEHOLDER: Held indicator showing active weapon
+Slot State:
 
-#### Key Properties
+| Property      | Type           | Description                                |
+| ------------- | -------------- | ------------------------------------------ |
+| `SlotTag`     | `FGameplayTag` | Equipment slot tag (Back, Hip, Chest)      |
+| `bIsOccupied` | `bool`         | Whether an item is equipped here           |
+| `bIsHeld`     | `bool`         | Whether the equipped item is actively held |
+| `bIsFocused`  | `bool`         | Navigation cursor is on this slot          |
+| `bIsSelected` | `bool`         | Slot is selected for interaction           |
+| `bIsGhost`    | `bool`         | Predicted but unconfirmed                  |
 
-**Slot State:**
+Proxied Item Data (when occupied):
 
-| Property      | Purpose                                            |
-| ------------- | -------------------------------------------------- |
-| `SlotTag`     | Equipment slot tag (Back, Hip, Chest)              |
-| `bIsOccupied` | Whether an item is equipped here                   |
-| `bIsHeld`     | **Equipment-specific:** Is the item actively held? |
-| `bIsFocused`  | Navigation cursor is here                          |
-| `bIsSelected` | Selected for interaction                           |
+| Property          | Type          | When Empty |
+| ----------------- | ------------- | ---------- |
+| `ItemIcon`        | `UTexture2D*` | nullptr    |
+| `ItemDisplayName` | `FText`       | Empty text |
+| `StackCount`      | `int32`       | 0          |
 
-**Proxied Item Data (when occupied):**
+Equipment-Specific:
 
-| Property          | When Empty |
-| ----------------- | ---------- |
-| `ItemIcon`        | nullptr    |
-| `ItemDisplayName` | Empty text |
-| `StackCount`      | 0          |
-| `bIsGhost`        | false      |
+| Property            | Type                      | Description                                     |
+| ------------------- | ------------------------- | ----------------------------------------------- |
+| `EquipmentInstance` | `ULyraEquipmentInstance*` | Direct reference to the equipment instance      |
+| `SlotDescriptor`    | `FInstancedStruct`        | Pre-built descriptor for the transaction system |
 
-**Equipment Instance Access:**
+***
 
-| Property            | Purpose                                    |
-| ------------------- | ------------------------------------------ |
-| `EquipmentInstance` | Direct reference to the equipment instance |
+### Equipment Instance Access
 
-#### Accessing the Equipment Instance
+For advanced use cases, reading weapon stats, accessing the underlying inventory item, you can reach through to the actual equipment instance:
 
-For advanced use cases, access the actual equipment:
-
+{% tabs %}
+{% tab title="C++" %}
 ```cpp
 ULyraEquipmentInstance* Equipment = SlotVM->EquipmentInstance;
-
 if (Equipment)
 {
-    // Read tag attributes
     float Damage = Equipment->GetTagAttributeValue(TAG_Weapon_Damage);
-
-    // Access the inventory item for persistent data
     ULyraInventoryItemInstance* Item = Equipment->GetInstigator();
-    int32 AmmoCount = Item->GetStatTagStackCount(TAG_Ammo);
 }
 ```
+{% endtab %}
 
-#### Drag-Drop Integration
+{% tab title="Blueprints" %}
+<figure><img src="../../.gitbook/assets/image (242).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+{% endtabs %}
 
+***
+
+### Delegates
+
+| Delegate               | Signature                                                     | Fires When                                              |
+| ---------------------- | ------------------------------------------------------------- | ------------------------------------------------------- |
+| `OnEquipmentChanged`   | `()`                                                          | Any equipment slot changes (equip, unequip, held state) |
+| `OnFocusedItemChanged` | `(ULyraItemViewModel* Previous, ULyraItemViewModel* Current)` | Navigation focus moves to a different slot              |
+
+***
+
+### Drag-Drop
+
+Slot ViewModels carry a pre-built `SlotDescriptor` that plugs directly into the transaction system:
+
+{% tabs %}
+{% tab title="C++" %}
 ```cpp
-// When dropping an item onto an equipment slot
 FInstancedStruct SourceSlot = SourceSlotVM->SlotDescriptor;
 FInstancedStruct DestSlot = EquipmentSlotVM->SlotDescriptor;
-
-// Execute via transaction ability
 ItemTransactionAbility->MoveItem(SourceSlot, DestSlot);
 ```
+{% endtab %}
+
+{% tab title="Blueprints" %}
+<figure><img src="../../.gitbook/assets/image (241).png" alt=""><figcaption><p>Example of getting the slot descriptor to pass to the interaction view model for drag and drop</p></figcaption></figure>
+{% endtab %}
+{% endtabs %}
 
 {% hint style="info" %}
-For the two-level slot model (storage vs held slots), see [Equipment Manager Component](equipment-manager-component.md).
+See [UI Transaction Pipeline](../ui/item-container-ui-system/interaction-and-transactions/ui-transaction-pipeline.md) for the full request flow from drag-drop through validation to server execution.
 {% endhint %}
 
 ***
 
-### Item ViewModel: The Actual Item
-
-`ULyraItemViewModel` wraps the item instance with display-ready properties:
-
-| Property      | Purpose                                   |
-| ------------- | ----------------------------------------- |
-| `Icon`        | Item texture                              |
-| `DisplayName` | Item name                                 |
-| `StackCount`  | Number in stack (usually 1 for equipment) |
-| `TotalWeight` | Weight                                    |
-| `bIsGhost`    | Predicted but unconfirmed                 |
-
 {% hint style="info" %}
-For ghost state styling, see [Prediction and Visuals](../ui/item-container-ui-system/data-layers-view-models/prediction-and-visuals.md).
+For the shared container/slot/item ViewModel architecture, see [Data Layers (View Models)](../ui/item-container-ui-system/data-layers-view-models/). For ghost state styling during prediction, see [Prediction & Visuals](../ui/item-container-ui-system/data-layers-view-models/prediction-and-visuals.md).
 {% endhint %}
-
-***
-
-### Practical Example: Building a Paperdoll
-
-📸 SCREENSHOT PLACEHOLDER: Paperdoll widget with equipped items
-
-{% stepper %}
-{% step %}
-### Create the Paperdoll Widget
-
-```cpp
-// PaperdollWidget.h
-UCLASS()
-class UPaperdollWidget : public UCommonActivatableWidget
-{
-    GENERATED_BODY()
-
-protected:
-    UPROPERTY(meta = (BindWidget))
-    UEquipmentSlotWidget* BackSlotWidget;
-
-    UPROPERTY(meta = (BindWidget))
-    UEquipmentSlotWidget* HipSlotWidget;
-
-    UPROPERTY(meta = (BindWidget))
-    UEquipmentSlotWidget* ChestSlotWidget;
-
-    UPROPERTY()
-    TObjectPtr<ULyraEquipmentViewModel> EquipmentVM;
-
-    FInstancedStruct CachedSource;
-
-public:
-    void SetSource(const FInstancedStruct& Source);
-
-protected:
-    virtual void NativeDestruct() override;
-
-private:
-    void BindSlotWidgets();
-
-    UFUNCTION()
-    void OnEquipmentChanged();
-};
-```
-{% endstep %}
-
-{% step %}
-### Acquire ViewModel and Bind Slots
-
-```cpp
-void UPaperdollWidget::SetSource(const FInstancedStruct& Source)
-{
-    ULyraItemContainerUIManager* Manager = GetOwningLocalPlayer()->GetSubsystem<ULyraItemContainerUIManager>();
-
-    CachedSource = Source;
-    EquipmentVM = Manager->AcquireContainerViewModel(Source);
-    EquipmentVM->OnEquipmentChanged.AddDynamic(this, &ThisClass::OnEquipmentChanged);
-
-    BindSlotWidgets();
-}
-
-void UPaperdollWidget::BindSlotWidgets()
-{
-    BackSlotWidget->BindToSlot(EquipmentVM->GetOrCreateSlotViewModel(TAG_Equipment_Slot_Back));
-    HipSlotWidget->BindToSlot(EquipmentVM->GetOrCreateSlotViewModel(TAG_Equipment_Slot_Hip));
-    ChestSlotWidget->BindToSlot(EquipmentVM->GetOrCreateSlotViewModel(TAG_Equipment_Slot_Chest));
-}
-
-void UPaperdollWidget::NativeDestruct()
-{
-    if (EquipmentVM)
-    {
-        ULyraItemContainerUIManager* Manager = GetOwningLocalPlayer()->GetSubsystem<ULyraItemContainerUIManager>();
-        Manager->ReleaseContainerViewModel(CachedSource);
-    }
-    Super::NativeDestruct();
-}
-
-void UPaperdollWidget::OnEquipmentChanged()
-{
-    // Slot widgets update automatically via their bound ViewModels
-    // Add any additional refresh logic here
-}
-```
-{% endstep %}
-
-{% step %}
-### Create the Slot Widget
-
-```cpp
-// EquipmentSlotWidget.h
-UCLASS()
-class UEquipmentSlotWidget : public UUserWidget
-{
-    GENERATED_BODY()
-
-protected:
-    UPROPERTY(meta = (BindWidget))
-    UImage* ItemIcon;
-
-    UPROPERTY(meta = (BindWidget))
-    UImage* EmptySlotVisual;
-
-    UPROPERTY(meta = (BindWidget))
-    UBorder* HeldBorder;
-
-    UPROPERTY()
-    TWeakObjectPtr<ULyraEquipmentSlotViewModel> SlotVM;
-
-public:
-    void BindToSlot(ULyraEquipmentSlotViewModel* InSlotVM);
-    void RefreshDisplay();
-};
-
-// EquipmentSlotWidget.cpp
-void UEquipmentSlotWidget::BindToSlot(ULyraEquipmentSlotViewModel* InSlotVM)
-{
-    SlotVM = InSlotVM;
-    RefreshDisplay();
-
-    // FieldNotify handles automatic updates, or subscribe manually
-}
-
-void UEquipmentSlotWidget::RefreshDisplay()
-{
-    if (!SlotVM.IsValid()) return;
-
-    // Show/hide based on occupation
-    EmptySlotVisual->SetVisibility(SlotVM->bIsOccupied ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
-    ItemIcon->SetVisibility(SlotVM->bIsOccupied ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-
-    if (SlotVM->bIsOccupied)
-    {
-        ItemIcon->SetBrushFromTexture(SlotVM->ItemIcon);
-
-        // Held indicator - green when in hand, gray when holstered
-        HeldBorder->SetBrushColor(SlotVM->bIsHeld ? FLinearColor::Green : FLinearColor::Gray);
-    }
-
-    // Ghost styling
-    SetRenderOpacity(SlotVM->bIsGhost ? 0.5f : 1.0f);
-}
-```
-{% endstep %}
-{% endstepper %}

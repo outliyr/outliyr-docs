@@ -314,7 +314,7 @@ Beyond picking up everything at once, the ability supports selecting specific it
 
 Pass a slot descriptor through the event's ContextHandle using the existing infrastructure:
 
-<figure><img src="../../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 #### Pickup Modes
 

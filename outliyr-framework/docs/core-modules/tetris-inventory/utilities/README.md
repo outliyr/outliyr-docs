@@ -1,29 +1,42 @@
-# Utilities
+# Tetris Utilities
 
-The Tetris Inventory Plugin provides several utility libraries and data structures to assist with common tasks related to grid manipulation, shape calculations, UI interactions, and data management specific to the spatial inventory system.
+You have an L-shaped item that needs to rotate 90 degrees, snap to a grid, and generate a masked icon texture, all before the player finishes their drag. You could write that logic inline every time, or you could reach for a set of tested utility functions that already handle the math, the edge cases, and the Blueprint exposure.
 
-This section serves as a reference for these helper elements.
+The Tetris Inventory plugin ships several utility libraries and data structures designed for exactly these situations. They cover grid manipulation, shape calculations, UI interactions, and the data types that tie the spatial inventory system together.
 
-### Purpose
+***
 
-These utilities aim to:
+### Why Utilities Exist
 
-* **Simplify Complex Tasks:** Provide pre-built functions for operations like shape rotation, coordinate lookups, and masked texture generation.
-* **Encapsulate Logic:** Keep common calculations and data structures organized and reusable.
-* **Improve Readability:** Offer clear, named functions for operations instead of scattering complex math throughout various Blueprints or C++ classes.
-* **Standardize Data:** Define common data structures used across different parts of the Tetris system (e.g., for representing shapes, layouts, found slots).
+These helpers serve four goals:
 
-### Overview of Utilities
+* **Simplify complex tasks.** Pre-built functions handle shape rotation, coordinate lookups, bounding box calculations, and masked texture generation so you don't reimplement them per-feature.
+* **Encapsulate logic.** Common calculations and data structures live in one place, making them reusable across Blueprints and C++ classes.
+* **Improve readability.** Named functions like `RotateShape` or `GetCellBorders` communicate intent far better than raw index arithmetic scattered across your project.
+* **Standardize data.** Shared structs for shapes, layouts, navigation hints, and found cells keep every system speaking the same language.
 
-The following subpages provide details on the specific utilities included in this plugin:
+***
 
-1. **Data Types (`InventoryDataLibrary`):**
-   * Defines fundamental enums and helper structs used throughout the Tetris system. This includes `EItemRotation`, structures for representing boolean/integer rows (`F1DBooleanRow`, `F1DIntegerRow`), the inventory layout definition (`FInventoryLayoutCreator`), and data carriers like `FFoundCells`.
-2. **Inventory Utility Library (`UInventoryUtilityLibrary`):**
-   * A Blueprint Function Library containing static functions primarily focused on **shape manipulation, coordinate transformations, and UI-related calculations** for the Tetris grid.
-   * Includes functions for rotating shapes, calculating shape/layout dimensions, generating masked icons, handling mouse interactions relative to grid cells, and converting coordinate systems during rotation.
-3. **Item Utility Library (`UItemUtilityLibrary`):**
-   * A Blueprint Function Library containing more general item-related utilities that might be used alongside the inventory system, though not strictly limited to it.
-   * Currently includes functions like `GetRandomPointsInSplineArea` for finding spawn locations within an area, which could be useful for procedural item spawning near containers or in defined loot zones.
+### What's Included
 
-By familiarizing yourself with these utilities, you can often save development time and implement Tetris inventory features more efficiently and robustly. Refer to the specific subpages for detailed descriptions and usage examples of the functions and data structures provided.
+{% stepper %}
+{% step %}
+#### [Data Types (`TetrisInventoryDataLibrary`)](data-types.md)
+
+Fundamental enums and structs used throughout the Tetris system, rotation enum, the boolean/integer row helpers, , inventory layout definitions (`FInventoryLayoutCreator`), the drag-context bundle , starting item configuration, and the gamepad navigation hint.
+{% endstep %}
+
+{% step %}
+#### [Tetris Utility Library (`UTetrisUtilityLibrary`)](tetris-utility-library.md)
+
+A Blueprint Function Library focused on **shape manipulation, coordinate transformations, and UI-related calculations** for the Tetris grid. Rotate shapes, calculate bounding boxes, generate masked icon materials, determine cell borders, convert coordinates during rotation, and more.
+{% endstep %}
+
+{% step %}
+#### [Item Utility Library (`UItemUtilityLibrary`)](item-utility-library.md)
+
+A Blueprint Function Library with general-purpose item utilities, currently focused on `GetRandomPointsInSplineArea` for procedural item spawning within spline-defined zones. Useful for loot distribution, scatter spawning, and any scenario where you need random world positions inside an arbitrary boundary.
+{% endstep %}
+{% endstepper %}
+
+Spend a few minutes browsing these pages before building new features. More often than not, the function you need already exists.

@@ -110,7 +110,7 @@ if (ValidatedTargetDataHandle.IsValid(0)) // Check if there's data to process
 {% endtab %}
 
 {% tab title="Blueprints" %}
-<figure><img src="../../../.gitbook/assets/image (5) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (5) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 

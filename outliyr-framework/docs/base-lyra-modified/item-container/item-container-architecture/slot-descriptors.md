@@ -217,7 +217,7 @@ struct FPickupAbilityData_SourceItem : public FAbilityData_PickupSourceItem
 };
 ```
 
-<figure><img src="../../../.gitbook/assets/image.png" alt="" width="536"><figcaption><p>Pickup Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (5).png" alt="" width="536"><figcaption><p>Pickup Source Slot</p></figcaption></figure>
 
 Pickup slots reference items within a world collectable's `FItemPickup`:
 
