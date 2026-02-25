@@ -112,23 +112,64 @@ When adding items to a child inventory, limits cascade upward through the hierar
 
 #### The Cascade
 
-```
-Add 5 ammo rounds to Pouch
-│
-├── Check Pouch limits ──── Weight OK? Count OK? Slot available?
-│   AllowedAmount = 5
-│
-├── Check Backpack limits (parent)
-│   ├── bIgnoreChildInventoryWeights = false? ──── Check weight
-│   ├── bIgnoreChildInventoryItemCounts = false? ── Check count
-│   └── bIgnoreChildInventoryItemLimits = false? ── Check specific limits
-│   AllowedAmount = min(5, backpack capacity)
-│
-└── Check Player Inventory limits (grandparent)
-    ├── bIgnoreChildInventoryWeights = false? ──── Check weight
-    ├── bIgnoreChildInventoryItemCounts = false? ── Check count
-    └── bIgnoreChildInventoryItemLimits = false? ── Check specific limits
-    AllowedAmount = min(remaining, player capacity)
+```mermaid
+flowchart TD
+    %% 1. The Trigger
+    Start([Request: Add 5 Ammo]) --> LocalCheck
+
+    %% 2. The Target (Pouch)
+    subgraph PouchScope ["Level 1: Pouch (Target)"]
+        direction TB
+        LocalCheck{"Check Local Limits<br/>(Weight, Count, Slots)"}
+        LocalSet["Set Initial Limit<br/>AllowedAmount = 5"]
+    end
+    
+    LocalCheck -- OK --> LocalSet
+    LocalCheck -- Fail --> Stop([Abort: 0 Added])
+
+    %% 3. The Parent (Backpack)
+    subgraph BackpackScope ["Level 2: Backpack (Parent)"]
+        direction TB
+        BP_Flags{"Check Ignore Flags<br/>(Weight/Count/Limits)"}
+        
+        %% The Logic: If we DO NOT ignore child limits, we must constrain the amount
+        BP_Calc["<b>Apply Constraint</b><br/>AllowedAmount = min(AllowedAmount, BackpackCap)"]
+        
+        BP_Skip["<b>Maintain Amount</b><br/>(Propagate current value)"]
+    end
+
+    LocalSet --> BP_Flags
+    BP_Flags -- "Flags = false (Enforce)" --> BP_Calc
+    BP_Flags -- "Flags = true (Ignore)" --> BP_Skip
+
+    %% 4. The Grandparent (Player)
+    subgraph PlayerScope ["Level 3: Player (Root)"]
+        direction TB
+        Pl_Flags{"Check Ignore Flags<br/>(Weight/Count/Limits)"}
+        
+        Pl_Calc["<b>Apply Constraint</b><br/>AllowedAmount = min(AllowedAmount, PlayerCap)"]
+        
+        Pl_Skip["<b>Maintain Amount</b>"]
+    end
+
+    BP_Calc --> Pl_Flags
+    BP_Skip --> Pl_Flags
+    
+    Pl_Flags -- "Flags = false (Enforce)" --> Pl_Calc
+    Pl_Flags -- "Flags = true (Ignore)" --> Pl_Skip
+
+    %% 5. The Result
+    Pl_Calc --> Final
+    Pl_Skip --> Final
+    
+    Final([Execute Transaction<br/>Final AllowedAmount])
+
+    %% Styling
+    classDef calc fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef logic fill:#fff9c4,stroke:#fbc02d,stroke-width:2px;
+    
+    class BP_Calc,Pl_Calc,LocalSet calc;
+    class BP_Flags,Pl_Flags,LocalCheck logic;
 ```
 
 Each parent level can independently opt out of specific constraint types:
