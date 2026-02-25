@@ -30,18 +30,13 @@ This section focuses on the **four fragments unique to the Tetris Inventory plug
 │   ─────────────────────         ─────────────────────────            │
 │   InventoryFragment_Icon        InventoryFragment_Tetris             │
 │   InventoryFragment_SetStats    InventoryFragment_Container          │
-│   InventoryFragment_Equippable  InventoryFragment_Combine            │
+│   InventoryFragment_Equippable  InventoryFragment_CraftRecipe        │
 │   ...                           InventoryFragment_Inspect            │
 │                                                                      │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-| Fragment                                                        | What It Does                                               | When You Need It                                              |
-| --------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------- |
-| [`InventoryFragment_Tetris`](inventoryfragment_tetris.md)       | Defines the 2D grid shape and rotation rules               | Every item that exists on a spatial grid                      |
-| [`InventoryFragment_Container`](inventoryfragment_container.md) | Gives an item its own nested inventory grid                | Backpacks, cases, ammo boxes, any item that holds other items |
-| [`InventoryFragment_Combine`](inventoryfragment_combine.md)     | Defines drag-and-drop combination recipes                  | Crafting, attachments, merging stackables                     |
-| [`InventoryFragment_Inspect`](inventoryfragment_inspect.md)     | Provides 3D mesh and camera data for the inspection viewer | Any item you want players to rotate and examine in 3D         |
+<table><thead><tr><th width="275">Fragment</th><th>What It Does</th><th>When You Need It</th></tr></thead><tbody><tr><td><a href="inventoryfragment_tetris.md"><code>InventoryFragment_Tetris</code></a></td><td>Defines the 2D grid shape and rotation rules</td><td>Every item that exists on a spatial grid</td></tr><tr><td><a href="inventoryfragment_container.md"><code>InventoryFragment_Container</code></a></td><td>Gives an item its own nested inventory grid</td><td>Backpacks, cases, ammo boxes, any item that holds other items</td></tr><tr><td><a href="inventoryfragment_combine.md"><code>InventoryFragment_CraftRecipe</code></a></td><td>Defines drag-and-drop crafting recipes</td><td>Combining berries + bottle into potions, resource transformations, etc</td></tr><tr><td><a href="inventoryfragment_inspect.md"><code>InventoryFragment_Inspect</code></a></td><td>Provides 3D mesh and camera data for the inspection viewer</td><td>Any item you want players to rotate and examine in 3D</td></tr></tbody></table>
 
 ***
 
@@ -57,7 +52,7 @@ A few common compositions:
 
 **Backpack**: `Tetris` (2x3 shape) + `Container` (nested 6x4 grid inside) + base fragments.
 
-**Craftable attachment**: `Tetris` (1x1 shape) + `Combine` (recipe: scope + rifle = scoped rifle) + base fragments.
+**Craftable ingredient**: `Tetris` (1x1 shape) + `CraftRecipe` (recipe: berries + bottle = health potion) + base fragments.
 
 {% hint style="info" %}
 The [Item Container](../../../base-lyra-modified/item-container/) system handles the underlying storage and transaction logic. Fragments configure _how_ items behave within that system, they don't replace it.

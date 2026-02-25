@@ -265,22 +265,9 @@ Only 20 rounds transfer. The remaining 30 stay in the source stack at its origin
 
 ***
 
-### Item Combining
+### Fragment Combining
 
-Items can also define recipes for combining with different item types. When you drop berries onto an empty bottle, the system doesn't stack them, it transforms them into a potion.
-
-A target item carries an `InventoryFragment_Combine` that defines which incoming items it accepts and what the combination produces:
-
-```
-Empty Bottle (owns InventoryFragment_Combine)
-├── CombinationList:
-│   ├── Key: Berry
-│   │   └── Target Qty: 1, Incoming Qty: 5, Result: Health Potion x1
-│   └── Key: Mushroom
-│       └── Target Qty: 1, Incoming Qty: 3, Result: Poison Flask x1
-```
-
-When `GetOccupiedSlotBehavior()` returns `FragmentCombine`, the system calls `TryCombineItems()` which iterates through the destination item's fragments looking for one that can handle the combination:
+When `GetOccupiedSlotBehavior()` returns `FragmentCombine`, the drop isn't a stack merge, it's a fragment-driven interaction. The system calls `TryCombineItems()`, which iterates through the **destination item's fragments** looking for any that can handle the incoming item:
 
 ```cpp
 for (const ULyraInventoryItemFragment* Fragment : DestItemDef->Fragments)
@@ -293,13 +280,15 @@ for (const ULyraInventoryItemFragment* Fragment : DestItemDef->Fragments)
 }
 ```
 
-This design means any fragment can implement combining behavior, not just `InventoryFragment_Combine`. The `InventoryFragment_Container` also uses this path to handle dropping items into a container item's nested inventory, and `InventoryFragment_Attachment` uses it for drag-drop attachment.
+Any fragment can implement `CanCombineItems()` / `CombineItems()` to opt into this system. The first fragment that accepts the combination handles it. Three built-in fragments use this:
 
-Both stacking and fragment combining are grid-aware. Stack combining happens in-place, the destination grows and the source shrinks or disappears, no new grid cells needed. Fragment combining may need to place result items. The system checks for available space before consuming any ingredients, if fully consumed ingredients free up cells, those cells are considered available for placing results (via the `ExcludedItemIds` mechanism in `FindAvailableSlotsForItem`).
+| Fragment                        | What Happens on Combine                                           |
+| ------------------------------- | ----------------------------------------------------------------- |
+| `InventoryFragment_Container`   | Moves the dropped item into the container's nested inventory      |
+| `InventoryFragment_Attachment`  | Attaches the dropped item to a compatible slot on the destination |
+| `InventoryFragment_CraftRecipe` | Consumes ingredients from both items and produces a new item      |
 
-{% hint style="info" %}
-For full configuration details on defining combination recipes, see [InventoryFragment\_Combine](/broken/pages/4bf1bb92d639173f2269186c788027ed1d031783).
-{% endhint %}
+Each fragment handles its own logic independently, `InventoryFragment_Container` delegates to the child inventory's add path, `InventoryFragment_Attachment` uses the attachment slot system, and `InventoryFragment_CraftRecipe` runs a simulate-then-commit pattern to ensure ingredients are never consumed without space for the result. The system doesn't impose any shared behavior; it just provides the iteration and the `FItemCombineContext`.
 
 ***
 

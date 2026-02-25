@@ -164,7 +164,7 @@ Is there exactly one item under the cursor that matches the held item's definiti
 {% step %}
 **Check fragment combine**
 
-Does the item under the cursor have an `InventoryFragment_Combine` with a recipe that accepts the held item?
+Does any fragment on the item under the cursor return `true` from `CanCombineItems()` for the held item? This covers recipe crafting (`InventoryFragment_CraftRecipe`), dropping items into containers (`InventoryFragment_Container`), and attaching items (`InventoryFragment_Attachment`).
 {% endstep %}
 
 {% step %}

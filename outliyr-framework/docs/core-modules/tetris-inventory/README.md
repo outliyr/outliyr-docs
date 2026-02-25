@@ -2,72 +2,70 @@
 
 Welcome to the documentation for the **Tetris Inventory System Plugin**, a powerful extension to the modified base Lyra asset. This plugin transforms the foundational inventory management capabilities into a fully spatial, grid-based system, introducing visually engaging organization and deeper gameplay mechanics often seen in popular extraction shooters and survival games.
 
-### Purpose
+You want your players to _feel_ their inventory, not just scroll through a list, but physically rotate a rifle to wedge it next to a medical kit, open a backpack to find ammo buried inside, and combine berries with an empty bottle to brew a health potion. Grid-based inventories turn storage into a spatial puzzle, and this plugin gives you the complete toolkit to build one.
 
-This plugin is designed to provide developers with a robust and flexible system for creating inventories where item **shape**, **rotation**, and **grid placement** are primary mechanics. It moves beyond simple list-based storage to offer:
+The Tetris Inventory Plugin extends the base Lyra inventory system with spatial grid mechanics: items have **shapes** that occupy multiple cells, **rotation** to fit tight spaces, **nested containers** for backpacks-within-backpacks, and a full **3D inspection system** for examining items up close.
 
-* Visually organized inventory grids with arbitrary layouts.
-* Items with defined multi-cell shapes ("Tetris pieces").
-* Functionality for rotating items to fit available space.
-* Container items that can hold their own nested Tetris inventories.
-* An integrated 3D item inspection system using PocketWorlds.
-* A foundation for advanced inventory interactions like spatial crafting or item combining.
+***
 
-### Core Benefits
+### What You Get
 
-Integrating the Tetris Inventory System offers several advantages:
+```
+┌────────────────────────────────────────────────────────────────┐
+│                    Tetris Inventory Plugin                     │
+├──────────────────────┬─────────────────────────────────────────┤
+│                      │                                         │
+│   Grid Layouts       │   Multi-cell item shapes                │
+│   Item Rotation      │   Shape-aware placement & collision     │
+│   Nested Containers  │   Backpacks, cases, ammo crates         │
+│   Item Combining     │   Recipe-based crafting on the grid     │
+│   3D Inspection      │   PocketWorlds-powered item previews    │
+│   Async Icons        │   Dynamic icons reflecting attachments  │
+│   Client Prediction  │   Responsive drag-and-drop multiplayer  │
+│                      │                                         │
+└──────────────────────┴─────────────────────────────────────────┘
+```
 
-* **Enhanced Gameplay:** Introduces spatial puzzle elements to inventory management, making looting and organization more interactive and challenging.
-* **Visual Appeal:** Provides a clear, intuitive, and visually satisfying way for players to view and manage their gear.
-* **Immersion:** The detailed item inspection system allows players to examine their items closely in 3D.
-* **Flexibility:** Built upon the modular fragment system of the enhanced Lyra base, allowing Tetris features to be added selectively to items.
-* **Extensibility:** Designed with clear separation, enabling customization and addition of new features.
-* **Networking:** Leverages the underlying networked Lyra inventory and GAS framework for multiplayer support.
+All of this integrates with the [Item Container](../../base-lyra-modified/item-container/) system for container-agnostic transactions, predictions, and UI, so the same drag-and-drop, context menus, and windowing system that work with slot-based inventories also work with tetris grids.
 
-### Dependencies & Prerequisites
+***
 
-This plugin builds directly upon the **Modified Base Lyra Game Core** provided with this asset package. It relies heavily on the core concepts and systems established there, including:
+### How It Builds on Base Lyra
 
-* The enhanced `ULyraInventoryManagerComponent`.
-* The [Item Definition](../../base-lyra-modified/items/items-and-fragments/item-definition.md) (`ULyraInventoryItemDefinition`) and [Item Instance ](../../base-lyra-modified/items/items-and-fragments/item-instance.md)(`ULyraInventoryItemInstance`) system.
-* The [Item Fragment](../../base-lyra-modified/items/items-and-fragments/item-fragments.md) system (including Transient Fragments).
-* The [Gameplay Ability System (GAS) integration layer](/broken/pages/2rNFzK7hnHUfDlBvXU0d) (`UInventoryAbilityFunctionLibrary`, `FAbilityData_SourceItem`).
+The plugin is an **extension**, not a replacement. It inherits from and integrates with the base systems:
 
-**It is highly recommended to have a solid understanding of the concepts within the** [**Modified Base Lyra Item Documentation**](../../base-lyra-modified/items/) **before diving into the Tetris-specific features.** This documentation will assume familiarity with those base systems and will focus primarily on the additions and modifications introduced by the Tetris Inventory Plugin.
+| Base System                                                                                                               | Tetris Extension                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`ULyraInventoryManagerComponent`](../../base-lyra-modified/inventory/)                                                   | `ULyraTetrisInventoryManagerComponent` adds grid logic on top of the base item list, weight/count limits, and access rights                                           |
+| [Item Container Interface](../../base-lyra-modified/item-container/item-container-architecture/the-container-contract.md) | Implements `ILyraItemContainerInterface` for container-agnostic operations with full prediction support                                                               |
+| [Item Fragments](../../base-lyra-modified/items/items-and-fragments/item-fragments.md)                                    | Adds `InventoryFragment_Tetris` (shape), `InventoryFragment_Container` (nesting), `InventoryFragment_CraftRecipe` (recipes), `InventoryFragment_Inspect` (3D preview) |
+| [Container UI System](../../base-lyra-modified/ui/item-container-ui-system/)                                              | `ULyraTetrisGridClumpWidget` implements the Window Content Interface for grid rendering                                                                               |
 
-### Key Concepts Added
+{% hint style="info" %}
+You should be familiar with the [Modified Base Lyra Item System](../../base-lyra-modified/items/) and the [Item Container Architecture](../../base-lyra-modified/item-container/) before diving into the tetris-specific features. This documentation focuses on what the plugin adds, referencing the base docs for shared concepts.
+{% endhint %}
 
-This plugin introduces several new core concepts specific to grid-based inventories:
+***
 
-* **Grid Layouts (`FInventoryLayoutCreator`):** Define the structure and available cells of an inventory container using one or more "clumps" arranged in a coordinate space.
-* **Item Shapes (`InventoryFragment_Tetris`):** Define the multi-cell footprint of an item using a 2D boolean array.
-* **Item Rotation (`EItemRotation`):** Allow items to be oriented (0, 90, 180, 270 degrees) to fit into the grid.
-* **Spatial Placement:** The core mechanic of finding valid empty cells within the grid that can accommodate an item's shape and rotation.
-* **Nested Inventories (`InventoryFragment_Container`):** Enable specific items (like backpacks or cases) to contain their own fully functional Tetris inventory grids.
-* **Item Combination (`InventoryFragment_Combine`):** A fragment allowing items to define recipes for combining with other specific items when dropped onto each other.
-* **Item Inspection (`InventoryFragment_Inspect`, PocketWorlds):** A system utilizing UE's PocketWorlds plugin to render interactive 3D previews of items.
+### Key Concepts
 
-### Relationship to Base Lyra Inventory
+A quick orientation of the major ideas you'll encounter:
 
-The Tetris Inventory Plugin is designed as an **extension**, not a replacement, of the base inventory system. It integrates seamlessly:
+* **Grid Layouts** — Inventories are defined by one or more "clumps" (rectangular grid sections) arranged in a coordinate space. A single inventory might be an 8×6 grid, or two separate 4×4 clumps side by side.
+* **Item Shapes** — Each item defines a 2D boolean array representing its footprint. A pistol might be 2×1, a rifle 4×2 with an L-shaped cutout. The system validates shapes against available space during placement.
+* **Rotation** — Items can be rotated (0°, 90°, 180°, 270°) to fit available space. The system automatically determines which rotations produce unique footprints based on shape symmetry.
+* **Nested Containers** — Items with `InventoryFragment_Container` spawn their own child `ULyraTetrisInventoryManagerComponent`. A backpack inside a backpack inside a crate, with constraint propagation up the hierarchy.
+* **Client Prediction** — Every grid operation (add, remove, move, rotate) is predicted client-side using GUID-keyed overlays, providing instant feedback while the server authorizes. The same prediction architecture from the Item Container system powers this.
 
-* **Inheritance:** The `ULyraTetrisInventoryManagerComponent` inherits from the base `ULyraInventoryManagerComponent`, gaining all its core functionality (item list management, weight/count limits, access rights, permissions) and adding grid-specific logic on top.
-* **Fragments:** Introduces new fragments (like `InventoryFragment_Tetris`, `InventoryFragment_Container`) that work alongside existing base fragments (like `InventoryFragment_InventoryIcon`, `InventoryFragment_SetStats`). An item typically needs both base and Tetris fragments to function correctly in this system.
-* **GAS Integration:** Leverages the _same_ `UInventoryAbilityFunctionLibrary` and GAS workflow established in the base system. It introduces a new data payload struct (`FInventoryAbilityData_SourceTetrisItem`) derived from `FAbilityData_SourceItem` to represent item locations within the grid context.
-* **Core Objects:** Relies on the fundamental `ULyraInventoryItemDefinition` and `ULyraInventoryItemInstance` objects defined in the base system.
+***
 
 ### Documentation Structure
 
-This documentation is organized to guide you through the various aspects of the Tetris Inventory System:
-
-* **Item Fragments (Tetris Specific):** Covers the new fragments introduced or enhanced for the Tetris system.
-* **Tetris Inventory Manager Component:** Explores the capabilities and configuration of the grid-based inventory container.
-* **Utilities:** Documents helper libraries and data structures specific to this plugin.
-* **GAS & UI Integration (Tetris Specific):** Explains how UI interacts with the Tetris inventory via GAS.
-* **Querying Tetris Inventories:** Describes how to efficiently query items across nested inventories.
-* **Item Inspection System:** Details the 3D item preview functionality and its PocketWorlds integration.
-* **Getting Started / Examples:** Provides practical guides and examples.
-
-Each major section contains an overview page, followed by detailed subpages covering specific components or concepts. I encourage you to follow the structure sequentially for the best understanding.
-
-Let's begin by exploring the **Item Fragments** specific to the Tetris Inventory system!
+| Section                                                                       | What It Covers                                                                                                      |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| [**Item Fragments (Tetris Specific)**](item-fragments-tetris-specific/)       | The four fragments that give items spatial behavior - shapes, containers, crafting recipes, and 3D inspection       |
+| [**Tetris Inventory Manager Component**](tetris-inventory-manager-component/) | The grid-based inventory container - grid system, configuration, item operations, nesting, prediction, and resizing |
+| [**Querying Tetris Inventories**](querying-tetris-inventories.md)             | Hierarchical item tracking across nested containers in C++ and Blueprints                                           |
+| [**Tetris Utilities**](utilities/)                                            | Helper libraries and data structures for shapes, rotation, and world-space items                                    |
+| [**Item Inspection System**](item-inspection-system/)                         | 3D item previews and dynamic icon generation via PocketWorlds                                                       |
+| [**Tetris Inventory UI**](tetris-inventory-ui/)                               | The UI layer that renders grids and handles input - ViewModel, grid clump widget, and input handler                 |
