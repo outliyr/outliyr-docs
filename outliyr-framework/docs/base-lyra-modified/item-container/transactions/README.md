@@ -8,11 +8,11 @@ The transaction system handles all of this. It provides atomic operations that e
 
 ### What You'll Learn
 
-| Page                                                       | Description                                                                                                                                 |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| [How Transactions Work](how-transactions-work/)            | The atomic execution model—how operations are validated, applied, and recorded for rollback. The mental model for understanding the system. |
-| [Operation Types](operation-types.md)                      | The five operation types: Move, ModifyTagStack, SplitStack, RemoveItem, and AddItem. When to use each, how to construct them.               |
-| [Validation and Permissions](validation-and-permission.md) | Two-stage validation (pre-filter vs full), the permission model, and how access is controlled.                                              |
+| Page                                                       | Description                                                                                                                                  |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| [How Transactions Work](how-transactions-work/)            | The atomic execution model, how operations are validated, applied, and recorded for rollback. The mental model for understanding the system. |
+| [Operation Types](operation-types.md)                      | The five operation types: Move, ModifyTagStack, SplitStack, RemoveItem, and AddItem. When to use each, how to construct them.                |
+| [Validation and Permissions](validation-and-permission.md) | Two-stage validation (pre-filter vs full), the permission model, and how access is controlled.                                               |
 
 ***
 
