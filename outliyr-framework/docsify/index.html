@@ -135,8 +135,25 @@
     /* rows */
     .gb-stack > .gb-toggle {
         margin: 0; border: 0; background: transparent; border-radius: 0;
-        transition: box-shadow .15s ease;
+        transition: background .15s ease, box-shadow .15s ease;
         display: flow-root;
+    }
+
+    /* Subtle background when open inside stack */
+    .gb-stack > .gb-toggle[open] {
+        background: rgba(0,0,0,.015);
+    }
+    html.dark .gb-stack > .gb-toggle[open],
+    body.dark .gb-stack > .gb-toggle[open] {
+        background: rgba(255,255,255,.03);
+    }
+
+    /* Standalone toggle (not inside stack) */
+    .gb-toggle:not(.gb-stack > .gb-toggle) {
+        border: 1px solid var(--gb-border);
+        border-radius: var(--gb-radius);
+        margin: 1rem 0;
+        overflow: hidden;
     }
     .gb-toggle :last-child { margin-bottom: 0; }
     .gb-toggle > :not(summary):last-child { padding-bottom: 1rem; }
@@ -152,23 +169,160 @@
         list-style: none; cursor: pointer; outline: none;
         padding: 0.85rem 1rem; min-height: 2.75rem;
         font-weight: 600; display: flex; align-items: center; gap: .55rem;
+        border-radius: inherit;
+        transition: background .15s ease;
+    }
+    .gb-toggle > summary:hover {
+        background: rgba(0,0,0,.03);
+    }
+    html.dark .gb-toggle > summary:hover,
+    body.dark .gb-toggle > summary:hover {
+        background: rgba(255,255,255,.04);
     }
     .gb-toggle > summary::-webkit-details-marker { display: none; }
     .gb-toggle > summary::before {
         content: ""; width: .5rem; height: .5rem;
         border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
-        transform: rotate(-45deg); transition: transform .2s ease; opacity: .55;
+        transform: rotate(-45deg); transition: transform .25s cubic-bezier(.4,0,.2,1); opacity: .55;
+        flex-shrink: 0;
     }
     .gb-toggle[open] > summary::before { transform: rotate(45deg); opacity: .85; }
 
     /* content spacing */
-    .gb-toggle > *:not(summary) { padding: 0 1rem 1rem 2rem; }
+    .gb-toggle > *:not(summary) {
+        padding: 0 1rem 1rem 2rem;
+        animation: gb-slide-down .2s ease;
+    }
     .gb-toggle > summary + * { margin-top: .6rem; }
+
+    @keyframes gb-slide-down {
+        from { opacity: 0; transform: translateY(-4px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
 
     /* optional variant title colors */
     .gb-toggle > summary[data-variant="example"] { color: #2e8b57; }
     .gb-toggle > summary[data-variant="warning"] { color: #d35400; }
     .gb-toggle > summary[data-variant="info"]    { color: #0078d4; }
+</style>
+<style>
+    /* ── Stepper (GitBook-style) ──────────────────────── */
+    :root {
+        --gb-step-circle:    32px;
+        --gb-step-line-w:    2px;
+        --gb-step-color:     var(--theme-color, #42b983);
+        --gb-step-line-color: rgba(0,0,0,.12);
+        --gb-step-gap:       16px;
+    }
+    html.dark, body.dark, :root.dark {
+        --gb-step-line-color: rgba(255,255,255,.18);
+    }
+
+    .gb-stepper {
+        margin: 1.5rem 0;
+        padding: 0;
+    }
+
+    .gb-step {
+        display: flex;
+        gap: var(--gb-step-gap);
+        position: relative;
+    }
+
+    /* Left column: number circle + vertical line */
+    .gb-step-indicator {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+        width: var(--gb-step-circle);
+    }
+
+    .gb-step-number {
+        width: var(--gb-step-circle);
+        height: var(--gb-step-circle);
+        border-radius: 50%;
+        background: var(--gb-step-color);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        line-height: 1;
+        z-index: 1;
+    }
+
+    .gb-step-line {
+        width: var(--gb-step-line-w);
+        flex: 1;
+        background: var(--gb-step-line-color);
+        min-height: 16px;
+        margin: 4px 0;
+    }
+
+    /* Right column: title + body */
+    .gb-step-content {
+        flex: 1;
+        min-width: 0;
+        padding-bottom: 1.5rem;
+    }
+
+    .gb-step:last-child .gb-step-content {
+        padding-bottom: 0;
+    }
+
+    .gb-step-title {
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: var(--gb-step-circle);
+        margin: 0 0 0.5rem 0;
+        color: inherit;
+    }
+
+    .gb-step-body {
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .gb-step-body > :first-child { margin-top: 0; }
+    .gb-step-body > :last-child  { margin-bottom: 0; }
+
+    .gb-step-body pre {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    /* ── Code Title Bar ──────────────────────────────── */
+    .gb-code-title {
+        background: #f0f0f0;
+        border: 1px solid #e0e0e0;
+        border-bottom: none;
+        border-radius: 6px 6px 0 0;
+        padding: 0.4rem 0.9rem;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 0;
+        margin-top: 1rem;
+    }
+
+    .gb-code-title + pre,
+    .gb-code-title + p > code,
+    .gb-code-title + div > pre {
+        border-top-left-radius: 0 !important;
+        border-top-right-radius: 0 !important;
+        margin-top: 0 !important;
+    }
+
+    html.dark .gb-code-title,
+    body.dark .gb-code-title {
+        background: #1e1e1e;
+        border-color: #333;
+        color: #aaa;
+    }
 </style>
 </head>
 <body>
@@ -231,6 +385,49 @@
                 attention: { label: 'attention' },
                 success: { label: 'tip', icon: 'icon-tip', className: 'tip'},
             },
+            plugins: [
+                function gbStepperPlugin(hook, vm) {
+                    hook.afterEach(function (html) {
+                        return html.replace(
+                            /<!-- gb-stepper:start -->([\s\S]*?)<!-- gb-stepper:end -->/g,
+                            function (_match, innerHtml) {
+                                var steps = innerHtml.split(/<!-- gb-step:start -->/)
+                                    .filter(function (s) { return s.trim().length > 0; });
+
+                                var stepHtml = steps.map(function (stepContent, index) {
+                                    var content = stepContent.replace(/<!-- gb-step:end -->/g, '').trim();
+
+                                    // Extract the first heading to use as step title
+                                    var titleMatch = content.match(/^(<h[1-6][^>]*>)([\s\S]*?)(<\/h[1-6]>)/);
+                                    var title = '';
+                                    var body = content;
+
+                                    if (titleMatch) {
+                                        title = titleMatch[2];
+                                        body = content.slice(titleMatch[0].length).trim();
+                                    }
+
+                                    var stepNumber = index + 1;
+                                    var isLast = index === steps.length - 1;
+
+                                    return '<div class="gb-step">' +
+                                        '<div class="gb-step-indicator">' +
+                                            '<div class="gb-step-number">' + stepNumber + '</div>' +
+                                            (!isLast ? '<div class="gb-step-line"></div>' : '') +
+                                        '</div>' +
+                                        '<div class="gb-step-content">' +
+                                            (title ? '<div class="gb-step-title">' + title + '</div>' : '') +
+                                            (body ? '<div class="gb-step-body">' + body + '</div>' : '') +
+                                        '</div>' +
+                                    '</div>';
+                                });
+
+                                return '<div class="gb-stepper">' + stepHtml.join('') + '</div>';
+                            }
+                        );
+                    });
+                }
+            ],
         }
     </script>
       <!-- Docsify v4 -->

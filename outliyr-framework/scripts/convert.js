@@ -83,15 +83,25 @@ function transformMarkdown(input) {
       (_m, src, attrs = '') => `<img src=".gitbook/assets/${src}"${attrs}>`
     )
 
-    // GitBook video file embeds
+    // GitBook video file embeds (with optional caption + endfile tag)
     .replace(
-      /{%\s*file\s+src="(?:\.\.\/)*\.gitbook\/assets\/([^"]+\.mp4)"\s*%}/g,
+      /{%\s*file\s+src="(?:\.\.\/)*\.gitbook\/assets\/([^"]+\.mp4)"\s*%}[\s\S]*?{%\s*endfile\s*%}/g,
       (_m, filename) =>
         `<div style="text-align: center;">\n  <video controls style="max-width: 100%; height: auto;">\n    <source src=".gitbook/assets/${filename}" type="video/mp4">\n    Your browser does not support the video tag.\n  </video>\n</div>`
     )
 
     // Unescape GitBook underscores
     .replace(/\\_/g, '_')
+
+    // Stepper blocks → HTML comment markers (processed by Docsify plugin)
+    .replace(/{% stepper %}/g,  '<!-- gb-stepper:start -->')
+    .replace(/{% endstepper %}/g, '<!-- gb-stepper:end -->')
+    .replace(/{% step %}/g,    '<!-- gb-step:start -->')
+    .replace(/{% endstep %}/g, '<!-- gb-step:end -->')
+
+    // Titled code blocks → title div + normal code block
+    .replace(/{%\s*code\s+title="([^"]*?)"\s*%}/g, '<div class="gb-code-title">$1</div>\n')
+    .replace(/{%\s*endcode\s*%}/g, '')
 
   // auto-wrap consecutive <details> blocks
   out = autoStackDetails(out);
