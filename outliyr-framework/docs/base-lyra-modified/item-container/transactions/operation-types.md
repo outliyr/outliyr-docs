@@ -27,7 +27,7 @@ struct FItemTransactionOpBase
 };
 ```
 
-### FItemTxOp\_Move
+### `FItemTxOp_Move`
 
 Moves an item from one slot to another. Handles same-container moves, cross-container transfers, and swaps.
 
@@ -81,7 +81,7 @@ The executor queries `GetOccupiedSlotBehavior()` on the destination container:
 * Destination container can accept the item (or swap is valid)
 * Player has required permissions on both containers
 
-### FItemTxOp\_ModifyTagStack
+### `FItemTxOp_ModifyTagStack`
 
 Modifies any gameplay tag stack on an item. Generalized for stack counts, durability, charges, or custom stats.
 
@@ -133,7 +133,7 @@ Request.Ops.Add(FInstancedStruct::Make(DurabilityOp));
 * Tag exists on the item (or can be added)
 * Result stays within bounds (unless clamping)
 
-### FItemTxOp\_SplitStack
+### `FItemTxOp_SplitStack`
 
 Splits a stack, creating a new item with a portion of the original.
 
@@ -207,7 +207,7 @@ Uses `SplitItemGUID` so client can match predicted item to server item.
 **GUID is required for prediction.** The client generates `SplitItemGUID` before sending. The server uses this same GUID when creating the item, allowing the client to reconcile its predicted item with the authoritative one.
 {% endhint %}
 
-### FItemTxOp\_RemoveItem
+### `FItemTxOp_RemoveItem`
 
 Removes an item from a container entirely. Supports destruction, dropping to world, or transfer to holding.
 
@@ -288,7 +288,7 @@ Request.Ops.Add(FInstancedStruct::Make(PartialOp));
 * For `DropToWorld`: collectable class specified
 * For partial: `QuantityToRemove` <= stack count
 
-### FItemTxOp\_AddItem
+### `FItemTxOp_AddItem`
 
 Adds an item to a container. Supports creating new items or adding existing ones.
 

@@ -77,6 +77,10 @@ Only after **all** operations pass validation do any execute.
 
 Permissions control who can interact with containers and how. The model has two layers.
 
+{% hint style="info" %}
+For more detail about the permission system and how item containers use it, you can read [Access Rights & Permission](../../items/access-rights-and-permissions/) section.
+{% endhint %}
+
 #### Access Rights (Visibility Gate)
 
 Access rights determine if a player can see a container at all:
@@ -104,7 +108,7 @@ Example scenarios:
 * Enemy's inventory: `NoAccess`
 * Vendor stock: `ReadOnly` (items visible) or `ReadWrite` (can purchase)
 
-### Permissions (Action Control)
+#### Permissions (Action Control)
 
 For `ReadWrite` access, permissions control specific actions:
 
@@ -186,15 +190,15 @@ if (AreSlotsInSameContainer(Source, Dest))
 // Cross-container move
 else
 {
-    // Need TakeOut from source, PutIn to destination
+    // Need TakeOut from the source container, PutIn to destination container
     if (!Source.HasPermission(PC, TakeOutItems)) return false;
     if (!Dest.HasPermission(PC, PutInItems)) return false;
 }
 ```
 
-### The Permission Component
+#### The Permission Component
 
-Containers that use permissions have a `UItemPermissionComponent`:
+Item containers that use permissions have a `UItemPermissionComponent`:
 
 ```cpp
 UCLASS()
@@ -216,7 +220,7 @@ class UItemPermissionComponent : public UObject
 };
 ```
 
-### Defaults and Overrides
+#### Defaults and Overrides
 
 The system supports both defaults and per-player overrides:
 
@@ -257,6 +261,10 @@ Each operation type has specific validation requirements.
 
 #### Move Validation
 
+<details>
+
+<summary>C++ example</summary>
+
 ```cpp
 bool ValidateMove(const FItemTxOp_Move& Op, FItemTransactionContext& Context)
 {
@@ -288,6 +296,8 @@ bool ValidateMove(const FItemTxOp_Move& Op, FItemTransactionContext& Context)
 }
 ```
 
+</details>
+
 Move validation steps:
 
 {% stepper %}
@@ -316,7 +326,11 @@ Ensure the appropriate permissions exist (MoveItems for internal moves, TakeOut/
 {% endstep %}
 {% endstepper %}
 
-### ModifyTagStack Validation
+#### ModifyTagStack Validation
+
+<details>
+
+<summary>C++ example</summary>
 
 ```cpp
 bool ValidateModifyTagStack(const FItemTxOp_ModifyTagStack& Op, FItemTransactionContext& Context)
@@ -341,6 +355,8 @@ bool ValidateModifyTagStack(const FItemTxOp_ModifyTagStack& Op, FItemTransaction
 }
 ```
 
+</details>
+
 ModifyTagStack validation steps:
 
 {% stepper %}
@@ -363,7 +379,11 @@ Verify the caller has `ModifyStack` permission on the target slot.
 {% endstep %}
 {% endstepper %}
 
-### SplitStack Validation
+#### SplitStack Validation
+
+<details>
+
+<summary>C++ example</summary>
 
 ```cpp
 bool ValidateSplitStack(const FItemTxOp_SplitStack& Op, FItemTransactionContext& Context)
@@ -387,6 +407,8 @@ bool ValidateSplitStack(const FItemTxOp_SplitStack& Op, FItemTransactionContext&
     return Op.SourceSlot.HasPermission(PC, ModifyStack);
 }
 ```
+
+</details>
 
 SplitStack validation steps:
 
@@ -421,32 +443,6 @@ A valid GUID for the split item must be included.
 Caller must have `ModifyStack` permission on the source slot.
 {% endstep %}
 {% endstepper %}
-
-***
-
-### Permission Events
-
-When permissions change, the system broadcasts messages:
-
-```cpp
-USTRUCT(BlueprintType)
-struct FItemAccessRightsChangedMessage
-{
-    TObjectPtr<UObject> Container;
-    TObjectPtr<APlayerController> Player;
-    EItemContainerAccessRights NewAccess;
-};
-
-USTRUCT(BlueprintType)
-struct FItemPermissionsChangedMessage
-{
-    TObjectPtr<UObject> Container;
-    TObjectPtr<APlayerController> Player;
-    EItemContainerPermissions NewPermission;
-};
-```
-
-UI listens for these to update interactive states (graying out slots, hiding containers, etc.).
 
 ***
 

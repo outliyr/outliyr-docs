@@ -40,7 +40,7 @@ Consider equipping a weapon that requires removing the current weapon:
 Without atomicity:
 
 1. Remove old weapon from equipment ✓
-2. Add new weapon to equipment ✗ (failed—slot incompatible)
+2. Add new weapon to equipment ✗ (failed - slot incompatible)
 3. Player now has no weapon and old weapon is... where?
 
 With atomicity:
