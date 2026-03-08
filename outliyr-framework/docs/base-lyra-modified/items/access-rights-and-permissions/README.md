@@ -1,7 +1,7 @@
 # Access Rights & Permissions
 
-> _“Can this client **see** the container at all?_\
-> _And if so, what exactly are they **allowed to do** with the things inside it?”_
+> “Can this client **see** the container at all?\
+> And if so, what exactly are they **allowed to do** with the things inside it?”
 
 That two-step question is the entire purpose of the Access Rights & Permissions layer.\
 Everything else, replication filters, UI greying-out, GAS security checks, flows from those two answers.
