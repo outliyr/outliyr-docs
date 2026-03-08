@@ -63,7 +63,7 @@ flowchart LR
 
 ### A mental model to keep in mind
 
-> _Access Right decides **visibility**,_\
-> _Permission decides **ability**._
+> Access Right decides **visibility**,\
+> Permission decides **ability**.
 
 If you remember that sentence you can usually predict how the container, GAS bridge, or UI will behave before writing a line of code.
