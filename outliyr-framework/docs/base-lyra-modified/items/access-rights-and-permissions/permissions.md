@@ -17,7 +17,7 @@ enum class EItemContainerPermissions : uint8
 	PutInItems   = 1 << 2,     // add new items from outside
 	TakeOutItems = 1 << 3,     // remove items to another container
 	HoldItems    = 1 << 4,     // hold an item inside container
-	Full         = MoveItems | UseItems | PutInItems | TakeOutItems | HoldItems
+	Full         = MoveItems | ModifyStack | PutInItems | TakeOutItems | HoldItems
 };
 ENUM_CLASS_FLAGS(EItemContainerPermissions)
 ```

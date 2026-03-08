@@ -147,7 +147,7 @@
     * [How Transactions Work](base-lyra-modified/item-container/transactions/how-transactions-work/README.md)
       * [Execution Deep Dive](base-lyra-modified/item-container/transactions/how-transactions-work/execution-deep-dive.md)
     * [Operation Types](base-lyra-modified/item-container/transactions/operation-types.md)
-    * [Validation And Permission](base-lyra-modified/item-container/transactions/validation-and-permission.md)
+    * [Transaction Validation](base-lyra-modified/item-container/transactions/transaction-validation.md)
   * [Access Rights & Permissions](base-lyra-modified/items/access-rights-and-permissions/README.md)
     * [Access rights](base-lyra-modified/items/access-rights-and-permissions/access-rights.md)
     * [Permissions](base-lyra-modified/items/access-rights-and-permissions/permissions.md)
