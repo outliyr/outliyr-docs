@@ -21,15 +21,15 @@ Everything else, replication filters, UI greying-out, GAS security checks, flows
 
 ### Core concepts at a glance
 
-| Concept          | What it answers                                 | Type    | Typical values                                                                                                                                                                                    |
-| ---------------- | ----------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Access Right** | “Do I replicate this container to you?”         | Enum    | `NoAccess`, `ReadOnly`, `FullAccess`                                                                                                                                                              |
-| **Permission**   | “If you _can_ see it, which actions are legal?” | Bitmask | <p><code>MoveItems</code>, <code>PutInItems</code>, <code>TakeOutItems</code>, <code>EquipItems</code>, <code>UseItems</code> ,<br><code>HoldItems</code> (or the combined <code>Full</code>)</p> |
+| Concept          | What it answers                                 | Type    | Typical values                                                                                                                                                                     |
+| ---------------- | ----------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Access Right** | “Do I replicate this container to you?”         | Enum    | `NoAccess`, `ReadOnly`, `ReadWrite`                                                                                                                                                |
+| **Permission**   | “If you _can_ see it, which actions are legal?” | Bitmask | <p><code>MoveItems</code>, </p><p><code>ModifyStack</code>, <code>PutInItems</code>, <code>TakeOutItems</code>, <br><code>HoldItems</code> (or the combined <code>Full</code>)</p> |
 
 #### Evaluation order
 
-1. **Access Right** gate – if the result is below _ReadOnly_, replication for that container is skipped and every gameplay call instantly fails.
-2. **Permissions** check – only evaluated when Access Right is _FullAccess_.
+1. **Access Right** gate – if the result is below `ReadOnly`, replication for that container is skipped and every gameplay call instantly fails.
+2. **Permissions** check – only evaluated when Access Right is `ReadWrite`.
 
 This strict order means a single `NoAccess` can short-circuit a thousand later checks.
 
