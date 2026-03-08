@@ -1,6 +1,6 @@
 # Access Rights & Permissions
 
-> “Can this client **see** the container at all?\
+> "Can this client **see** the container at all?\
 > And if so, what exactly are they **allowed to do** with the things inside it?”
 
 That two-step question is the entire purpose of the Access Rights & Permissions layer.\
@@ -43,7 +43,7 @@ flowchart LR
         direction TB
         A["UItemPermissionComponent"] -- FastArray --> B["Player-specific entries"]
         A -- defaults --> C["Default Right & Perm"]
-        D["ULyraInventoryManagerComponent<br><i>or any container</i>"] -->|reads| A
+        D["ItemContainer"] -->|reads| A
     end
 
     subgraph Network
