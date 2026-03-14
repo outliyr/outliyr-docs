@@ -37,7 +37,7 @@ Some modes include additional folders depending on their complexity:
 
 Some game modes share common functionality through infrastructure plugins:
 
-* **ControlPointCore** — Shared control point logic (capture mechanics, bot tasks, VFX) used by Domination, Hardpoint, Headquarters, and Payload
+* **ControlPointCore** — Shared control point logic (capture mechanics, control point related bot tasks, VFX) used by Domination, Hardpoint, Headquarters, and Payload
 * **ShooterBase** — The core combat framework that all game modes depend on for weapons, abilities, scoring, spawning, and more
 * **GameplayMaps** — Shared map infrastructure and the Compound Blockout System for level design, used by all game modes
 * **TetrisInventory** — Spatial grid-based inventory system used by Arena, Battle Royale, and Extraction
