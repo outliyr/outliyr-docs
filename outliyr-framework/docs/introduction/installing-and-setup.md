@@ -42,7 +42,7 @@ Before diving in, a quick look at where things are:
   * This is a standard Unreal Engine plugins directory.
 * `📂 Plugins/GameFeatures/`
   * **This is the primary location for modular content.** Each subdirectory here is a separate **Game Feature Plugin**.
-  * **Core Framework Plugins:** You'll find the foundational plugins of this asset here (e.g., `ShooterBase/`, `TetrisInventory/`, `TrueFirstPerson/`).
+  * **Core Framework Plugins:** You'll find the foundational plugins of this asset here (e.g., `ShooterBase/`, `TetrisInventory/`, `GameplayMaps/`, `TrueFirstPerson/`).
   * **Example Game Mode Plugins:** The pre-built game modes (e.g., `TeamDeathmatch/`, `Arena/`, `BattleRoyale/`) also reside here as individual Game Feature Plugins.
   * **Your Custom Plugins:** When you create new game modes or features, they will also become subdirectories in `Plugins/GameFeatures/`.
 
@@ -52,35 +52,26 @@ Before diving in, a quick look at where things are:
 * **Experiences (`ULyraExperienceDefinition`):** Data Assets (usually found within a Game Feature Plugin's `Content` folder) that define _what_ game mode to run, _which_ Game Features to activate for that session, default player setups, and UI.
 
 {% hint style="success" %}
-### Best Practice: Working with the Framework
+#### Making It Yours
 
-If you're just getting started with Unreal Engine or aren't yet comfortable managing complex changes in large codebases (especially when it comes to using Git for merging and tracking changes), **please follow the recommended customization paths** below to keep your project clean and easy to update.
+This is your project, feel free to modify anything. There’s just one practical tradeoff to be aware of:
 
-#### Recommended Way to Customize
+**Editing core plugins** (like ShooterBase, TetrisInventory, etc.) means that when a framework update is released, you’ll need to merge those updates with your changes using Git. This is completely normal and manageable with version control, but it is extra work.
 
-* **Add Major Features / New Game Modes / Big Changes**\
-  Create a **new Game Feature Plugin** for your content. This keeps your work separate from the core framework and example content, making updates smoother and easier to manage.
-*   **Tweak Example Game Modes**\
-    If you want to build on an existing example:
+**Creating new Game Feature Plugins** for your content is the easiest path, it keeps your work separate from core systems, so updates apply cleanly with no merge work on your end.
 
-    1. Create a new Game Feature Plugin.
-    2. Copy any relevant assets (like `ULyraExperienceDefinition`, `ULyraPawnData`, `ULyraExperienceActionSets`) from the example plugin.
-    3. Modify those copies in your plugin.
+**The Easy Path: New Game Feature Plugins**
 
-    This approach ensures the original examples stay untouched, making it easier to compare, learn from, or update them later.
+* **New game modes, major features, or big changes** → Create a new Game Feature Plugin. Your work stays independent of core systems.
+* **Tweaking an example game mode** → Create a new Game Feature Plugin, copy the relevant assets (Experience Definition, Pawn Data, Action Sets) from the example, and modify the copies. The originals stay intact for reference.
 
-#### Modifying the Core Framework (ShooterBase, TetrisInventory, etc.)
+**Editing Core Systems**
 
-The core plugins are designed to be extended—not edited directly. If you modify them, you’re entering “merge conflict territory,” and future updates will be harder to apply.
+If a new Game Feature Plugin won’t cut it, maybe you need to change how a core system fundamentally works, go ahead and edit it directly. Just keep in mind:
 
-#### A Word to Experienced Developers
-
-If you're comfortable with Unreal's systems and Git workflows, and you truly need to change something deep in the core systems that can’t be handled through subclassing, configuration, or Game Features—go for it. But understand:
-
-* **You’re now responsible** for manually merging changes when updating this asset pack.
-* Modifying core systems is a valid choice for advanced use cases, but it requires a solid understanding of Unreal's architecture and version control workflows. If that’s not familiar territory, it’s best to stick with extension-based methods to avoid potential maintenance headaches
-
-In short: **extend, don’t edit—unless you know exactly what you're doing.**
+* Use Git to track your changes so you can merge future updates
+* The more targeted your edits, the easier merges will be
+* Core plugins are designed with extension points (subclassing, configuration, delegates), so check if those can solve your problem first, not because editing is wrong, but because it may be less work for you
 {% endhint %}
 
 ***
@@ -90,7 +81,7 @@ In short: **extend, don’t edit—unless you know exactly what you're doing.**
 1. In **Unreal Engine**, go to `Edit → Plugins`
 2. Click `Add`
 3. Choose **Game Feature Plugin**
-4. Select **C++** as the base (even if you won’t use C++ yet—it allows expansion later)
+4. Select **C++** as the base (even if you won’t use C++ yet, it allows expansion later)
 5. Name your plugin (e.g., `MyShooterExpansion`)
 6. Add necessary dependencies (see below)
 
@@ -118,7 +109,7 @@ You can manage these dependencies manually in the `.uplugin` file or via the Gam
 <figure><img src="../.gitbook/assets/GameFeature.png" alt=""><figcaption></figcaption></figure>
 
 {% hint style="info" %}
-If you don't like images and want a video (I don't blame you), this is a [good guide](https://www.youtube.com/watch?v=AaGxHtQ0okw). One thing to keep in mind is that is based on Lyra, not my plugin (will make a video later if necessary), so the plugin dependencies used in the video are not in this project, like `ShooterCore`.
+If you don't like images and want a video (I don't blame you), this is a [good guide](https://www.youtube.com/watch?v=AaGxHtQ0okw). One thing to keep in mind is that the video is based on Lyra, not my plugin, so the plugin dependencies used in the video are not in this project, like `ShooterCore`.
 {% endhint %}
 
 ***

@@ -38,7 +38,7 @@ However, Lyra is a tech demo—not a full game framework. Outliyr builds on Lyra
 
 * Indie developers building competitive multiplayer shooters
 * Small teams or studios who want a solid Unreal-based shooter foundation
-* Developers looking to skip reinventing common systems like loadouts, UI, and weapon logic
+* Developers looking to skip reinventing common systems like UI, inventories and weapon logic
 * Newcomers to Lyra who need a more practical, usable starting point
 
 ***
@@ -55,10 +55,10 @@ However, Lyra is a tech demo—not a full game framework. Outliyr builds on Lyra
 
 ### What You'll Find in This Documentation
 
-* **Core Systems Overview** – Learn how Experiences, Game Features, and modular gameplay work
-* **Prebuilt Gameplay Systems** – Detailed guides on inventory, weapons, abilities, UI, and more
-* **Game Mode Implementations** – Explore Team Deathmatch, Battle Royale, Extraction, and others
 * **Quick Start Guide** – Set up the framework and launch your first session
+* **Base Lyra Modifications** – Learn how Experiences, Game Features, and modular gameplay work
+* **Core Modules** – Detailed guides on inventory, weapons, abilities, UI, and more
+* **Game Mode Implementations** – Explore Team Deathmatch, Battle Royale, Extraction, and others
 * **Customization Guides** – Best practices for extending or modifying the framework
 * **Troubleshooting & FAQ** – Common issues and solutions
 * **Community Links** – Join our Discord or contact support

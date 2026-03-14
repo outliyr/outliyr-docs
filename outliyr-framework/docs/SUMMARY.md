@@ -354,19 +354,17 @@
   * [Capture The Flag](game-modes/game-mode-details/capture-the-flag.md)
   * [Domination](game-modes/game-mode-details/domination.md)
   * [Extraction](game-modes/game-mode-details/extraction.md)
-  * [Free For All](game-modes/game-mode-details/free-for-all.md)
+  * [Free for all](game-modes/game-mode-details/free-for-all.md)
   * [Gun Game](game-modes/game-mode-details/gun-game.md)
   * [Hardpoint](game-modes/game-mode-details/hardpoint.md)
   * [Headquarters](game-modes/game-mode-details/headquarters.md)
   * [Infection](game-modes/game-mode-details/infection.md)
-  * [Kill Confirmed](game-modes/game-mode-details/kill-confirmed.md)
+  * [Kill confirmed](game-modes/game-mode-details/kill-confirmed.md)
   * [Payload](game-modes/game-mode-details/payload.md)
   * [Prop Hunt](game-modes/game-mode-details/prop-hunt.md)
-  * [Search & Destroy](game-modes/game-mode-details/search-and-destroy.md)
+  * [Search And Destroy](game-modes/game-mode-details/search-and-destroy.md)
   * [Team Deathmatch](game-modes/game-mode-details/team-deathmatch.md)
-* [Extending & Customization](game-modes/extending-and-customization/README.md)
-  * [Creating New Game modes](game-modes/extending-and-customization/creating-new-game-modes/README.md)
-    * [TDM Example](game-modes/extending-and-customization/creating-new-game-modes/tdm-example.md)
+* [Extending & Customization](game-modes/extending-and-customization.md)
 
 ## Others
 

@@ -8,7 +8,7 @@ This framework is built on **Lyra’s Game Features, Modular Gameplay, and Exper
 
 By embracing a **composition-based design**, this system enables developers to build highly modular and scalable multiplayer shooters while balancing **performance (C++) and flexibility (Blueprints).**
 
-This section provides a **high-level overview**—subsequent sections will **dive deeper into each system** so you can see how everything fits together.
+This section provides a **high-level overview**, subsequent sections will **dive deeper into each system** so you can see how everything fits together.
 
 #### **Key Principles**
 
@@ -144,14 +144,14 @@ This shows a better understanding of the dependencies layers
 #### **What This Means in Practice**
 
 * **You can delete any game mode** (TDM, BR, Extraction) without breaking anything.
-* **You can remove entire features** (e.g., the Inventory System) without affecting other systems. (**Note:** this would require **deleting** game modes depending on that core feature)
+* **You can remove entire features** (e.g., the tetris Inventory System) without affecting other systems. (**Note:** this would require **deleting** game modes depending on that core feature)
 * **Game modes dynamically load only what they need** – No hardcoded dependencies
 
 ***
 
 ### **Modular & Extensible Design**
 
-This framework is **built on a** [**modular gameplay approach**](../base-lyra-modified/gameframework-and-experience/game-features/), meaning **everything is opt-in**—you only include what you need.
+This framework is **built on a** [**modular gameplay approach**](../base-lyra-modified/gameframework-and-experience/game-features/), meaning **everything is opt-in**, you only include what you need.
 
 #### **How This Works**
 
@@ -163,7 +163,7 @@ Each major system is designed as a **Game Feature Plugin**, meaning:&#x20;
 
 #### **Examples of Modularity**
 
-* The **Inventory System** doesn’t dictate the UI—you can build your own visual layer.
+* The **Inventory System** doesn’t dictate the UI, you can build your own visual layer.
 * The **Weapon System** allows new mechanics without modifying base weapon classes.
 * The **Spawning System** dynamically adjusts based on **game mode conditions** (e.g., BR vs. TDM).
 
@@ -203,7 +203,7 @@ This is a high-level summary for context. For a deep dive into how Experiences a
 * A spectating system exists **only if a game mode enables it** (e.g., exists in BR but not in TDM).
 
 {% hint style="info" %}
-The Experience System **removes hard dependencies. G**ameplay mechanics are defined per mode, instead of hardcoded into the player class with complex inheritance chains.
+The Experience System **removes hard dependencies.** Gameplay mechanics are defined per mode, instead of hardcoded into the player class with complex inheritance chains.
 {% endhint %}
 
 ***

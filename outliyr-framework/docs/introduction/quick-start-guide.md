@@ -2,7 +2,7 @@
 
 ### **Your First Gameplay Session**
 
-This guide walks you through launching your first gameplay session with the framework. You’ll play a prebuilt game mode, explore its assets, and make a simple customization—all while learning how the modular system works.
+This guide walks you through launching your first gameplay session with the framework. You’ll play a prebuilt game mode, explore its assets, and make a simple customization, all while learning how the modular system works.
 
 {% hint style="info" %}
 This guide assumes you've already completed the [Installing & Setup](installing-and-setup.md) steps and have the project open in Unreal Engine.
@@ -28,9 +28,9 @@ Let's jump into a pre-built game mode to see the framework in action. We'll use 
 
     * In the Content Browser, make sure "Show Plugin Content" is enabled (Settings cogwheel in the Content Browser).
     * Navigate to the TDM plugin's content folder: `Plugins/GameFeatures/TeamDeathmatch/Content/Maps/`
-    * Open the TDM map (`L_TDM_Test`)
+    * Open either TDM map
 
-    <figure><img src="../.gitbook/assets/image (190).png" alt="" width="563"><figcaption><p>Team Death match map file and file path</p></figcaption></figure>
+    <figure><img src="../.gitbook/assets/image (244).png" alt=""><figcaption><p>Team Death match map file and file path</p></figcaption></figure>
 2.  **Check World Settings (Informational):**
 
     * With the map open, go to **Window > World Settings**.
@@ -58,9 +58,15 @@ Observe:
 
 Now that you've played it, let's briefly see where the TDM setup lives:
 
-1. **Game Feature Plugin:** The TDM mode resides in its plugin folder (e.g., `Plugins/GameFeatures/TeamDeathmatch/`).
-   * The `TeamDeathmatch.uplugin` file defines its dependencies (e.g., on `ShooterBase`, `LyraGame`). _This cannot be seen in the editor only in the file structure_. You can still set dependencies for the plugin in the editor through the game feature asset.
-   * The `TeamDeathmatch` asset (in the plugin's root content folder) lists any plugin-wide actions, like `AddGameplayCuePath`.
+1.  **Game Feature Plugin:** The TDM mode resides in its plugin folder (e.g., `Plugins/GameFeatures/TeamDeathmatch/`).
+
+    * The `TeamDeathmatch.uplugin` file defines its dependencies (e.g., on `ShooterBase`, `LyraGame`). _This cannot be seen in the editor only in the file structure_. You can still set dependencies for the plugin in the editor through the game feature asset.
+
+    <figure><img src="../.gitbook/assets/image (245).png" alt=""><figcaption></figcaption></figure>
+
+    <figure><img src="../.gitbook/assets/image (246).png" alt=""><figcaption></figcaption></figure>
+
+    * The `TeamDeathmatch` asset (in the plugin's root content folder) lists any plugin-wide actions, like `AddGameplayCuePath`.
 2. **Experience Definition:** Inside the plugin's content (e.g., `Content/TeamDeathmatch/Experiences/`), find `B_TeamDeathmatch` .
    *   Open it to see:
 
@@ -70,7 +76,7 @@ Now that you've played it, let's briefly see where the TDM setup lives:
 
        <figure><img src="../.gitbook/assets/image (3) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p><em><code>B_TeamDeathmatch</code> asset open, highlighting key properties.</em></p></figcaption></figure>
 
-#### Other Useful Assets in the Plugin
+#### Other Useful Assets in the TeamDeathmatch plugin
 
 * `HeroData_TeamDeathmatch` – Player configuration
 * `B_Scoring_TeamDeathmatch` – Scoring logic
@@ -93,10 +99,9 @@ This lets you experiment without breaking core functionality. Feel free to adjus
 * Win conditions
 * UI elements
 
-{% hint style="success" %}
-While it’s fine to experiment here, remember that the recommended way to make lasting changes is to duplicate assets into your own Game Feature Plugin.\
-This helps avoid conflicts and makes updates easier.\
-If you haven't already, see the [Installing & Setup](installing-and-setup.md) guide for how to set this up properly.
+{% hint style="info" %}
+If you want to keep your changes separate from the example plugins (making future framework updates easier to apply), you can duplicate these assets into your own Game Feature Plugin.\
+See the [Installing & Setup](installing-and-setup.md) guide for how to create one.
 {% endhint %}
 
 ***
@@ -118,23 +123,27 @@ You've now launched a game mode! This framework is extensive. Here’s where to 
     * **Dive In:** Learn how to define item shapes, create grid containers, and manage items spatially.
     * **➡️** [**See Tetris Inventory Documentation**](../core-modules/tetris-inventory/)
   * **True First Person:** For an immersive first-person perspective.
-    * **Key Features:** Full-body awareness, seamless first/third-person transitions (if supported), weapon animations synced with the first-person view.
+    * **Key Features:** Full-body awareness, seamless first/third-person transitions, weapon animations synced with the first-person view.
     * **Dive In:** Understand how to set up character meshes and animations for true FPS.
     * **➡️** [**See True First Person Documentation**](../core-modules/true-first-person.md)
 * **Leverage Base Lyra (Modified) Systems:**
   * This asset extends and utilizes many core Lyra concepts. Understanding these is beneficial:
-    * **Character System:** How pawns are built with components, GAS integration, movement. ([See Character System Docs](../base-lyra-modified/character/))
-    * **Item/Inventory System (Base):** The foundational item definitions, instances, fragments, permissions, GAS integration, and pickup system, which `TetrisInventory` builds upon. ([See Inventory System Docs](../base-lyra-modified/items/))
-    * **Equipment System:** How items (especially weapons) are equipped, grant abilities, and manage their runtime instances. ([See Equipment System Docs](../base-lyra-modified/equipment/))
-    * **Team System:** Defining teams, assigning players, and managing team visuals. ([See Team System Docs](../base-lyra-modified/team/))
-    * **Interaction System:** How players interact with objects in the world using GAS. ([See Interaction System Docs](../base-lyra-modified/interaction/))
-    * **Cosmetic System:** Dynamically changing pawn appearance with character parts. ([See Cosmetic System Docs](../base-lyra-modified/cosmetics/))
-    * **Game Phase System:** Managing the stages of a game session (e.g., warmup, playing, round end) using GAS and tags. ([See Game Phase System Docs](../base-lyra-modified/game-phase-system/))
-    * **Camera System:** Flexible camera modes and stack-based blending. ([See Camera System Docs](../base-lyra-modified/camera/))
-    * **Input System:** How Enhanced Input and Lyra Input Configs drive actions and abilities. ([See Input System Docs](../base-lyra-modified/input/))
-    * **Settings System:** Player and machine-specific settings management. ([See Settings System Docs](../base-lyra-modified/settings/))
+    * [**Character System**](../base-lyra-modified/character/)**:** How pawns are built with components, GAS integration, movement.&#x20;
+    * [**Items**](../base-lyra-modified/items/)**:** Item definitions, instances, fragments, permissions, and the pickup system.
+    * [**Inventory**](../base-lyra-modified/inventory/)**:** The inventory manager component, item queries, and inventory viewmodels/UI.
+    * [**Item Container**](../base-lyra-modified/item-container/)**:** The core container interface, transactions, prediction, and access rights that all container types (inventory, equipment, tetris, etc.) build on.
+    * [**Equipment System**](../base-lyra-modified/equipment/)**:** How items (especially weapons) are equipped, grant abilities, and manage their runtime instances.
+    * [**Weapons**](../base-lyra-modified/weapons/)**:** Weapon instances, range weapon configuration, weapon state, and reticle fragments.
+    * [**UI**](../base-lyra-modified/ui/)**:** The Lyra Indicator System for HUD markers and the Item Container UI System for container management interfaces.
+    * [**Team System**](../base-lyra-modified/team/)**:** Defining teams, assigning players, and managing team visuals.
+    * [**Interaction System**](../base-lyra-modified/interaction/)**:** How players interact with objects in the world using GAS.
+    * [**Cosmetic System**](../base-lyra-modified/cosmetics/)**:** Dynamically changing pawn appearance with character parts.
+    * [**Game Phase System**](../base-lyra-modified/game-phase-system/)**:** Managing the stages of a game session (e.g., warmup, playing, round end) using GAS and tags.
+    * [**Camera System**](../base-lyra-modified/camera/)**:** Flexible camera modes and stack-based blending.
+    * [**Input System**](../base-lyra-modified/input/)**:** How Enhanced Input and Lyra Input Configs drive actions and abilities.
+    * [**Settings System**](../base-lyra-modified/settings/)**:** Player and machine-specific settings management.
 * **Creating Your Own Game Mode:**
-  * Once you're familiar with the concepts, follow the detailed guide: [**Creating a New Game Mode (Practical Guide)**](../game-modes/extending-and-customization/creating-new-game-modes/).
+  * Once you're familiar with the concepts, follow the detailed guide: [**Creating a New Game Mode (Practical Guide)**](/broken/pages/nSHtc0HcLAWvxk4mEJgw).
 * **Analyze Example Game Modes:**
   * Each included game mode plugin (Arena, Battle Royale, Capture The Flag, Domination, Extraction, Free For All, Gun Game, Hardpoint, Headquarters, Infection, Kill Confirmed, Payload, Prop Hunt, Search & Destroy) in `Plugins/GameFeatures/` showcases different ways to combine these systems.
   * **For example:**
