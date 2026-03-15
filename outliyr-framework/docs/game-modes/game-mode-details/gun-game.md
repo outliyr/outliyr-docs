@@ -23,7 +23,7 @@ Content/
 └── UserInterface/
 ```
 
-This mode follows the standard folder convention with no additional folders. Weapon progression is driven by Gameplay Events.
+This mode follows the standard folder convention with no additional folders. Weapon progression is driven by the game `GA_AdvanceWeapon` in `Inputs/Ability`.
 
 ***
 

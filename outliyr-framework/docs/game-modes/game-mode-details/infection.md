@@ -42,7 +42,7 @@ Content/
 * **Asymmetric Teams** — Separate hero setups for Infected and Survivor roles in `Hero/`
 * **Team Setup** — Custom team assignment logic for the infection mechanic
 * **Bot AI** — Extensive AI with behavior trees, decorators, EQS, services, state trees, and custom tasks for role-specific behavior
-* **Experience Phases** — Multi-phase flow for infection rounds
+* **Experience Phases** — Gameplay abilities that manage game mode state transitions and rule changes. Example: the first infection.
 
 ### C++ Classes
 
