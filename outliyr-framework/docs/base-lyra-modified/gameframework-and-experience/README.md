@@ -80,4 +80,10 @@ The extended Unreal framework classes, how GameMode orchestrates experiences, Ga
 
 The data asset that defines a pawn's class, abilities, input, camera, and HUD, the complete picture of pawn configuration.
 {% endstep %}
+
+{% step %}
+[**Creating Experiences**](integrating-with-experiences-and-game-features-a-practical-guide.md)
+
+Practical walkthrough: building a new game mode from scratch as a Game Feature plugin, with a Target Practice example.
+{% endstep %}
 {% endstepper %}
