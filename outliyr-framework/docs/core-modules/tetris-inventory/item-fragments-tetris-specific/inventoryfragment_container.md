@@ -35,7 +35,7 @@ The child inventory is resolved at runtime by the parent item's **GUID**, not by
 
 Add `InventoryFragment_Container` to a `ULyraInventoryItemDefinition` and configure the following properties.
 
-<figure><img src="../../../.gitbook/assets/image (12) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (12) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 #### Container Identity and Layout
 

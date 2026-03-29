@@ -6,22 +6,18 @@ Leveraging the Game Phase System involves two main steps: first, defining the di
 
 Follow these steps for each unique stage or state in your game flow:
 
-1. **Create the Gameplay Tag:**
-   * Navigate to **Project Settings -> Project -> Gameplay Tags**.
-   * Click **"Add New Gameplay Tag"**.
-   * Define a tag that clearly represents the phase and fits logically within your desired hierarchy. Use dots (`.`) for nesting.
-     * _Examples:_ `GamePhase.Warmup`, `GamePhase.Playing.CaptureTheFlag`, `GamePhase.PostGame.Scoreboard`.
-   * **Hierarchy Planning:** Think carefully about parent/child/sibling relationships, as this directly impacts the automatic cancellation logic (See "Core Concept: The Phase Hierarchy").
-2. **Create the Phase Ability Class:**
+1. **Create the Phase Ability Class:**
    * In your Content Browser, right-click and choose **Blueprint Class**.
    * Search for and select **`LyraGamePhaseAbility`** as the parent class.
    * Give it a descriptive name, often mirroring the tag (e.g., `Phase_Warmup`, `Phase_Playing`, `Phase_RoundEnd`).
-3. **Set the `GamePhaseTag`:**
+2. **Set the `GamePhaseTag`:**
    * Open the newly created Blueprint Ability asset.
    * Go to the **Class Defaults**.
    * Locate the **`Game Phase Tag`** property (under the "Lyra|Game Phase" category).
-   * Select the specific Gameplay Tag you created in Step 1 from the dropdown list. **This step is crucial for linking the ability to the phase.**
-4. **(Optional) Add Phase-Specific Logic:**
+   * Select a Gameplay Tag or create a new one. **This step is crucial for linking the ability to the phase.**
+   * if you create a new one, define a tag that clearly represents the phase and fits logically within your desired hierarchy. Use dots (`.`) for nesting.
+     * _Examples:_ `GamePhase.Warmup`, `GamePhase.Playing.BombPlanted`, `GamePhase.PostGame.Scoreboard`.
+3. **(Optional) Add Phase-Specific Logic:**
    * In most cases, the phase ability subclass doesn't need any custom logic. The base `ULyraGamePhaseAbility` handles the necessary interaction with the `ULyraGamePhaseSubsystem` during activation and ending.
    * However, if you need something specific to happen _only_ when this exact phase begins or ends (beyond what observers handle), you could override `ActivateAbility` or `EndAbility` in your subclass and add logic **after** calling the `Super::` implementation. This is generally less common, as observer patterns are preferred for decoupling.
 
@@ -54,20 +50,13 @@ Transitions don't happen automatically based on time (unless you build timer log
 <summary>Advanced: Internal Execution Flow</summary>
 
 * Your game logic calls `StartPhase(TargetPhaseAbilityClass)`.
-
-- The subsystem finds or creates an ability spec for `TargetPhaseAbilityClass` on the GameState's ASC.
-
+* The subsystem finds or creates an ability spec for `TargetPhaseAbilityClass` on the GameState's ASC.
 * It activates that ability spec (`GiveAbilityAndActivateOnce`).
-
-- The `TargetPhaseAbilityClass`'s `ActivateAbility` function runs.
-
+* The `TargetPhaseAbilityClass`'s `ActivateAbility` function runs.
 * It calls `Super::ActivateAbility`, which in turn calls `PhaseSubsystem->OnBeginPhase`.
-
-- `OnBeginPhase` executes the core hierarchy cancellation logic, potentially ending other active phases.
-
+* `OnBeginPhase` executes the core hierarchy cancellation logic, potentially ending other active phases.
 * The `TargetPhaseAbilityClass` instance is now considered active, and the game is officially in the new phase.
-
-- Phase start observers are notified.
+* Phase start observers are notified.
 
 </details>
 

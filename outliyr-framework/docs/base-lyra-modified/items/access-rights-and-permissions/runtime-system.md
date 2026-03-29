@@ -111,7 +111,7 @@ OnAccessRightChanged (Msg : ItemAccessRightsChanged)
 {% endtab %}
 
 {% tab title="Example Image" %}
-<figure><img src="../../../.gitbook/assets/image (41).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (41) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 

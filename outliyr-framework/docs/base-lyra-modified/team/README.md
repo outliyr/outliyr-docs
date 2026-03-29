@@ -2,29 +2,34 @@
 
 Welcome to the Team System documentation. This system provides the framework for grouping players and AI into distinct teams, managing their affiliations, applying team-specific visuals, and enabling gameplay logic based on team relationships (e.g., friendly fire, team scoring, objective ownership).
 
-### Purpose: Organizing Players and Defining Affiliation
+The team system manages team identity, membership, visual representation, and cross-team queries for every actor in a match. It is designed around four principles:
 
-The core goals of the Team System are to:
+* **Data-driven** — teams are defined in the Experience, not hardcoded. A `ULyraTeamCreationComponent` on the GameState reads a simple `TeamsToCreate` map (team ID to display asset) and builds everything at runtime.
+* **Replicated** — team state flows from server to all clients automatically. Each team is represented by a pair of always-relevant info actors that carry the team's ID, tags, and visuals.
+* **Visually flexible** — display assets define named color, scalar, and texture parameters that materials and UI read by key. A perspective mode can override these so the local player always sees allies as blue and enemies as red, regardless of actual team IDs.
+* **Query-friendly** — the `ULyraTeamSubsystem` answers "is X on the same team as Y?" without the actors knowing about each other. Any system that needs team information goes through this single entry point.
 
-1. **Establish Team Identities:** Define distinct teams within a match using unique identifiers (Team IDs).
-2. **Assign Players/AI:** Associate actors (primarily Player States and Pawns via the `ILyraTeamAgentInterface`) with specific teams.
-3. **Manage Affiliation:** Provide a centralized way (`ULyraTeamSubsystem`) to query the team membership of any actor and compare the relationship between different actors (same team, different teams, no team).
-4. **Apply Team Visuals:** Use data assets (`ULyraTeamDisplayAsset`) to define team colors, icons, and other visual parameters, and apply them dynamically to actors based on their team or the viewer's perspective (Perspective Colors).
-5. **Support Team-Based Gameplay:** Enable game modes and systems to implement team-specific rules, scoring, objectives, and logic by querying team membership and relationships.
-6. **Modular Setup:** Allow team structures and assignments to be configured dynamically, often driven by the active Experience via the `ULyraTeamCreationComponent`.
+***
 
-### Core Concepts
+### Architecture
 
-* **Team ID:** A simple integer uniquely identifying each team (typically small numbers like 0, 1, 2...). `INDEX_NONE` (-1) represents no team affiliation.
-* **Team Agent Interface (`ILyraTeamAgentInterface`):** An interface implemented by actors (like `ALyraPlayerState` or potentially custom Pawns/Controllers) that can belong to a team. It provides the standard way to get/set the actor's `FGenericTeamId`.
-* **Team Info Actors (`ALyraTeamInfoBase`, `ALyraTeamPublicInfo`, `ALyraTeamPrivateInfo`):** Replicated `AInfo` actors representing the existence and state of a specific team in the world. Public info holds display assets, while both can hold replicated `TeamTags` (`FGameplayTagStackContainer`) for team-wide state.
-* **Team Subsystem (`ULyraTeamSubsystem`):** A world subsystem acting as the central registry and query point for all team information. It tracks registered `ALyraTeamInfoBase` actors and provides functions to find an actor's team, compare teams, and access display assets.
-* **Team Display Assets (`ULyraTeamDisplayAsset`):** Data Assets defining the visual properties (colors, textures, parameters) associated with a team or a perspective (Ally/Enemy).
-* **Team Creation Component (`ULyraTeamCreationComponent`):** A Game State Component (often added by an Experience) responsible for spawning the `ALyraTeamInfoBase` actors and performing initial player team assignments when a match starts.
-* **Perspective Colors:** An optional mode managed by the `ULyraTeamSubsystem` where team visuals are overridden based on the local viewer's relationship to an actor (Ally vs. Enemy) rather than the actor's actual team ID.
+{% tabs %}
+{% tab title="Simple" %}
+```mermaid
+flowchart LR
+    EXP["Experience"] --> TCC["TeamCreationComponent"]
+    TCC -->|spawns per team| PUB["Public Info Actor"]
+    TCC -->|spawns per team| PRIV["Private Info Actor"]
+    PUB -->|registers on BeginPlay| SUB["TeamSubsystem"]
+    PRIV -->|registers on BeginPlay| SUB
+    SUB -->|maps TeamID →| DATA["{ PublicInfo, PrivateInfo, DisplayAsset }"]
+    PS["PlayerState"] -->|stores TeamID| SUB
+    SUB -->|"FindTeamFromObject(Actor)"| QUERY["Gameplay Queries"]
+    SUB -->|"GetEffectiveTeamDisplayAsset()"| VIS["Visuals / UI"]
+```
+{% endtab %}
 
-### High-Level Interaction Diagram
-
+{% tab title="More Detailed" %}
 ```mermaid
 graph TD
     subgraph "Configuration & Setup"
@@ -73,16 +78,35 @@ graph TD
 5. During gameplay, other systems query the `ULyraTeamSubsystem` to find an actor's team ID or compare affiliations.
 6. The subsystem provides team data, including the appropriate `ULyraTeamDisplayAsset` (which might be the actual team's asset or an Ally/Enemy perspective asset).
 7. Visual systems use the Display Asset data to apply team colors/textures to actors and UI elements.
+{% endtab %}
+{% endtabs %}
 
 ### Structure of this Section
 
-This documentation section explores the team systems in detail:
+{% stepper %}
+{% step %}
+[**Team Model**](team-model.md)
 
-1. **Core Concepts - Deep Dive:** Delving into Team IDs, the Team Agent Interface, Team Info Actors, and Team Display Assets.
-2. **Team Management (`ULyraTeamSubsystem`):** Explaining the subsystem's role in tracking teams, managing agents, handling queries, and managing perspective colors.
-3. **Team Creation & Assignment (`ULyraTeamCreationComponent`):** How teams are initially set up and players are assigned based on Experience configuration.
-4. **Utilities & Blueprint Integration:** Covering the `ULyraTeamStatics` library and the Async Action nodes for observing team changes in Blueprints.
+What a team actually is at runtime, info actors, membership interface, display assets, and how they connect.
+{% endstep %}
+
+{% step %}
+[**Team Setup**](team-setup.md)
+
+How the creation component spawns teams from Experience data, assigns players, and supports asymmetric setups.
+{% endstep %}
+
+{% step %}
+[**Runtime Queries**](runtime-queries.md)
+
+The subsystem's role: finding teams, comparing teams, friendly fire checks, team tags, and viewer tracking.
+{% endstep %}
+
+{% step %}
+[**Team Visuals**](team-visuals.md)
+
+Display assets, perspective colors, async actions for reactive UI, and safe color accessors.
+{% endstep %}
+{% endstepper %}
 
 ***
-
-This overview introduces the Lyra Team System as a structured approach to managing player affiliations and team visuals within the game world, driven by the active gameplay Experience and managed centrally by the `ULyraTeamSubsystem`.

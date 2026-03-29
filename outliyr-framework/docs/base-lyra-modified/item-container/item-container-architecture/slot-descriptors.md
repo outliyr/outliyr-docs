@@ -132,7 +132,7 @@ struct FInventoryAbilityData_SourceItem : public FAbilityData_InventorySourceIte
 };
 ```
 
-<figure><img src="../../../.gitbook/assets/image (6) (1) (1) (1) (1) (1).png" alt="" width="473"><figcaption><p>Inventory Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (6) (1) (1) (1) (1) (1) (1).png" alt="" width="473"><figcaption><p>Inventory Source Slot</p></figcaption></figure>
 
 Inventory slots are simple: a reference to the inventory component and an integer index.
 
@@ -155,7 +155,7 @@ struct FEquipmentAbilityData_SourceEquipment : public FAbilityData_EquipmentSour
 };
 ```
 
-<figure><img src="../../../.gitbook/assets/image (27).png" alt="" width="391"><figcaption><p>Equipment Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (27) (1).png" alt="" width="391"><figcaption><p>Equipment Source Slot</p></figcaption></figure>
 
 Equipment slots use gameplay tags. Notice `ActiveHeldSlot`, this represents a _state_ (is the item being held?), not a separate location. The item always lives in `EquipmentSlot`; `ActiveHeldSlot` indicates whether it's currently in-hand.
 
@@ -183,7 +183,7 @@ struct FAttachmentAbilityData_SourceAttachment : public FAbilityData_SourceItem
 };
 ```
 
-<figure><img src="../../../.gitbook/assets/image (8) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p>Attachment Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (8) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p>Attachment Source Slot</p></figcaption></figure>
 
 Attachments are more complex because they can nest. A scope attached to a weapon that's equipped requires:
 
@@ -217,7 +217,7 @@ struct FPickupAbilityData_SourceItem : public FAbilityData_PickupSourceItem
 };
 ```
 
-<figure><img src="../../../.gitbook/assets/image (5).png" alt="" width="536"><figcaption><p>Pickup Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (5) (1).png" alt="" width="536"><figcaption><p>Pickup Source Slot</p></figcaption></figure>
 
 Pickup slots reference items within a world collectable's `FItemPickup`:
 
@@ -330,7 +330,7 @@ struct FNullSourceSlot : public FAbilityData_SourceItem
 };
 ```
 
-<figure><img src="../../../.gitbook/assets/image (9) (1) (1) (1) (1).png" alt="" width="181"><figcaption><p>Null Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (9) (1) (1) (1) (1) (1).png" alt="" width="181"><figcaption><p>Null Source Slot</p></figcaption></figure>
 
 Use this instead of invalid/empty `FInstancedStruct` when you need an explicit "no slot" value.
 

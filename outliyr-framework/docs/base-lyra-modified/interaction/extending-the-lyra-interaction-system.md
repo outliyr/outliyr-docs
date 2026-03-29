@@ -141,14 +141,3 @@ You can subclass it to:
 Just assign your custom ability in the player's granted abilities or inventory item.
 
 ***
-
-### Summary: Extension Entry Points
-
-| Extension                 | How                                      |
-| ------------------------- | ---------------------------------------- |
-| Add new interaction types | Return multiple `FInteractionOption`s    |
-| Change prompt behavior    | Customize the widget class               |
-| Redirect the logic        | Override `CustomizeInteractionEventData` |
-| Add interaction menus     | Implement `IInteractionInstigator`       |
-| Build custom logic        | Create new GAS abilities                 |
-| Integrate systems         | Use gameplay events and payloads         |

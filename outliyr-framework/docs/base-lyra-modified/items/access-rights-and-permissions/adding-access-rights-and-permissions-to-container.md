@@ -137,11 +137,11 @@ If you need Blueprint workflows, create a minimal C++ parent class that implemen
 Never poke `PermissionComp` directly.\
 Instead onteract through the functions defined on **IItemPermissionOwner**.
 
-* **Encapsulation** – keeps the underlying storage private; future refactors won’t break callers.
-* **Authority safety** – mutating functions are tagged `BlueprintAuthorityOnly`; they simply do nothing when called on a non-authoritative client.
-* **Identical API** in C++ and Blueprints – write gameplay code once, use it everywhere.
+* **Encapsulation** — keeps the underlying storage private; future refactors won’t break callers.
+* **Authority safety** — mutating functions are tagged `BlueprintAuthorityOnly`; they simply do nothing when called on a non-authoritative client.
+* **Identical API** in C++ and Blueprints — write gameplay code once, use it everywhere.
 
-With these three edits and the interface calls in place, your container now inherits the full Access-Rights & Permissions pipeline: server-side authority, fast-array replication, and gameplay-message notifications – all without touching its original item logic.
+With these three edits and the interface calls in place, your container now inherits the full Access-Rights & Permissions pipeline: server-side authority, fast-array replication, and gameplay-message notifications, all without touching its original item logic.
 
 ***
 

@@ -2,81 +2,82 @@
 
 This section delves into the core systems that manage the overall game flow, session rules, and modular content delivery within this asset. Building upon Unreal Engine's standard framework (Game Mode, Game State, etc.), it leverages Lyra's **Experience** system and Unreal's **Game Features** plugin infrastructure to create highly modular and customizable gameplay sessions.
 
-### Purpose: Defining and Delivering Gameplay Sessions
+In a traditional Unreal project, you create a GameMode subclass per game type. Deathmatch gets one. Elimination gets another. Want the same map to support both? Now you need conditional logic, duplicate configuration, and tight coupling between maps and gameplay rules. Add a battle royale mode six months later, and you're either refactoring the base GameMode or layering in yet another subclass with its own override chain.
 
-The primary goal of these interconnected systems is to provide a structured way to:
-
-1. **Define Gameplay Sessions:** Specify the rules, map, player configurations (Pawn types, abilities), UI layouts, and required features for different game modes or scenarios using **Experience Definitions**.
-2. **Modular Content Delivery:** Load and activate specific gameplay logic, assets, UI elements, and input configurations on demand using the **Game Features** plugin system, driven by the selected Experience.
-3. **Orchestrate Game Flow:** Manage the standard Unreal lifecycle (joining players, spawning Pawns, setting up game state) while integrating the Experience loading and Game Feature activation processes.
-4. **Decouple Features:** Allow different gameplay features (defined in separate plugins/modules) to be activated or deactivated for different Experiences without creating hard dependencies between them.
-
-Think of an **Experience** as the high-level blueprint for a specific match or gameplay session (e.g., "Team Deathmatch on Arena Map," "Capture the Flag Tutorial," "Main Menu"). **Game Features** are the modular packages containing the specific code and content needed for parts of that experience (e.g., "CTF Rules," "Arena UI Elements," "Standard Weapon Abilities"). The **Game Framework** classes (Game Mode, Game State) coordinate loading the correct Experience and activating its required Game Features.
-
-### Key Concepts & Terminology
-
-* **Experience Definition (`ULyraExperienceDefinition`):** A primary Data Asset defining the core components of a gameplay session, including the Game Features to enable, default Pawn configuration, and specific setup Actions.
-* **Game Feature:** A self-contained plugin managed by Unreal Engine's Game Features subsystem. Experiences activate specific Game Features to load their content and logic.
-* **Game Feature Action (`UGameFeatureAction`):** The mechanism by which a Game Feature executes logic when it's activated or deactivated (e.g., adding abilities, input mappings, widgets).
-* **Experience Action Set (`ULyraExperienceActionSet`):** A reusable collection of Game Features and Actions that can be included in multiple Experience Definitions.
-* **Game Mode (`ALyraGameMode`):** Server-authoritative class responsible for game rules, player joining, and initiating the Experience loading process.
-* **Game State (`ALyraGameState`):** Replicated container for game-wide state, hosting the `ULyraExperienceManagerComponent` which manages the loading/activation lifecycle.
-* **Pawn Data (`ULyraPawnData`):** A Data Asset defining the specific Pawn class, abilities, input, camera, and UI associated with a player character type, often specified by the loaded Experience.
-
-### High-Level Interaction Flow
-
-_(Simplified Diagram)_
-
-```mermaid
-graph TD
-    subgraph "Session Setup"
-        A(Game Starts / Session Request) --> B(ALyraGameMode::InitGame);
-        B -- Determines Experience --> C["ULyraExperienceManagerComponent::SetCurrentExperience"];
-    end
-
-    subgraph "Experience Loading (via ExperienceManagerComponent)"
-        C --> D{Load Experience Definition};
-        D --> E{Load Required Game Features};
-        E --> F{Activate Game Features};
-        F --> G{Execute Game Feature Actions};
-        G --> H(Experience Loaded);
-    end
-
-    subgraph "Game Feature Actions (Examples)"
-        G --> GA1["Action: Add Abilities"];
-        G --> GA2["Action: Add Input Mapping"];
-        G --> GA3["Action: Add Widgets"];
-    end
-
-    subgraph "Game Runtime"
-        H -- Allows --> I(ALyraGameMode::HandleStartingNewPlayer);
-        I -- Uses PawnData From --> J(Loaded Experience / Player State);
-        J --> K(Spawn Pawn with Correct Abilities/Input/UI);
-    end
-
-    style C fill:#ccf,stroke:#333,stroke-width:2px
-    style H fill:#dfd,stroke:#333,stroke-width:2px
-    style G fill:#f9d,stroke:#333,stroke-width:1px
-```
-
-**Explanation:**
-
-1. The Game Mode starts and determines which Experience Definition needs to be loaded (based on URL options, world settings, etc.).
-2. It tells the `ULyraExperienceManagerComponent` (on the Game State) to load this Experience.
-3. The Experience Manager loads the Definition asset, identifies the required Game Feature plugins, and loads/activates them.
-4. As Game Features activate, their associated Game Feature Actions execute, configuring the game world (e.g., adding global abilities, setting up input mappings, registering widgets).
-5. Once the Experience (including its features and actions) is fully loaded, the Game Mode allows players to spawn.
-6. When spawning a player, the Game Mode uses the `ULyraPawnData` (often specified by the loaded Experience) to configure the Pawn correctly with the right abilities, input, UI elements, etc.
-
-### Structure of this Section
-
-This documentation section explores these systems in detail:
-
-* **Experiences:** Delving into data Experience Definitions, Action Sets, and User Facing Definitions.
-* **Game Features Integration:** How Experiences activate Game Features, the role of the Experience Manager Component, and examples of common Game Feature Actions.
-* **Core Game Flow Classes:** Detailed documentation for the customized Game Mode, Game State, Game Instance, and Game Session classes.
-* **Supporting Data Assets:** Covering key configuration assets like World Settings, and the Asset Manager.
+Experiences solve this by separating _what gameplay rules apply_ from _which map we're on_. An experience is a data asset that defines everything about a gameplay session, which pawn players control, which abilities they have, which UI appears on screen, and which game feature plugins provide the functionality. The same map can host different experiences. The same experience can run on different maps. You never subclass GameMode to create a new game type.
 
 ***
 
-This overview introduces the core concepts of Experiences and Game Features as the foundation for modular gameplay sessions in this asset. Understanding this framework is key to customizing game modes, adding new features, and managing the overall game flow.
+### Design Principles
+
+**Data-driven** — Game modes are data assets, not C++ subclasses. Creating a new mode means creating a new `ULyraExperienceDefinition` in the editor, not writing a new class.
+
+**Modular** — Functionality comes from game feature plugins that are mixed and matched per experience. Weapons, HUD, input bindings, scoring logic, each lives in its own plugin and is composed at runtime.
+
+**Async-ready** — Experiences load asynchronously. Game features and their assets arrive on demand through the asset manager. The loading screen stays visible until everything is ready, and nothing blocks the game thread waiting for content.
+
+**Composable** — Action sets package groups of game feature actions into reusable bundles. A "shooter base" action set can be shared across every FPS-style experience without duplicating a single action.
+
+***
+
+### Architecture
+
+The flow from map load to active gameplay passes through several systems, each with a single responsibility.
+
+```mermaid
+flowchart TD
+    WS["World Settings<br/><em>DefaultGameplayExperience</em>"]
+    GM["Game Mode<br/><em>resolves experience ID</em>"]
+    EMC["Experience Manager Component<br/><em>on Game State</em>"]
+    EXP["Experience Definition<br/><em>data asset loaded async</em>"]
+    GF["Game Feature Plugins<br/><em>loaded & activated</em>"]
+    ACT["Game Feature Actions<br/><em>executed in order</em>"]
+    PLAY["Gameplay Active<br/><em>pawns spawn, UI appears</em>"]
+
+    WS -->|"provides default<br/>experience ID"| GM
+    GM -->|"SetCurrentExperience()"| EMC
+    EMC -->|"async loads asset<br/>by primary ID"| EXP
+    EXP -->|"declares plugin<br/>dependencies"| GF
+    GF -->|"activation triggers"| ACT
+    ACT -->|"components, abilities,<br/>widgets injected"| PLAY
+```
+
+When a map loads, the **Game Mode** resolves which experience to use. It checks multiple sources in priority order, matchmaking assignment, URL options, developer settings (PIE only), command line, world settings, falling back through the chain until it finds a valid experience ID. Once resolved, it passes that ID to the **Experience Manager Component** living on the Game State.
+
+The Experience Manager Component drives the entire async pipeline. It loads the experience definition by primary asset ID, identifies every game feature plugin the experience and its action sets depend on, loads and activates those plugins, then executes every game feature action declared by the experience. The loading screen remains up throughout this process via the `ILoadingProcessInterface`. Only when the load state reaches `Loaded` do pawns spawn and gameplay begin.
+
+***
+
+### Sub-pages
+
+{% stepper %}
+{% step %}
+[**Experiences**](experiences.md)
+
+The data model, Experience Definitions, Action Sets, User-Facing Experiences, and how they compose together.
+{% endstep %}
+
+{% step %}
+[**Experience Lifecycle**](experience-lifecycle.md)
+
+The full lifecycle from map load to gameplay, experience selection, async loading, action execution, and the CallOrRegister pattern.
+{% endstep %}
+
+{% step %}
+[**Game Features**](/broken/pages/MMuer3tX1noU84k4jem8)
+
+The modularity system, plugins loaded on demand, all action types, and how the extension system injects functionality.
+{% endstep %}
+
+{% step %}
+[**Game Mode & State**](game-mode-and-state.md)
+
+The extended Unreal framework classes, how GameMode orchestrates experiences, GameState hosts them, and WorldSettings configures defaults.
+{% endstep %}
+
+{% step %}
+[**Pawn Data**](lyrapawndata.md)
+
+The data asset that defines a pawn's class, abilities, input, camera, and HUD, the complete picture of pawn configuration.
+{% endstep %}
+{% endstepper %}

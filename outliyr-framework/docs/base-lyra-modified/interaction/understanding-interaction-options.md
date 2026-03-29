@@ -96,7 +96,7 @@ If set, this widget overrides the default prompt UI. This allows you to:
 * Show different data or layouts
 * Handle complex interaction visuals (e.g., item previews, icons, warnings)
 
-If left unset, the system uses a default UI that supports icons, text, subtext, and timers — clean and controller-aware.
+If left unset, the system uses a default UI that supports icons, text, subtext, and timers, clean and controller-aware.
 
 ***
 
@@ -157,18 +157,5 @@ This will:
 * Display the prompt at the same location of the `TerminalInteractionWidgetComponent` in the viewport
 {% endtab %}
 {% endtabs %}
-
-***
-
-### Summary
-
-| Field                                                   | Purpose                                          |
-| ------------------------------------------------------- | ------------------------------------------------ |
-| `Text`, `SubText`                                       | What appears in the prompt                       |
-| `InteractionTime`                                       | Whether the interaction is instant or hold-based |
-| `InteractionAbilityToGrant`                             | Ability granted to the player                    |
-| `TargetAbilitySystem`, `TargetInteractionAbilityHandle` | Ability triggered on another actor               |
-| `InteractionWidgetClass`                                | Optional custom widget                           |
-| `InteractionWidgetComponent`                            | Where to show the prompt in world space          |
 
 ***

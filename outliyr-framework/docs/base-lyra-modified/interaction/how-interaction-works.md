@@ -1,6 +1,6 @@
 # How Interaction Works
 
-This section explains the full flow of the Lyra Interaction System — how it detects interactables, gathers interaction options, and triggers gameplay logic via GAS (Gameplay Ability System). It also covers how abilities are correctly assigned and executed, either on the player or on external targets.
+This section explains the full flow of the Lyra Interaction System, how it detects interactables, gathers interaction options, and triggers gameplay logic via GAS (Gameplay Ability System). It also covers how abilities are correctly assigned and executed, either on the player or on external targets.
 
 ***
 
@@ -24,14 +24,10 @@ The system uses  two scanning methods to find nearby or focused interactables:
 
 #### How the scans work together:
 
-* The **overlap scan is a core part of the interaction system** — it is responsible for granting abilities to the player so they can interact. If it doesn't run (or fails to detect something), the player won’t receive the ability, and the trace system won’t consider that interaction valid.
-* The **line trace is responsible for determining the current focus target** — it decides what the player is trying to interact with when pressing the interaction input.
+* The **overlap scan is a core part of the interaction system**, it is responsible for granting abilities to the player so they can interact. If it doesn't run (or fails to detect something), the player won’t receive the ability, and the trace system won’t consider that interaction valid.
+* The **line trace is responsible for determining the current focus target**, it decides what the player is trying to interact with when pressing the interaction input.
 * In some cases, an interaction may be set up to **trigger an ability directly on the target actor’s Ability System**. In that case, no ability is granted to the player, and the overlap scan doesn’t play a functional role, but it’s still active and part of the system's design. _(See “_[_Ability Assignment_](how-interaction-works.md#ability-assignment-two-approaches)_” below for how this works in detail.)_
 * **Key takeaway:** Both scans are part of the complete interaction pipeline. The overlap grants interaction capabilities; the trace resolves the current target. If either is disabled or misconfigured, interactions will fail.
-
-{% hint style="info" %}
-The interaction&#x20;
-{% endhint %}
 
 ***
 

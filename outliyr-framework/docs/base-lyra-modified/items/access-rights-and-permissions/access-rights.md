@@ -56,7 +56,7 @@ enum class EItemContainerAccessRights : uint8
 | **ReadOnly**  | Yes                                                | Yes                                           | Loot chest preview, spectator screen |
 | **ReadWrite** | Yes                                                | Yes                                           | Local player inventory, team storage |
 
-A remote player with _NoAccess_ won’t even have the `ULyraInventoryItemInstance` objects listed in their `SubobjectRepKey` table – a measurable saving on saturated servers.
+A remote player with _NoAccess_ won’t even have the `ULyraInventoryItemInstance` objects listed in their `SubobjectRepKey` table, a measurable saving on saturated servers.
 
 ***
 
@@ -67,7 +67,7 @@ A remote player with _NoAccess_ won’t even have the `ULyraInventoryItemInstanc
 * **Treat ReadOnly as a UI-only state**.\
   Abilities that modify items should check `RequiredAccessRights == ReadWrite` by default.
 * **Never rely on Permissions alone**.\
-  A mis-configured container that leaves Access at `ReadWrite` but clears every Permission still replicates all item data to the client – fine if you need hover-tooltips, but wasteful if true secrecy is desired.
+  A mis-configured container that leaves Access at `ReadWrite` but clears every Permission still replicates all item data to the client, fine if you need hover-tooltips, but wasteful if true secrecy is desired.
 
 ***
 
@@ -75,6 +75,6 @@ A remote player with _NoAccess_ won’t even have the `ULyraInventoryItemInstanc
 
 | Situation                                                       | Server code snippet                                                                    |
 | --------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| **Player walks up to a chest** – let them preview contents.     | `PermissionOwner->SetContainerAccessRight(PC, EItemContainerAccessRights::ReadOnly);`  |
-| **Player presses ‘E’ to interact** – open and allow take / put. | `PermissionOwner->SetContainerAccessRight(PC, EItemContainerAccessRights::ReadWrite);` |
-| **Player walks away** – stop replication.                       | `PermissionOwner->RemoveContainerAccessRight(PC);` _(falls back to default NoAccess)_  |
+| **Player walks up to a chest** — let them preview contents.     | `PermissionOwner->SetContainerAccessRight(PC, EItemContainerAccessRights::ReadOnly);`  |
+| **Player presses ‘E’ to interact** — open and allow take / put. | `PermissionOwner->SetContainerAccessRight(PC, EItemContainerAccessRights::ReadWrite);` |
+| **Player walks away** — stop replication.                       | `PermissionOwner->RemoveContainerAccessRight(PC);` _(falls back to default NoAccess)_  |

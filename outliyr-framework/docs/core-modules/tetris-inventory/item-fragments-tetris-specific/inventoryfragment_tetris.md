@@ -57,7 +57,7 @@ The top-left `true` value in the array serves as the conceptual reference point.
 
 You design item shapes directly in the Details panel. When you select an `InventoryFragment_Tetris`, the shape property displays as an **interactive grid editor**, no need to edit raw arrays or use external tools.
 
-<figure><img src="../../../.gitbook/assets/image (4).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (4) (1).png" alt=""><figcaption></figcaption></figure>
 
 #### How It Works
 

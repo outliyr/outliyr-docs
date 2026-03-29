@@ -16,7 +16,7 @@ ID_HealthPotion
    └─ InventoryFragment_Consume   ← this makes it usable
 ```
 
-<figure><img src="../../../../.gitbook/assets/image (47).png" alt=""><figcaption><p>Consumable Fragment</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (47) (1).png" alt=""><figcaption><p>Consumable Fragment</p></figcaption></figure>
 
 #### Adding the fragment step-by-step
 

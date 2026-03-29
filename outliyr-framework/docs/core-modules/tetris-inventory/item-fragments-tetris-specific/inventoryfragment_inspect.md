@@ -19,7 +19,7 @@ A flat 2D icon tells the player they have a shotgun. But let them grab it, spin 
 
 Add `InventoryFragment_Inspect` to a `ULyraInventoryItemDefinition` and configure the following sections.
 
-<figure><img src="../../../.gitbook/assets/image (13) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (13) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 #### Visual Mesh
 

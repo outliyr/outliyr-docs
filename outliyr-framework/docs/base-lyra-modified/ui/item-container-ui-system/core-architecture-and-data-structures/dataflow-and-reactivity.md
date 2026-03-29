@@ -72,7 +72,7 @@ Select `ItemViewModel.DisplayName`.
 
 Now whenever `DisplayName` changes, the Text widget updates automatically.
 
-<figure><img src="../../../../.gitbook/assets/image (14).png" alt=""><figcaption><p>Example of binding Equipment Slot View Model values to the Item Icon and Background Icon</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (14) (1).png" alt=""><figcaption><p>Example of binding Equipment Slot View Model values to the Item Icon and Background Icon</p></figcaption></figure>
 
 ***
 

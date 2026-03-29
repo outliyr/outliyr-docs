@@ -108,7 +108,7 @@ All containers implement `ILyraItemContainerInterface`. For container-specific d
   Understanding Definitions, Instances, Stat Tags, and the different Fragment types (Base, Transient Struct, Transient UObject).
 * [World Interaction & Global Management](world-interaction-and-global-management/)\
   How items exist outside inventories (`IPickupable`, `ALyraWorldCollectable`) and the role of the `UGlobalInventoryManager`.
-* [Modularity: Fragment Injector](modularity-fragment-injector/)\
+* [Modularity: Fragment Injector](modularity-fragment-injector.md)\
   Adding functionality via plugins using the Fragment Injector system.
 * [Item Fragments In-Depth](item-fragments-in-depth/)\
   Detailed explanations and usage for specific fragments (Attachment, Consume, Icon, Category, Pickup, SetStats).

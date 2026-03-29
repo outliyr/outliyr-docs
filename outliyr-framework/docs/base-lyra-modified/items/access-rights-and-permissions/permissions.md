@@ -56,7 +56,7 @@ If you find yourself gating multiple unrelated UI buttons behind the same flag, 
 
 ## Design guidelines
 
-* **Default to the safest mask** – most world chests ship with `TakeOutItems` only.
+* **Default to the safest mask** — most world chests ship with `TakeOutItems` only.
 * **Do not gate Equip/Attach behind MoveItems** unless you really mean it.\
   Let players equip directly from loot windows by giving permission to `TakeOutItems` from the container and `PutInItems` in their equipment manager.
 * **Pair PutIn and TakeOut thoughtfully.**\

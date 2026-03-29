@@ -14,23 +14,39 @@ Lyra's input architecture is designed to be robust, flexible, and highly data-dr
   * **Platform Adaptability:** Enhanced Input is designed to handle input from various devices and platforms more easily.
 * **Modularity via Game Feature Plugins:** Input schemes, new actions, and ability bindings can be encapsulated within Game Feature Plugins. This means you can add or alter input functionality for specific game modes or content updates without deeply modifying core systems, promoting a cleaner, more extensible architecture.
 
-### The Big Picture: How an Input Becomes an Action or Ability
+### The Pipeline
 
-Understanding the flow of an input event from the player's physical action to an in-game result is crucial. Here's a high-level overview of this journey:
+{% stepper %}
+{% step %}
+#### Hardware to Enhanced Input
 
-1. **Player Input:** The player presses a key, moves a mouse, or uses a gamepad stick.
-2. **Enhanced Input Subsystem Processing:** Unreal Engine's **Enhanced Input Subsystem** captures this hardware event. It looks at the active `Input Mapping Contexts` (IMCs) to see if this hardware input is recognized.
-3. **Mapping to an Input Action:** If a match is found in an IMC, the hardware input is translated into an abstract `Input Action` (IA) (e.g., "IA\_Jump," "IA\_PrimaryFire").
-4. **Lyra's Interpretation (ULyraInputConfig):**
-   * **(For Gameplay Abilities):** A `ULyraInputConfig` Data Asset maps this `Input Action` to a specific `GameplayTag` (e.g., `InputTag.Ability.Jump`). This tag acts as an identifier for the _intent_ to perform an ability.
-   * **(For Native C++ Actions):** Similarly, an `Input Action` can be mapped to a `GameplayTag` (e.g., `InputTag.Move.Forward`) intended for direct C++ function calls, like character movement.
-5. **Binding and Dispatch (ULyraInputComponent):** A specialized input component on the Pawn (`ULyraInputComponent`), often set up by the `ULyraHeroComponent`, has bindings for these `Input Actions` (identified by their Gameplay Tags from the `ULyraInputConfig`).
-6. **Notifying Systems:**
-   * **(For Gameplay Abilities):** When an ability-related `Input Action` is triggered, the `ULyraInputComponent` (via the `ULyraHeroComponent`) notifies the Pawn's `Ability System Component` (ASC) that the associated `InputTag` (e.g., `InputTag.Ability.Jump`) has been pressed or released.
-   * **(For Native C++ Actions):** The `ULyraInputComponent` directly calls the bound C++ function (e.g., a movement function on the `ULyraHeroComponent`).
-7. **Ability Activation (Ability System Component):** The `Ability System Component` (ASC) then checks if any of its granted Gameplay Abilities are configured to activate in response to the received `InputTag`. If so, it attempts to activate the ability.
+Player presses a key or moves a stick, the hardware event is captured by the Enhanced Input Subsystem.
+{% endstep %}
 
-This flow, while involving several components, provides a highly decoupled and configurable system. We will explore each of these steps in greater detail in the subsequent pages.
+{% step %}
+#### IMC to Input Action
+
+Enhanced Input maps the hardware event to an abstract Input Action via the active Input Mapping Contexts.
+{% endstep %}
+
+{% step %}
+#### Input Action to Gameplay Tag
+
+The Input Action is translated to a Gameplay Tag through a `ULyraInputConfig` data asset.
+{% endstep %}
+
+{% step %}
+#### Dispatch
+
+`ULyraInputComponent` dispatches the tag, either to a native C++ handler (movement, look) or to the Ability System Component.
+{% endstep %}
+
+{% step %}
+#### Ability Activation
+
+The ASC finds granted abilities matching the input tag and activates them based on their activation policy.
+{% endstep %}
+{% endstepper %}
 
 ### Key Terminology
 
@@ -47,11 +63,11 @@ As you delve into Lyra's input system, you'll encounter these terms frequently:
 
 To help you navigate this complex but powerful system, this documentation is structured as follows:
 
-* **The Journey of an Input:** A detailed, step-by-step breakdown of how a key press translates into a Gameplay Ability.
-* **Configuring Input:** How to set up and link the various Data Assets (`InputMappingContext`, `InputAction`, `ULyraInputConfig`) and leverage Game Features for modular input.
-* **Customizing Input Behavior:** Information on using Lyra's custom input modifiers, handling sensitivity, and managing user settings like key rebinding.
-* **Advanced & Low-Level Input:** Details on more specialized input components and functionalities.
-* **Practical Guides & How-Tos:** Step-by-step instructions for common input-related development tasks.
+* [**The Journey of an Input**](key-press-to-gameplay-ability.md)**:** A detailed, step-by-step breakdown of how a key press translates into a Gameplay Ability.
+* [**Configuring Input**](configuring-input.md)**:** How to set up and link the various Data Assets (`InputMappingContext`, `InputAction`, `ULyraInputConfig`) and leverage Game Features for modular input.
+* [**Customizing Input Behavior**](customizing-input-behaviour.md)**:** Information on using Lyra's custom input modifiers, handling sensitivity, and managing user settings like key rebinding.
+* [**Advanced & Low-Level Input**](low-level-input.md)**:** Details on more specialized input components and functionalities.
+* [**Practical Guides**](practical-guides.md)**:** Step-by-step instructions for common input-related development tasks.
 
 Let's begin by taking a closer look at the journey of an input.
 

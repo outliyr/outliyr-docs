@@ -58,9 +58,9 @@ You typically trigger the menu from your **Slot Widget** (the widget representin
 
 <summary>Blueprint graph showing utilization of <code>ItemActionMenu</code> in equipment slot</summary>
 
-<figure><img src="../../../../.gitbook/assets/image (9).png" alt=""><figcaption><p>Blueprint Graph showing OnMouseButtonDown->CreateItemActionMenu on right click</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (9) (1).png" alt=""><figcaption><p>Blueprint Graph showing OnMouseButtonDown->CreateItemActionMenu on right click</p></figcaption></figure>
 
-<figure><img src="../../../../.gitbook/assets/image (10).png" alt=""><figcaption><p>Inform the ActionMenuViewModel that it should create should populate a menu for the item in the slot</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (10) (1).png" alt=""><figcaption><p>Inform the ActionMenuViewModel that it should create should populate a menu for the item in the slot</p></figcaption></figure>
 
 </details>
 
@@ -84,7 +84,7 @@ Create a simple button widget for the list.
 * **Text:** Bind to `ActionData.DisplayName`.
 * **On Clicked:** Call `ActionMenuVM->ExecuteAction(ActionData.ActionTag)`.
 
-<figure><img src="../../../../.gitbook/assets/image (12).png" alt=""><figcaption><p>ItemActionButton OnClicked Implementation</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (12) (1).png" alt=""><figcaption><p>ItemActionButton OnClicked Implementation</p></figcaption></figure>
 
 ***
 
@@ -137,7 +137,7 @@ For an action to work, you **must** have a Gameplay Ability in your project that
 
 Every item action ability receives the same payload in its EventData. You can use the `GetCustomAbilityData` node in your Ability Blueprint to extract the `FItemActionContext`. This tells your ability exactly which item it should act upon.
 
-<figure><img src="../../../../.gitbook/assets/image (18).png" alt=""><figcaption><p>Example unpacking the item action context from the gameplay ability</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (18) (1).png" alt=""><figcaption><p>Example unpacking the item action context from the gameplay ability</p></figcaption></figure>
 
 ***
 

@@ -115,7 +115,7 @@ bool bCanMove = IItemPermissionOwner::Execute_HasContainerPermission(
 
 In Blueprint graphs you’ll see nodes auto-generated from the interface, for example:
 
-<figure><img src="../../../.gitbook/assets/image (42).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (42) (1).png" alt=""><figcaption></figcaption></figure>
 
 </details>
 

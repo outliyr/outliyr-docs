@@ -1,4 +1,4 @@
-# InventoryFragment\_Combine
+# InventoryFragment\_CraftRecipe
 
 You have berries in one slot and an empty bottle in another. The player drags the berries onto the bottle and a health potion appears in their inventory. Just drag, drop, and combine, right there in the grid.
 
@@ -21,7 +21,7 @@ You have berries in one slot and an empty bottle in another. The player drags th
 
 The fragment lives on the **target item** - the item that _receives_ the drop. The incoming item (the one being dragged) is looked up as a key in the recipe map.
 
-<figure><img src="../../../.gitbook/assets/image (10) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (10) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ### The `CombinationList` (TMap)
 
