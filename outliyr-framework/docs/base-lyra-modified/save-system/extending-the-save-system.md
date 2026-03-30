@@ -337,3 +337,10 @@ The caller code (`SaveContainer`, `LoadContainerInto`, etc.) is completely unawa
 For most projects, the disk-based implementation is sufficient through development and early production. Migrate to a backend when you need multiple server instances accessing the same player data.
 {% endhint %}
 
+### A Note on World-State Persistence
+
+This save system is **per-player**, every operation is keyed by an `APlayerController*`. It's designed for data that belongs to a specific player: their inventory, equipment, currency, progression.
+
+It is **not** designed for world-state persistence, saving which loot crates have been opened, what items are still on the ground, or the state of placed structures. World persistence requires a different keying model (map + actor identity rather than player identity) and a different lifecycle (tied to map load/unload rather than player login/logout).
+
+If your game needs world-state persistence (survival base building, persistent open worlds, sandbox servers), that would be a separate subsystem with its own save file. The item serialization helpers (`SerializeItem`, `DeserializeItem`, `SerializeContainer`) can be reused since they're stateless, but the save lifecycle and storage would be independent.
