@@ -4,6 +4,8 @@ An experience defines a complete gameplay session as data. Rather than encoding 
 
 Three asset types work together to make this happen: the **Experience Definition** holds the gameplay configuration, **Action Sets** package reusable groups of actions for sharing across experiences, and the **User-Facing Experience** maps display information for lobby screens and mode selectors.
 
+***
+
 ### Experience Definition (`ULyraExperienceDefinition`)
 
 The experience definition is the core asset. When you create a new game mode, you create one of these. It is a `UPrimaryDataAsset`, which means it can be loaded by primary asset ID through the asset manager without requiring hard references from any other asset. This is what makes the entire async loading pipeline possible, the Game Mode only needs an ID string, not a loaded object.
@@ -48,6 +50,8 @@ TArray<FString> GameFeaturesToEnable;
 
 Names of game feature plugins to load and activate for this experience. These are string identifiers resolved by the Game Features subsystem. The experience manager loads these plugins asynchronously, waits for all of them to finish, then proceeds to action execution. Action sets can declare their own plugin dependencies as well, the manager merges both lists.
 
+***
+
 ### Action Sets (`ULyraExperienceActionSet`)
 
 An action set packages a group of actions and game feature dependencies into a reusable bundle. This is the primary composition mechanism for experiences.
@@ -83,6 +87,8 @@ Plugin dependencies this action set needs. If your "ShooterBase" action set gran
 Like experience definitions, action sets inherit from `UPrimaryDataAsset`. This means they participate in the asset manager's bundle system and can have their dependent assets (widget classes, ability classes, input configs) tracked and loaded as part of the experience's async load. The experience definition's `UpdateAssetBundleData()` implementation walks its action sets and aggregates their bundle data, ensuring nothing is missed during the load.
 
 </details>
+
+***
 
 ### User-Facing Experience (`ULyraUserFacingExperienceDefinition`)
 
@@ -125,6 +131,97 @@ TSoftClassPtr<UUserWidget> LoadingScreenWidget;
 ```
 
 `MaxPlayerCount` sets the lobby size. `bIsDefaultExperience` gives this mode priority in quick-play flows and dedicated server fallback. `bShowInFrontEnd` controls whether it appears in the mode list at all. `ExtraArgs` passes additional URL parameters to the server travel (useful for variant rules on the same experience). `LoadingScreenWidget` allows a custom loading screen per mode.
+
+#### Game Mode Options
+
+Each game mode can declare its own configurable options, bot count, score limit, friendly fire, round time, as data on the user-facing experience. The host session screen reads these declarations and generates the appropriate UI controls dynamically. Players adjust the values, and they flow through the same `ExtraArgs` pipeline that already carries URL parameters to the server.
+
+<figure><img src="../../.gitbook/assets/image (272).png" alt=""><figcaption></figcaption></figure>
+
+The `GameModeOptions` array holds instanced `ULyraGameModeOption` descriptors. Because the array uses the `Instanced` property specifier, you add options directly inside the data asset, no separate assets to manage. Each descriptor stores an `OptionKey` (the URL parameter name), a `DisplayName` for the UI, an optional `Description` for tooltips, and a `SortOrder` to control display ordering.
+
+Three option types are available:
+
+**Bool** (`ULyraGameModeOption_Bool`) — a toggle with a default on/off state. Serializes to `"1"` or `"0"`.
+
+**Int Range** (`ULyraGameModeOption_IntRange`) — a numeric value with `MinValue`, `MaxValue`, `StepSize`, and `DefaultIntValue`. Displayed as a slider.
+
+**Enum** (`ULyraGameModeOption_Enum`) — a list of named choices. `DisplayOptions` holds the player-visible text, `Values` holds the corresponding URL strings (parallel arrays), and `DefaultIndex` selects the initial choice.
+
+<details>
+
+<summary>In code: ULyraGameModeOption</summary>
+
+```cpp
+UPROPERTY(BlueprintReadOnly, EditAnywhere, Instanced, Category=GameModeOptions)
+TArray<TObjectPtr<ULyraGameModeOption>> GameModeOptions;
+```
+
+The base class provides:
+
+```cpp
+UPROPERTY(BlueprintReadOnly, EditAnywhere, Category=Option)
+FString OptionKey;          // URL parameter name, e.g. "NumBots"
+
+UPROPERTY(BlueprintReadOnly, EditAnywhere, Category=Option)
+FText DisplayName;          // Shown in the host session UI
+
+UPROPERTY(BlueprintReadOnly, EditAnywhere, Category=Option)
+FText Description;          // Tooltip
+
+UPROPERTY(BlueprintReadOnly, EditAnywhere, Category=Option)
+int32 SortOrder = 0;        // Lower values display first
+
+virtual FString GetDefaultValue() const;  // Returns the default as a URL-ready string
+```
+
+</details>
+
+**How options flow to the server**
+
+`CreateHostingRequest()` iterates the `GameModeOptions` array after copying `ExtraArgs` and inserts each option's default value for any key not already present. This means hardcoded `ExtraArgs` on the asset still take priority, and the option descriptors provide structured defaults as a fallback.
+
+When the host session screen is active, it builds UI controls from the option descriptors. On "Start Game", it collects the player's chosen values and writes them into the request's `ExtraArgs`, overriding the defaults. The server-side game mode components read these values with the same `UGameplayStatics::GetIntOption()` or `ParseOption()` calls they already use, no server-side changes are needed to support new options.
+
+{% tabs %}
+{% tab title="Game mode specific options" %}
+<figure><img src="../../.gitbook/assets/image (273).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+
+{% tab title="OnExperienceSelected" %}
+<figure><img src="../../.gitbook/assets/image (274).png" alt=""><figcaption><p>Dynamically populates the options when an experience is selected</p></figcaption></figure>
+{% endtab %}
+
+{% tab title="CreateHostingRequest" %}
+<figure><img src="../../.gitbook/assets/image (275).png" alt=""><figcaption><p>CreateHostingRequest in W_HostSessionScreen</p></figcaption></figure>
+{% endtab %}
+{% endtabs %}
+
+**UI integration: IGameModeOptionEntry**
+
+Blueprint widgets that display an option implement the `IGameModeOptionEntry` C++ interface. This lets the options panel talk to any option widget without casting to a specific type.
+
+The interface declares three functions:
+
+* `InitFromOption(ULyraGameModeOption*)` — called once to bind the widget to its descriptor and set up the control.
+* `GetOptionKey() → FString` — returns the URL parameter key.
+* `GetValue() → FString` — returns the current player-chosen value as a string.
+
+The options panel calls `SetExperienceDefinition()` whenever the selected experience changes. It clears its children, iterates the new experience's `GameModeOptions`, creates the correct widget for each type, calls `InitFromOption`, and adds the widget to a scroll box. On start, it calls `GetOptionKey` and `GetValue` on each child to build the values map.
+
+{% tabs %}
+{% tab title="InitFromOption" %}
+<figure><img src="../../.gitbook/assets/image (276).png" alt=""><figcaption><p>InitFromOption interface function of W_GameModeOptionBool</p></figcaption></figure>
+{% endtab %}
+
+{% tab title="GetOptionKey" %}
+<figure><img src="../../.gitbook/assets/image (277).png" alt=""><figcaption><p>GetOptionKey interface function of W_GameModeOptionBool</p></figcaption></figure>
+{% endtab %}
+
+{% tab title="GetValue" %}
+<figure><img src="../../.gitbook/assets/image (278).png" alt=""><figcaption><p>GetValue interface function of W_GameModeOptionBool</p></figcaption></figure>
+{% endtab %}
+{% endtabs %}
 
 #### `CreateHostingRequest()`
 
