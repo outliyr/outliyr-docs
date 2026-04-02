@@ -119,4 +119,17 @@ The extraction mode organizes save data using six gameplay tags:
 On a dedicated server, player saves are keyed by platform ID (`PlayerState->GetUniqueId()`). In PIE without Steam, EOS, or another online subsystem configured, this ID changes every session, so stash and loadout data won't persist between PIE sessions when testing as a client. Use standalone networking mode for persistence testing, or configure an online subsystem for dedicated server testing.
 {% endhint %}
 
+{% hint style="warning" %}
+### PIE client mode generates orphaned save files.
+
+Because the platform ID changes each PIE session, every run in dedicated server client mode creates a new save file in `Saved/SaveGames/` with a unique alphanumeric suffix (e.g., `PlayerSaveGame_Jeff-0C9B411E4C430A560F19EE98E09267E0.sav`). These files accumulate and are never reused. The base `PlayerSaveGame.sav` from standalone mode is fine to keep, only delete the ones with platform ID suffixes.
+{% endhint %}
+
+{% hint style="info" %}
+### Production note:
+
+The default implementation saves to the server's local disk, which is sufficient for development and single-server deployments. For a scalable production game with multiple server instances, player data should be persisted to a database via a backend service instead. See [Replacing the Storage Backend](../../base-lyra-modified/save-system/extending-the-save-system.md#replacing-the-storage-backend) for guidance on swapping the storage layer.
+{% endhint %}
+
 The staged tags exist to survive map travel. `CommitLoadouts` writes the loadout to staged tags and empties the loadout tags atomically with a synchronous save. If the player crashes mid-match, the save on disk has the stash intact and an empty loadout, the staged items are lost, which is the intended behavior (death = loss).
+
