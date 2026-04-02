@@ -39,7 +39,7 @@ Content/
 * **Items** — Mode-specific item definitions
 * **Experience Phases** — Multi-phase flow with solo variant
 * **Death Handling** — Custom death behavior for the extraction format
-* **Stash & Loadout Persistence** — Players keep extracted loot across sessions via the [Save System](/broken/pages/ed4456834e1c0d4173f355acbd2a3109d7b82a7c)
+* **Stash & Loadout Persistence** — Players keep extracted loot across sessions via the [Save System](../../base-lyra-modified/save-system/)
 
 #### Players can be looted after death
 
