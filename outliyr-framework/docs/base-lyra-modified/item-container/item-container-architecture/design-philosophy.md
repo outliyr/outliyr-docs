@@ -71,7 +71,7 @@ Polymorphic structs with value semantics. This is the chosen approach.
 * **Value semantics**: Copy, move, serialize like any struct. No GC, no weak pointer concerns.
 * **Type-safe polymorphism**: Runtime type checking via `GetScriptStruct()`, safe casting with `GetPtr<T>()`.
 * **Automatic serialization**: Handled by Unreal's struct serialization, works with SaveGame, RPC, etc.
-* **Plugin extensibility**: New slot types are just new structs—no engine modification needed.
+* **Plugin extensibility**: New slot types are just new structs, no engine modification needed.
 
 **The trade-off:** Slight runtime overhead for type checking and virtual calls. Some Blueprint friction (generic structs require special handling). Worth it for the flexibility.
 
