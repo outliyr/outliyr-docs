@@ -243,28 +243,21 @@ If the server rejects the pickup, `RestoreFromRejectedPrediction()` makes the co
 
 The ability provides several hooks for game-mode specific customization:
 
-#### Validation
+#### Validation — **`CanPickup`**
 
 <figure><img src="../../../.gitbook/assets/image (224).png" alt="" width="368"><figcaption></figcaption></figure>
-
-{% hint style="info" %}
-**`CanPickup`** _(BlueprintNativeEvent)_
 
 Called before any pickup logic. Return `false` to prevent the pickup entirely.
 
 **Use Cases:**
 
 * Check player has inventory space
-* Validate faction/level requirements
+* Validate level requirements
 * Prevent pickup during certain game states
-{% endhint %}
 
-#### Routing
+#### Routing — **`DetermineItemDestination`**&#x20;
 
 <figure><img src="../../../.gitbook/assets/image (225).png" alt="" width="375"><figcaption></figcaption></figure>
-
-{% hint style="info" %}
-**`DetermineItemDestination`** _(BlueprintNativeEvent)_
 
 Only called when `RoutingPolicy == Custom`. Determines where each item should go.
 
@@ -275,14 +268,10 @@ Only called when `RoutingPolicy == Custom`. Determines where each item should go
 * `OutDestContainer` - Set this to the target container
 * `OutDestSlot` - Set this to the target slot (or leave empty for auto-placement)
 * `OutEquipmentSlot` - Set this for equipment routing
-{% endhint %}
 
-#### Feedback
+#### Feedback — **`PlayPickupEffects`**
 
 <figure><img src="../../../.gitbook/assets/image (226).png" alt="" width="334"><figcaption></figcaption></figure>
-
-{% hint style="info" %}
-**`PlayPickupEffects`** _(BlueprintImplementableEvent)_
 
 Called immediately after prediction executes. Use for:
 
@@ -294,7 +283,6 @@ Called immediately after prediction executes. Use for:
 
 * `Pickup` - The world collectable being picked up
 * `Items` - Array of item instances being picked up
-{% endhint %}
 
 #### Result Callbacks
 
@@ -356,7 +344,7 @@ The pickup is only hidden for prediction when **all** items will be taken. Parti
 
 ***
 
-### Creating a Game-Mode Pickup Ability
+### Creating a Pickup Ability
 
 {% stepper %}
 {% step %}
@@ -381,7 +369,7 @@ Override `PlayPickupEffects` to add your pickup feel:
 {% step %}
 #### Wire Up Interaction
 
-Grant this ability and trigger it from the [interaction system](../../interaction/). The pickup is passed via the `TriggerEventData->Target` field.
+Ttrigger it from the [interaction system](../../interaction/). The pickup is passed via the `TriggerEventData->Target` field.
 {% endstep %}
 {% endstepper %}
 
