@@ -10,6 +10,8 @@ In a standard UMG layout, you can use Unreal's built-in navigation (Up, Down, Le
 
 Unreal's default focus system doesn't know about these spatial relationships. To solve this, we built navigation directly into the **Item Container Layer**.
 
+***
+
 ### The Philosophy
 
 Instead of relying on hardcoded tab-indices or explicit "Up/Down" links, this system "looks" at the screen. It treats your UI as a 2D map and calculates the best neighbor based on **Geometry**.
@@ -96,6 +98,8 @@ Navigation context (direction and cursor position) is passed to the target windo
 {% endstep %}
 {% endstepper %}
 
+***
+
 ### Navigation Features
 
 #### Cross-Window Edge Navigation
@@ -108,7 +112,9 @@ Press LB/RB to cycle through open windows by focus order. This provides quick ac
 
 #### Auto-Focus on Window Open
 
-When a window opens, it automatically receives focus on its content widget—no manual focus management required.
+When a window opens, it automatically receives focus on its content widget, no manual focus management required.
+
+***
 
 ### Core Concepts
 
@@ -116,6 +122,8 @@ When a window opens, it automatically receives focus on its content widget—no 
 * **The Content Widget**: The actual interactive content (ListView, TileView, Tetris Grid, etc.) that implements `ILyraItemContainerWindowContentInterface`.
 * **The Edge Hit**: When navigation tries to move beyond a content widget's boundaries and triggers `Escape()`.
 * **Cursor Alignment**: The system that preserves cursor position when moving between windows.
+
+***
 
 ### Implementation Topics Covered
 

@@ -200,7 +200,7 @@ Without the dependency, the resolution setting would only evaluate its condition
 
 </details>
 
-**Primary player restrictions** apply in splitscreen. Settings like audio device selection or display resolution only make sense for the primary local player — other players shouldn't be able to change machine-wide settings.
+**Primary player restrictions** apply in splitscreen. Settings like audio device selection or display resolution only make sense for the primary local player, other players shouldn't be able to change machine-wide settings.
 
 <details>
 

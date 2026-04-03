@@ -30,7 +30,7 @@ Any `ULyraGameplayAbility` can take temporary control of the camera by calling `
 
 <figure><img src="../../.gitbook/assets/image (254).png" alt=""><figcaption></figcaption></figure>
 
-Cleanup is automatic — `EndAbility()` calls `ClearCameraMode()`, so abilities do not need to manually restore the previous camera. Only the ability that set the override can clear it, because the hero component checks the spec handle before resetting.
+Cleanup is automatic, `EndAbility()` calls `ClearCameraMode()`, so abilities do not need to manually restore the previous camera. Only the ability that set the override can clear it, because the hero component checks the spec handle before resetting.
 
 <figure><img src="../../.gitbook/assets/image (255).png" alt=""><figcaption></figcaption></figure>
 

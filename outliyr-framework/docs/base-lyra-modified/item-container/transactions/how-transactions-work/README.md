@@ -243,7 +243,7 @@ struct FPredictionKeyRecord
 };
 ```
 
-`PendingDestructions` handles items marked for destruction—they aren't destroyed until the server confirms. On rejection, they're restored via the normal delta mechanism.
+`PendingDestructions` handles items marked for destruction, they aren't destroyed until the server confirms. On rejection, they're restored via the normal delta mechanism.
 
 ***
 

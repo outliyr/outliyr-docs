@@ -13,7 +13,7 @@ This plugin bridges the gap by offering a rich feature set designed for performa
 * **Player Targeting Assistance:**&#x20;
   * Includes a highly configurable **Aim Assist system**, an input modifier that subtly helps players (especially with gamepads) keep their reticle on or near targets through gentle pull and aim slowdown mechanics.
 * **Intelligent Influence Spawn System:**
-  * Move beyond simple spawn points with a dynamic system that analyzes game state—considering teammate presence, enemy proximity, and line-of-sight—to calculate a "Bias Score" and select safer, more strategic spawn locations for players, reducing spawn frustration.
+  * Move beyond simple spawn points with a dynamic system that analyzes game state, considering teammate presence, enemy proximity, and line-of-sight, to calculate a "Bias Score" and select safer, more strategic spawn locations for players, reducing spawn frustration.
 * **Extensible GameState Scoring System:**
   * Utilize a foundational GameState component for tracking team and individual scores, automatically handling common events like eliminations and assists via Gameplay Messages and Tag-based stat tracking. It's designed for easy subclassing to implement unique game mode rules and win conditions.
 * **Immersive Spectator & Killcam System:**

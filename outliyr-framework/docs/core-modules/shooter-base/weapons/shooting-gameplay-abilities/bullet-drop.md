@@ -113,7 +113,7 @@ OnRangedWeaponTargetDataReady(TargetData):
 
 **Important**: Bullet Drop uses `CameraTowardsFocus` targeting, while Hitscan uses `WeaponTowardsFocus`.
 
-For instant-hit weapons, the trace should originate from the muzzle. For projectiles with travel time, starting from the camera provides better aiming feel—the player aims where they're looking, and the bullet arcs toward that point.
+For instant-hit weapons, the trace should originate from the muzzle. For projectiles with travel time, starting from the camera provides better aiming feel, the player aims where they're looking, and the bullet arcs toward that point.
 
 ***
 

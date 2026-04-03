@@ -151,14 +151,14 @@ The core playback logic in `UKillcamPlayback` interacts with complex engine syst
 
 This documentation is organized to help you understand the system progressively:
 
-| Page                                                                                    | What You'll Learn                                                            |
-| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| [Architecture Overview](architecture-overview.md)                                       | The big picture—how all components connect and data flows through the system |
-| [World Duplication Deep Dive](world-duplication-deep-dive.md)                           | The engine-level magic that makes isolated playback possible                 |
-| [Recording System](recording-system.md)                                                 | How gameplay data is continuously captured for potential kill cam use        |
-| [Data Transfer & Networking](data-transfer-and-networking.md)                           | How killer data moves from killer → server → victim                          |
-| [Playback System](playback-system.md)                                                   | The mechanics of world switching, time scrubbing, and view control           |
-| [Setup & Integration](../accolades/setup-and-integration.md)                            | Practical guide to enabling kill cam in your experiences                     |
-| [Customization & Extension](../gamestate-scoring-system/customization-and-extension.md) | Safe ways to modify behavior and add new features                            |
+| Page                                                                                    | What You'll Learn                                                             |
+| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [Architecture Overview](architecture-overview.md)                                       | The big picture, how all components connect and data flows through the system |
+| [World Duplication Deep Dive](world-duplication-deep-dive.md)                           | The engine-level magic that makes isolated playback possible                  |
+| [Recording System](recording-system.md)                                                 | How gameplay data is continuously captured for potential kill cam use         |
+| [Data Transfer & Networking](data-transfer-and-networking.md)                           | How killer data moves from killer → server → victim                           |
+| [Playback System](playback-system.md)                                                   | The mechanics of world switching, time scrubbing, and view control            |
+| [Setup & Integration](../accolades/setup-and-integration.md)                            | Practical guide to enabling kill cam in your experiences                      |
+| [Customization & Extension](../gamestate-scoring-system/customization-and-extension.md) | Safe ways to modify behavior and add new features                             |
 
 ***

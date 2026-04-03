@@ -59,7 +59,7 @@ When `DrawBulletHitDuration > 0`, you'll see:
 * Spheres: At the exact `ImpactPoint` where collision was detected
 * Size: Controlled by `DrawBulletHitRadius`
 
-Compare these with your VFX impact locations from `AddImpactEffects`. They should align. If VFX appears offset, check your effect spawning logic — the simulation is authoritative.
+Compare these with your VFX impact locations from `AddImpactEffects`. They should align. If VFX appears offset, check your effect spawning logic, the simulation is authoritative.
 
 ### Common Issues
 

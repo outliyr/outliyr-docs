@@ -99,7 +99,7 @@ The power of this system is that **the same content widget class works with diff
 | `UI.Window.Attachment` | `UAttachmentGridContent` | Gun attachments, armor mods, vehicle parts   |
 | `UI.Window.Equipment`  | `UEquipmentSlotsContent` | Player equipment, mannequin, loadout preview |
 
-The content widget doesn't care _which_ inventory it's showing—it just receives a source via `SetContainerSource()` and displays it.
+The content widget doesn't care _which_ inventory it's showing, it just receives a source via `SetContainerSource()` and displays it.
 
 #### Example: One Grid Widget, Many Uses
 

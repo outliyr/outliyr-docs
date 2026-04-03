@@ -2,7 +2,7 @@
 
 While `UShooterScoring_Base` provides a foundation for tracking scores, its primary role in a sophisticated game mode is to act as the **central controller for the game's flow**. It does this by listening to and triggering **Game Phases**.
 
-Instead of simply reacting to isolated events like eliminations, this component should manage the entire lifecycle of a match—from warmup, to active play, to round end, to the final scoreboard—by using the `ULyraGamePhaseSubsystem`.
+Instead of simply reacting to isolated events like eliminations, this component should manage the entire lifecycle of a match, from warmup, to active play, to round end, to the final scoreboard, by using the `ULyraGamePhaseSubsystem`.
 
 {% hint style="success" %}
 You can explore the included game mode examples to see how flexible the system is, and how different rules, game phases, and win conditions can be implemented.
@@ -14,6 +14,8 @@ Before proceeding, a strong understanding of the **Game Phase System** is requir
 
 Please review the [**Game Phase System documentation**](../../../base-lyra-modified/game-phase-system/) first.
 
+***
+
 ### The Phase-Driven Workflow
 
 The intended workflow is to subclass `UShooterScoring_Base` and use it as the "brain" for your game mode's progression.
@@ -24,6 +26,8 @@ The intended workflow is to subclass `UShooterScoring_Base` and use it as the "b
     <figure><img src="../../../.gitbook/assets/image (181).png" alt="" width="375"><figcaption></figcaption></figure>
 3. **Gate Logic by Phase:** In event handlers like `OnEliminationScored`, first check the current game phase using `IsPhaseActive`. You typically only want to award points or check for win conditions during a `GamePhase.Playing` phase, not during `GamePhase.Warmup` or `GamePhase.PostGame`.
 4. **Trigger Phase Transitions:** When a game-altering event occurs (a team reaches the score limit, a bomb is defused, a headquarters is destroyed), your scoring component is responsible for telling the `ULyraGamePhaseSubsystem` to `StartPhase`, moving the entire game into its next logical state.
+
+***
 
 ### Hook 1: Connecting to the Game Flow in Begin Play (Core Logic)
 
@@ -43,6 +47,8 @@ This is the most important part of setting up your custom scoring component. In 
    * `WhenPhaseEnds(GamePhase.Playing.Captured, ...)` -> Bind to `OnHeadquartersLost`. This function would re-enable respawning for all players (using `ResetAllActivePlayers`) and start the next `GamePhase.Playing.Locked` phase.
 
 This observer pattern is the foundation of a clean, phase-driven architecture.
+
+***
 
 ### Hook 2: OnEliminationScored (Reacting During a Phase)
 
@@ -80,6 +86,8 @@ if (CheckForWinCondition())
 * **Friendly Fire/Suicide:** Apply penalties, but only if the active phase dictates it.
 * **Mode-Specific Bonuses:** Award extra points for killing an enemy near an objective, but only if the objective is active (which can be tied to a sub-phase like `GamePhase.Playing.HillActive`).
 
+***
+
 ### Hook 3: ResetAllActivePlayers (Responding to a Phase Change)
 
 This function is a powerful tool for synchronizing all players, often used as a direct result of a phase transition.
@@ -93,6 +101,8 @@ Instead of calling this function arbitrarily, trigger it from a phase event hand
 In `BeginPlay`, you would set up a listener:`WhenPhaseEnds(GamePhase.Playing.Round, MatchType: ExactMatch, ...)` -> Bind to `OnRoundEnded`.
 
 Inside the `OnRoundEnded` function, you would call `ResetAllActivePlayers` to ensure everyone is ready for the next round, which might be triggered by starting a new `GamePhase.Playing.Round` or `GamePhase.RoundSwitchSides` phase.
+
+***
 
 ### Hook 4: Adding New Scoring Logic (Triggering New Phases)
 

@@ -19,5 +19,5 @@ The design of Lyra's UI Indicator System is built upon several key philosophies 
 * **Clear Communication Channels:** Interactions between the core system and the UMG widgets are facilitated by the `IIndicatorWidgetInterface` interface, ensuring a well-defined contract for how widgets bind to indicator data and respond to system events.
 * **Leveraging Unreal Engine & Lyra Strengths:** The system effectively utilizes UMG for visual design and Blueprint accessibility, Slate for high-performance low-level UI rendering, and Lyra's component-based architecture.
 
-The overarching goal is to provide a system that is powerful enough for complex scenarios while remaining understandable enough for developers to confidently customize and build upon. It aims to give a holistic view of how these different parts—data definition, visual presentation, and screen projection—come together to create a cohesive UI indicator experience.
+The overarching goal is to provide a system that is powerful enough for complex scenarios while remaining understandable enough for developers to confidently customize and build upon. It aims to give a holistic view of how these different parts, data definition, visual presentation, and screen projection, come together to create a cohesive UI indicator experience.
 

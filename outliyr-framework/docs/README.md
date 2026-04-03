@@ -26,7 +26,7 @@ Lyra is Unreal Engine's reference shooter project built by Epic Games using best
 * Modular Gameplay through Game Feature Plugins and the Experience System
 * AAA-level architecture seen in games like Fortnite
 
-However, Lyra is a tech demo—not a full game framework. Outliyr builds on Lyra’s foundation and adds:
+However, Lyra is a tech demo, not a full game framework. Outliyr builds on Lyra’s foundation and adds:
 
 * A structured project layout ready for real development
 * Fully integrated and extendable game systems

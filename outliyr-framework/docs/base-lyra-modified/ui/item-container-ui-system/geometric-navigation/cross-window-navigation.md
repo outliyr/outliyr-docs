@@ -67,14 +67,14 @@ NativeOnNavigation(Direction):
         SetPendingNavigationContext(Direction, CursorScreenPos)
 
         // 3. Deferred Focus Transfer
-        //    Schedule focus for next tick — calling SetFocus() mid-event
+        //    Schedule focus for next tick, calling SetFocus() mid-event
         //    would cause Slate to route the same event to the new target.
         PendingFocusWindow = Target
         ScheduleForNextTick → FocusWindow(PendingFocusWindow)
 
         return Stop   // handled
 
-    // No target in this direction — keep focus where it is
+    // No target in this direction, keep focus where it is
     return Stop
 ```
 {% endtab %}
@@ -218,7 +218,7 @@ When the deferred timer fires and `FocusWindow()` is called on the target, the s
 RequestContentFocus(bIsRestoringFocus):
 
     // Path 1: Restoring focus (e.g., after action menu closes)
-    // Cursor is already positioned — just restore keyboard focus.
+    // Cursor is already positioned, just restore keyboard focus.
     if bIsRestoringFocus:
         GetFocusableContent().SetFocus()
         return
@@ -240,7 +240,7 @@ RequestContentFocus(bIsRestoringFocus):
             handled = FocusTarget.ReceiveNavigationEntry(Direction, ScreenCoord)
             if handled: return
 
-    // Final fallback — nothing handled navigation
+    // Final fallback, nothing handled navigation
     FocusTarget.SetFocus()
 ```
 {% endtab %}

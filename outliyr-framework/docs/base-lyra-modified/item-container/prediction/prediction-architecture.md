@@ -297,7 +297,7 @@ struct FContainerPredictionStamp
 };
 ```
 
-**`LastModifyingPredictionKey`**: Stamped by the server when a predicted operation is applied. Due to `FPredictionKey`'s network serialization, `IsValidKey()` returns true only on the originating client—enabling phase classification.
+**`LastModifyingPredictionKey`**: Stamped by the server when a predicted operation is applied. Due to `FPredictionKey`'s network serialization, `IsValidKey()` returns true only on the originating client, enabling phase classification.
 
 **`LastLocalPredictedKeyId`**: Used locally to track whether this entry has a pending prediction. Set when the client records an overlay, cleared when the prediction is confirmed or rejected.
 

@@ -70,7 +70,7 @@ You can control materials at two levels:
 <figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 {% hint style="success" %}
-`Material Overrides` only have a visible effect on shapes with the **Add** operation. Subtractive shapes are "invisible" — they only remove geometry and do not contribute any surface or material slots to the final mesh.
+`Material Overrides` only have a visible effect on shapes with the **Add** operation. Subtractive shapes are "invisible", they only remove geometry and do not contribute any surface or material slots to the final mesh.
 {% endhint %}
 
 ### Interacting with Shapes

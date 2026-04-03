@@ -151,7 +151,7 @@ This shows a better understanding of the dependencies layers
 
 ### **Modular & Extensible Design**
 
-This framework is **built on a** [**modular gameplay approach**](/broken/pages/MMuer3tX1noU84k4jem8), meaning **everything is opt-in**, you only include what you need.
+This framework is **built on a modular gameplay approach**, meaning **everything is opt-in**, you only include what you need.
 
 #### **How This Works**
 

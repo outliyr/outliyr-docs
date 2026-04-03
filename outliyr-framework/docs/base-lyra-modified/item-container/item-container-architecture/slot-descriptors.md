@@ -2,7 +2,9 @@
 
 Different containers use different slot types. An inventory uses integer indices. Equipment uses gameplay tags. Attachments use a tag path. Yet the transaction system needs to work with all of them uniformly.
 
-Slot descriptors solve this problem through polymorphism—a base struct with virtual methods, wrapped in `FInstancedStruct` for value semantics.
+Slot descriptors solve this problem through polymorphism, a base struct with virtual methods, wrapped in `FInstancedStruct` for value semantics.
+
+***
 
 ### The Problem
 
@@ -111,8 +113,10 @@ if (const FAbilityData_SourceItem* Base = Slot.GetPtr<FAbilityData_SourceItem>()
 ```
 
 {% hint style="info" %}
-**Why structs, not UObjects?** Slot descriptors are passed around frequently—in ability payloads, transaction requests, UI callbacks. UObjects would create GC pressure and require careful lifetime management. Value-semantic structs are copied freely and cleaned up automatically.
+**Why structs, not UObjects?** Slot descriptors are passed around frequently, in ability payloads, transaction requests, UI callbacks. UObjects would create GC pressure and require careful lifetime management. Value-semantic structs are copied freely and cleaned up automatically.
 {% endhint %}
+
+***
 
 ### Concrete Slot Descriptors
 
@@ -229,6 +233,8 @@ Pickup slots reference items within a world collectable's `FItemPickup`:
 Unlike other slot types, pickup slots distinguish between templates and instances. Templates are lightweight data (item definition + stack count) while instances are full `ULyraInventoryItemInstance` objects. This matters because templates are created on-the-fly during pickup while instances are transferred directly.
 {% endhint %}
 
+***
+
 ### Marker Base Structs
 
 Notice the intermediate structs like `FAbilityData_InventorySourceItem` , `FAbilityData_EquipmentSourceItem` and `FAbilityData_PickupSourceItem`  These are marker structs, they contain no data but establish a type hierarchy.
@@ -246,6 +252,8 @@ This enables:
 * Plugin extensibility: A Tetris inventory plugin can define `FTetrisInventorySlot : public FAbilityData_InventorySourceItem`
 * Category detection: UI can show different icons for inventory vs equipment slots
 * Future-proofing: Core code doesn't need to know about every concrete slot type
+
+***
 
 ### The ResolveContainer Pattern
 
@@ -288,6 +296,8 @@ ILyraItemContainerInterface* FAttachmentAbilityData_SourceAttachment::ResolveCon
 
 The caller doesn't care about these details, it just gets a container interface.
 
+***
+
 ### Slot Comparison
 
 Slots need to be comparable for operations like "did this item's slot change?":
@@ -318,6 +328,8 @@ static bool AreSlotsInSameRootContainer(
     const FInstancedStruct& SlotB);
 ```
 
+***
+
 ### The Null Slot
 
 A special descriptor represents "no slot":
@@ -341,6 +353,8 @@ bool UItemContainerFunctionLibrary::IsNullSlot(const FInstancedStruct& Slot)
     return !Slot.IsValid() || Slot.GetScriptStruct() == FNullSourceSlot::StaticStruct();
 }
 ```
+
+***
 
 ### Creating Your Own Slot Descriptor
 

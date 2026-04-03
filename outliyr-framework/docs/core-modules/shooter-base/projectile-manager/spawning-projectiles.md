@@ -137,7 +137,7 @@ UProjectileManager (listening):
     Queues to simulation thread
 ```
 
-This decoupled design means your ability doesn't need a reference to the manager—it just broadcasts and trusts the system.
+This decoupled design means your ability doesn't need a reference to the manager, it just broadcasts and trusts the system.
 
 ***
 

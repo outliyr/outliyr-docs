@@ -66,7 +66,7 @@ Calls `USpectatorFunctionLibrary::SetPlayerStateSpectating(true)` on the player'
 {% step %}
 ### Server Subscription
 
-After a target is selected (via `SetObservedPawn` or `SpectatePlayerState`), `ATeammateSpectator`'s `SpectatingPlayerChanged` executes and calls `Server_SetSpectatedPlayer(ObservedPlayerState)`. On the server-controlled `ATeammateSpectator`, this calls `USpectatorDataProxy::SetSpectatorSubscribed` on the target player's proxy—adding the spectating player's controller to the subscription list. This authorizes replication of the `USpectatorDataContainer` and its contents to the spectator client.
+After a target is selected (via `SetObservedPawn` or `SpectatePlayerState`), `ATeammateSpectator`'s `SpectatingPlayerChanged` executes and calls `Server_SetSpectatedPlayer(ObservedPlayerState)`. On the server-controlled `ATeammateSpectator`, this calls `USpectatorDataProxy::SetSpectatorSubscribed` on the target player's proxy, adding the spectating player's controller to the subscription list. This authorizes replication of the `USpectatorDataContainer` and its contents to the spectator client.
 {% endstep %}
 
 {% step %}

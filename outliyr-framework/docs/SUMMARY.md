@@ -233,7 +233,7 @@
     * [Rewind Traces](core-modules/shooter-base/lag-compensation/rewind-traces.md)
     * [Thread Internals](core-modules/shooter-base/lag-compensation/thread-internals.md)
     * [Debugging](core-modules/shooter-base/lag-compensation/debugging.md)
-    * [internals](core-modules/shooter-base/lag-compensation/internals.md)
+    * [Internals](core-modules/shooter-base/lag-compensation/internals.md)
   * [Projectile Manager](core-modules/shooter-base/projectile-manager/README.md)
     * [Architecture](core-modules/shooter-base/projectile-manager/architecture.md)
     * [Spawning Projectiles](core-modules/shooter-base/projectile-manager/spawning-projectiles.md)

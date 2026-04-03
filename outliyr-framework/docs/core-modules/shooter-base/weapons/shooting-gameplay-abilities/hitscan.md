@@ -30,7 +30,7 @@ Server: "Yes, that was a hit"
 Client: [100ms later] "Oh, now I know I hit"
 ```
 
-The player sees themselves hit 100ms before confirmation. If the server says "miss," the game feels unfair—they _saw_ the crosshair on the head.
+The player sees themselves hit 100ms before confirmation. If the server says "miss," the game feels unfair, they _saw_ the crosshair on the head.
 
 ***
 
@@ -90,7 +90,7 @@ Without lag compensation, you'd have to lead targets by their movement over your
 | 50ms | Server receives: "Hit at T=0ms, ping=100ms" |
 | 50ms | Server rewinds to T=0ms                     |
 | 50ms | Server traces against historical positions  |
-| 50ms | Hit validates—enemy WAS at position A       |
+| 50ms | Hit validates, enemy WAS at position A      |
 
 #### The Timestamp Formula
 
@@ -105,7 +105,7 @@ The client's local time is roughly `ServerTime - (Ping/2)` due to the round-trip
 Lag compensation is not perfect. It fails when:
 
 * **Enemy teleported**: Abilities that move characters instantly aren't captured in historical positions
-* **Extreme latency**: 300ms+ ping means rewinding 300ms—positions may be too stale
+* **Extreme latency**: 300ms+ ping means rewinding 300ms, positions may be too stale
 * **Rapid direction changes**: Interpolation between historical samples may not capture sharp movement
 
 The system is tuned for typical competitive latency (50–150ms). Beyond that, accuracy degrades.

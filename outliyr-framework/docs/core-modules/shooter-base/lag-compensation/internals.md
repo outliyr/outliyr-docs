@@ -1,12 +1,12 @@
-# internals
+# Internals
 
-The lag compensation thread handles all heavy computation: maintaining history, interpolating poses, expanding shapes, and performing collision tests. This page covers the internal systems—required reading for debugging hit detection issues or understanding system behavior.
+The lag compensation thread handles all heavy computation: maintaining history, interpolating poses, expanding shapes, and performing collision tests. This page covers the internal systems, required reading for debugging hit detection issues or understanding system behavior.
 
 ***
 
 ## History Management
 
-### Storage Structure
+#### Storage Structure
 
 Each registered source maintains a time-ordered doubly-linked list of historical poses:
 
@@ -193,12 +193,12 @@ The lag compensation system uses Unreal's Chaos physics library directly for col
 
 ### Why Chaos?
 
-| Requirement       | Solution                                         |
-| ----------------- | ------------------------------------------------ |
-| Thread safety     | Chaos queries are stateless—no scene lock needed |
-| Shape support     | Native Box, Sphere, Capsule, Convex support      |
-| Sweep queries     | Efficient shape sweep operations                 |
-| No UObject access | Works with raw geometry data only                |
+| Requirement       | Solution                                          |
+| ----------------- | ------------------------------------------------- |
+| Thread safety     | Chaos queries are stateless, no scene lock needed |
+| Shape support     | Native Box, Sphere, Capsule, Convex support       |
+| Sweep queries     | Efficient shape sweep operations                  |
+| No UObject access | Works with raw geometry data only                 |
 
 ### Collision Test Flow
 

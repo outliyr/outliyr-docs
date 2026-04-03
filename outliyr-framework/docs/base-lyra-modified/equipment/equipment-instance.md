@@ -74,7 +74,7 @@ These are local-only actors spawned during prediction. They exist solely to give
 
 {% stepper %}
 {% step %}
-When the server's replicated actor arrives, the predicted actor is still visible — the player continues to see their local weapon.
+When the server's replicated actor arrives, the predicted actor is still visible, the player continues to see their local weapon.
 {% endstep %}
 
 {% step %}

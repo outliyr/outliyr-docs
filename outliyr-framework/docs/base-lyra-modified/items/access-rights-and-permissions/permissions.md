@@ -54,7 +54,7 @@ If you find yourself gating multiple unrelated UI buttons behind the same flag, 
 
 ***
 
-## Design guidelines
+### Design guidelines
 
 * **Default to the safest mask** — most world chests ship with `TakeOutItems` only.
 * **Do not gate Equip/Attach behind MoveItems** unless you really mean it.\

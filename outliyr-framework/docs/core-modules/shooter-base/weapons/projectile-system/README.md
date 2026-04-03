@@ -53,7 +53,7 @@ Static utility functions for trajectory calculations:
 
 See [Converging Path System](converging-path-system.md) for mathematical details.
 
-### Integration with `UGameplayAbility_PredictiveProjectile`
+#### Integration with `UGameplayAbility_PredictiveProjectile`
 
 The [Predictive Projectile ability](../shooting-gameplay-abilities/predictive-projectile.md) orchestrates the system:
 
@@ -68,17 +68,17 @@ The [Predictive Projectile ability](../shooting-gameplay-abilities/predictive-pr
 
 #### The Muzzle-Camera Offset Problem
 
-Projectiles spawn at the weapon muzzle, but players aim from their camera. In third-person games, these positions are offset by 30-50cm. If a projectile simply launched straight from the muzzle toward the aim point, it would follow a different arc than the player intended—especially noticeable when compensating for bullet drop or leading targets.
+Projectiles spawn at the weapon muzzle, but players aim from their camera. In third-person games, these positions are offset by 30-50cm. If a projectile simply launched straight from the muzzle toward the aim point, it would follow a different arc than the player intended, especially noticeable when compensating for bullet drop or leading targets.
 
 {% stepper %}
 {% step %}
-### Bridge path
+#### Bridge path
 
 For 0.15 seconds, the projectile follows a calculated curve from the muzzle that merges onto the camera's aim line.
 {% endstep %}
 
 {% step %}
-### True path
+#### True path
 
 After merging, standard `UProjectileMovementComponent` physics take over on the intended trajectory.
 {% endstep %}

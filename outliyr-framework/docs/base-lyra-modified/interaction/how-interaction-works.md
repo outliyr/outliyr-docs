@@ -138,7 +138,7 @@ When the player chooses to interact, the system executes the selected interactio
 * If the option specifies an ability that was granted to the player (via the overlap scan), that ability is activated on the player’s Ability System Component.
 * If the option is configured to trigger an ability on the interactable itself, the system sends a gameplay event to the target’s Ability System Component and activates the specified ability handle.
 
-In both cases, the interaction runs using standard Gameplay Ability System (GAS) logic — enabling animations, state changes, effects, UI updates, or any other gameplay behavior defined by the ability.
+In both cases, the interaction runs using standard Gameplay Ability System (GAS) logic, enabling animations, state changes, effects, UI updates, or any other gameplay behavior defined by the ability.
 
 ***
 
