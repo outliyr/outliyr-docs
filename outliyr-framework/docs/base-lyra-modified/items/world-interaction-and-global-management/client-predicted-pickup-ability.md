@@ -106,7 +106,7 @@ Config.bAutoHold = true;  // Immediately equip after pickup
 {% tab title="InventoryOnly" %}
 **Use Case:** Survival, RPG, Looter
 
-All items route to the inventory container. Nothing goes directly to equipment—the player must manually equip items.
+All items route to the inventory container. Nothing goes directly to equipment, the player must manually equip items.
 
 ```mermaid
 flowchart LR
