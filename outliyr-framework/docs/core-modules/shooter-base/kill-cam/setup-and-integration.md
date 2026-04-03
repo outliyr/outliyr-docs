@@ -109,7 +109,7 @@ The Action Set includes input configuration for the skip action, typically mappe
 
 ***
 
-## Game Mode Variants
+### Game Mode Variants
 
 Different game modes may need different kill cam behavior. The framework provides variant Action Sets:
 
@@ -119,25 +119,25 @@ These variants typically use different `GA_Killcam_Death` implementations that h
 
 {% stepper %}
 {% step %}
-#### Creating Your Own Variant — Duplicate Action Set
+#### Duplicate Action Set
 
 Duplicate `LAS_ShooterBase_Death_Killcam`.
 {% endstep %}
 
 {% step %}
-#### Creating Your Own Variant — Create Custom Ability
+#### Create Custom Ability
 
 Create custom `GA_Killcam_Death_YourMode` ability.
 {% endstep %}
 
 {% step %}
-#### Creating Your Own Variant — Swap Ability
+#### Swap Ability
 
 Replace the death ability reference in your Action Set.
 {% endstep %}
 
 {% step %}
-#### Creating Your Own Variant — Add to Experience
+#### Add to Experience
 
 Add your Action Set to your Experience Definition.
 {% endstep %}

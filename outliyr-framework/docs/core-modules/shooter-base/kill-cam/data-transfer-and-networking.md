@@ -352,7 +352,7 @@ sequenceDiagram
     K->>S: ServerSend FinalCameraTrack
 
     S->>V: ClientReceive Final Tracks
-    S->>V: Playback Begins
+    S->>V: Playback Integrates Tracks
 
 ```
 
@@ -435,9 +435,9 @@ void UKillcamManager::BuildAimTrackForWindow(
 
 ***
 
-## Network Optimization
+### Network Optimization
 
-### Bandwidth Considerations
+#### Bandwidth Considerations
 
 At 60Hz aim sampling over 7 seconds:
 
@@ -445,13 +445,13 @@ At 60Hz aim sampling over 7 seconds:
 * Raw format: 420 × 28 bytes = \~12KB
 * Net format: 420 × \~14 bytes = \~6KB (50% savings)
 
-### Compression Techniques
+#### Compression Techniques
 
 * Time Compression: Store time as normalized offset from death time, scaled to int16 range (4-byte float -> 2-byte int).
 * Rotation Compression: Use Unreal's `CompressAxisToShort` (maps rotation axis to 16-bit integer).
 * Location Quantization: Use `FVector_NetQuantize10` (1 decimal place precision).
 
-### Reliable vs Unreliable
+#### Reliable vs Unreliable
 
 All Kill Cam RPCs use `Reliable`:
 
@@ -461,9 +461,9 @@ All Kill Cam RPCs use `Reliable`:
 
 ***
 
-## Error Handling
+### Error Handling
 
-### Missing Killer
+#### Missing Killer
 
 If the killer disconnects before data transfer completes:
 
@@ -471,7 +471,7 @@ If the killer disconnects before data transfer completes:
 * `IsPlaybackAllowed()` check may fail
 * Kill Cam simply won't play (fails gracefully)
 
-### Network Delays
+#### Network Delays
 
 The two-phase approach (initial + final request) handles delays:
 
@@ -479,7 +479,7 @@ The two-phase approach (initial + final request) handles delays:
 * Final request ensures complete, precise window
 * If final request fails, initial data is still usable
 
-### Data Validation
+#### Data Validation
 
 Receivers validate incoming data:
 
@@ -488,49 +488,3 @@ Receivers validate incoming data:
 * Null pointer guards on PlayerState references
 
 ***
-
-## Summary
-
-{% stepper %}
-{% step %}
-### Server as trusted relay
-
-No P2P; server validates kill and relays data between killer and victim.
-{% endstep %}
-
-{% step %}
-### Two-phase transfer
-
-Initial rough data immediately after death, then a precise final window when the Kill Cam starts.
-{% endstep %}
-
-{% step %}
-### Separate tracks
-
-Aim, hit markers, and camera are handled independently (separate RPCs & structures).
-{% endstep %}
-
-{% step %}
-### Network optimization
-
-Compressed formats (time, rotation, location) reduce bandwidth 50%+.
-{% endstep %}
-
-{% step %}
-### Human vs AI paths
-
-Human killer: data requested from killer client. AI killer: server extracts data directly.
-{% endstep %}
-
-{% step %}
-### Graceful degradation
-
-If data is missing or invalid, playback is prevented but the game remains stable.
-{% endstep %}
-{% endstepper %}
-
-***
-
-## Next Steps
-
-* [**Playback System**](/broken/pages/a5c96a2dd441489d6d8b9a0506dd737daf2224e3) - How the received data is actually played back

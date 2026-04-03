@@ -2,6 +2,8 @@
 
 The Kill Cam needs data to play back. This page explains how the system continuously captures gameplay data so it's ready when a player dies.
 
+***
+
 ### The Continuous Recording Philosophy
 
 The Kill Cam doesn't wait for death to start recording, it records **continuously** on every client. This proactive approach ensures:
@@ -11,6 +13,8 @@ The Kill Cam doesn't wait for death to start recording, it records **continuousl
 * **Complete Context**: The full lead-up to death is captured, not just the final moment
 
 Each player's client records **their own** perspective data. When they get a kill, this pre-recorded data is transferred to the victim.
+
+***
 
 ### Two Types of Recording
 
@@ -46,11 +50,11 @@ The `InMemoryNetworkReplayStreaming` option stores data in RAM for instant acces
 
 Custom components capture perspective-specific data that the replay system doesn't handle well:
 
-| Data Type         | Why It's Needed                                                                            |
-| ----------------- | ------------------------------------------------------------------------------------------ |
-| **Aim Direction** | Replicated aim of other clients is interpolated/smoothed; we want exact crosshair position |
-| **Hit Markers**   | These are visual feedback, not replicated game state                                       |
-| **Camera Mode**   | ADS transitions, camera changes are local hence are not captured by replay                 |
+| Data Type         | Why It's Needed                                                                                      |
+| ----------------- | ---------------------------------------------------------------------------------------------------- |
+| **Aim Direction** | Replicated aim of other clients is interpolated/smoothed; we want exact crosshair position           |
+| **Hit Markers**   | These are visual feedback, not replicated game state. The replay system only records replicated data |
+| **Camera Mode**   | ADS transitions, camera changes are local hence are not captured by replay                           |
 
 ***
 
@@ -203,9 +207,9 @@ Memory efficiency: Only state changes are recorded, so typical buffer contains v
 
 ***
 
-## Replay System Recording
+### Replay System Recording
 
-### When Recording Starts
+#### When Recording Starts
 
 Recording begins when the Lyra Experience loads:
 
@@ -219,7 +223,7 @@ OnExperienceLoaded
 
 The next-tick deferral prevents issues with starting replay during sensitive engine initialization phases.
 
-### In-Memory Streaming
+#### In-Memory Streaming
 
 Unlike disk-based replays, kill cam uses `InMemoryNetworkReplayStreaming`:
 
@@ -230,7 +234,7 @@ Unlike disk-based replays, kill cam uses `InMemoryNetworkReplayStreaming`:
 | **Persistence** | Lost on exit          | Survives restarts     |
 | **Use Case**    | Short, recent history | Full match recordings |
 
-### Buffer Configuration
+#### Buffer Configuration
 
 Several CVars control replay recording:
 
@@ -247,7 +251,7 @@ The `BufferTimeInSeconds` directly controls how much history the in-memory strea
 
 When a player dies, critical information must be captured **immediately**, before the dying player's pawn is destroyed or unpossessed.
 
-### Why Immediate Caching?
+#### Why Immediate Caching?
 
 After death:
 
@@ -258,7 +262,7 @@ After death:
 
 The solution: cache **NetGUIDs** instead of actor pointers. NetGUIDs remain valid for identifying actors during replay playback.
 
-### What Gets Cached
+#### What Gets Cached
 
 ```cpp
 void UKillcamPlayback::OnLocalHeroDeath(
@@ -289,7 +293,7 @@ void UKillcamPlayback::OnLocalHeroDeath(
 | `CachedHeroDeathDemoTime`        | Anchor point for calculating playback start time   |
 | `CachedHeroDeathClientWorldTime` | Prevents starting playback too quickly after death |
 
-### Trigger Flow
+#### Trigger Flow
 
 ```
 Elimination Message Broadcast

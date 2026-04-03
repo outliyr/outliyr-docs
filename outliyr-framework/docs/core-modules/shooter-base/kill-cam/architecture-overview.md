@@ -4,7 +4,7 @@ Before diving into individual systems, it's essential to understand how all the 
 
 ***
 
-## The Big Picture
+### The Big Picture
 
 The Kill Cam system spans multiple machines and involves careful coordination between client and server:
 

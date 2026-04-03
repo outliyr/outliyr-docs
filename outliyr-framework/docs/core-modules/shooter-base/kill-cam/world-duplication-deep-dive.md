@@ -2,6 +2,8 @@
 
 The Kill Cam system's ability to show a replay without interfering with the live game depends entirely on a specific, experimental Unreal Engine feature: **in-memory world duplication**. This page explains how it works, why it's necessary, and what implications it has for your project.
 
+***
+
 ### Why Duplication is Necessary
 
 Before understanding the solution, consider the problems with playing a replay directly in the live game world.
@@ -39,11 +41,13 @@ Instead of trying to manage these conflicts, the Kill Cam creates a completely s
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-Key insight: The worlds never visibly coexist. When kill cam plays, the live world becomes invisible (but continues simulating in the background). This provides complete isolation between the two worlds.
+The worlds never visibly coexist. When kill cam plays, the live world becomes invisible (but continues simulating in the background). This provides complete isolation between the two worlds.
+
+***
 
 ### The Engine Hook
 
-### `Experimental_ShouldPreDuplicateMap`
+#### `Experimental_ShouldPreDuplicateMap`
 
 World duplication is enabled through a virtual function on the `UGameEngine` class:
 
@@ -89,7 +93,7 @@ This duplicate collection starts **hidden** and **inactive**.
 {% endstep %}
 {% endstepper %}
 
-### Engine Configuration
+#### Engine Configuration
 
 For the custom engine class to be used, it must be specified in `Config/DefaultEngine.ini`:
 
@@ -107,6 +111,8 @@ s.World.CreateStaticLevelCollection=1
 
 This CVar ensures the static level collection system is enabled, which is necessary for proper level collection management.
 
+***
+
 ### Level Collections Explained
 
 #### What is a Level Collection?
@@ -119,7 +125,7 @@ A `FLevelCollection` is the engine's way of grouping levels that should be proce
 | `DynamicDuplicatedLevels` | The pre-created copy used for replay playback              |
 | `StaticLevels`            | Levels that don't participate in gameplay (lighting, etc.) |
 
-### Visibility Control
+#### Visibility Control
 
 The Kill Cam system controls which collection is visible:
 
@@ -137,7 +143,7 @@ DuplicateCollection->SetIsVisible(true);
 
 This visibility toggle provides complete isolation between the two worlds. Since only one world is ever visible, there's no possibility of visual or physics conflicts between them.
 
-### Why This Works
+#### Why This Works
 
 When a collection is invisible:
 
@@ -146,6 +152,8 @@ When a collection is invisible:
 * The player can't see or interact with it
 
 The live game keeps running in the background (invisible), so when kill cam ends, everything is exactly where it should be, no resynchronization needed.
+
+***
 
 ### DemoNetDriver and World Assignment
 
@@ -178,13 +186,15 @@ GameInstance->PlayReplay(ReplayName, nullptr, Options);
 
 This prevents the replay system from trying to load new level instances, it uses the pre-duplicated ones instead.
 
+***
+
 ### Adapting the Experience System
 
-### The Problem
+#### The Problem
 
 The `ULyraExperienceManagerComponent` exists on the GameState, which gets duplicated along with the world. Without special handling, the experience system would try to load and activate game features twice, once in each world.
 
-### The Solution
+#### The Solution
 
 The component checks which collection it's in before executing:
 
@@ -201,6 +211,8 @@ When experience load starts:
 ```
 
 Similar checks exist in `EndPlay()` and `IsExperienceLoaded()` to ensure the duplicate world inherits the experience state without re-initializing it.
+
+***
 
 ### Client-Side Nature
 
@@ -256,6 +268,8 @@ Listen Server Host:
 
 The system detects listen server hosts and automatically disables Kill Cam for them.
 
+***
+
 ### Checking Actor World Context
 
 #### The Utility Function
@@ -291,55 +305,3 @@ Use these functions when you need to prevent cross-world interactions:
 * Targeting systems shouldn't target actors in the other world
 * Interaction checks should verify same-world context
 * Custom gameplay logic during kill cam
-
-***
-
-### Summary
-
-The world duplication approach provides clean isolation between the live game and Kill Cam playback:
-
-{% stepper %}
-{% step %}
-#### Engine enables duplication
-
-A custom `UGameEngine` override enables pre-duplication.
-{% endstep %}
-
-{% step %}
-#### Two level collections exist
-
-A `DynamicSourceLevels` and `DynamicDuplicatedLevels` collection live in the same UWorld.
-{% endstep %}
-
-{% step %}
-#### Visibility toggling provides isolation
-
-Toggling visibility between collections ensures only one world is visible.
-{% endstep %}
-
-{% step %}
-#### Complete isolation
-
-Only one world is ever visible at a time, preventing conflicts.
-{% endstep %}
-
-{% step %}
-#### Experience system adapted
-
-The experience manager skips initialization in the duplicated world.
-{% endstep %}
-
-{% step %}
-#### Client-side only
-
-Duplication and playback occur on the victim client; the server only relays data.
-{% endstep %}
-
-{% step %}
-#### Listen server excluded
-
-Listen server hosts are detected and Kill Cam is disabled for them to avoid breaking networking.
-{% endstep %}
-{% endstepper %}
-
-This foundation enables all the other Kill Cam systems to work without worrying about interference with the live game.
