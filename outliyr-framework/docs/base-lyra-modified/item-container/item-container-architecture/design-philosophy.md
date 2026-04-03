@@ -190,7 +190,7 @@ Containers declare prediction support. This is the chosen approach.
 
 ***
 
-## Why Overlay Composition?
+### Why Overlay Composition?
 
 **The problem:** Client needs to show predicted state while server state replicates. How do you merge them?
 
@@ -264,7 +264,7 @@ A source struct knows how to create its ViewModel. This is the chosen approach.
 
 ***
 
-## Summary of Trade-offs
+### Summary of Trade-offs
 
 | Decision                   | Benefit                                         | Cost                       |
 | -------------------------- | ----------------------------------------------- | -------------------------- |
@@ -277,7 +277,7 @@ A source struct knows how to create its ViewModel. This is the chosen approach.
 
 ***
 
-## When to Break the Rules
+### When to Break the Rules
 
 These design decisions are guidelines, not laws. Break them when:
 
@@ -289,6 +289,6 @@ The framework is designed to be flexible. Use the patterns that help, adapt or b
 
 ***
 
-## Next Steps
+### Next Steps
 
 Now that you understand the architecture, learn how operations flow through the system in [Transactions](../transactions/).
