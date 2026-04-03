@@ -21,22 +21,22 @@ Before understanding the solution, consider the problems with playing a replay d
 Instead of trying to manage these conflicts, the Kill Cam creates a completely separate sandbox:
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────────┐
 │                         UWorld                                   │
 │                                                                  │
-│  ┌────────────────────────────┐  ┌────────────────────────────┐ │
-│  │   DynamicSourceLevels      │  │  DynamicDuplicatedLevels   │ │
-│  │   (Live Game)              │  │  (Kill Cam Sandbox)        │ │
-│  │                            │  │                            │ │
-│  │  • Real game simulation    │  │  • Replay playback only    │ │
-│  │  • Network replication     │  │  • No network traffic      │ │
-│  │  • Player input processed  │  │  • No player input         │ │
-│  │  • Visible normally        │  │  • Visible during KC only  │ │
-│  │                            │  │                            │ │
-│  └────────────────────────────┘  └────────────────────────────┘ │
+│  ┌────────────────────────────┐  ┌────────────────────────────┐  │
+│  │   DynamicSourceLevels      │  │  DynamicDuplicatedLevels   │  │
+│  │   (Live Game)              │  │  (Kill Cam Sandbox)        │  │
+│  │                            │  │                            │  │
+│  │  • Real game simulation    │  │  • Replay playback only    │  │
+│  │  • Network replication     │  │  • No network traffic      │  │
+│  │  • Player input processed  │  │  • No player input         │  │
+│  │  • Visible normally        │  │  • Visible during KC only  │  │
+│  │                            │  │                            │  │
+│  └────────────────────────────┘  └────────────────────────────┘  │
 │                                                                  │
 │  Only ONE collection is visible at any time - complete isolation │
-└─────────────────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 Key insight: The worlds never visibly coexist. When kill cam plays, the live world becomes invisible (but continues simulating in the background). This provides complete isolation between the two worlds.
