@@ -71,11 +71,11 @@ Mode-Specific Features
 Game Rules & Scoring
 
 * [ ] Does this mode have unique rules? (Create a gamestate component or a Blueprint child of `ShooterScoring_Base`)
-* [ ] Can the rules be separated into distinct components? (e.g., Arena separates economy and character selection into different managers — smaller, focused components are more reusable and easier to maintain)
+* [ ] Can the rules be separated into distinct components? (e.g., Arena separates economy and character selection into different managers, smaller, focused components are more reusable and easier to maintain)
 
 Experience Definition
 
-* [ ] The Experience ties everything together. Think of it as the recipe — the systems and features you created are the ingredients, and the Experience combines them into a playable game.
+* [ ] The Experience ties everything together. Think of it as the recipe, the systems and features you created are the ingredients, and the Experience combines them into a playable game.
 * [ ] You can create multiple experiences per game mode (e.g., `BattleRoyale_Solo`, `BattleRoyale_Duo`, `BattleRoyale_Squads`, or `TDM`, `TDM_Hardcore`, `TDM_Realism`).
 * [ ] The Experience defines: the default pawn, which Game Features to enable, what UI to give players, which components to add, and which Action Sets to include.
 * [ ] See [Game Framework & Experiences](../base-lyra-modified/gameframework-and-experience/) for full documentation.

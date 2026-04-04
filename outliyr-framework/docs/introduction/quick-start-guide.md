@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-### **Your First Gameplay Session**
+## **Your First Gameplay Session**
 
 This guide walks you through launching your first gameplay session with the framework. You’ll play a prebuilt game mode, explore its assets, and make a simple customization, all while learning how the modular system works.
 
@@ -20,7 +20,7 @@ Let's get started!
 
 ***
 
-### **Launching an Example Game Mode**
+## **Launching an Example Game Mode**
 
 Let's jump into a pre-built game mode to see the framework in action. We'll use **Team Deathmatch (TDM)** as an example.
 
@@ -54,7 +54,7 @@ Observe:
 
 ***
 
-### **Exploring the Team Deathmatch Assets (Initial Peek)**
+## **Exploring the Team Deathmatch Assets (Initial Peek)**
 
 Now that you've played it, let's briefly see where the TDM setup lives:
 
@@ -87,7 +87,7 @@ It depends on shared systems like ShooterBase, but no other plugin depends on TD
 
 ***
 
-### **Making a Small Tweak:**
+## **Making a Small Tweak:**
 
 Let’s change a rule or component for learning purposes.
 
@@ -106,14 +106,14 @@ See the [Installing & Setup](installing-and-setup.md) guide for how to create on
 
 ***
 
-### **Next Steps: Diving Deeper**
+## **Next Steps: Diving Deeper**
 
 You've now launched a game mode! This framework is extensive. Here’s where to go to learn more and start building your vision:
 
-* **Understand the Foundation - Experiences & Game Features:**
+* #### **Understand the Foundation - Experiences & Game Features:**
   * This is how all game modes and modular content are structured. Mastering this is key.
   * **➡️** [**See Full Documentation: Game Framework & Experiences**](../base-lyra-modified/gameframework-and-experience/).
-* **Explore Core Gameplay Plugins:**
+* #### **Explore Core Gameplay Plugins:**
   * **ShooterBase:** For all things combat.
     * **Key Features:** Compositional weapon system, predictive recoil, diverse projectile types (hitscan, simulated bullet drop), lag compensation, aim assist, intelligent spawning, flexible scoring, spectator system, killcam, accolades.
     * **Dive In:** Learn how to define new weapons, tweak firing mechanics, or customize the spawn system.
@@ -126,7 +126,7 @@ You've now launched a game mode! This framework is extensive. Here’s where to 
     * **Key Features:** Full-body awareness, seamless first/third-person transitions, weapon animations synced with the first-person view.
     * **Dive In:** Understand how to set up character meshes and animations for true FPS.
     * **➡️** [**See True First Person Documentation**](../core-modules/true-first-person.md)
-* **Leverage Base Lyra (Modified) Systems:**
+* #### **Leverage Base Lyra (Modified) Systems:**
   * This asset extends and utilizes many core Lyra concepts. Understanding these is beneficial:
     * [**Character System**](../base-lyra-modified/character/)**:** How pawns are built with components, GAS integration, movement.&#x20;
     * [**Items**](../base-lyra-modified/items/)**:** Item definitions, instances, fragments, permissions, and the pickup system.
@@ -134,6 +134,7 @@ You've now launched a game mode! This framework is extensive. Here’s where to 
     * [**Item Container**](../base-lyra-modified/item-container/)**:** The core container interface, transactions, prediction, and access rights that all container types (inventory, equipment, tetris, etc.) build on.
     * [**Equipment System**](../base-lyra-modified/equipment/)**:** How items (especially weapons) are equipped, grant abilities, and manage their runtime instances.
     * [**Weapons**](../base-lyra-modified/weapons/)**:** Weapon instances, range weapon configuration, weapon state, and reticle fragments.
+    * [**Save System**](../base-lyra-modified/save-system/)**:** How the player based save system works, and how to extend it.
     * [**UI**](../base-lyra-modified/ui/)**:** The Lyra Indicator System for HUD markers and the Item Container UI System for container management interfaces.
     * [**Team System**](../base-lyra-modified/team/)**:** Defining teams, assigning players, and managing team visuals.
     * [**Interaction System**](../base-lyra-modified/interaction/)**:** How players interact with objects in the world using GAS.
@@ -142,10 +143,10 @@ You've now launched a game mode! This framework is extensive. Here’s where to 
     * [**Camera System**](../base-lyra-modified/camera/)**:** Flexible camera modes and stack-based blending.
     * [**Input System**](../base-lyra-modified/input/)**:** How Enhanced Input and Lyra Input Configs drive actions and abilities.
     * [**Settings System**](../base-lyra-modified/settings/)**:** Player and machine-specific settings management.
-* **Creating Your Own Game Mode:**
-  * Once you're familiar with the concepts, follow the detailed guide: [**Creating a New Game Mode (Practical Guide)**](/broken/pages/nSHtc0HcLAWvxk4mEJgw).
-* **Analyze Example Game Modes:**
-  * Each included game mode plugin (Arena, Battle Royale, Capture The Flag, Domination, Extraction, Free For All, Gun Game, Hardpoint, Headquarters, Infection, Kill Confirmed, Payload, Prop Hunt, Search & Destroy) in `Plugins/GameFeatures/` showcases different ways to combine these systems.
+* #### **Creating Your Own Game Mode:**
+  * Once you're familiar with the concepts, follow the detailed guide: [**Creating a New Game Mode (Practical Guide)**](../game-modes/extending-and-customization.md).
+* #### **Analyze Example Game Modes:**
+  * Each included game mode plugin (Arena, Battle Royale, Capture The Flag, Domination, Extraction, Free For All, Gun Game, Hardpoint, Headquarters, Infection, Kill Confirmed, Payload, Prop Hunt, Search & Destroy, Team Deathmatch) in `Plugins/GameFeatures/` showcases different ways to combine these systems.
   * **For example:**
     * **Extraction & Battle Royale:** Demonstrate different scales of inventory usage (BR is simpler, Extraction uses the full Tetris system).
     * **Arena:** Shows character selection and a buy menu.

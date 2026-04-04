@@ -4,7 +4,7 @@ This documentation will guide you through using the **Outliyr Framework** for **
 
 ***
 
-### What Is This Framework?
+## What Is This Framework?
 
 The Outliyr Framework is a **modular multiplayer shooter foundation** built on top of Epic Gamesâ€™ Lyra Starter Game. It expands Lyraâ€™s systems to provide a complete, extensible shooter base that supports both first-person and third-person perspectives.
 
@@ -18,7 +18,7 @@ This framework includes:
 
 ***
 
-### Why Build on Lyra?
+## Why Build on Lyra?
 
 Lyra is Unreal Engine's reference shooter project built by Epic Games using best practices for modular multiplayer development. It includes:
 
@@ -34,7 +34,7 @@ However, Lyra is a tech demo, not a full game framework. Outliyr builds on Lyraâ
 
 ***
 
-### Who Is This Framework For?
+## Who Is This Framework For?
 
 * Indie developers building competitive multiplayer shooters
 * Small teams or studios who want a solid Unreal-based shooter foundation
@@ -43,7 +43,7 @@ However, Lyra is a tech demo, not a full game framework. Outliyr builds on Lyraâ
 
 ***
 
-### Key Benefits
+## Key Benefits
 
 * **Save time** â€” Focus on building your game, not rewriting boilerplate systems
 * **Production-ready** â€” Fully integrated multiplayer shooter mechanics
@@ -53,7 +53,7 @@ However, Lyra is a tech demo, not a full game framework. Outliyr builds on Lyraâ
 
 ***
 
-### What You'll Find in This Documentation
+## What You'll Find in This Documentation
 
 * **Quick Start Guide** â€“ Set up the framework and launch your first session
 * **Base Lyra Modifications** â€“ Learn how Experiences, Game Features, and modular gameplay work
@@ -65,7 +65,7 @@ However, Lyra is a tech demo, not a full game framework. Outliyr builds on Lyraâ
 
 ***
 
-### Getting Started
+## Getting Started
 
 If you're new to the framework, start here:
 

@@ -1,6 +1,6 @@
 # Project Architecture
 
-### **Overview of the Design Philosophy**
+## **Overview of the Design Philosophy**
 
 Before diving into the individual features, it's important to **understand how this framework is structured** and why it was designed this way.
 
@@ -10,7 +10,7 @@ By embracing a **composition-based design**, this system enables developers to b
 
 This section provides a **high-level overview**, subsequent sections will **dive deeper into each system** so you can see how everything fits together.
 
-#### **Key Principles**
+### **Key Principles**
 
 * **Composition over inheritance** – Features are built as modular components rather than deep inheritance chains.
 * **Opt-in systems** – Just about anything (player abilities, pawn components, UI, game mechanics, etc) can be selectively enabled or disabled, thanks to Lyra's experience systems.
@@ -23,7 +23,7 @@ This section provides a **high-level overview**, subsequent sections will **dive
 
 ***
 
-### **C++ vs Blueprint Breakdown**
+## **C++ vs Blueprint Breakdown**
 
 This framework takes a **hybrid approach**, using C++ for performance-critical systems while keeping Blueprints accessible for designers.
 
@@ -33,7 +33,7 @@ This framework takes a **hybrid approach**, using C++ for performance-critical s
 
 ***
 
-### **Dependency Structure**
+## **Dependency Structure**
 
 This framework is **layered**, meaning each level **depends only on the layers below it**.
 
@@ -141,7 +141,7 @@ This shows a better understanding of the dependencies layers
 {% endtab %}
 {% endtabs %}
 
-#### **What This Means in Practice**
+### **What This Means in Practice**
 
 * **You can delete any game mode** (TDM, BR, Extraction) without breaking anything.
 * **You can remove entire features** (e.g., the tetris Inventory System) without affecting other systems. (**Note:** this would require **deleting** game modes depending on that core feature)
@@ -149,11 +149,11 @@ This shows a better understanding of the dependencies layers
 
 ***
 
-### **Modular & Extensible Design**
+## **Modular & Extensible Design**
 
 This framework is **built on a modular gameplay approach**, meaning **everything is opt-in**, you only include what you need.
 
-#### **How This Works**
+### **How This Works**
 
 Each major system is designed as a **Game Feature Plugin**, meaning:&#x20;
 
@@ -161,7 +161,7 @@ Each major system is designed as a **Game Feature Plugin**, meaning:&#x20;
 * New mechanics can be added **without modifying core classes**.
 * Plugins can be updated independently **without breaking the entire project**.
 
-#### **Examples of Modularity**
+### **Examples of Modularity**
 
 * The **Inventory System** doesn’t dictate the UI, you can build your own visual layer.
 * The **Weapon System** allows new mechanics without modifying base weapon classes.
@@ -169,7 +169,7 @@ Each major system is designed as a **Game Feature Plugin**, meaning:&#x20;
 
 ***
 
-### **Experience System: The Core of Modularity**
+## **Experience System: The Core of Modularity**
 
 The **Experience System** is the backbone of how game modes are defined and modular content is loaded in this framework. It determines what features, UI, inputs, abilities, and logic are activated for each gameplay session.
 
@@ -177,7 +177,7 @@ The **Experience System** is the backbone of how game modes are defined and modu
 This is a high-level summary for context. For a deep dive into how Experiences and Game Features work, including key data assets and interaction flow, [see the full Game Framework & Experiences documentation.](../base-lyra-modified/gameframework-and-experience/)
 {% endhint %}
 
-#### **What It Controls**
+### **What It Controls**
 
 * **What abilities a character has**
 * **What UI elements are enabled**
@@ -185,7 +185,7 @@ This is a high-level summary for context. For a deep dive into how Experiences a
 * **What inputs are enabled and their bindings**
 * **Which plugins are active per game mode**
 
-#### **Example Use Cases**
+### **Example Use Cases**
 
 **Battle Royale & Extraction & TDM Inventory**
 

@@ -8,7 +8,7 @@ Unlike standard Unreal Engine plugins, this framework is designed as a **standal
 
 ***
 
-### **Downloading the Project**
+## **Downloading the Project**
 
 You can obtain the framework via the **Unreal Engine Marketplace** (once released).
 
@@ -18,7 +18,7 @@ This project would require at least **Unreal Engine 5.6**
 
 ***
 
-### **Opening the Project**
+## **Opening the Project**
 
 * Open Unreal Engine 5 (latest stable version recommended)
 * Select Open Project
@@ -32,7 +32,7 @@ The first load may take a few minutes due to shader compilation and plugin initi
 
 ***
 
-### **Understanding the Project Structure**
+## **Understanding the Project Structure**
 
 Before diving in, a quick look at where things are:
 
@@ -76,7 +76,7 @@ If a new Game Feature Plugin won’t cut it, maybe you need to change how a core
 
 ***
 
-### How To Create a Game Feature Plugin
+## How To Create a Game Feature Plugin
 
 1. In **Unreal Engine**, go to `Edit → Plugins`
 2. Click `Add`
@@ -91,7 +91,7 @@ In the editor, the modified lyra code is inside the content folder, the game fea
 If you can't see any plugins in the editor, make sure you tick "Show Plugin Content", in the settings of your content browser.
 {% endhint %}
 
-#### Common Plugin Dependencies:
+### Common Plugin Dependencies:
 
 * `GameplayAbilities`
 * `ModularGameplay`
@@ -114,7 +114,7 @@ If you don't like images and want a video (I don't blame you), this is a [good g
 
 ***
 
-### Important Note About Activation
+## Important Note About Activation
 
 After creating your plugin, **you won’t see any gameplay changes right away.** That’s expected.
 
