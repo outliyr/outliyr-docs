@@ -6,7 +6,7 @@ You want a grid-based inventory - rows and columns of item slots, like most RPG 
 
 ***
 
-### When to Use This
+## When to Use This
 
 Choose Tile Panel when:
 
@@ -23,7 +23,7 @@ Choose [List Panel](inventory-list-panel.md) instead when:
 
 ***
 
-### Setting Up
+## Setting Up
 
 {% stepper %}
 {% step %}
@@ -103,7 +103,7 @@ void UMyInventoryScreen::NativeConstruct()
 
 ***
 
-### How It Works Internally
+## How It Works Internally
 
 {% stepper %}
 {% step %}
@@ -146,9 +146,9 @@ Entry widgets receive SlotViewModels (not ItemViewModels) so the grid can show e
 
 ***
 
-### Navigation
+## Navigation
 
-#### 2D Grid Navigation
+### 2D Grid Navigation
 
 The panel handles arrow key / d-pad navigation automatically:
 
@@ -157,7 +157,7 @@ The panel handles arrow key / d-pad navigation automatically:
 
 The panel calculates grid position based on TileView dimensions and entry size.
 
-#### Wrap Navigation
+### Wrap Navigation
 
 Control what happens at grid edges:
 
@@ -173,7 +173,7 @@ When wrap is disabled, navigation at edges can escape to adjacent panels (useful
 
 ***
 
-### Selection Sync
+## Selection Sync
 
 The panel keeps the TileView's selection synchronized with the ViewModel's focus:
 
@@ -189,7 +189,7 @@ InventoryVM->SetFocusedSlot(5);
 
 ***
 
-### Practical Example: Complete Inventory Screen
+## Practical Example: Complete Inventory Screen
 
 <details>
 

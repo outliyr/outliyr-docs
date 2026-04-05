@@ -6,7 +6,7 @@ Slot descriptors solve this problem through polymorphism, a base struct with vir
 
 ***
 
-### The Problem
+## The Problem
 
 Consider a simple item move. The transaction ability needs to:
 
@@ -118,11 +118,11 @@ if (const FAbilityData_SourceItem* Base = Slot.GetPtr<FAbilityData_SourceItem>()
 
 ***
 
-### Concrete Slot Descriptors
+## Concrete Slot Descriptors
 
 Each container type defines its own slot descriptor with the data needed to identify a slot.
 
-#### Inventory Slots
+### Inventory Slots
 
 ```cpp
 USTRUCT(BlueprintType)
@@ -136,11 +136,11 @@ struct FInventoryAbilityData_SourceItem : public FAbilityData_InventorySourceIte
 };
 ```
 
-<figure><img src="../../../.gitbook/assets/image (6) (1) (1) (1) (1) (1) (1).png" alt="" width="473"><figcaption><p>Inventory Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (6) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="473"><figcaption><p>Inventory Source Slot</p></figcaption></figure>
 
 Inventory slots are simple: a reference to the inventory component and an integer index.
 
-#### Equipment Slots
+### Equipment Slots
 
 ```cpp
 USTRUCT(BlueprintType)
@@ -167,7 +167,7 @@ Equipment slots use gameplay tags. Notice `ActiveHeldSlot`, this represents a _s
 This gives the benefit of the held state (i.e. holstering vs holding an item) equating to a move from one slot to another.
 {% endhint %}
 
-#### Attachment Slots
+### Attachment Slots
 
 ```cpp
 USTRUCT(BlueprintType)
@@ -187,7 +187,7 @@ struct FAttachmentAbilityData_SourceAttachment : public FAbilityData_SourceItem
 };
 ```
 
-<figure><img src="../../../.gitbook/assets/image (8) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p>Attachment Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (8) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p>Attachment Source Slot</p></figcaption></figure>
 
 Attachments are more complex because they can nest. A scope attached to a weapon that's equipped requires:
 
@@ -201,7 +201,7 @@ A scope attached to a weapon attached to another weapon (attachment chains):
 * ContainerAttachmentPath: `[UnderbarrelAttachment]` (path to reach the attached weapon)
 * AttachmentSlot: The scope attachment point
 
-#### Pickup Slots
+### Pickup Slots
 
 ```cpp
 USTRUCT(BlueprintType)
@@ -221,7 +221,7 @@ struct FPickupAbilityData_SourceItem : public FAbilityData_PickupSourceItem
 };
 ```
 
-<figure><img src="../../../.gitbook/assets/image (5) (1).png" alt="" width="536"><figcaption><p>Pickup Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (5) (1) (1).png" alt="" width="536"><figcaption><p>Pickup Source Slot</p></figcaption></figure>
 
 Pickup slots reference items within a world collectable's `FItemPickup`:
 
@@ -235,7 +235,7 @@ Unlike other slot types, pickup slots distinguish between templates and instance
 
 ***
 
-### Marker Base Structs
+## Marker Base Structs
 
 Notice the intermediate structs like `FAbilityData_InventorySourceItem` , `FAbilityData_EquipmentSourceItem` and `FAbilityData_PickupSourceItem`  These are marker structs, they contain no data but establish a type hierarchy.
 
@@ -255,7 +255,7 @@ This enables:
 
 ***
 
-### The ResolveContainer Pattern
+## The ResolveContainer Pattern
 
 The key method is `ResolveContainer()`:
 
@@ -264,7 +264,7 @@ The key method is `ResolveContainer()`:
 
 Each slot descriptor implements this to return its container. The implementation varies:
 
-Inventory:
+### Inventory
 
 ```cpp
 ILyraItemContainerInterface* FInventoryAbilityData_SourceItem::ResolveContainer(APlayerController* PC) const
@@ -273,7 +273,7 @@ ILyraItemContainerInterface* FInventoryAbilityData_SourceItem::ResolveContainer(
 }
 ```
 
-Equipment:
+### Equipment
 
 ```cpp
 ILyraItemContainerInterface* FEquipmentAbilityData_SourceEquipment::ResolveContainer(APlayerController* PC) const
@@ -282,7 +282,7 @@ ILyraItemContainerInterface* FEquipmentAbilityData_SourceEquipment::ResolveConta
 }
 ```
 
-Attachments:
+### Attachments
 
 ```cpp
 ILyraItemContainerInterface* FAttachmentAbilityData_SourceAttachment::ResolveContainer(APlayerController* PC) const
@@ -298,7 +298,7 @@ The caller doesn't care about these details, it just gets a container interface.
 
 ***
 
-### Slot Comparison
+## Slot Comparison
 
 Slots need to be comparable for operations like "did this item's slot change?":
 
@@ -330,7 +330,7 @@ static bool AreSlotsInSameRootContainer(
 
 ***
 
-### The Null Slot
+## The Null Slot
 
 A special descriptor represents "no slot":
 
@@ -342,7 +342,7 @@ struct FNullSourceSlot : public FAbilityData_SourceItem
 };
 ```
 
-<figure><img src="../../../.gitbook/assets/image (9) (1) (1) (1) (1) (1).png" alt="" width="181"><figcaption><p>Null Source Slot</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (9) (1) (1) (1) (1) (1) (1).png" alt="" width="181"><figcaption><p>Null Source Slot</p></figcaption></figure>
 
 Use this instead of invalid/empty `FInstancedStruct` when you need an explicit "no slot" value.
 
@@ -356,7 +356,7 @@ bool UItemContainerFunctionLibrary::IsNullSlot(const FInstancedStruct& Slot)
 
 ***
 
-### Creating Your Own Slot Descriptor
+## Creating Your Own Slot Descriptor
 
 When implementing a custom container, you'll need a slot descriptor. The requirements:
 
@@ -388,6 +388,4 @@ Implement `GetDebugString()` for logging
 
 See [Implementing the Interface](../creating-containers/implementing-the-interface.md) for a complete example.
 
-### Next Steps
-
-See how the Blueprint layer wraps these C++ constructs in [Blueprint API](item-container-blueprint-api.md).
+***

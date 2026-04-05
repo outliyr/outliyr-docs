@@ -4,7 +4,7 @@ A transaction is a batch of operations that execute atomically, all succeed or a
 
 ***
 
-### The Mental Model
+## The Mental Model
 
 {% stepper %}
 {% step %}
@@ -67,9 +67,9 @@ Request.AddModifyTagStackOp(AmmoSlot, AmmoTag, -5);
 
 ***
 
-### Execution Flow
+## Execution Flow
 
-#### 1. Pre-Filter (`ShouldAbilityRespondToEvent`)
+### 1. Pre-Filter (`ShouldAbilityRespondToEvent`)
 
 Before the ability activates, a quick check determines if the request is worth processing:
 
@@ -79,7 +79,7 @@ Before the ability activates, a quick check determines if the request is worth p
 
 This catches obviously invalid requests without spinning up the full ability.
 
-#### 2. Validation Phase
+### 2. Validation Phase
 
 The ability validates every operation before applying any:
 
@@ -105,7 +105,7 @@ Validation checks depend on the operation type:
 It is better not to send massive transaction batches as they are more likely to fail. Instead think of a transaction batch as the minimum number of operation necessary to achieve a specific state
 {% endhint %}
 
-#### 3. Execution Phase
+### 3. Execution Phase
 
 Once validated, operations execute in order:
 
@@ -122,7 +122,7 @@ Each operation:
 2. Records deltas in the `FPredictionKeyRecord`
 3. Stamps containers for prediction tracking (if applicable)
 
-#### 4. Delta Recording
+### 4. Delta Recording
 
 Every mutation is recorded as an `FItemTransactionDelta`:
 
@@ -150,7 +150,7 @@ Deltas are stored in chronological order. A move operation records two deltas:
 [1] Add ItemA to Equipment[Primary]    (bWasAddition = true)
 ```
 
-#### 5. Rollback (If Needed)
+### 5. Rollback (If Needed)
 
 If the server rejects or a later operation fails, rollback iterates deltas **in reverse**:
 
@@ -176,7 +176,7 @@ The `bForceAdd` flag bypasses validation during rollback, we're restoring known-
 
 ***
 
-### Prediction Integration
+## Prediction Integration
 
 When running on a predicting client:
 
@@ -207,7 +207,7 @@ struct FItemTransactionContext
 
 ***
 
-### Server Confirmation
+## Server Confirmation
 
 After client prediction, the server runs the same transaction:
 
@@ -229,7 +229,7 @@ After client prediction, the server runs the same transaction:
 
 ***
 
-### The Prediction Key Record
+## The Prediction Key Record
 
 All deltas for a prediction are stored together:
 
@@ -247,7 +247,7 @@ struct FPredictionKeyRecord
 
 ***
 
-### Example: Move with Swap
+## Example: Move with Swap
 
 Player drags ItemA to a slot containing ItemB.
 
@@ -286,7 +286,7 @@ Result: Both items return to their original positions.
 
 ***
 
-### Transaction Results
+## Transaction Results
 
 Transactions broadcast results via `FItemTransactionResultMessage`:
 
@@ -321,7 +321,7 @@ The [interaction view mode](../../../ui/item-container-ui-system/interaction-and
 
 ***
 
-### Key Principles
+## Key Principles
 
 1. **Validate first**: All operations validated before any execute
 2. **Record everything**: Every mutation becomes a delta
@@ -330,13 +330,3 @@ The [interaction view mode](../../../ui/item-container-ui-system/interaction-and
 5. **All or nothing**: Partial success is not an option
 
 ***
-
-### Deep Dive
-
-For the complete execution flow with code details, see [Execution Deep Dive](execution-deep-dive.md).
-
-***
-
-### Next Steps
-
-Learn about the available operation types in [Operation Types](../operation-types.md).

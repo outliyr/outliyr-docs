@@ -11,7 +11,7 @@ The team system manages team identity, membership, visual representation, and cr
 
 ***
 
-### Architecture
+## Architecture
 
 {% tabs %}
 {% tab title="Simple" %}
@@ -81,7 +81,7 @@ graph TD
 {% endtab %}
 {% endtabs %}
 
-### Structure of this Section
+## Structure of this Section
 
 {% stepper %}
 {% step %}

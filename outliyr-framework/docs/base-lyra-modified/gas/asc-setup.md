@@ -4,15 +4,15 @@ Every ability, effect, and attribute needs a home, the Ability System Component.
 
 ***
 
-### Two Patterns for Ownership
+## Two Patterns for Ownership
 
-#### PlayerState Pattern
+### PlayerState Pattern
 
 The ASC lives on `ALyraPlayerState`. Abilities, effects, and attribute state survive respawns because the PlayerState persists. The pawn connects to it during initialization. This is the standard pattern for player-controlled characters.
 
 The PlayerState creates the ASC along with default attribute sets (`ULyraHealthSet` and `ULyraCombatSet`) as subobjects. When a pawn spawns, the pawn extension component detects the PlayerState and links the pawn as the ASC's avatar.
 
-#### Self-Contained Pattern
+### Self-Contained Pattern
 
 The ASC lives on the character itself (`ALyraCharacterWithAbilities`). Everything dies with the pawn. Simpler setup, used for AI-controlled characters, interactable objects, or anything that doesn't need persistence.
 
@@ -24,7 +24,7 @@ In the shooter game modes, AI are supposed to represent players, meaning they ha
 
 ***
 
-### Pattern Comparison
+## Pattern Comparison
 
 |                      | PlayerState        | Self-Contained                |
 | -------------------- | ------------------ | ----------------------------- |
@@ -36,7 +36,7 @@ In the shooter game modes, AI are supposed to represent players, meaning they ha
 
 ***
 
-### How Initialization Works
+## How Initialization Works
 
 {% stepper %}
 {% step %}
@@ -64,13 +64,13 @@ For the full initialization sequence, see [Character Initialization](../characte
 
 ***
 
-### Tag Relationship Mapping
+## Tag Relationship Mapping
 
 You want melee attacks to cancel ranged abilities. You want a stun to block all offensive abilities. Tag relationships let you define these rules in a data asset instead of hardcoding them.
 
 `ULyraAbilityTagRelationshipMapping` is a data asset set on the ASC. It contains an array of rules, each mapping an ability tag to tags it blocks, tags it cancels, and additional activation requirements.
 
-#### `FLyraAbilityTagRelationship`
+### `FLyraAbilityTagRelationship`
 
 | Field                    | Purpose                                                                      |
 | ------------------------ | ---------------------------------------------------------------------------- |

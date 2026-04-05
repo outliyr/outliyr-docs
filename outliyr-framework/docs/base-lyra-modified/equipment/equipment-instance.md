@@ -2,11 +2,11 @@
 
 When a player equips a weapon, something has to exist at runtime to represent that equipped state - to own the spawned actors, to receive held state changes, to act as the source for granted abilities. That something is the `ULyraEquipmentInstance`.
 
-Think of it as the **live runtime object** that exists while gear is equipped. The `ULyraEquipmentDefinition` says "this rifle spawns this actor and grants these abilities" - the Equipment Instance is what actually makes that happen during gameplay.
+Think of it as the **live runtime object** that exists while gear is equipped. The `ULyraEquipmentDefinition` says "this rifle spawns this actor and grants these abilities", the Equipment Instance is what actually makes that happen during gameplay.
 
 ***
 
-### The Lifecycle
+## The Lifecycle
 
 Understanding when Equipment Instances exist clarifies their role:
 
@@ -38,21 +38,21 @@ Understanding when Equipment Instances exist clarifies their role:
 | **Destroyed**   | When item leaves equipment container               |
 | **Replication** | As a subobject of `ULyraEquipmentManagerComponent` |
 
-The Equipment Instance links back to the inventory item through its `Instigator` property - so abilities can access both runtime equipment state AND persistent item data (like ammo counts).
+The Equipment Instance links back to the inventory item through its `Instigator` property, so abilities can access both runtime equipment state AND persistent item data (like ammo counts).
 
 ***
 
-### The Two Actor Arrays Problem
+## The Two Actor Arrays Problem
 
 Here's a scenario: Player clicks to equip a weapon. They expect to see it immediately. But network latency means the server takes 100ms to process the request and replicate back.
 
 **Without prediction:** 100ms delay before the weapon appears. Feels sluggish.
 
-**With prediction:** Weapon appears instantly on the client. But now we have a problem - the client spawned a "fake" predicted actor, and soon the "real" replicated actor will arrive from the server.
+**With prediction:** Weapon appears instantly on the client. But now we have a problem, the client spawned a "fake" predicted actor, and soon the "real" replicated actor will arrive from the server.
 
 The Equipment Instance solves this with two separate actor arrays:
 
-#### SpawnedActors - The Truth
+### SpawnedActors - The Truth
 
 ```cpp
 UPROPERTY(ReplicatedUsing=OnRep_SpawnedActors)
@@ -61,7 +61,7 @@ TArray<TObjectPtr<AActor>> SpawnedActors;
 
 These are server-authoritative actors that replicate to all clients. They're the "real" equipment visuals that everyone sees.
 
-#### PredictedActors - The Instant Feedback
+### PredictedActors - The Instant Feedback
 
 ```cpp
 UPROPERTY()
@@ -70,7 +70,7 @@ TArray<TObjectPtr<AActor>> PredictedActors;
 
 These are local-only actors spawned during prediction. They exist solely to give the owning client immediate visual feedback. They're never replicated and are destroyed once the real actors arrive.
 
-#### The Handoff
+### The Handoff
 
 {% stepper %}
 {% step %}
@@ -98,9 +98,9 @@ For the full prediction model including how the Equipment Manager orchestrates t
 
 ***
 
-### Visibility Suppression
+## Visibility Suppression
 
-During the prediction handoff, there's a brief window where both actors exist - the predicted one (about to be destroyed) and the replicated one (just arrived). Without careful management, players would see duplicate weapons.
+During the prediction handoff, there's a brief window where both actors exist, the predicted one (about to be destroyed) and the replicated one (just arrived). Without careful management, players would see duplicate weapons.
 
 ```cpp
 // Hide actors and prevent OnRep from showing them
@@ -120,13 +120,13 @@ This gives the Equipment Manager precise control over when replicated actors bec
 
 ***
 
-### Deferred Visibility (Montage-Driven Transitions)
+## Deferred Visibility (Montage-Driven Transitions)
 
 Client prediction makes gameplay feel instant, when a player switches weapons, input bindings and abilities change immediately. But that same speed works against visual polish: the old weapon disappears and the new weapon appears before equip/unequip montages can play.
 
 Deferred visibility solves this. Gameplay changes happen instantly during prediction. Actor visibility changes are held until the right moment in the animation.
 
-#### The Problem
+### The Problem
 
 {% tabs %}
 {% tab title="Simple" %}
@@ -145,7 +145,7 @@ Frame 3:  Montage starts playing... but weapons already swapped visually
 {% endtab %}
 
 {% tab title="Complex" %}
-```
+```mermaid
 sequenceDiagram
     participant EM as Equipment Manager
     participant OW as Old Weapon Actors
@@ -163,7 +163,7 @@ sequenceDiagram
 {% endtab %}
 {% endtabs %}
 
-#### The Solution
+### The Solution
 
 {% tabs %}
 {% tab title="Simple" %}
@@ -186,7 +186,7 @@ Frame 25: AnimNotify(PendingShow) → new weapon appears
 {% endtab %}
 
 {% tab title="Complex" %}
-```
+```mermaid
 sequenceDiagram
     participant EM as Equipment Manager
     participant OW as Old Weapon Actors
@@ -213,7 +213,7 @@ sequenceDiagram
 
 The player sees smooth draw/holster animations with weapons appearing at exactly the right moments.
 
-#### Setup
+### Setup
 
 **1. Enable on Equipment Instance**
 
@@ -236,11 +236,11 @@ In your **unequip montage**, add `AnimNotify_CommitEquipVisibility` at the frame
 
 That's it, no Blueprint graph wiring or C++ code needed.
 
-#### Blueprint Alternative
+### Blueprint Alternative
 
 Instead of using the AnimNotify, you can call `CommitDeferredVisibility()` directly on the Equipment Instance from any Blueprint event, after a delay, after a custom event, or from your own AnimNotify subclass.
 
-#### Edge Cases
+### Edge Cases
 
 | Situation                                  | What Happens                                                                                        |
 | ------------------------------------------ | --------------------------------------------------------------------------------------------------- |
@@ -254,11 +254,11 @@ If `bUseDeferredVisibility` is enabled but no AnimNotify or Blueprint ever calls
 
 ***
 
-### Held State Change Notifications
+## Held State Change Notifications
 
 When equipment transitions between held and holstered states, the Equipment Manager calls `NotifyHeldStateChanged` on each affected Equipment Instance. This callback provides complete context about the change, what changed and how.
 
-#### The `FHeldStateChangedEvent` Structure
+### The `FHeldStateChangedEvent` Structure
 
 ```cpp
 USTRUCT(BlueprintType)
@@ -275,7 +275,7 @@ struct FHeldStateChangedEvent
 };
 ```
 
-#### Change Types
+### Change Types
 
 | Change Type    | Meaning                      | When It Happens             |
 | -------------- | ---------------------------- | --------------------------- |
@@ -284,7 +284,7 @@ struct FHeldStateChangedEvent
 | `StillHeld`    | Equipment remains held       | Held slot changed           |
 | `NeverHeld`    | Equipment was never held     | Initialization or no change |
 
-#### The Callback
+### The Callback
 
 ```cpp
 virtual void NotifyHeldStateChanged(const FHeldStateChangedEvent& Event);
@@ -292,7 +292,7 @@ virtual void NotifyHeldStateChanged(const FHeldStateChangedEvent& Event);
 
 This callback is called by the Equipment Manager, you should never call it directly. The Equipment Manager buffers and sorts notifications to ensure deterministic broadcast order e.g. unheld before held.
 
-#### Implementation Pattern
+### Implementation Pattern
 
 ```cpp
 void UMyWeaponInstance::NotifyHeldStateChanged(const FHeldStateChangedEvent& Event)
@@ -324,11 +324,11 @@ void UMyWeaponInstance::NotifyHeldStateChanged(const FHeldStateChangedEvent& Eve
 }
 ```
 
-#### Blueprint Implementation
+### Blueprint Implementation
 
 <figure><img src="../../.gitbook/assets/image (211).png" alt=""><figcaption></figcaption></figure>
 
-#### Native Delegate
+### Native Delegate
 
 For C++ listeners that need to respond to held state changes without subclassing:
 
@@ -339,7 +339,7 @@ UPROPERTY(BlueprintAssignable, Category = Equipment)
 FOnHeldStateChanged OnHeldStateChanged;
 ```
 
-#### Two-Handed Weapons
+### Two-Handed Weapons
 
 For a two-handed rifle, `NewHeldSlotTags` might contain both `Held.Primary` and `Held.Secondary`. Check the container for specific slots:
 
@@ -350,13 +350,13 @@ if (Event.NewHeldSlotTags.HasTag(TAG_Held_Primary))
 }
 ```
 
-#### Akimbo Support
+### Akimbo Support
 
 The callback tells you exactly which slot this particular instance occupies. For example with dual pistols, each pistol's instance receives only its specific held slot.&#x20;
 
 ***
 
-### Tag Attributes: Flexible Parameters Without Subclassing
+## Tag Attributes: Flexible Parameters Without Subclassing
 
 A common challenge in equipment systems is managing stats or parameters that are specific to certain equipment _types_ or _abilities_ without cluttering the base class or creating complex inheritance chains. For example:
 
@@ -366,7 +366,7 @@ A common challenge in equipment systems is managing stats or parameters that are
 
 Putting all these variables directly in `ULyraEquipmentInstance` (or even `ULyraWeaponInstance`) leads to bloat. Creating subclasses for every variation (`ULyraLaserRifleInstance`, `ULyraShotgunInstance`) becomes bloated and messy.
 
-#### **The Solution: Tag Attributes**
+### **The Solution: Tag Attributes**
 
 The `ULyraEquipmentInstance` contains a replicated `FGameplayTagAttributeContainer` named `Attributes`.
 
@@ -385,7 +385,7 @@ FFloatStatModification ModifyTagAttribute(FGameplayTag Tag, float Modifier, EFlo
 float GetTagAttributeValue(FGameplayTag Tag) const;
 ```
 
-#### Typical Flow
+### Typical Flow
 
 {% stepper %}
 {% step %}
@@ -436,7 +436,7 @@ EquipmentInstance->RemoveTagAttribute(FGameplayTag Tag));
 {% endstep %}
 {% endstepper %}
 
-#### Tag Attributes vs Item Stat Tags
+### Tag Attributes vs Item Stat Tags
 
 Both store tagged data, but they serve different purposes:
 
@@ -451,7 +451,7 @@ Both store tagged data, but they serve different purposes:
 
 ***
 
-### Prediction Reconciliation
+## Prediction Reconciliation
 
 When the server confirms a prediction, it creates its own authoritative Equipment Instance. The client's predicted instance is about to be destroyed - but it might have local state that matters (UI selections, local visual effects, aim offsets).
 
@@ -476,7 +476,7 @@ void UMyWeaponInstance::ReconcileWithPredictedInstance(ULyraEquipmentInstance* P
 
 ***
 
-### The Instigator Link
+## The Instigator Link
 
 Every Equipment Instance maintains a link to its source inventory item:
 
@@ -497,15 +497,15 @@ The `OnInstigatorReady` delegate fires when replication completes on clients.
 
 ***
 
-### Integrating with Gameplay Abilities (GAS)
+## Integrating with Gameplay Abilities (GAS)
 
-#### Ability Source Object
+### Ability Source Object
 
 When the `ULyraEquipmentManagerComponent` grants an ability set (defined in the `ULyraEquipmentDefinition`) to the Pawn's ASC, it specifies the **`ULyraEquipmentInstance`** as the `SourceObject` for those granted abilities.
 
 This means that inside a Gameplay Ability activated from this equipment, you can easily access the instance that granted it.
 
-#### Recommended Ability Base Class: `ULyraGameplayAbility_FromEquipment`
+### Recommended Ability Base Class: `ULyraGameplayAbility_FromEquipment`
 
 When creating Gameplay Abilities specifically intended to be granted by equipment (e.g., `GA_FireWeapon`, `GA_ActivateShield`), it is **highly recommended** to subclass your ability from `ULyraGameplayAbility_FromEquipment` instead of the base `ULyraGameplayAbility`.
 
@@ -526,7 +526,7 @@ When creating Gameplay Abilities specifically intended to be granted by equipmen
 * **Cleaner Code:** Avoids repetitive casting of the `SourceObject` within your ability logic.
 * **Direct Access:** Easily get references to both the runtime equipment state (`ULyraEquipmentInstance`) and the persistent inventory item state (`ULyraInventoryItemInstance`).
 
-**Example Usage (inside an ability derived from `ULyraGameplayAbility_FromEquipment`):**
+#### **Example Usage (inside an ability derived from `ULyraGameplayAbility_FromEquipment`):**
 
 {% tabs %}
 {% tab title="Blueprints" %}
@@ -569,7 +569,7 @@ By using `ULyraGameplayAbility_FromEquipment`, you streamline the process of wri
 
 ***
 
-### When to Subclass
+## When to Subclass
 
 The base `ULyraEquipmentInstance` handles most needs. Only subclass when you need:
 
@@ -581,14 +581,14 @@ The base `ULyraEquipmentInstance` handles most needs. Only subclass when you nee
 
 **Don't subclass** just to add variables (use Tag Attributes), handle action logic (use abilities), or store temporary state (use `InstancedPerActor` abilities).
 
-#### Examples in the Codebase
+### Examples in the Codebase
 
 | Class                       | Purpose                                           |
 | --------------------------- | ------------------------------------------------- |
 | `ULyraRangedWeaponInstance` | Per-frame heat and spread updates                 |
 | `UGunWeaponInstance`        | Recoil tracking with frame-accurate interpolation |
 
-#### Creating a Subclass
+### Creating a Subclass
 
 {% stepper %}
 {% step %}

@@ -2,7 +2,9 @@
 
 This section guides you through building custom item containers that integrate with the transaction system, prediction engine, and UI layer.
 
-### When You Need a Custom Container
+***
+
+## When You Need a Custom Container
 
 The framework ships with three container types:
 
@@ -22,7 +24,7 @@ Throughout this section, we use a **Vendor** as our running example. It's simple
 
 ***
 
-### What's in This Section
+## What's in This Section
 
 | Page                                                        | Description                                            |
 | ----------------------------------------------------------- | ------------------------------------------------------ |
@@ -87,11 +89,13 @@ Characteristics:
 Start without prediction. Get your container working with Pattern 1 first. Add prediction later if the latency bothers players. Many containers (vendors, loot, crafting) work perfectly fine without it.
 {% endhint %}
 
-### Vendor Container Overview
+***
+
+## Vendor Container Overview
 
 Here's the mental model and structure we'll build.
 
-#### The Mental Model
+### The Mental Model
 
 {% stepper %}
 {% step %}
@@ -115,7 +119,7 @@ Ability deducts currency after successful transaction.
 {% endstep %}
 {% endstepper %}
 
-#### Minimal Vendor Sketch
+### Minimal Vendor Sketch
 
 ```
 VendorComponent implements ILyraItemContainerInterface

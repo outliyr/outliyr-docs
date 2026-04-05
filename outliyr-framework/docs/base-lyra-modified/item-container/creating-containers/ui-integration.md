@@ -4,7 +4,7 @@ Once your container implements `ILyraItemContainerInterface`, it can integrate w
 
 ***
 
-### The Connection Point
+## The Connection Point
 
 The UI system interacts with containers through the interface you've already implemented:
 
@@ -16,9 +16,9 @@ If your interface methods work correctly, the UI layer can display your containe
 
 ***
 
-### What the UI Needs from Your Container
+## What the UI Needs from Your Container
 
-#### Slot Descriptors
+### Slot Descriptors
 
 Your slot descriptor struct (the one inheriting from `FAbilityData_SourceItem`) must:
 
@@ -44,7 +44,7 @@ If the descriptors are used in transactions, they must serialize correctly.
 
 The UI passes these slot descriptors around to identify where items are and where they can go.
 
-#### Change Notifications
+### Change Notifications
 
 For the UI to stay synchronized, your container should notify when its contents change:
 
@@ -57,7 +57,7 @@ Without change notifications, the UI won't know to refresh.
 
 ***
 
-### Where to Learn More
+## Where to Learn More
 
 The [**Item Container UI**](../../ui/item-container-ui-system/) documentation section covers:
 

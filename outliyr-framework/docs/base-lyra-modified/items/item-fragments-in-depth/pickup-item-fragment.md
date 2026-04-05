@@ -2,14 +2,18 @@
 
 When an item needs to exist physically in the game world, either placed intentionally or dropped by a player, the `UInventoryFragment_PickupItem` defines how it should look and potentially some basic display information for interaction prompts.
 
-### Purpose
+***
+
+## Purpose
 
 * **World Visuals:** Specifies the Static Mesh or Skeletal Mesh used to visually represent this item type when it's an actor in the world (typically via `AWorldCollectableBase` subclasses or a similar actor implementing `IPickupable`).
 * **Appearance Customization:** Allows defining mesh offsets/transforms and potentially a specific display name to use when the item is in its physical world form.
 * **Interaction Hint:** Can provide data (like `DisplayName` or `PadColor`) that interaction systems might use when generating prompts for picking up the item.
 * **Enabling Dropping:** Systems that handle dropping items from an inventory often check for the presence of this fragment on the item's definition. If the fragment is missing, the system may prevent the item from being dropped, assuming it has no defined physical representation.
 
-### Static Configuration (`UInventoryFragment_PickupItem`)
+***
+
+## Static Configuration (`UInventoryFragment_PickupItem`)
 
 You configure the world appearance by adding this fragment to an `ULyraInventoryItemDefinition`:
 
@@ -90,7 +94,7 @@ Importance:
 
 ***
 
-### Action Menu Integration
+## Action Menu Integration
 
 This fragment implements `IItemActionProvider` to add a **Drop** action to the item's context menu.
 

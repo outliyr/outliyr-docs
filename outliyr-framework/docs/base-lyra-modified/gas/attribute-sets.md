@@ -6,15 +6,13 @@ Attribute sets hold the numbers. Each set is a C++ class registered on the Abili
 
 ***
 
-### What Attributes Are
+## What Attributes Are
 
 Attributes are named float values managed by GAS. Health, MaxHealth, Stamina, BaseDamage, each is an attribute, stored as an `FGameplayAttributeData` on an attribute set. Gameplay Effects read from and write to them.
 
 A single ASC can hold multiple attribute sets at once. A character might have a health set, a shield set, and a combat set all active simultaneously, each responsible for a different slice of that character's data.
 
 The framework provides three attribute sets out of the box.
-
-***
 
 ### Health Set (`ULyraHealthSet`)
 
@@ -35,8 +33,6 @@ The health set also broadcasts an `FLyraVerbMessage` tagged with `Lyra.Damage.Me
 
 **Cheat support:** `Cheat.GodMode` blocks all incoming damage entirely, the effect is cancelled before it applies. `Cheat.UnlimitedHealth` is softer, it prevents health from dropping below 1, so the character still takes damage but cannot die. Both tags only function in non-shipping builds.
 
-***
-
 ### Shield Set (`ULyraShieldSet`)
 
 The shield set is an ablative layer that absorbs damage before it reaches health.
@@ -56,8 +52,6 @@ Shields have a `DamageAbsorptionPriority` of 100 compared to health's 0. When th
 
 **Cheat support:** `Cheat.UnlimitedShield` prevents shields from dropping below 1. `Cheat.GodMode` blocks damage to all resources, including shields.
 
-***
-
 ### Combat Set (`ULyraCombatSet`)
 
 The combat set sits on the **source** side of the damage equation, the character dealing damage, not the one receiving it. It does not inherit from the resource base class because it is not a depletable resource.
@@ -72,7 +66,7 @@ When a character fires a weapon, the damage execution captures `BaseDamage` from
 
 ***
 
-### The Resource Pattern
+## The Resource Pattern
 
 Health and shield are both "depletable resources." They share the same structure: a current value, a max value, damage and healing meta attributes, clamping between 0 and max, delegate broadcasting on change, and an out-of-resource event when the value hits zero.
 
@@ -80,7 +74,7 @@ The framework captures this shared behavior in an abstract base class, `ULyraRes
 
 This means adding a new resource (mana, stamina, energy) is a matter of subclassing the base and defining attributes. The damage and heal executions automatically discover all resource sets on a target and route through them based on priority.
 
-#### Damage Absorption Priority
+### Damage Absorption Priority
 
 Each resource set has a `DamageAbsorptionPriority` (int32). The damage execution gathers all resource sets on the target, sorts them by priority descending, and applies damage in that order. Overflow carries to the next set.
 
@@ -93,7 +87,7 @@ Inserting a new resource layer (overshield at priority 200, armor at priority 50
 
 ***
 
-### Adding a New Resource
+## Adding a New Resource
 
 Using mana as an example, here is how to add a new depletable resource.
 

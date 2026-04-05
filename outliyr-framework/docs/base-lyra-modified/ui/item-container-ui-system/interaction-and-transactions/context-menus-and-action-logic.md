@@ -58,9 +58,9 @@ You typically trigger the menu from your **Slot Widget** (the widget representin
 
 <summary>Blueprint graph showing utilization of <code>ItemActionMenu</code> in equipment slot</summary>
 
-<figure><img src="../../../../.gitbook/assets/image (9) (1).png" alt=""><figcaption><p>Blueprint Graph showing OnMouseButtonDown->CreateItemActionMenu on right click</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (9) (1) (1).png" alt=""><figcaption><p>Blueprint Graph showing OnMouseButtonDown->CreateItemActionMenu on right click</p></figcaption></figure>
 
-<figure><img src="../../../../.gitbook/assets/image (10) (1).png" alt=""><figcaption><p>Inform the ActionMenuViewModel that it should create should populate a menu for the item in the slot</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (10) (1) (1).png" alt=""><figcaption><p>Inform the ActionMenuViewModel that it should create should populate a menu for the item in the slot</p></figcaption></figure>
 
 </details>
 
@@ -84,7 +84,7 @@ Create a simple button widget for the list.
 * **Text:** Bind to `ActionData.DisplayName`.
 * **On Clicked:** Call `ActionMenuVM->ExecuteAction(ActionData.ActionTag)`.
 
-<figure><img src="../../../../.gitbook/assets/image (12) (1).png" alt=""><figcaption><p>ItemActionButton OnClicked Implementation</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (12) (1) (1).png" alt=""><figcaption><p>ItemActionButton OnClicked Implementation</p></figcaption></figure>
 
 ***
 

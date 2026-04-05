@@ -6,7 +6,7 @@ Whether you're building a lootable item, a door, or a console, the process is th
 
 ***
 
-### Implement the `IInteractableTarget` Interface
+## Implement the `IInteractableTarget` Interface
 
 First, your actor or component must implement the `IInteractableTarget` interface. This marks it as something the interaction system can detect and query.
 
@@ -20,7 +20,7 @@ First, your actor or component must implement the `IInteractableTarget` interfac
 
 ***
 
-### Override `GatherInteractionOptions`
+## Override `GatherInteractionOptions`
 
 This function tells the system what the player can do when they detect your object.
 
@@ -36,12 +36,12 @@ GatherInteractionOptions
 
 ***
 
-### Choose the Interaction Behavior
+## Choose the Interaction Behavior
 
 Every `FInteractionOption` needs to define **how the interaction is triggered**, either on the player or on the interactable itself.\
 There are two valid ways to configure this:
 
-**Option A: Player Executes the Ability (Most Common)**
+### **Option A: Player Executes the Ability (Most Common)**
 
 * Use this when the interaction logic lives on the **player**, like opening a chest, picking up loot, or triggering UI.
 * **Steps:**
@@ -80,7 +80,7 @@ void AMyCollectableActor::GatherInteractionOptions_Implementation(
   * No need for an ASC on the interactable
   * Simpler to manage and test
 
-**Option B: Interactable Executes the Ability (Advanced)**
+### **Option B: Interactable Executes the Ability (Advanced)**
 
 * Use this when the interactable has **its own state, logic, or cooldowns**, and should run the ability itself, not the player.
 * **Setup requirements:**
@@ -136,8 +136,6 @@ OutOptions.Add(Option);
 If both fields are set (`InteractionAbilityToGrant` **and** `TargetAbilitySystem`/`Handle`), the system uses the **target ability path**.&#x20;
 {% endhint %}
 
-***
-
 ### Use the Interaction Widget Class (Optional)
 
 Each `FInteractionOption` supports a custom widget via `InteractionWidgetClass`, but if you leave this blank, the system uses a powerful **default prompt widget**.
@@ -149,8 +147,6 @@ Each `FInteractionOption` supports a custom widget via `InteractionWidgetClass`,
 * Displays **interaction text** and subtext.
 
 You can provide your own widget if you need specialized visuals, but the default covers most use cases elegantly.
-
-***
 
 ### Customize Focus & Proximity (Optional)
 
@@ -171,7 +167,7 @@ These functions do **not** affect functionality, they are purely visual.
 
 ***
 
-### Summary Checklist
+## Summary Checklist
 
 * [ ] Added `IInteractableTarget` to your actor or component
 * [ ] Implemented `GatherInteractionOptions`
@@ -183,7 +179,7 @@ These functions do **not** affect functionality, they are purely visual.
 
 ***
 
-### What's Next?
+## What's Next?
 
 Now that your object is interactable, you can:
 

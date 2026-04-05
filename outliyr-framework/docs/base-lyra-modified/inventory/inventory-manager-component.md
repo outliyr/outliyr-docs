@@ -6,7 +6,7 @@ The Inventory Manager handles this. It stores items in numbered slots, enforces 
 
 ***
 
-### Slot-Based Storage
+## Slot-Based Storage
 
 The inventory stores items in numbered positions - slots 0, 1, 2, and so on up to a maximum. This isn't just an implementation detail; it's what makes inventory UIs work.
 
@@ -26,13 +26,13 @@ The inventory stores items in numbered positions - slots 0, 1, 2, and so on up t
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### Why Slots Matter
+### Why Slots Matter
 
 * Grid layouts: Your inventory UI probably shows a grid. Each cell is a slot. Items appear in specific cells, not just "somewhere in the bag."
 * Drag and drop: When you drag an item, you're moving it from one slot to another. Source and destination are slot indices.
 * Visual consistency: A player's inventory looks the same way every time they open it. Items stay in their slots until moved.
 
-#### What Gets Stored
+### What Gets Stored
 
 Each item in the inventory is stored as an entry containing:
 
@@ -80,11 +80,11 @@ The Prediction Stamp
 
 ***
 
-### Capacity Limits
+## Capacity Limits
 
 The Inventory Manager enforces up to three independent limits:
 
-#### Weight Limit
+### Weight Limit
 
 Each item contributes weight based on its definition. The inventory tracks total weight and rejects items that would exceed the limit.
 
@@ -93,7 +93,7 @@ Each item contributes weight based on its definition. The inventory tracks total
 float MaxWeight = 10.0f;
 ```
 
-#### Item Count Limit
+### Item Count Limit
 
 Total count of items, including stack quantities. A stack of 30 ammo counts as 30 items.
 
@@ -102,7 +102,7 @@ Total count of items, including stack quantities. A stack of 30 ammo counts as 3
 int32 ItemCountLimit = 100;
 ```
 
-#### Slot Limit
+### Slot Limit
 
 Maximum number of occupied slots (stacks). A stack of 30 ammo occupies 1 slot.
 
@@ -111,7 +111,7 @@ Maximum number of occupied slots (stacks). A stack of 30 ammo occupies 1 slot.
 int32 LimitItemInstancesStacks = 20;
 ```
 
-#### How Limits Interact
+### How Limits Interact
 
 When adding an item, all applicable limits must pass:
 
@@ -133,11 +133,11 @@ This allows flexible configuration:
 
 ***
 
-### Auto-Compaction
+## Auto-Compaction
 
 When items are removed from the inventory, gaps can appear in the slot indices. The auto-compact feature automatically shifts items to fill these gaps.
 
-#### Enabling Auto-Compaction
+### Enabling Auto-Compaction
 
 ```cpp
 // Items automatically fill gaps when removed
@@ -167,7 +167,7 @@ Slot 0    Slot 1    Slot 2    Slot 3    Slot 4
 └─────┘  └─────┘  └─────┘  └─────┘  └─────┘
 ```
 
-#### Use Cases
+### Use Cases
 
 **Auto-compact ON:**
 
@@ -180,7 +180,7 @@ Slot 0    Slot 1    Slot 2    Slot 3    Slot 4
 * Hotbar-style inventories where slot = keybind
 * Games where item position has gameplay meaning
 
-#### Prediction Support
+### Prediction Support
 
 Auto-compaction is fully client-predicted. When you remove an item:
 
@@ -196,7 +196,7 @@ Manual slot rearrangement can be controlled via the permission system (`UItemPer
 
 ***
 
-### Item Filtering
+## Item Filtering
 
 You can restrict what items can enter the inventory:
 
@@ -229,7 +229,7 @@ Use cases:
 
 ***
 
-### How Items Enter and Move
+## How Items Enter and Move
 
 Items don't just appear in inventory, they arrive through the transaction system. When a pickup adds an item:
 
@@ -337,7 +337,7 @@ If you create a runtime fragment that owns other UObjects (like the attachment s
 
 ***
 
-### Reading Inventory State
+## Reading Inventory State
 
 Now that you understand how items are stored, here's how to query them.
 
@@ -396,11 +396,11 @@ This is why drag-and-drop feels instant.
 
 ***
 
-### Starting Items
+## Starting Items
 
 A shop NPC needs a fixed inventory of goods for sale. A loot chest needs pre-determined contents. A player's backpack starts with a medkit and some ammo. Rather than writing custom spawn logic for each case, the Inventory Manager has a `DefaultStartingItems` array that populates items automatically during initialization.
 
-#### **The Starting Item Structure**
+### **The Starting Item Structure**
 
 Each entry describes one item to add:
 
@@ -429,11 +429,11 @@ struct FInventoryStartingItem
 | `SlotIndex`        | Specific slot to place in, or `INDEX_NONE` to auto-place in first available     |
 | `FragmentInitData` | Polymorphic per-instance overrides applied before the item enters the inventory |
 
-#### **Slot Placement**
+### **Slot Placement**
 
 When `SlotIndex` is left at its default (`INDEX_NONE`), the item is placed in the first available slot. Set it to a specific number to control exact placement, useful for shop inventories or containers where item position matters.
 
-#### **Fragment Init Data**
+### **Fragment Init Data**
 
 `FragmentInitData` lets you customize each starting item without creating a separate item definition for every variation. The same medkit definition can start with different durability values. The same rifle can start with different ammo counts or attachments.
 
@@ -441,7 +441,7 @@ Each entry is an `FInstancedStruct` derived from `FLyraFragmentInitBase`. When t
 
 For the full details on available init types and how to create custom ones, see Fragment Initialization.
 
-#### **The Flow**
+### **The Flow**
 
 ```
 BeginPlay (server-authority only)
@@ -463,7 +463,7 @@ AddStartingItems()
 
 Starting items bypass normal capacity checks (`bForceAdd = true`) since they represent the designed initial state of the container. They only run on the server, clients receive the items through normal replication.
 
-#### **Practical Example**
+### **Practical Example**
 
 A shop NPC selling medical supplies and ammunition:
 
@@ -498,7 +498,7 @@ DefaultStartingItems:
 
 ***
 
-### Client Prediction
+## Client Prediction
 
 When a player drags an item, they expect it to move immediately. The Inventory Manager supports client-side prediction to make this happen.
 
@@ -528,7 +528,7 @@ Prediction is rolled back; item returns to original position.
 {% endstep %}
 {% endstepper %}
 
-#### Change Notifications
+### Change Notifications
 
 When the inventory changes (for any reason), delegates fire:
 
@@ -591,7 +591,5 @@ OnRep Callbacks Drive Reconciliation
   * `PostReplicatedRemove` - Entry removed, clear any predictions for it
 
 </details>
-
-***
 
 ***

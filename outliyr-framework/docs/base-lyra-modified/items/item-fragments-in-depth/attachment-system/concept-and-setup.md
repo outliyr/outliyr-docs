@@ -1,98 +1,145 @@
 # Concept & Setup
 
-This page focuses on configuring the **static** aspects of the attachment system using the `UInventoryFragment_Attachment`. This fragment is added to an `ULyraInventoryItemDefinition` to enable it to either **host attachments** or **be an attachment** itself (or both). The configuration done here dictates the rules, available slots, and the _potential_ behaviors of attachments.
-
-### Adding the Fragment
-
-1. **Open Item Definition:** Open the `ULyraInventoryItemDefinition` asset for the item you want to modify (e.g., `ID_Rifle_Standard`, `ID_Attachment_Scope`).
-2. **Add Fragment:** In the Details panel, add `InventoryFragment_Attachment` to the `Fragments` array.
-
-Adding this fragment signals to the system that this item type participates in the attachment system and enables the creation of the necessary `UTransientRuntimeFragment_Attachment` on its instances at runtime.
-
-### Core Configuration Properties
-
-The primary configuration happens within the properties of the added `UInventoryFragment_Attachment` instance:
-
-<figure><img src="../../../../.gitbook/assets/Screenshot 2025-05-23 011621.png" alt=""><figcaption></figcaption></figure>
-
-* **`Compatible Attachments` (TMap<`FAttachmentSlotTagKey`, `FAttachmentSlotDetails`>)**
-  * **Purpose:** Defines the slots this item offers to host other attachments and specifies exactly which attachments are allowed in each slot and how they behave when attached.
-  * **Structure:**
-    * **Key (`FAttachmentSlotTagKey`):**
-      * Similar to the equipment system, this is a custom struct designed to hold an `FGameplayTag` for an attachment slot.
-      * **`FAttachmentSlotTagKey` filters the Gameplay Tag picker in the Unreal Editor to only show `GameplayTag`s that are children of a predefined parent tag (i.e., `Lyra.Attachment.Slot`).**
-      * This ensures all attachment slot tags follow a consistent pattern (like `Lyra.Attachment.Slot.Optic`, `Lyra.Attachment.Slot.Muzzle`), enhancing organization and reducing errors during setup.
-    * **Value (`FAttachmentSlotDetails`):** A struct containing another map specific to this slot:
-      * `AttachmentDetailsMap` (`TMap<TSubclassOf<ULyraInventoryItemDefinition>, FAttachmentDetails>`):
-        * **Key (`TSubclassOf<ULyraInventoryItemDefinition>`):** The specific Item Definition class of an attachment that is allowed in this slot (e.g., `ID_Attachment_RedDot`, `ID_Attachment_Scope4x`).
-        * **Value (`FAttachmentDetails`):** A struct defining the exact behavior applied when this specific attachment (ItemDefinition key) is placed into this specific slot (whose tag is held by the `FAttachmentSlotTagKey`) on the host item. (See `FAttachmentDetails` breakdown below).
-  * _Example:_ On `ID_Rifle_Standard`, the `CompatibleAttachments` map might have:
-    * An entry where `FAttachmentSlotTagKey` holds `Lyra.Attachment.Slot.Optic`. The corresponding `FAttachmentSlotDetails` would then contain:
-      * Map Key: `ID_Attachment_RedDot` -> Value: `FAttachmentDetails` for Red Dot behavior.
-      * Map Key: `ID_Attachment_Scope4x` -> Value: `FAttachmentDetails` for 4x Scope behavior.
-    * Another entry where `FAttachmentSlotTagKey` holds `Lyra.Attachment.Slot.Underbarrel`, with its own compatible item definitions and behaviors.
-* **`Default Attachments` (TMap<`FAttachmentSlotTagKey`, `TSubclassOf<ULyraInventoryItemDefinition>`>)**
-  * **Purpose:** Allows this item definition to spawn with certain attachments already pre-installed in specific slots.
-  * **Structure:**
-    * **Key (`FAttachmentSlotTagKey`):**
-      * Identical in function to the key in `CompatibleAttachments`. It uses the same struct and editor filtering mechanism, ensuring that default attachments are assigned to correctly defined `Lyra.Attachment.Slot.*` tags.
-      * The attachment slot specified here _must_ also be defined as a key in the `CompatibleAttachments` map for this item.
-    * **Value (`TSubclassOf<ULyraInventoryItemDefinition>`):** The Item Definition of the attachment that should be pre-installed in this slot. This definition must also be listed as compatible for this slot within the `CompatibleAttachments` map.
-  * **Runtime:** When an instance of the host item is created, the `UInventoryFragment_Attachment::CreateNewRuntimeTransientFragment` logic iterates through this map, creates instances of the specified default attachments, and adds them to the runtime fragment's `AttachmentArray`.
-
-### Defining Attachment Behavior: `FAttachmentDetails` & `FAttachmentBehaviour`
-
-The `FAttachmentDetails` struct, found as the value in the `AttachmentDetailsMap`, is where you specify the precise effects of attaching a particular item to a particular slot. It separates behaviors based on whether the **host item** is currently **Held** or **Holstered**.
-
-* **`FAttachmentDetails` Properties:**
-  * **`Attachment Icon` (`TObjectPtr<UTexture2D>`)**: (Optional) An icon for the UI to display _for the slot itself_ (e.g., a generic scope silhouette for an optic slot, distinct from the icon of the actual attached scope).
-  * **`Holstered Attachment Settings` (`FAttachmentBehaviour`)**: Defines the attachment's effects when the **host item is Holstered**.
-  * **`Held Attachment Settings` (`FAttachmentBehaviour`)**: Defines the attachment's effects when the **host item is Actively Held**.
-* **`FAttachmentBehaviour` Properties (for both Holstered and Held settings):**
-  * **`Ability Sets To Grant` (`TArray<TObjectPtr<const ULyraAbilitySet>>`)**: An array of `ULyraAbilitySet` assets. When the host item enters the corresponding state (Holstered/Held) with this attachment active, these ability sets are granted to the host item's owner (via the `UTransientRuntimeFragment_Attachment`).
-    * _Use Case (Held):_ A scope granting a zoom ability, a grip granting a passive recoil reduction effect (via a Gameplay Effect in the set).
-    * _Use Case (Holstered):_ Rocket jump ability from rocket shoes, or a jetpack ability from wearing a jetpack as these equipment typically wouldn't be held just holstered.
-  * **`Actor Spawn Info` (`FLyraEquipmentActorToSpawn`)**: Defines a visual actor to spawn and attach to the host item's corresponding spawned actor.
-    * `ActorToSpawn` (`TSubclassOf<AActor>`): The Blueprint or C++ Actor class for the attachment's visual mesh (e.g., `BP_ScopeMesh_MainViewModel`).
-    * `AttachSocket` (`FName`): The socket name on the _host item's spawned actor_ where this attachment actor should be attached.
-    * `AttachTransform` (`FTransform`): The relative transform (offset, rotation, scale) from the `AttachSocket`.
-    * **Important:** The root component of the `ActorToSpawn` should ideally be a `UStaticMeshComponent` or `USkeletalMeshComponent` for reliable visual attachment.
-  * **`Input Mappings` (`TArray<FPawnInputMappingContextAndPriority>`)**: An array to add specific `UInputMappingContext`s to the player's Enhanced Input subsystem when the attachment is active in this state.
-  * **`Input Config` (`TObjectPtr<ULyraInputConfig>`)**: An `ULyraInputConfig` to add to the player's `ULyraHeroComponent` when the attachment is active in this state, mapping input actions to ability tags.
-
-**Key Considerations for Behavior:**
-
-* **Host State Driven:** The effects (actors, abilities, input) defined in `FAttachmentDetails` are applied by the host item's `UTransientRuntimeFragment_Attachment` _based on the host item's current Held/Holstered state_.
-* **Relative Transforms:** The `AttachTransform` for `ActorSpawnInfo` is relative to the specified socket on the _host item's spawned actor_. This allows precise positioning of the attachment model on the host model.
-
-### Workflow Example (Configuring an Optic Slot)
-
-1. **Host Item:** `ID_Rifle_AR15` (`UInventoryFragment_Attachment` added).
-2. **Attachment Items:**
-   * `ID_Attachment_RedDotSight`
-   * `ID_Attachment_Scope4x`
-3. **Configure `ID_Rifle_AR15`'s Fragment:**
-   * In `CompatibleAttachments`, add a new entry:
-     * **Key:** `Lyra.Attachment.Slot.Optic`
-     * **Value (`FAttachmentSlotDetails`):**
-       * `AttachmentDetailsMap`:
-         * **Entry 1 Key:** `ID_Attachment_RedDotSight`
-         * **Entry 1 Value (`FAttachmentDetails` for Red Dot):**
-           * `AttachmentIcon`: `T_UI_Icon_OpticSlotDefault`
-           * `HolsteredAttachmentSettings`: `ActorSpawnInfo` -> `BP_RedDot_Attached` (possibly a low-poly or covered version if rifle is holstered)
-           * `HeldAttachmentSettings`:
-             * `ActorSpawnInfo` -> `BP_RedDot_Attached` (main visual mesh)
-             * `AbilitySetsToGrant`: (Optional) `AS_RedDotAimAssist` (if it provides a unique aiming passive)
-         * **Entry 2 Key:** `ID_Attachment_Scope4x`
-         * **Entry 2 Value (`FAttachmentDetails` for 4x Scope):**
-           * `AttachmentIcon`: `T_UI_Icon_OpticSlotDefault`
-           * `HolsteredAttachmentSettings`: `ActorSpawnInfo` -> `BP_Scope4x_Attached`
-           * `HeldAttachmentSettings`:
-             * `ActorSpawnInfo` -> `BP_Scope4x_Attached`
-             * `AbilitySetsToGrant`: `AS_Scope4x_ZoomAbility` (contains `GA_ToggleZoom`)
-             * `InputConfig`: `InputConfig_ScopeZoomControls` (maps middle mouse to activate `Ability.Scope.ToggleZoom`)
-4. **Create Assets:** Ensure `BP_RedDot_Attached`, `BP_Scope4x_Attached`, `AS_RedDotAimAssist`, `AS_Scope4x_ZoomAbility`, and `InputConfig_ScopeZoomControls` are created and configured.
+Your AR-15 supports a red dot or a 4x scope in the optic slot, a vertical grip or a laser on the underbarrel. Each attachment changes the weapon's behavior differently depending on whether it's held or holstered, the scope grants a zoom ability only when held, while the grip's recoil reduction applies in both states. The `UInventoryFragment_Attachment` defines all of these rules as static data on the Item Definition.
 
 ***
 
-By meticulously configuring the `CompatibleAttachments` map (including `FAttachmentDetails` and `FAttachmentBehaviour`) within an item's `UInventoryFragment_Attachment`, designers define the precise rules for which attachments can be used, where they fit, and what visual, ability, and input changes they introduce when connected to a host item in its different states (Held/Holstered). This static setup is then brought to life by the `UTransientRuntimeFragment_Attachment` at runtime.
+## The Data Structure
+
+The attachment configuration is a hierarchy of maps. At the top level, the host item declares which **slots** it offers (keyed by Gameplay Tag). Each slot declares which **attachments** are compatible (keyed by Item Definition class). Each compatible attachment defines **behaviors** for both the held and holstered states.
+
+<figure><img src="../../../../.gitbook/assets/Screenshot 2025-05-23 011621.png" alt=""><figcaption></figcaption></figure>
+
+```mermaid
+flowchart TB
+    ItemDef["ID_Rifle_AR15<br/><b>InventoryFragment_Attachment</b>"]
+
+    ItemDef --> Optic["<b>Slot:</b> Lyra.Attachment.Slot.Optic"]
+    ItemDef --> Underbarrel["<b>Slot:</b> Lyra.Attachment.Slot.Underbarrel"]
+
+    Optic --> RedDot["ID_Attachment_RedDot<br/><i>FAttachmentDetails</i>"]
+    Optic --> Scope4x["ID_Attachment_Scope4x<br/><i>FAttachmentDetails</i>"]
+
+    RedDot --> RD_Held["<b>Held:</b> Spawn mesh, aim assist ability"]
+    RedDot --> RD_Holstered["<b>Holstered:</b> Spawn mesh (low-poly)"]
+
+    Scope4x --> S4_Held["<b>Held:</b> Spawn mesh, zoom ability, input config"]
+    Scope4x --> S4_Holstered["<b>Holstered:</b> Spawn mesh"]
+```
+
+***
+
+## Adding the Fragment
+
+Add `InventoryFragment_Attachment` to the `Fragments` array of any Item Definition that should **host attachments** or **be an attachment** (or both). This signals the system to create a `UTransientRuntimeFragment_Attachment` on each item instance at runtime.
+
+***
+
+## Slot Tags
+
+Attachment slots use Gameplay Tags under the `Lyra.Attachment.Slot` hierarchy. The editor filters the tag picker to only show children of this parent, preventing misconfiguration. Common examples:
+
+* `Lyra.Attachment.Slot.Optic`
+* `Lyra.Attachment.Slot.Muzzle`
+* `Lyra.Attachment.Slot.Underbarrel`
+* `Lyra.Attachment.Slot.Magazine`
+
+You define new slot types simply by adding tags under this hierarchy, no code changes required.
+
+***
+
+## Compatible Attachments
+
+The `CompatibleAttachments` map is the core of the configuration. It's a `TMap<FAttachmentSlotTagKey, FAttachmentSlotDetails>`:
+
+* **Key** — a slot tag (e.g., `Lyra.Attachment.Slot.Optic`)
+* **Value** — an `FAttachmentSlotDetails` struct containing another map: `TMap<TSubclassOf<ULyraInventoryItemDefinition>, FAttachmentDetails>`
+
+This inner map says "for this slot, these specific Item Definitions are allowed, and here's what each one does."
+
+***
+
+## State-Dependent Behaviors
+
+Each compatible attachment defines separate behaviors for the host item's **Held** and **Holstered** states through `FAttachmentDetails`. This is the key design insight, a scope's zoom ability should only activate when the weapon is in the player's hands.
+
+`FAttachmentDetails` contains:
+
+* **Attachment Icon** — optional UI icon for the slot itself (e.g., a generic scope silhouette)
+* **Held Attachment Settings** — an `FAttachmentBehaviour` for when the host item is actively held
+* **Holstered Attachment Settings** — an `FAttachmentBehaviour` for when the host item is holstered
+
+<details>
+
+<summary>FAttachmentBehaviour properties</summary>
+
+Each behavior struct controls what happens when the host enters that state with this attachment active:
+
+| Property             | Type                                          | Purpose                                                                                                                                                                    |
+| -------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AbilitySetsToGrant` | `TArray<ULyraAbilitySet*>`                    | Ability sets granted to the owner. Held example: scope zoom ability. Holstered example: rocket jump from rocket boots.                                                     |
+| `ActorSpawnInfo`     | `FLyraEquipmentActorToSpawn`                  | Visual actor to spawn and attach to the host item's actor. Contains `ActorToSpawn` (class), `AttachSocket` (socket name on host), and `AttachTransform` (relative offset). |
+| `InputMappings`      | `TArray<FPawnInputMappingContextAndPriority>` | Input mapping contexts added to the Enhanced Input subsystem when this behavior is active.                                                                                 |
+| `InputConfig`        | `ULyraInputConfig*`                           | Input config mapping actions to ability tags via the `ULyraHeroComponent`.                                                                                                 |
+
+The `ActorSpawnInfo`'s `AttachTransform` is relative to the specified socket on the _host item's spawned actor_, allowing precise positioning of the attachment model.
+
+</details>
+
+***
+
+## Default Attachments
+
+The `DefaultAttachments` map (`TMap<FAttachmentSlotTagKey, TSubclassOf<ULyraInventoryItemDefinition>>`) lets an item spawn with attachments pre-installed. When an instance is created, `CreateNewRuntimeTransientFragment` iterates this map and creates instances of each default attachment.
+
+Each entry must reference a slot that exists in `CompatibleAttachments`, and the attachment definition must be listed as compatible in that slot.
+
+***
+
+## Configuration Walkthrough
+
+Configuring an optic slot on a rifle, step by step:
+
+{% stepper %}
+{% step %}
+**Define the Host Item**
+
+Open `ID_Rifle_AR15` and add `InventoryFragment_Attachment` to its fragments.
+{% endstep %}
+
+{% step %}
+**Add a Slot**
+
+In `CompatibleAttachments`, add an entry with key `Lyra.Attachment.Slot.Optic`.
+{% endstep %}
+
+{% step %}
+**Add Compatible Attachments**
+
+In the slot's `AttachmentDetailsMap`, add entries for each allowed attachment:
+
+**Red Dot Sight** (`ID_Attachment_RedDotSight`):
+
+* Held Settings: `ActorSpawnInfo` → `BP_RedDot_Attached` on socket `Optic_Mount`
+* Holstered Settings: `ActorSpawnInfo` → same mesh (or a low-poly version)
+
+**4x Scope** (`ID_Attachment_Scope4x`):
+
+* Held Settings: `ActorSpawnInfo` → `BP_Scope4x_Attached`, `AbilitySetsToGrant` → `AS_Scope4x_ZoomAbility`, `InputConfig` → `InputConfig_ScopeZoomControls`
+* Holstered Settings: `ActorSpawnInfo` → `BP_Scope4x_Attached`
+{% endstep %}
+
+{% step %}
+**(Optional) Set a Default**
+
+In `DefaultAttachments`, map `Lyra.Attachment.Slot.Optic` → `ID_Attachment_IronSights` to have the rifle spawn with iron sights pre-installed.
+{% endstep %}
+
+{% step %}
+**Create Supporting Assets**
+
+Ensure the referenced Blueprint actors (`BP_RedDot_Attached`, etc.), ability sets, and input configs exist and are configured.
+{% endstep %}
+{% endstepper %}
+
+The [Runtime Container](runtime-container.md) page covers how these static rules are brought to life, activating and deactivating abilities, spawning and destroying visual actors, as the host item transitions between states.

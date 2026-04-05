@@ -10,7 +10,7 @@ The fragment injector solves this by reversing the dependency. Instead of the it
 
 ***
 
-### Real Examples from the Project
+## Real Examples from the Project
 
 #### Arena Mode — Shop Prices
 
@@ -34,19 +34,19 @@ The key insight: **none of these modes modify the base weapon assets.** ShooterB
 
 ***
 
-### How It Works
+## How It Works
 
-#### The Two Components
+### **`UFragmentInjector`**&#x20;
 
-**`UFragmentInjector`** — a Data Asset (`UDataAsset` subclass) that declares a single injection rule set. Each injector targets one item definition class and specifies which fragments to add, replace, or remove. You create concrete injectors as Blueprint assets that inherit from this class.
+a Data Asset (`UDataAsset` subclass) that declares a single injection rule set. Each injector targets one item definition class and specifies which fragments to add, replace, or remove. You create concrete injectors as Blueprint assets that inherit from this class.
 
 <figure><img src="../../.gitbook/assets/image (48).png" alt=""><figcaption><p>Example of injecting a battle royale category to a weapon</p></figcaption></figure>
 
-**`UFragmentInjectorManager`** — a `UObject` owned by `ULyraExperienceManagerComponent`. It discovers injector Blueprints through the Asset Registry, applies them during experience loading, and restores the original fragment arrays on unload.
+### **`UFragmentInjectorManager`**&#x20;
 
-#### The Runtime Flow
+a `UObject` owned by `ULyraExperienceManagerComponent`. It discovers injector Blueprints through the Asset Registry, applies them during experience loading, and restores the original fragment arrays on unload.
 
-***
+### The Runtime Flow
 
 {% stepper %}
 {% step %}
@@ -86,13 +86,15 @@ Items created during this session reflect the injected fragments. The shop syste
 {% endstep %}
 
 {% step %}
-**Experience unloads** — **originals restored**
+**Experience unloads, originals restored**
 
 When the experience changes or the world shuts down, `RestoreOriginalFragments()` writes the backed-up array back into each modified CDO and removes the root references so the injected fragments can be garbage collected. The item definitions return to their original state as if the injections never happened.
 {% endstep %}
 {% endstepper %}
 
-### Creating a Fragment Injector
+***
+
+## Creating a Fragment Injector
 
 {% stepper %}
 {% step %}
@@ -121,8 +123,6 @@ Place the Blueprint in your plugin's content directory. The manager discovers it
 Create a Fragment Injector
 {% endfile %}
 
-***
-
 ### The Override Index
 
 When multiple sources want to set the same fragment type on an item, the override index decides who wins.
@@ -138,7 +138,7 @@ This means if two plugins both inject the same fragment type at the same overrid
 
 ***
 
-### Integration with the Experience Lifecycle
+## Integration with the Experience Lifecycle
 
 The fragment injector system runs as part of the [Experience Lifecycle](../gameframework-and-experience/experience-lifecycle.md). The `UFragmentInjectorManager` is held as a `UPROPERTY` on `ULyraExperienceManagerComponent`. After game feature plugins are loaded and activated, the manager scans for injectors and applies them. This ensures item definitions are fully configured before any gameplay actions execute and begin spawning item instances.
 

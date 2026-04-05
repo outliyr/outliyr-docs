@@ -113,7 +113,7 @@ Setting->AddEditCondition(MakeShared<FWhenCondition>(
 
 ***
 
-### UI Organization
+## UI Organization
 
 Settings are arranged in a tree of `UGameSettingCollection` objects (sections) and `UGameSettingCollectionPage` objects (sub-pages). To add a new section, create a collection and add it to an existing parent, the UI renders the hierarchy automatically.
 
@@ -126,7 +126,7 @@ ParentCollection->AddSetting(NewSection);
 
 ***
 
-### Modifying Existing Settings
+## Modifying Existing Settings
 
 * **Default values** - change the property initializer and `SetToDefaults()` (Local only).
 * **Application logic -** update the setter, `ApplySettings()` (Shared), or `ApplyNonResolutionSettings()` (Local).
@@ -134,7 +134,7 @@ ParentCollection->AddSetting(NewSection);
 
 ***
 
-### Common Setting Types
+## Common Setting Types
 
 | Type                                      | Use For                        |
 | ----------------------------------------- | ------------------------------ |

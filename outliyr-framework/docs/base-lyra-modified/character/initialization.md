@@ -4,11 +4,11 @@ You press play. A pawn spawns into the world. But its PlayerState hasn't replica
 
 ***
 
-### The Problem
+## The Problem
 
 In a networked Unreal game, the objects a character needs don't arrive in a predictable order. `BeginPlay` fires before replication delivers the PlayerState. The controller might not be assigned yet. PawnData might still be loading. If any component blindly initializes in `BeginPlay`, it will grab null pointers and crash, or silently fail and leave the character in a broken state.
 
-### The Solution
+## The Solution
 
 The solution is a shared state machine. Components register themselves as named **features** and declare what they need before they can advance. A central manager (`UGameFrameworkComponentManager`) tracks every feature's current state. The system advances through phases, and each component only initializes when its dependencies are met.
 
@@ -16,7 +16,7 @@ This system is called the **InitState system**, and it coordinates the entire ch
 
 ***
 
-### State Progression
+## State Progression
 
 ```mermaid
 stateDiagram-v2
@@ -26,7 +26,7 @@ stateDiagram-v2
     DataInitialized --> GameplayReady : No gate
 ```
 
-#### Init States
+### Init States
 
 | State               | Tag                         | In Plain Terms                                                                                                                                     | Prerequisites                                                   |
 | ------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
@@ -37,9 +37,9 @@ stateDiagram-v2
 
 ***
 
-### Component Participation
+## Component Participation
 
-#### `ULyraPawnExtensionComponent` — Feature: `"PawnExtension"`
+### `ULyraPawnExtensionComponent` — Feature: `"PawnExtension"`
 
 **Role:** The coordinator. It drives the state machine and acts as the gatekeeper for the DataAvailable-to-DataInitialized transition.
 
@@ -56,7 +56,7 @@ stateDiagram-v2
 
 **How it coordinates:** It binds to state changes from all features (`BindOnActorInitStateChanged(NAME_None, ...)`). Whenever any feature reaches DataAvailable, it re-runs `CheckDefaultInitialization()` to see if it can now advance to DataInitialized.
 
-#### ULyraHeroComponent — Feature: `"Hero"`
+### ULyraHeroComponent — Feature: `"Hero"`
 
 **Role:** Player-specific setup. Input binding, camera mode, and ASC event registration.
 
@@ -99,7 +99,7 @@ Binds the camera mode delegate on `ULyraCameraComponent`, so the camera system c
 
 **How it coordinates:** It binds specifically to PawnExtensionComponent state changes. When PawnExtension reaches DataInitialized, the HeroComponent calls `CheckDefaultInitialization()` to attempt its own transition.
 
-#### Other Components
+### Other Components
 
 Components that don't participate directly in the InitState chain can still react to ASC availability through delegates on the PawnExtensionComponent:
 
@@ -125,7 +125,7 @@ The interface also provides helper methods like `RegisterInitStateFeature()`, `T
 
 ***
 
-### How Transitions Work
+## How Transitions Work
 
 The state machine does not advance on a timer or a tick. Transitions are attempted whenever something relevant changes.
 

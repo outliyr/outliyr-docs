@@ -4,7 +4,7 @@ The camera sits behind and above the character. As the player looks up, the came
 
 ***
 
-### Pitch-Based Positioning
+## Pitch-Based Positioning
 
 The camera's offset from the character changes based on where the player is looking. Looking up shifts the camera higher and further back. Looking down brings it closer. The exact relationship between pitch angle and camera position is entirely up to you, these offsets are defined by runtime curves (one per axis: X, Y, Z) that map pitch angle to position. You configure the curves directly in the Blueprint defaults of your camera mode.
 
@@ -16,7 +16,7 @@ A `UCurveVector` asset can be used instead of the three runtime float curves by 
 
 ***
 
-### Crouch Handling
+## Crouch Handling
 
 When the character crouches, the camera needs to lower smoothly rather than snapping to the new height. The system detects crouching by comparing the current character state to its default class values, specifically, the difference between `CrouchedEyeHeight` and `BaseEyeHeight`. That difference becomes a vertical target offset that the camera blends toward using an ease-in-out interpolation.
 
@@ -24,7 +24,7 @@ The blend speed is configurable. A higher blend multiplier makes the camera foll
 
 ***
 
-### Collision Avoidance
+## Collision Avoidance
 
 Without collision handling, the camera clips through walls. The penetration avoidance system traces rays from the character to the desired camera position and pulls the camera forward when geometry is in the way.
 
@@ -89,11 +89,11 @@ When the camera hits a wall, it needs to pull in immediately to avoid clipping. 
 
 </details>
 
-#### Performance
+### Performance
 
 Feeler rays that didn't hit anything on the previous frame can skip tracing for several frames. The primary ray always traces every frame, but predictive feelers only need periodic checks when nothing is nearby. Any feeler that gets a hit resets to tracing every frame until the obstruction clears.
 
-#### Special Cases
+### Special Cases
 
 * Actors tagged with `IgnoreCameraCollision` are invisible to the collision system. Once detected, they are added to the ignore list for the remainder of that frame's traces.
 * Camera blocking volumes in front of the player are ignored, only volumes between the player and camera (behind the player) block normally.
@@ -101,7 +101,7 @@ Feeler rays that didn't hit anything on the previous frame can skip tracing for 
 
 ***
 
-### Camera Assist Interface
+## Camera Assist Interface
 
 Actors and controllers can optionally implement the camera assist interface to customize collision behavior:
 

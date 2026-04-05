@@ -7,7 +7,9 @@ While inventory components manage items _within_ containers (like a player's bac
 * Centralized Item Creation: The `ULyraItemSubsystem` ensuring item instances are created consistently with proper fragment initialization.
 * Tracking World Containers: Managing inventories that aren't directly attached to players or standard actors.
 
-### Items in the World: Pickups
+***
+
+## Items in the World: Pickups
 
 When items are not inside an `ULyraInventoryManagerComponent`, they often need a physical representation in the game world that players can see and interact with.
 
@@ -25,7 +27,9 @@ When items are not inside an `ULyraInventoryManagerComponent`, they often need a
 * `UPickupableStatics Library`
   * A static Blueprint function library providing utility functions, e.g. centralized `DropItem` and `DropItemAtLocation` functions for robustly spawning world collectable actors.
 
-### Item Creation: `ULyraItemSubsystem`
+***
+
+## Item Creation: `ULyraItemSubsystem`
 
 Creating `ULyraInventoryItemInstance` objects involves initializing their fragments and ensuring they have the correct outer object. The `ULyraItemSubsystem` centralizes this:
 
@@ -38,7 +42,9 @@ Creating `ULyraInventoryItemInstance` objects involves initializing their fragme
 Centralizing item creation in a subsystem ensures consistent initialization (fragments, stat tags, outers) and enables global tracking and cleanup.
 {% endhint %}
 
-### Container Management: `UGlobalInventoryManager`
+***
+
+## Container Management: `UGlobalInventoryManager`
 
 For managing world containers that aren't directly attached to players:
 
@@ -46,7 +52,9 @@ For managing world containers that aren't directly attached to players:
 * World Container Tracking: Used to register and manage `ULyraInventoryManagerComponent` instances that represent world containers not tied directly to a player Pawn (e.g., persistent chests, vendor inventories). This is facilitated by `AddNewInventory` and `DestroyItemInventory`.
 * Experience Loading: Integrates with the Lyra Experience system to perform initialization (`InitializeGlobalInventory`) once an experience is loaded.
 
-### Interaction Flow
+***
+
+## Interaction Flow
 
 {% stepper %}
 {% step %}
@@ -79,7 +87,9 @@ For managing world containers that aren't directly attached to players:
 The example above is server-authoritative and introduces latency. For fast-paced games, use the [Client-Predicted Pickup Ability](client-predicted-pickup-ability.md) which provides instant feedback with automatic rollback on rejection, plus configurable routing policies for different game modes.
 {% endhint %}
 
-### Structure of this Section
+***
+
+## Structure of this Section
 
 The following sub-pages will detail these components:
 

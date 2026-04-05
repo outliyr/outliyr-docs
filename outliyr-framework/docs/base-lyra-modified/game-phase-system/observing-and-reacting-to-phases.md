@@ -2,7 +2,7 @@
 
 A major benefit of the Game Phase System is decoupling. Instead of systems directly querying the Game Mode's state, they can **observe** the `ULyraGamePhaseSubsystem` and **react** when specific phases begin or end. This promotes modularity and makes it easier to manage complex interactions based on the game's current stage.
 
-### Purpose of Observing
+## Purpose of Observing
 
 Various game systems often need to change their behavior based on the active phase:
 

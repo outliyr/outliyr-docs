@@ -10,7 +10,7 @@ A lot of these functions don't work in blueprints because they use c++ only vari
 
 ***
 
-### What Makes a Container?
+## What Makes a Container?
 
 A container is anything that:
 
@@ -23,7 +23,7 @@ The interface formalizes these requirements into a set of methods that every con
 
 ***
 
-### Mutation Methods
+## Mutation Methods
 
 These methods modify container state. The `FPredictionKey` parameter exists for the prediction system, if you're not implementing prediction support, you can ignore it.
 
@@ -31,7 +31,7 @@ These methods modify container state. The `FPredictionKey` parameter exists for 
 **About `FPredictionKey`:** You'll see this parameter on mutation methods. It's used by the prediction engine to track operations for potential rollback. If you're creating a simple container without prediction support, you don't need to do anything with it. See [Adding Prediction](../creating-containers/adding-prediction.md) if you want prediction support.
 {% endhint %}
 
-#### `AddItemToSlot`
+### `AddItemToSlot`
 
 ```cpp
 virtual bool AddItemToSlot(
@@ -57,7 +57,7 @@ Adds an item to the specified slot. Returns `true` on success.
 * Store the item in the slot
 * Return `false` if the slot doesn't exist or the item can't be placed
 
-#### **`RemoveItemFromSlot`**
+### **`RemoveItemFromSlot`**
 
 ```cpp
 virtual ULyraInventoryItemInstance* RemoveItemFromSlot(
@@ -74,7 +74,7 @@ Removes and returns the item from the specified slot. Returns `nullptr` if the s
 * Return the item (it's no longer in this container but is not destroyed)
 * Return `nullptr` if the slot is empty or doesn't exist
 
-#### **`MoveItemBetweenSlots`**
+### **`MoveItemBetweenSlots`**
 
 ```cpp
 virtual bool MoveItemBetweenSlots(
@@ -92,11 +92,11 @@ For cross-container moves, the transaction system uses `RemoveItemFromSlot` + `A
 
 ***
 
-### Query Methods
+## Query Methods
 
 These methods read container state without modifying it.
 
-#### **`CanAcceptItem`**
+### **`CanAcceptItem`**
 
 ```cpp
 virtual int32 CanAcceptItem(
@@ -117,7 +117,7 @@ Checks if a slot can accept an item. Returns:
 * Container weight/capacity limits exceeded
 * Slot doesn't exist
 
-#### **`CanRemoveItem`**
+### **`CanRemoveItem`**
 
 ```cpp
 virtual int32 CanRemoveItem(
@@ -137,7 +137,7 @@ This is a read-only validation check that does not mutate state. Unlike permissi
 
 * Item is bound (quest items that cannot leave a quest container)
 
-#### **`GetItemInSlot`**
+### **`GetItemInSlot`**
 
 ```cpp
 virtual ULyraInventoryItemInstance* GetItemInSlot(
@@ -146,7 +146,7 @@ virtual ULyraInventoryItemInstance* GetItemInSlot(
 
 Returns the item in a slot, or `nullptr` if empty.
 
-#### **`ForEachItem`**
+### **`ForEachItem`**
 
 ```cpp
 virtual int32 ForEachItem(
@@ -175,7 +175,7 @@ Container->ForEachItem([&](ULyraInventoryItemInstance* Item, const FInstancedStr
 
 ***
 
-### Occupied Slot Behavior
+## Occupied Slot Behavior
 
 When an item is moved to an occupied slot, different containers handle it differently. The interface defines an enum and a query method:
 
@@ -207,7 +207,7 @@ The transaction system queries this to determine how to handle the move.
 
 ***
 
-### Prediction Support
+## Prediction Support
 
 Containers can opt into client-side prediction for responsive multiplayer:
 
@@ -226,7 +226,7 @@ When you want prediction support, you override this method to return `true`. The
 
 ***
 
-### Prediction Key Delegate Handlers
+## Prediction Key Delegate Handlers
 
 ```cpp
 virtual void OnPredictionKeyRejected(int32 PredictionKeyCurrent);
@@ -244,7 +244,7 @@ See [Adding Prediction](../creating-containers/adding-prediction.md) for a step-
 
 ***
 
-### Auto-Placement
+## Auto-Placement
 
 Some containers support finding an available slot automatically:
 
@@ -268,7 +268,7 @@ The `ExcludedItemIds` parameter treats slots containing those items as available
 
 ***
 
-### Item Destruction
+## Item Destruction
 
 Each container handles item destruction differently:
 
@@ -286,7 +286,7 @@ The default implementation marks the item for garbage collection, but containers
 
 ***
 
-### Action Filtering
+## Action Filtering
 
 Containers can filter which item actions are available:
 
@@ -307,7 +307,7 @@ virtual void FilterItemActions(
 
 ***
 
-### Container Hierarchy
+## Container Hierarchy
 
 Some containers are owned by items (like a backpack's internal inventory or InventoryFragment\_Attachment):
 
@@ -324,7 +324,7 @@ Used for:
 
 ***
 
-### How Different Containers Implement This
+## How Different Containers Implement This
 
 #### Inventory (`LyraInventoryManagerComponent`)
 
@@ -351,7 +351,7 @@ Used for:
 
 ***
 
-### The Payoff
+## The Payoff
 
 Because all containers implement this interface:
 
@@ -363,7 +363,3 @@ Because all containers implement this interface:
 You write container-specific logic once (how your slots work, what items fit), and everything else works automatically.
 
 ***
-
-### Next Steps
-
-Learn how slots are identified across different container types in Slot Descriptors.

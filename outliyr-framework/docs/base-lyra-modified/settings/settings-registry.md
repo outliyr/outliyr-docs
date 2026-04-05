@@ -4,7 +4,7 @@ The settings screen doesn't define its layout in UMG. A C++ registry creates set
 
 ***
 
-### The GameSettings Plugin Foundation
+## The GameSettings Plugin Foundation
 
 The GameSettings plugin provides the framework that the settings screen is built on:
 
@@ -18,7 +18,7 @@ Lyra extends this foundation with **`ULyraGameSettingRegistry`**, which creates 
 
 ***
 
-### How the Registry Initializes
+## How the Registry Initializes
 
 {% stepper %}
 {% step %}
@@ -60,7 +60,7 @@ After each initialization function returns, the resulting collection is stored o
 
 ***
 
-### Five Categories
+## Five Categories
 
 * **Video** — window mode, resolution, graphics quality, colorblind options, frame rates, and performance stat overlays
 * **Audio** — volume levels (overall, music, sound effects, dialogue, voice chat), audio output device, headphone mode, subtitles, and background audio
@@ -70,7 +70,7 @@ After each initialization function returns, the resulting collection is stored o
 
 ***
 
-### Data Source Binding
+## Data Source Binding
 
 Each setting has a dynamic getter and a dynamic setter that tell it where to read and write its value. Rather than hard-coding function pointers, the system uses **property path resolution**, a chain of function name strings that is walked at runtime starting from the `ULocalPlayer`.
 
@@ -117,7 +117,7 @@ The macro produces a `TSharedRef<FGameSettingDataSourceDynamic>` containing func
 
 ***
 
-### Setting Types
+## Setting Types
 
 | Type                                      | UI Widget   | Example                                                                |
 | ----------------------------------------- | ----------- | ---------------------------------------------------------------------- |
@@ -152,7 +152,7 @@ Each of these has a dedicated setting class that encapsulates the complex behavi
 
 ***
 
-### Edit Conditions
+## Edit Conditions
 
 Not every setting makes sense on every platform or in every context. Edit conditions control when a setting is visible and when it is interactable.
 
@@ -226,7 +226,7 @@ Dependencies (`AddEditDependency`) make conditions reactive, when the window mod
 
 ***
 
-### UI Rendering
+## UI Rendering
 
 The UI side is separate from the registry and handles turning setting objects into visible widgets:
 
@@ -238,7 +238,7 @@ The UI side is separate from the registry and handles turning setting objects in
 
 ***
 
-### Save Flow
+## Save Flow
 
 {% stepper %}
 {% step %}

@@ -4,7 +4,7 @@ A player pulls the trigger. A character jumps. A consumable heals the user. Ever
 
 ***
 
-### Activation Policies
+## Activation Policies
 
 How an ability starts determines how it feels. A shotgun fires once per trigger pull. A shield ability stays active while the button is held. A passive health regen activates automatically when granted.
 
@@ -16,7 +16,7 @@ How an ability starts determines how it feels. A shotgun fires once per trigger 
 
 ***
 
-### Activation Groups
+## Activation Groups
 
 Some abilities can run simultaneously. Others are mutually exclusive. A character can sprint while their passive regen runs, but they can only use one aim mode at a time.
 
@@ -28,7 +28,7 @@ Some abilities can run simultaneously. Others are mutually exclusive. A characte
 
 ***
 
-### Costs
+## Costs
 
 Abilities can have costs beyond what GAS provides by default. The base ability class exposes an `AdditionalCosts` array where each ability can carry multiple cost objects. All costs are checked before activation and consumed on commit.
 
@@ -50,7 +50,7 @@ GAS's built-in cost is a single Gameplay Effect applied on commit. That works fo
 
 ***
 
-### Ability Specializations
+## Ability Specializations
 
 The base ability handles activation, costs, and camera integration. Specialized subclasses add context for specific sources, a weapon ability knows about its weapon, an equipment ability knows about its equipment instance.
 

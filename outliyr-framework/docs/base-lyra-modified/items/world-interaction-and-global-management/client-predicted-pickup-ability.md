@@ -8,7 +8,7 @@ Beyond responsiveness, this ability introduces **routing policies**, a way to co
 
 ***
 
-#### The Routing Problem
+## The Routing Problem
 
 Different game modes have fundamentally different pickup expectations:
 
@@ -23,7 +23,7 @@ A single hardcoded pickup flow can't serve all these needs. The routing policy s
 
 ***
 
-### Architecture Overview
+## Architecture Overview
 
 ```mermaid
 flowchart TD
@@ -65,7 +65,7 @@ flowchart TD
     J -->|Failure| L
 ```
 
-#### Key Components
+### Key Components
 
 | Component                         | Purpose                                                           |
 | --------------------------------- | ----------------------------------------------------------------- |
@@ -76,7 +76,7 @@ flowchart TD
 
 ***
 
-### Routing Policies
+## Routing Policies
 
 #### `EPickupRoutingPolicy`
 
@@ -175,7 +175,7 @@ flowchart LR
 
 ***
 
-### Configuration Reference
+## Configuration Reference
 
 <figure><img src="../../../.gitbook/assets/image (223).png" alt=""><figcaption></figcaption></figure>
 
@@ -193,7 +193,7 @@ flowchart LR
 
 ***
 
-### Client Prediction Flow
+## Client Prediction Flow
 
 The prediction system ensures pickups feel instant while maintaining server authority.
 
@@ -231,7 +231,7 @@ sequenceDiagram
     end
 ```
 
-#### Visibility Management
+### Visibility Management
 
 When the client predicts a pickup, the world collectable is hidden immediately using `HideForPrediction()`. This provides instant visual feedback without destroying the actor (which only the server can do).
 
@@ -239,11 +239,11 @@ If the server rejects the pickup, `RestoreFromRejectedPrediction()` makes the co
 
 ***
 
-### Blueprint Extension Points
+## Blueprint Extension Points
 
 The ability provides several hooks for game-mode specific customization:
 
-#### Validation — **`CanPickup`**
+### Validation — **`CanPickup`**
 
 <figure><img src="../../../.gitbook/assets/image (224).png" alt="" width="368"><figcaption></figcaption></figure>
 
@@ -255,7 +255,7 @@ Called before any pickup logic. Return `false` to prevent the pickup entirely.
 * Validate level requirements
 * Prevent pickup during certain game states
 
-#### Routing — **`DetermineItemDestination`**&#x20;
+### Routing — **`DetermineItemDestination`**&#x20;
 
 <figure><img src="../../../.gitbook/assets/image (225).png" alt="" width="375"><figcaption></figcaption></figure>
 
@@ -269,7 +269,7 @@ Only called when `RoutingPolicy == Custom`. Determines where each item should go
 * `OutDestSlot` - Set this to the target slot (or leave empty for auto-placement)
 * `OutEquipmentSlot` - Set this for equipment routing
 
-#### Feedback — **`PlayPickupEffects`**
+### Feedback — **`PlayPickupEffects`**
 
 <figure><img src="../../../.gitbook/assets/image (226).png" alt="" width="334"><figcaption></figcaption></figure>
 
@@ -284,7 +284,7 @@ Called immediately after prediction executes. Use for:
 * `Pickup` - The world collectable being picked up
 * `Items` - Array of item instances being picked up
 
-#### Result Callbacks
+### Result Callbacks
 
 | Event               | When Called                       | Typical Use                            |
 | ------------------- | --------------------------------- | -------------------------------------- |
@@ -294,24 +294,24 @@ Called immediately after prediction executes. Use for:
 
 ***
 
-### Selective Pickup
+## Selective Pickup
 
 Beyond picking up everything at once, the ability supports selecting specific items from a pickup (useful for death boxes or loot containers with multiple items).
 
-#### How It Works
+### How It Works
 
 Pass a slot descriptor through the event's ContextHandle using the existing infrastructure:
 
-<figure><img src="../../../.gitbook/assets/image (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-#### Pickup Modes
+### Pickup Modes
 
 | Mode          | Trigger                                          | Behavior                                              |
 | ------------- | ------------------------------------------------ | ----------------------------------------------------- |
 | **Bulk**      | No slot in ContextHandle                         | Picks up everything that fits based on routing policy |
 | **Selective** | `FPickupAbilityData_SourceItem` in ContextHandle | Picks up only the specified item                      |
 
-#### Partial Pickup Handling
+### Partial Pickup Handling
 
 When picking up from a multi-item pickup (like a death box), the ability handles partial pickups intelligently:
 
@@ -327,7 +327,7 @@ flowchart TD
 
 The pickup is only hidden for prediction when **all** items will be taken. Partial pickups keep the actor visible with remaining items.
 
-#### `FPickupAbilityResult` Fields
+### `FPickupAbilityResult` Fields
 
 | Property             | Type                                    | Description                                         |
 | -------------------- | --------------------------------------- | --------------------------------------------------- |
@@ -344,7 +344,7 @@ The pickup is only hidden for prediction when **all** items will be taken. Parti
 
 ***
 
-### Creating a Pickup Ability
+## Creating a Pickup Ability
 
 {% stepper %}
 {% step %}
@@ -375,7 +375,7 @@ Ttrigger it from the [interaction system](../../interaction/). The pickup is pas
 
 ***
 
-### Common Configurations
+## Common Configurations
 
 #### TDM
 
@@ -406,7 +406,7 @@ Config.bMergeStacks = true;
 
 ***
 
-### Relationship to Other Systems
+## Relationship to Other Systems
 
 ```mermaid
 flowchart TB
@@ -448,7 +448,7 @@ flowchart TB
 
 ***
 
-### Troubleshooting
+## Troubleshooting
 
 {% hint style="warning" %}
 **Pickup disappears then reappears**

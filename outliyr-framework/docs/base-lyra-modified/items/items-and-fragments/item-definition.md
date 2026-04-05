@@ -1,79 +1,66 @@
 # Item Definition
 
-The `ULyraInventoryItemDefinition` serves as the static **blueprint** or **template** for a specific type of item in your game. Think of it as the unchanging definition that describes what an "Apple", a "Standard Rifle", or a "Basic Helmet" _is_.
+Every item in the game starts as a definition. A `ULyraInventoryItemDefinition` is the static template that describes what an "Assault Rifle" or a "Health Potion" _is_, its name, its icon, whether it stacks, what abilities it grants, how it appears in the world. It never changes at runtime. When a player picks up that rifle, the system creates a live _instance_ from this template, and the instance carries mutable state like ammo count or durability.
 
-#### Role and Purpose
+```mermaid
+flowchart LR
+    Def["ULyraInventoryItemDefinition<br/><i>ID_Rifle_AK47</i><br/>(shared template)"]
+    Def -->|creates| I1["Instance A<br/>Ammo: 30"]
+    Def -->|creates| I2["Instance B<br/>Ammo: 12"]
+    Def -->|creates| I3["Instance C<br/>Ammo: 0"]
+```
 
-* **Static Data:** It holds information that is common to _all_ instances of this item type. Its properties are typically configured on its Class Default Object (CDO).
-* **Configuration Asset (via Blueprint Class):** You create Blueprint classes derived from `ULyraInventoryItemDefinition`. The defaults set in these Blueprint classes act as your configuration assets.
-* **Fragment Container:** Its most crucial role is to hold an array of `ULyraInventoryItemFragment` objects. These fragments are `Instanced` UObjects within the definition and define the actual capabilities, properties, and behaviors associated with this item type.
-* **Read-Only at Runtime:** Generally, you treat the properties of the definition (accessed via its CDO) as read-only once the game is running. Item instances hold the mutable state.
+The definition itself is a Blueprint class, you create it in the Content Browser, configure its defaults, and every instance spawned from it shares that configuration. Think of it as the cookie cutter, not the cookie.
+
+### Key Properties
+
+| Property      | Type                                  | Purpose                                              |
+| ------------- | ------------------------------------- | ---------------------------------------------------- |
+| `DisplayName` | `FText`                               | User-facing name, supports localization              |
+| `Fragments`   | `TArray<ULyraInventoryItemFragment*>` | Instanced fragment array, the core of the definition |
+
+The `Fragments` array is marked `UPROPERTY(Instanced)`, so each definition gets its own unique copies of its fragment objects. Fragment order generally doesn't matter.
+
+<figure><img src="../../../.gitbook/assets/image (16) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ***
 
-### Creation
+## What Makes a Definition Useful: Fragments
 
-You typically create Item Definitions by creating Blueprint Classes:
+A definition on its own only holds a `DisplayName`. Its real power comes from the **Fragments** array, instanced `ULyraInventoryItemFragment` objects that each handle one aspect of the item's identity:
 
-1. **Content Browser:** Navigate to where you want to store your item definitions (e.g., `Content/Inventory/Items/Weapons`).
-2. **Right-Click:** Right-click in the empty space, select Blueprint -> Blueprint Class.
-3. **Choose Parent Class:** Search for and select `LyraInventoryItemDefinition` as the parent class.
-4. **Name Asset:** Give your Blueprint class a descriptive name, often prefixed with `ID_`(e.g., `ID_Rifle_AK47`, `ID_HealthPotion`).
-5. **Configure Defaults:** Open the Blueprint class and edit its Class Defaults. This is where you'll set `DisplayName` and add/configure `Fragments`.
+```mermaid
+flowchart TB
+    ItemDef["ID_Rifle_AK47<br/><b>ULyraInventoryItemDefinition</b>"]
+    ItemDef --> F1["InventoryFragment_InventoryIcon<br/><i>Name, Icon, Weight, MaxStack</i>"]
+    ItemDef --> F2["InventoryFragment_EquippableItem<br/><i>Equipment Definition</i>"]
+    ItemDef --> F3["InventoryFragment_SetStats<br/><i>Initial Ammo: 30</i>"]
+    ItemDef --> F4["InventoryFragment_PickupItem<br/><i>World Mesh</i>"]
+    ItemDef --> F5["InventoryFragment_Attachment<br/><i>Optic Slot, Muzzle Slot</i>"]
+```
+
+Adding or removing fragments changes what the item can do without touching any other code. A healing potion might only need `InventoryIcon`, `SetStats`, and `Consume`. A weapon needs those plus `EquippableItem`, `PickupItem`, and `Attachment`. This is composition over inheritance, covered in depth on the [Item Fragments](item-fragments.md) page.
+
+***
+
+## Creating an Item Definition
+
+{% stepper %}
+{% step %}
+**Create the Blueprint Class**
+
+In the Content Browser, right-click and select **Blueprint Class**. Search for `LyraInventoryItemDefinition` as the parent. Name it with an `ID_` prefix (e.g., `ID_Rifle_AK47`, `ID_HealthPotion`).
+{% endstep %}
+
+{% step %}
+**Configure Defaults**
+
+Open the Blueprint and edit its **Class Defaults**. Set the `DisplayName` and add fragments to the `Fragments` array. Click the `+` icon, pick a fragment class from the dropdown, then configure its properties inline.
+{% endstep %}
+{% endstepper %}
 
 {% file src="../../../.gitbook/assets/create_item_definition.mp4" %}
 Create Item Definition
 {% endfile %}
 
 ***
-
-### Key Properties
-
-When you open an Item Definition asset, you'll primarily configure these properties in the Details panel:
-
-1. **`DisplayName` (`FText`)**
-   * The user-facing name of the item type (e.g., "Assault Rifle", "Medkit"). This is often used in UI elements.
-   * Supports localization.
-2. **`Fragments` (`TArray<TObjectPtr<ULyraInventoryItemFragment>>`)**
-   * **This is the core of the definition's functionality.** Marked `UPROPERTY(Instanced)`, meaning each definition gets its own unique instances of these fragment UObjects.
-   * It's an array where you add instances of different `ULyraInventoryItemFragment`-derived classes.
-   * **Adding Fragments:** Click the `+` icon next to the `Fragments` array in the Class Defaults, then select the desired Fragment class from the dropdown list. An instance of that fragment will be created, and you can then configure its specific properties directly.
-   * **Order:** The order of fragments generally doesn't matter unless one fragment's initialization depends on another (which is rare).
-
-<figure><img src="../../../.gitbook/assets/image (16) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
-
-***
-
-### Accessing Fragments
-
-You typically don't interact directly with the definition at runtime often, but if needed:
-
-*   **From an Instance:** `ULyraInventoryItemInstance::GetItemDef()` returns the `TSubclassOf<ULyraInventoryItemDefinition>`. You can then get the Class Default Object (CDO) to access its fragments:
-
-    ```cpp
-    ULyraInventoryItemInstance* MyInstance = ...;
-    if (MyInstance && MyInstance->GetItemDef())
-    {
-        const ULyraInventoryItemDefinition* ItemDefCDO = GetDefault<ULyraInventoryItemDefinition>(MyInstance->GetItemDef());
-        const UInventoryFragment_InventoryIcon* IconFragment = ItemDefCDO->FindFragmentByClass<UInventoryFragment_InventoryIcon>();
-        if (IconFragment)
-        {
-            // Use IconFragment->MaxStackSize, etc.
-        }
-    }
-    ```
-*   **Directly (e.g., in Editor Utilities or Game Systems):**
-
-    ```cpp
-    TSubclassOf<ULyraInventoryItemDefinition> ItemDefClass = ...; // Load class
-    if (ItemDefClass)
-    {
-        const ULyraInventoryItemDefinition* ItemDefCDO = GetDefault<ULyraInventoryItemDefinition>(ItemDefClass);
-        // ... access fragments as above ...
-    }
-    ```
-* **Helper Function:** The `UInventoryFunctionLibrary::FindItemDefinitionFragment` provides a convenient Blueprint-callable wrapper for finding fragments on a definition CDO.
-
-***
-
-In summary, the `ULyraInventoryItemDefinition` is the static foundation upon which runtime items are built. Its primary role is to act as a container for the various `ULyraInventoryItemFragment`s that collectively define the item type's characteristics and potential behaviors. The next page will cover the `ULyraInventoryItemInstance`, which brings these definitions to life.

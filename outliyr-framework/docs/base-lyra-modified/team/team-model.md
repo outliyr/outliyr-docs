@@ -2,7 +2,7 @@
 
 Before working with any team API, it helps to understand what a "team" actually is at runtime. A team is not just an integer ID passed around in gameplay code, it is a set of replicated actors, a membership interface, and a visual identity system that work together through the team subsystem. This page builds that mental model.
 
-### What Is a Team?
+## What Is a Team?
 
 Each team in a match is represented by a **pair of replicated actors** that carry the team's state:
 

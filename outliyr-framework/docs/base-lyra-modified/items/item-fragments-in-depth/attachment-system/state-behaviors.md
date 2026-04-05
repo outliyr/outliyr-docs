@@ -1,12 +1,12 @@
 # State Behaviors
 
-A scope on a rifle doesn't just sit there - it grants ADS abilities when you're aiming, spawns a visible mesh attached to the weapon, and adds input bindings for zoom. But when you holster the weapon? Those abilities disappear, the mesh might change, and the input goes away. When the weapon sits in your inventory, the scope does nothing at all.
+A scope on a rifle doesn't just sit there, it grants ADS abilities when you're aiming, spawns a visible mesh attached to the weapon, and adds input bindings for zoom. But when you holster the weapon? Those abilities disappear, the mesh might change, and the input goes away. When the weapon sits in your inventory, the scope does nothing at all.
 
 This is state-aware behavior: attachments change what they do based on their parent item's equipment state.
 
 ***
 
-### The Three States
+## The Three States
 
 Attachments exist in one of three states, determined entirely by their parent item:
 
@@ -31,35 +31,35 @@ stateDiagram-v2
 
 **Holstered** - The parent item is equipped but not in hand. The player has the weapon on their back, the armor on their body, the tool on their belt. Attachments use their `HolsteredAttachmentSettings` - maybe a folded mesh, maybe passive abilities, maybe nothing visible.
 
-**Equipped** - The parent item is actively held. For weapons, this means in the player's hands, ready to use. Attachments use their `HeldAttachmentSettings` - full visual representation, active abilities, input bindings for special actions.
+**Equipped** - The parent item is actively held. For weapons, this means in the player's hands, ready to use. Attachments use their `HeldAttachmentSettings`, full visual representation, active abilities, input bindings for special actions.
 
 ***
 
-### What Changes Per State
+## What Changes Per State
 
 Each state can have completely different behavior:
 
-#### Actors
+### Actors
 
-A scope might spawn `BP_RedDot_InHand` with full detail when the weapon is held, but `BP_RedDot_Holstered` (a smaller, simplified mesh) when holstered on the player's back. Or it might spawn nothing when holstered - just disappear from view.
+A scope might spawn `BP_RedDot_InHand` with full detail when the weapon is held, but `BP_RedDot_Holstered` (a smaller, simplified mesh) when holstered on the player's back. Or it might spawn nothing when holstered, just disappear from view.
 
 Actors always attach to the **parent item's spawned actor**, not the pawn. The scope attaches to the rifle mesh, which attaches to the player's hand or back.
 
-#### Abilities
+### Abilities
 
 A red dot scope might grant aim assist abilities when the weapon is held. When holstered? No abilities, you can't aim with a weapon on your back.
 
 Armor plates work differently. Since armor is never "held" (you wear it, you don't wield it), the abilities live in `HolsteredAttachmentSettings`. Damage reduction is active whenever the vest is equipped.
 
-#### Input
+### Input
 
-Zoom controls, firing mode toggles, special attachment actions - these only make sense when the weapon is equipped. Input mappings and input configs apply in held or holstered state.
+Zoom controls, firing mode toggles, special attachment actions, these only make sense when the weapon is equipped. Input mappings and input configs apply in held or holstered state.
 
 Input only applies on the locally controlled client. The server grants abilities, but input is purely client-side.
 
 ***
 
-### Behavior Configuration
+## Behavior Configuration
 
 Each attachment defines two behavior configurations in the host item's `CompatibleAttachments` map:
 
@@ -88,7 +88,7 @@ The `FAttachmentBehaviour` struct contains everything that can change per state:
 
 ***
 
-### When State Changes
+## When State Changes
 
 When the player draws or holsters a weapon, here's what happens to each attachment:
 
@@ -136,7 +136,7 @@ The entire hierarchy transitions together
 
 ***
 
-### Practical Examples
+## Practical Examples
 
 <details>
 

@@ -6,7 +6,7 @@ Three asset types work together to make this happen: the **Experience Definition
 
 ***
 
-### Experience Definition (`ULyraExperienceDefinition`)
+## Experience Definition (`ULyraExperienceDefinition`)
 
 The experience definition is the core asset. When you create a new game mode, you create one of these. It is a `UPrimaryDataAsset`, which means it can be loaded by primary asset ID through the asset manager without requiring hard references from any other asset. This is what makes the entire async loading pipeline possible, the Game Mode only needs an ID string, not a loaded object.
 
@@ -14,7 +14,7 @@ The experience definition is the core asset. When you create a new game mode, yo
 
 An experience definition declares four things:
 
-#### DefaultPawnData
+### DefaultPawnData
 
 ```cpp
 UPROPERTY(EditDefaultsOnly, Category=Gameplay)
@@ -23,7 +23,7 @@ TObjectPtr<const ULyraPawnData> DefaultPawnData;
 
 A direct reference to a [Pawn Data](lyrapawndata.md) asset. This determines the pawn class players control, their granted ability sets, input configuration, input mapping contexts, HUD layout, and default camera mode. When the Game Mode spawns a player and no override exists on their Player State, it falls back to this pawn data from the loaded experience.
 
-#### Actions
+### Actions
 
 ```cpp
 UPROPERTY(EditDefaultsOnly, Instanced, Category="Actions")
@@ -32,7 +32,7 @@ TArray<TObjectPtr<UGameFeatureAction>> Actions;
 
 Game feature actions that execute directly when this experience loads. These are the same action types used by game feature plugins, add components, grant abilities, inject widgets, bind input, but defined inline on the experience itself rather than inside a plugin. Use these for actions that are unique to this specific experience and don't need to be shared.
 
-#### ActionSets
+### ActionSets
 
 ```cpp
 UPROPERTY(EditDefaultsOnly, Category=Gameplay)
@@ -41,7 +41,7 @@ TArray<TObjectPtr<ULyraExperienceActionSet>> ActionSets;
 
 References to reusable bundles of actions and plugin dependencies. Instead of duplicating the same ten actions across every experience that needs "FPS shooter" functionality, you create an action set and reference it. The experience manager collects actions from all referenced action sets and executes them alongside the experience's own actions.
 
-#### GameFeaturesToEnable
+### GameFeaturesToEnable
 
 ```cpp
 UPROPERTY(EditDefaultsOnly, Category=Gameplay)
@@ -52,7 +52,7 @@ Names of game feature plugins to load and activate for this experience. These ar
 
 ***
 
-### Action Sets (`ULyraExperienceActionSet`)
+## Action Sets (`ULyraExperienceActionSet`)
 
 An action set packages a group of actions and game feature dependencies into a reusable bundle. This is the primary composition mechanism for experiences.
 
@@ -62,7 +62,7 @@ Consider what goes into a typical FPS experience: weapon abilities, an FPS HUD w
 
 An action set contains two things:
 
-#### Actions
+### Actions
 
 ```cpp
 UPROPERTY(EditAnywhere, Instanced, Category="Actions to Perform")
@@ -71,7 +71,7 @@ TArray<TObjectPtr<UGameFeatureAction>> Actions;
 
 The same game feature actions you would put directly on an experience. When the experience manager processes an experience, it collects actions from all referenced action sets and executes them as part of the same pipeline.
 
-#### GameFeaturesToEnable
+### GameFeaturesToEnable
 
 ```cpp
 UPROPERTY(EditAnywhere, Category="Feature Dependencies")
@@ -90,13 +90,13 @@ Like experience definitions, action sets inherit from `UPrimaryDataAsset`. This 
 
 ***
 
-### User-Facing Experience (`ULyraUserFacingExperienceDefinition`)
+## User-Facing Experience (`ULyraUserFacingExperienceDefinition`)
 
 The user-facing experience is the presentation layer, what players see in lobby screens, mode selectors, and server browsers. It maps display information to an experience-plus-map combination and provides the parameters needed to host a session.
 
 <figure><img src="../../.gitbook/assets/image (45).png" alt=""><figcaption><p>User Facing Experience for GunGame game mode</p></figcaption></figure>
 
-#### Identity
+### Identity
 
 ```cpp
 UPROPERTY(BlueprintReadWrite, EditAnywhere, Category=Experience, meta=(AllowedTypes="Map"))
@@ -108,7 +108,7 @@ FPrimaryAssetId ExperienceID;
 
 `MapID` and `ExperienceID` are primary asset IDs, not hard references. The user-facing experience tells the session system "load this map with this experience" without pulling either into memory until the player actually selects it.
 
-#### Display
+### Display
 
 ```cpp
 FText TileTitle;
@@ -119,7 +119,7 @@ TObjectPtr<UTexture2D> TileIcon;
 
 Visual information for UI tiles: a primary title, subtitle, full description, and icon texture. Your lobby UI reads these fields to populate mode selection grids.
 
-#### Session Configuration
+### Session Configuration
 
 ```cpp
 int32 MaxPlayerCount = 16;
@@ -132,7 +132,7 @@ TSoftClassPtr<UUserWidget> LoadingScreenWidget;
 
 `MaxPlayerCount` sets the lobby size. `bIsDefaultExperience` gives this mode priority in quick-play flows and dedicated server fallback. `bShowInFrontEnd` controls whether it appears in the mode list at all. `ExtraArgs` passes additional URL parameters to the server travel (useful for variant rules on the same experience). `LoadingScreenWidget` allows a custom loading screen per mode.
 
-#### Game Mode Options
+### Game Mode Options
 
 Each game mode can declare its own configurable options, bot count, score limit, friendly fire, round time, as data on the user-facing experience. The host session screen reads these declarations and generates the appropriate UI controls dynamically. Players adjust the values, and they flow through the same `ExtraArgs` pipeline that already carries URL parameters to the server.
 
@@ -177,7 +177,7 @@ virtual FString GetDefaultValue() const;  // Returns the default as a URL-ready 
 
 </details>
 
-**How options flow to the server**
+#### **How options flow to the server**
 
 `CreateHostingRequest()` iterates the `GameModeOptions` array after copying `ExtraArgs` and inserts each option's default value for any key not already present. This means hardcoded `ExtraArgs` on the asset still take priority, and the option descriptors provide structured defaults as a fallback.
 
@@ -197,7 +197,7 @@ When the host session screen is active, it builds UI controls from the option de
 {% endtab %}
 {% endtabs %}
 
-**UI integration: IGameModeOptionEntry**
+#### **UI integration: IGameModeOptionEntry**
 
 Blueprint widgets that display an option implement the `IGameModeOptionEntry` C++ interface. This lets the options panel talk to any option widget without casting to a specific type.
 
@@ -236,7 +236,7 @@ This asset is purely presentation and session configuration. The actual gameplay
 
 ***
 
-### How They Compose
+## How They Compose
 
 These three asset types form a layered structure. The experience definition sits at the center, action sets feed reusable functionality into it, and user-facing experiences wrap it for player-visible UI.
 

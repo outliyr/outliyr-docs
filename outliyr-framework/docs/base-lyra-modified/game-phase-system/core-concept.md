@@ -2,7 +2,7 @@
 
 The defining characteristic and core strength of the Lyra Game Phase System lies in its use of **hierarchical Gameplay Tags**. The structure you create with these tags dictates how different phases relate to each other and, most importantly, how the system automatically manages transitions by ending conflicting phases.
 
-### Gameplay Tag Structure: Parent.Child
+## Gameplay Tag Structure: Parent.Child
 
 The system relies on the standard Gameplay Tag convention where tags are structured using dots (`.`) to denote parent-child relationships.
 

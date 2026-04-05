@@ -1,19 +1,19 @@
 # Equipment Manager Component
 
-You pick up a rifle, equip it to your back, then draw it into your hands. The weapon mesh appears, firing abilities activate, and input bindings apply. You holster it - the mesh moves to your back, firing abilities disappear. How does the system know what to do in each state?
+You pick up a rifle, equip it to your back, then draw it into your hands. The weapon mesh appears, firing abilities activate, and input bindings apply. You holster it, the mesh moves to your back, firing abilities disappear. How does the system know what to do in each state?
 
 The Equipment Manager handles this. It stores equipped items and applies different **behaviors** based on whether each item is held or holstered.
 
 ***
 
-### The Two-Level Slot Model
+## The Two-Level Slot Model
 
-Every equipped item has two slot properties - and understanding this distinction is key to understanding the entire equipment system.
+Every equipped item has two slot properties, and understanding this distinction is key to understanding the entire equipment system.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
 │                    Equipment Entry                           │
-├─────────────────────────────────────────────────────────────┤
+├──────────────────────────────────────────────────────────────┤
 │                                                              │
 │   SlotTag (Storage)              ActiveHeldSlot (State)      │
 │   ─────────────────              ─────────────────────       │
@@ -27,14 +27,14 @@ Every equipped item has two slot properties - and understanding this distinction
 │   Changes when:                  Changes when:               │
 │   Moving to different slot       Hold or holster             │
 │                                                              │
-└─────────────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────────────┘
 ```
 
 **SlotTag** is the storage location - where the item physically lives on the player's body. A rifle on your back has `SlotTag = Equipment.Slot.Back`. This doesn't change when you draw or holster the weapon.
 
 **ActiveHeldSlot** is the held state - which hand (if any) is holding the item. When you draw the rifle, `ActiveHeldSlot = Held.Primary`. When you holster it, `ActiveHeldSlot` becomes invalid (empty).
 
-#### Why Two Levels?
+### Why Two Levels?
 
 This separation exists because games need both pieces of information independently:
 
@@ -82,8 +82,8 @@ struct FLyraAppliedEquipmentEntry : public FFastArraySerializerItem
 
 With the slot model understood, we can talk about equipment states. An item is in one of two states based on its `ActiveHeldSlot`:
 
-* **Holstered:** `ActiveHeldSlot` is invalid (empty) - the item is stored but not in hand
-* **Held:** `ActiveHeldSlot` is valid - the item is actively in the player's hand
+* **Holstered:** `ActiveHeldSlot` is invalid (empty), the item is stored but not in hand
+* **Held:** `ActiveHeldSlot` is valid, the item is actively in the player's hand
 
 ```mermaid
 stateDiagram-v2
@@ -97,7 +97,7 @@ stateDiagram-v2
     note right of Held: Uses HeldBehaviors
 ```
 
-#### What Changes Between States
+### What Changes Between States
 
 Each state applies a different set of **behaviors** from the Equipment Definition:
 
@@ -204,15 +204,15 @@ With proper ordering:
 
 ***
 
-### Starting Equipment
+## Starting Equipment
 
 Most games don't start players empty-handed. The Equipment Manager has a `StartingEquipment` array that automatically equips items when the experience loads.
 
-#### **Why This Exists**
+### **Why This Exists**
 
 Without starting equipment, you'd need a separate Actor or GameMode blueprint to spawn items, add them to inventory, then move them to equipment slots. That's fragile and experience-specific. `StartingEquipment` keeps loadout configuration on the component that owns the equipment, right where you'd look for it.
 
-#### **The Starting Item Structure**
+### **The Starting Item Structure**
 
 Each entry in the array describes one item to equip:
 
@@ -241,9 +241,9 @@ struct FEquipmentStartingItem
 | `bAutoHold`        | If `true`, the item is held immediately instead of starting holstered, this matches `HeldBehaviour` |
 | `FragmentInitData` | Polymorphic fragment overrides applied before equipping                                             |
 
-#### **The `bAutoHold` Flag**
+### **The `bAutoHold` Flag**
 
-By default, starting items are equipped in the holstered state - a rifle on your back, a pistol on your hip. Setting `bAutoHold = true` skips that and puts the item directly into the player's hand.
+By default, starting items are equipped in the holstered state, a rifle on your back, a pistol on your hip. Setting `bAutoHold = true` skips that and puts the item directly into the player's hand.
 
 This is how you give a player a weapon that's ready to fire the moment they spawn. Only one item should typically have `bAutoHold` enabled (unless you're supporting akimbo weapons with multiple held slots).
 
@@ -251,7 +251,7 @@ This is how you give a player a weapon that's ready to fire the moment they spaw
 Be sure to add [equipment mapping](quick-bar-component.md#auto-sync-with-equipment) to the quick bar component as well, so it automatically syncs the equipment to the quick bar slots, or the quick bar slots would appear empty.
 {% endhint %}
 
-#### **Fragment Init Data**
+### **Fragment Init Data**
 
 `FragmentInitData` lets you customize each starting item without needing a separate item definition for every loadout variation. Want the same rifle definition but with different ammo counts or attachments per experience? Use init data.
 
@@ -259,7 +259,7 @@ Each entry is an `FInstancedStruct` containing a fragment-specific data payload.
 
 For the full details on how fragment initialization works, see Fragment Initialization.
 
-#### **The Flow**
+### **The Flow**
 
 ```
 Experience Loads
@@ -281,7 +281,7 @@ AddStartingEquipment()
 
 **Practical Example**
 
-A typical shooter loadout - primary rifle in hand, backup pistol holstered:
+A typical shooter loadout, primary rifle in hand, backup pistol holstered:
 
 ```
 StartingEquipment:
@@ -312,7 +312,7 @@ Result on spawn:
 
 ***
 
-### How Equipment Gets Equipped
+## How Equipment Gets Equipped
 
 Equipment enters through the container transaction system. When an item moves from inventory to an equipment slot:
 
@@ -340,7 +340,7 @@ Holstered behavior is applied (items always start holstered, not held).
 
 The entry replicates to clients.
 
-The item's `CurrentSlot` is updated to an `FEquipmentAbilityData_SourceEquipment` - a slot descriptor that contains both the storage slot tag and the held state.
+The item's `CurrentSlot` is updated to an `FEquipmentAbilityData_SourceEquipment`, a slot descriptor that contains both the storage slot tag and the held state.
 {% endstep %}
 {% endstepper %}
 
@@ -413,7 +413,7 @@ The `SpawnedActors` array contains replicated Actors (like weapon meshes), not s
 
 ***
 
-### Holding and Holstering
+## Holding and Holstering
 
 Now that items are equipped (holstered), players need to hold them. When you hold an item:
 
@@ -443,9 +443,9 @@ Spawn held actor, grant abilities, bind input.
 {% endstep %}
 {% endstepper %}
 
-Holstering reverses this - held behavior is removed, holstered behavior applies, and `ActiveHeldSlot` is cleared.
+Holstering reverses this, held behavior is removed, holstered behavior applies, and `ActiveHeldSlot` is cleared.
 
-#### Two-Handed Weapons
+### Two-Handed Weapons
 
 Some weapons need both hands. The Equipment Definition specifies a `HeldSlotPolicy`:
 
@@ -467,17 +467,17 @@ Pistol B → Held.Secondary                 (claims both slots)
 
 The rifle's `ClaimedHeldSlots` array contains both Primary and Secondary, preventing any other item from being held until the rifle is holstered.
 
-#### Akimbo
+### Akimbo
 
-With one-handed weapons and multiple held slots (configured via `AvailableHeldSlots` on the Equipment Manager), players can hold multiple items simultaneously. A pistol in Primary, another in Secondary - both held, both applying their behaviors.
+With one-handed weapons and multiple held slots (configured via `AvailableHeldSlots` on the Equipment Manager), players can hold multiple items simultaneously. A pistol in Primary, another in Secondary, both held, both applying their behaviors.
 
 ***
 
-### Working with Equipment in Code
+## Working with Equipment in Code
 
 Now that you understand the model, here's how to query it.
 
-#### "What weapon is the player holding?"
+### "What weapon is the player holding?"
 
 When you need the currently held weapon - for firing logic, UI display, or ability checks:
 
@@ -492,7 +492,7 @@ if (UWeaponInstance* Weapon = EquipmentManager->GetFirstHeldInstanceOfType<UWeap
 }
 ```
 
-#### "What's stored in a specific slot?"
+### "What's stored in a specific slot?"
 
 For paperdoll UI or checking slot availability:
 
@@ -501,7 +501,7 @@ For paperdoll UI or checking slot availability:
 ULyraEquipmentInstance* BackItem = EquipmentManager->GetInstanceFromSlot(TAG_Slot_Back);
 ```
 
-#### "Get all equipped items for UI"
+### "Get all equipped items for UI"
 
 For displaying all equipment in a character screen:
 
@@ -518,17 +518,17 @@ for (const FLyraAppliedEquipmentEntry& Entry : Entries)
 }
 ```
 
-`GetSlots()` returns what we call the **effective view** - it shows what the player should actually see right now. On the server, this is just the authoritative equipment list. On the owning client, it includes any pending predictions that haven't been confirmed yet. This is why UI code doesn't need to track predictions separately - `GetSlots()` always returns the correct visual state.
+`GetSlots()` returns what we call the **effective view**, it shows what the player should actually see right now. On the server, this is just the authoritative equipment list. On the owning client, it includes any pending predictions that haven't been confirmed yet. This is why UI code doesn't need to track predictions separately, `GetSlots()` always returns the correct visual state.
 
 ***
 
-### Writing Equipment Abilities
+## Writing Equipment Abilities
 
 When equipment grants abilities (like firing, reloading, or using a special feature), those abilities often need to interact with the equipment that granted them. A firing ability needs to know the weapon's damage, spread, and fire rate. A reload ability needs to access the magazine capacity and current ammo.
 
 `ULyraGameplayAbility_FromEquipment` solves this. It provides direct access to both the equipment instance and the underlying inventory item.
 
-#### Why Inherit From This Class?
+### Why Inherit From This Class?
 
 Without it, you'd need to manually find your equipment:
 
@@ -554,14 +554,14 @@ void UMyAbility::ActivateAbility(...)
 }
 ```
 
-#### What It Provides
+### What It Provides
 
 | Method                     | Returns                       | Use Case                                                        |
 | -------------------------- | ----------------------------- | --------------------------------------------------------------- |
 | `GetAssociatedEquipment()` | `ULyraEquipmentInstance*`     | Access spawned actors, tag attributes, equipment-specific state |
 | `GetAssociatedItem()`      | `ULyraInventoryItemInstance*` | Access persistent data like ammo count, durability, stat tags   |
 
-#### Practical Example: Firing Ability
+### Practical Example: Firing Ability
 
 ```cpp
 UCLASS()
@@ -590,7 +590,7 @@ class UGA_WeaponFire : public ULyraGameplayAbility_FromEquipment
 };
 ```
 
-#### The Instancing Requirement
+### The Instancing Requirement
 
 {% hint style="warning" %}
 Equipment abilities **must be instanced** (`InstancedPerActor` or `InstancedPerExecution`). The class validates this in the editor and will report an error if set to `NonInstanced`.
@@ -602,9 +602,9 @@ If you see "Equipment ability must be instanced" validation errors, check your a
 
 ***
 
-### Client Prediction
+## Client Prediction
 
-When a player equips or holds a weapon, they expect immediate feedback. The Equipment Manager supports client-side prediction - actors appear instantly while the server validates.
+When a player equips or holds a weapon, they expect immediate feedback. The Equipment Manager supports client-side prediction, actors appear instantly while the server validates.
 
 Here's what happens when you hold a weapon:
 
@@ -685,9 +685,9 @@ EquipmentInstance->ClearActorVisibilitySuppression();  // Reveals replicated
 
 ***
 
-### Customization
+## Customization
 
-#### Adding New Storage Slots
+### Adding New Storage Slots
 
 To add a new equipment location (like a utility belt):
 
@@ -695,14 +695,14 @@ To add a new equipment location (like a utility belt):
 2. In Equipment Definitions, add `HolsteredBehaviors` entries for this slot
 3. UI can query for items via `GetInstanceFromSlot()`
 
-#### Adding More Held Slots
+### Adding More Held Slots
 
 To support three-weapon wielding or a shield slot:
 
 1. Add tags to `AvailableHeldSlots` on your Equipment Manager component
 2. Configure `HeldBehaviors` in Equipment Definitions to support these slots
 
-#### Custom Behavior on State Change
+### Custom Behavior on State Change
 
 Create a custom Equipment Instance class for special logic:
 
@@ -732,7 +732,7 @@ Equipment Instances receive a single `NotifyHeldStateChanged()` callback, not se
 
 ***
 
-### Troubleshooting
+## Troubleshooting
 
 {% hint style="info" %}
 **Equipment not appearing?** Check:

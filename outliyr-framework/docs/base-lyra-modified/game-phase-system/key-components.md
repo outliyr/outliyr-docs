@@ -2,7 +2,7 @@
 
 The Lyra Game Phase System relies on two primary C++ classes working in tandem: the `ULyraGamePhaseSubsystem` acts as the central manager, while instances of `ULyraGamePhaseAbility` represent the active phases themselves.
 
-### `ULyraGamePhaseSubsystem`
+## `ULyraGamePhaseSubsystem`
 
 This class is the brain of the operation, responsible for tracking the game's current phase(s) and orchestrating transitions.
 
@@ -21,7 +21,9 @@ This class is the brain of the operation, responsible for tracking the game's cu
   * `WhenPhaseEnds`: Registers a delegate to be called when a matching phase ends.
   * `OnBeginPhase` / `OnEndPhase`: Internal callbacks triggered by `ULyraGamePhaseAbility` instances.
 
-### `ULyraGamePhaseAbility`
+***
+
+## `ULyraGamePhaseAbility`
 
 This class serves as the blueprint for any ability that represents a specific game phase. You don't use this class directly; instead, you create subclasses for each distinct phase in your game.
 

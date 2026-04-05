@@ -2,7 +2,13 @@
 
 This page explains how the system distinguishes between predicted and authoritative changes. Understanding phase classification is essential for implementing correct side effects that only run at the appropriate time.
 
-### The Problem
+{% hint style="warning" %}
+This is a deep dive on reconcilation, you do not need to understand this page to be able to use the item transaction system. Feel free to skip this page if you aren't interested in the internals and don't plan to modify it.
+{% endhint %}
+
+***
+
+## The Problem
 
 When the server replicates an item change, the client needs to know:
 
@@ -13,8 +19,6 @@ Getting this wrong causes problems:
 
 * Treating authoritative as confirmed: Side effects never run
 * Treating confirmed as authoritative: Side effects run twice (double-spawn actors, etc.)
-
-***
 
 ### The `FPredictionKey` Trick
 
@@ -27,8 +31,6 @@ The solution leverages a clever property of Unreal's `FPredictionKey`. When a cl
 | Server             | `false`               |
 
 This happens automatically through GAS's `FPredictionKey::NetSerialize`. The key serializes normally, but its validity check only succeeds on the client that created it.
-
-***
 
 ### FContainerPredictionStamp
 
@@ -91,7 +93,7 @@ This is race-proof because `IsValidKey()` is evaluated on the receiving client, 
 
 ***
 
-### The Four Phases
+## The Four Phases
 
 | Phase                  | Description                          |
 | ---------------------- | ------------------------------------ |
@@ -100,7 +102,7 @@ This is race-proof because `IsValidKey()` is evaluated on the receiving client, 
 | `PredictionConfirmed`  | Server confirmed client's prediction |
 | `PredictionRejected`   | Server rejected client's prediction  |
 
-#### Execution Matrix
+### Execution Matrix
 
 | Phase                  | Predicting Client | Server | Other Clients |
 | ---------------------- | ----------------- | ------ | ------------- |
@@ -109,7 +111,7 @@ This is race-proof because `IsValidKey()` is evaluated on the receiving client, 
 | `PredictionConfirmed`  | Yes               | No     | No            |
 | `PredictionRejected`   | Yes               | No     | No            |
 
-#### When Each Phase Fires
+### When Each Phase Fires
 
 <details>
 
@@ -153,7 +155,7 @@ This is race-proof because `IsValidKey()` is evaluated on the receiving client, 
 
 ***
 
-### Removal Classification: GUID Matching
+## Removal Classification: GUID Matching
 
 Removals use a different classification approach than adds and changes.
 
@@ -177,7 +179,7 @@ This works because the client recorded a removal overlay when it predicted the r
 
 ***
 
-### Side Effect Implementation
+## Side Effect Implementation
 
 Use phase to gate side effects. The pattern for equipment might be:
 
@@ -188,7 +190,7 @@ Use phase to gate side effects. The pattern for equipment might be:
 | `PredictionConfirmed`  | Transfer predicted actor to authoritative | Clean up overlay         |
 | `PredictionRejected`   | Destroy predicted actor                   | Restore actor visibility |
 
-#### Example: Equipment Actor Spawning
+### Example: Equipment Actor Spawning
 
 {% code title="OnEquipmentEvent" %}
 ```
@@ -225,7 +227,7 @@ Containers subscribe to prediction events and switch on the phase to execute the
 
 ***
 
-### Local Prediction Tracking
+## Local Prediction Tracking
 
 For UI purposes (showing "pending" state), entries track local prediction separately via `LastLocalPredictedKeyId`:
 
@@ -249,7 +251,7 @@ else:
 
 ***
 
-### Common Scenarios
+## Common Scenarios
 
 This section explains how the prediction system handles typical real-world situations.
 
@@ -350,7 +352,7 @@ Each container classifies its own delta independently. The transaction system en
 
 ***
 
-### Helper Methods
+## Helper Methods
 
 The stamp provides convenience methods (shown in the struct definition above):
 

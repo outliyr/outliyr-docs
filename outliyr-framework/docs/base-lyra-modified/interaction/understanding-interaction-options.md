@@ -8,11 +8,11 @@ This page breaks down how to use `FInteractionOption` effectively and how each p
 
 ***
 
-### Choosing the Interaction Behavior
+## Choosing the Interaction Behavior
 
 Each `FInteractionOption` must define **how** the interaction is executed. There are two distinct approaches, **you only need one**, not both.
 
-#### Option A: Run Ability on the Player
+### Option A: Run Ability on the Player
 
 ```cpp
 InteractionAbilityToGrant = YourGameplayAbilityClass;
@@ -24,9 +24,7 @@ InteractionAbilityToGrant = YourGameplayAbilityClass;
 * When the player presses the interact input, the ability is activated on their own ASC
 * Logic, effects, and UI run on the player
 
-***
-
-#### Option B: Run Ability on the Interactable
+### Option B: Run Ability on the Interactable
 
 ```cpp
 TargetAbilitySystem = Interactable->GetAbilitySystemComponent();
@@ -45,7 +43,7 @@ If neither of these is set correctly, the interaction will appear but do nothing
 
 ***
 
-### 2. Interaction Text & Subtext
+## 2. Interaction Text & Subtext
 
 ```cpp
 Text = FText::FromString("Open Door");
@@ -61,7 +59,7 @@ These are displayed in the **default prompt UI**, or can be shown in custom widg
 
 ***
 
-### 3. Hold Duration
+## 3. Hold Duration
 
 ```cpp
 InteractionTime = 1.5f;
@@ -82,9 +80,9 @@ The default prompt UI shows a radial timer when a hold is required.
 
 ***
 
-### 4. UI Widget & Spawn Location
+## 4. UI Widget & Spawn Location
 
-#### a. `InteractionWidgetClass`
+### a. `InteractionWidgetClass`
 
 ```cpp
 InteractionWidgetClass = YourCustomWidget;
@@ -98,9 +96,7 @@ If set, this widget overrides the default prompt UI. This allows you to:
 
 If left unset, the system uses a default UI that supports icons, text, subtext, and timers, clean and controller-aware.
 
-***
-
-#### b. `InteractionWidgetComponent`
+### b. `InteractionWidgetComponent`
 
 ```cpp
 InteractionWidgetComponent = SomeSceneComponent;
@@ -115,7 +111,7 @@ This is helpful when the interactable is a small part of a large actor (e.g., a 
 
 ***
 
-### 5. Example Use Case (Full Setup)
+## 5. Example Use Case (Full Setup)
 
 Here’s an example `FInteractionOption` configured for a lootable chest:
 

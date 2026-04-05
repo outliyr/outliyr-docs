@@ -4,7 +4,7 @@ This section explains the full flow of the Lyra Interaction System, how it detec
 
 ***
 
-### Detection: Finding Interactable Objects
+## Detection: Finding Interactable Objects
 
 The system uses  two scanning methods to find nearby or focused interactables:
 
@@ -22,7 +22,7 @@ The system uses  two scanning methods to find nearby or focused interactables:
     * Gathers and filters available interaction options
     * Pushes valid options to the UI or to an interaction-choosing system
 
-#### How the scans work together:
+### How the scans work together:
 
 * The **overlap scan is a core part of the interaction system**, it is responsible for granting abilities to the player so they can interact. If it doesn't run (or fails to detect something), the player won’t receive the ability, and the trace system won’t consider that interaction valid.
 * The **line trace is responsible for determining the current focus target**, it decides what the player is trying to interact with when pressing the interaction input.
@@ -31,7 +31,7 @@ The system uses  two scanning methods to find nearby or focused interactables:
 
 ***
 
-### Option Gathering
+## Option Gathering
 
 Once interactables are detected, the system queries them using the interface(`IInteractableTarget`) function:
 
@@ -78,13 +78,11 @@ These options contain:
 * Either an ability to grant or a target ability to activate
 * UI widget location for prompts or indicators
 
-***
-
 ### Ability Execution Paths
 
 When an interaction option is triggered, the ability runs in **one** of two places:
 
-**Player ASC (ability granted to the player)**
+#### **Player ASC (ability granted to the player)**
 
 * If `InteractionAbilityToGrant` is set, the ability is temporarily granted to the player via the overlap scanner. When the player interacts, that ability is activated on their Ability System Component.
 * **Use this when:**
@@ -96,7 +94,7 @@ When an interaction option is triggered, the ability runs in **one** of two plac
   * Inventory actions
   * “Press E to interact” doors or triggers
 
-**Target ASC (ability lives on the interactable)**
+#### **Target ASC (ability lives on the interactable)**
 
 * If `TargetAbilitySystem` and `TargetInteractionAbilityHandle` are set, the system sends a gameplay event directly to the interactable’s ASC, activating the specified ability handle.
 * **Use this when:**
@@ -107,8 +105,6 @@ When an interaction option is triggered, the ability runs in **one** of two plac
   * Terminals with shared timers
   * Generators that apply team-wide buffs
   * Puzzle nodes or boss triggers
-
-***
 
 ### Event Payload Customization
 
@@ -129,8 +125,6 @@ This enables powerful behaviors like:
 * Redirecting the `Target` field to a different actor
 * Injecting values or context into the payload (e.g., door IDs, interaction reasons)
 
-***
-
 ### Triggering the Interaction
 
 When the player chooses to interact, the system executes the selected interaction option in one of two ways:
@@ -139,8 +133,6 @@ When the player chooses to interact, the system executes the selected interactio
 * If the option is configured to trigger an ability on the interactable itself, the system sends a gameplay event to the target’s Ability System Component and activates the specified ability handle.
 
 In both cases, the interaction runs using standard Gameplay Ability System (GAS) logic, enabling animations, state changes, effects, UI updates, or any other gameplay behavior defined by the ability.
-
-***
 
 ### Visual Feedback
 
@@ -154,7 +146,7 @@ This UI is client-side only and purely cosmetic, ensuring no unintended replicat
 
 ***
 
-### Summary of Interaction Flow
+## Summary of Interaction Flow
 
 ```mermaid fullWidth="false"
 flowchart TD

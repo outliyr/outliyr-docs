@@ -49,7 +49,7 @@ Override `OnMouseButtonDown` / `OnDragDetected`
 3. **Get Offset:** Calculate `AbsoluteToLocal` to know where the user clicked inside the icon (so the drag visual doesn't "jump").
 4. **Call Begin:** `InteractionVM->BeginInteraction`.
 
-<figure><img src="../../../../../.gitbook/assets/image (6) (1).png" alt=""><figcaption><p>Starting the drag process for an equipment system</p></figcaption></figure>
+<figure><img src="../../../../../.gitbook/assets/image (6) (1) (1).png" alt=""><figcaption><p>Starting the drag process for an equipment system</p></figcaption></figure>
 
 #### Key Function: `BeginInteraction`
 
@@ -93,7 +93,7 @@ The player needs to know if they can drop here.
 2. Call `InteractionVM->CanPlaceAt(MySlotDescriptor)`.
 3. If true, show a **Green Border**. If false, show a **Red Border**.
 
-<figure><img src="../../../../../.gitbook/assets/image (7) (1).png" alt=""><figcaption><p>Checking if the dragged item can enter this equipment slot and updating the brush color</p></figcaption></figure>
+<figure><img src="../../../../../.gitbook/assets/image (7) (1) (1).png" alt=""><figcaption><p>Checking if the dragged item can enter this equipment slot and updating the brush color</p></figcaption></figure>
 
 #### Completing the Move (`OnMouseButtonUp`)
 
@@ -107,7 +107,7 @@ This is the commit phase.
 
 This function triggers the Transaction Pipeline. It builds the request and sends it to the server.
 
-<figure><img src="../../../../../.gitbook/assets/image (8) (1).png" alt=""><figcaption><p>Placing the item in the equipment slot and clearing the brush highlight</p></figcaption></figure>
+<figure><img src="../../../../../.gitbook/assets/image (8) (1) (1).png" alt=""><figcaption><p>Placing the item in the equipment slot and clearing the brush highlight</p></figcaption></figure>
 
 ***
 

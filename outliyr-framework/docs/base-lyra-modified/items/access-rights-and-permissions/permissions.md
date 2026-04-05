@@ -1,28 +1,27 @@
 # Permissions
 
-Once a player has `ReadWrit`**`e` Access** to a container, the **Permissions** bitmask decides _what they can actually do_ with the data that is now in-sync on their client.
+Your team stash should accept donations but not withdrawals. Your vendor should let players browse and buy, but not rearrange the stock. Your player's own inventory should allow everything. Once a player has `ReadWrite` [Access](access-rights.md) to a container, the **Permissions** bitmask decides _what they can actually do_ with the data that is now in-sync on their client.
 
 ***
 
-### The enum at a glance
+## The Enum
 
 ```cpp
-/** Fine-grained actions inside a visible container. */
 UENUM(BlueprintType, meta=(Bitflags, UseEnumValuesAsMaskValuesInEditor="true"))
 enum class EItemContainerPermissions : uint8
 {
-	None         = 0,          // baseline
-	MoveItems    = 1 << 0,     // reorder / swap inside container
-	ModifyStack  = 1 << 1,     // increase or reduce the count of an item
-	PutInItems   = 1 << 2,     // add new items from outside
-	TakeOutItems = 1 << 3,     // remove items to another container
-	HoldItems    = 1 << 4,     // hold an item inside container
-	Full         = MoveItems | ModifyStack | PutInItems | TakeOutItems | HoldItems
+    None         = 0,
+    MoveItems    = 1 << 0,     // reorder / swap inside container
+    ModifyStack  = 1 << 1,     // increase or reduce a stack's count
+    PutInItems   = 1 << 2,     // add new items from outside
+    TakeOutItems = 1 << 3,     // remove items to another container
+    HoldItems    = 1 << 4,     // hold an item inside container
+    Full         = MoveItems | ModifyStack | PutInItems | TakeOutItems | HoldItems
 };
 ENUM_CLASS_FLAGS(EItemContainerPermissions)
 ```
 
-| Flag             | Typical meaning (may vary by game)     |
+| Flag             | Typical Meaning                        |
 | ---------------- | -------------------------------------- |
 | **MoveItems**    | Rearranging slots, stacking, splitting |
 | **ModifyStack**  | Consuming a potion, splitting items    |
@@ -32,43 +31,30 @@ ENUM_CLASS_FLAGS(EItemContainerPermissions)
 
 ***
 
-### Relationship to Access Rights
+## Relationship to Access Rights
 
-* **Permissions are ignored unless `Access == ReadWrite`.**\
-  A ReadOnly viewer can never “cheat” by having hidden Put-In bits set.
-* **Bandwidth cost is identical** for different Permission masks.\
-  Permissions are checked **server-side only**; they do _not_ change what is replicated.
+* **Permissions are ignored unless `Access == ReadWrite`.** A ReadOnly viewer can never bypass this by having hidden permission bits set.
+* **Bandwidth cost is identical** across different permission masks. Permissions are checked **server-side only**, they don't affect what gets replicated.
 
 ***
 
-### Extending the enum
+## Design Guidelines
 
-1. Add a new bit constant ( `1 << 5`, `1 << 6`, … ).
-2. **Recompile** – Fast-arrays replicate raw bytes, so existing saves stay valid.
-3. Use the new flag in abilities’ `RequiredPermission` masks.
+* **Default to the safest mask.** Most world chests ship with `TakeOutItems` only.
+* **Don't gate Equip/Attach behind MoveItems** unless you really mean it. Let players equip directly from loot windows by giving `TakeOutItems` on the source container and `PutInItems` on their equipment manager.
+* **Pair PutIn and TakeOut thoughtfully.** Donation-only boxes grant `PutInItems` alone. Withdraw-only stashes grant `TakeOutItems` alone.
 
 {% hint style="info" %}
-**Tip:** keep each flag focused on one _verb_.\
-If you find yourself gating multiple unrelated UI buttons behind the same flag, you probably need two flags.
+Keep each flag focused on one _verb_. If you find yourself gating multiple unrelated UI buttons behind the same flag, you probably need two flags.
 {% endhint %}
 
 ***
 
-### Design guidelines
+## Quick Recipes
 
-* **Default to the safest mask** — most world chests ship with `TakeOutItems` only.
-* **Do not gate Equip/Attach behind MoveItems** unless you really mean it.\
-  Let players equip directly from loot windows by giving permission to `TakeOutItems` from the container and `PutInItems` in their equipment manager.
-* **Pair PutIn and TakeOut thoughtfully.**\
-  It’s common for a team-stash to allow _either_ direction but not both ( e.g. donate-only boxes ).
-
-***
-
-### Quick recipes
-
-| Container type                   | Default Mask                                      |
+| Container Type                   | Default Mask                                      |
 | -------------------------------- | ------------------------------------------------- |
-| **Player inventory**             | `None` (the owning player has `full` permissions) |
+| **Player inventory**             | `None` (the owning player has `Full` permissions) |
 | **Read-Only chest**              | `None` (because Access will be ReadOnly)          |
 | **Take-Only loot chest**         | `TakeOutItems`                                    |
 | **Donation box**                 | `PutInItems`                                      |
@@ -76,23 +62,38 @@ If you find yourself gating multiple unrelated UI buttons behind the same flag, 
 
 ***
 
-### Adding a new flag example
+## Extending the Enum
 
-Suppose you add **RepairItems**:
+Adding a new permission flag is straightforward, the system is entirely data-driven.
 
-* ```cpp
-  RepairItems = 1 << 5 UMETA(DisplayName="Repair Items"),
-  ```
-* Give smith-NPC containers `RepairItems | TakeOutItems`.
-*   In your `GA_RepairItem` ability:
+{% stepper %}
+{% step %}
+#### Add a new bit constant
 
-    ```cpp
-    RequiredPermission = EItemContainerPermissions::RepairItems;
-    ```
+```cpp
+RepairItems = 1 << 5 UMETA(DisplayName="Repair Items"),
+```
+{% endstep %}
 
-No further engine tweaks needed, the permission system is entirely data-driven.
+{% step %}
+#### Recompile
+
+Fast-arrays replicate raw bytes, so existing saves stay valid.
+{% endstep %}
+
+{% step %}
+#### Use the new flag in your abilities' `RequiredPermission` masks
+
+Give smith-NPC containers `RepairItems | TakeOutItems`, then in your repair ability:
+
+```cpp
+RequiredPermission = EItemContainerPermissions::RepairItems;
+```
+
+No further engine changes needed.
+{% endstep %}
+{% endstepper %}
 
 {% hint style="danger" %}
-**Note:** **only the first 32 values** will be visible in the blueprint drop down editor.\
-Here is some further [unreal engine documentation](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-uproperties#asbitmasks) on using bitmasks.&#x20;
+**Only the first 32 values** will be visible in the Blueprint dropdown editor. See Epic's [bitmask documentation](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-uproperties#asbitmasks) for details.
 {% endhint %}

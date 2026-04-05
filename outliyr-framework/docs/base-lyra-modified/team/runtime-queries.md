@@ -4,7 +4,7 @@ Once teams are created and players assigned, the `ULyraTeamSubsystem` becomes th
 
 ***
 
-### Finding an Actor's Team
+## Finding an Actor's Team
 
 `FindTeamFromObject()` takes any `UObject` and returns the team ID it belongs to, or `INDEX_NONE` if it has no team affiliation. Internally, it walks a resolution hierarchy, trying each strategy in order until one succeeds:
 
@@ -40,7 +40,7 @@ You rarely need to think about this hierarchy. Call `FindTeamFromObject` with wh
 
 ***
 
-### Comparing Teams
+## Comparing Teams
 
 `CompareTeams(A, B)` takes two objects and returns an `ELyraTeamComparison`:
 
@@ -54,7 +54,7 @@ You rarely need to think about this hierarchy. Call `FindTeamFromObject` with wh
 
 The Blueprint-exposed version also outputs both team IDs as separate pins, and the return enum is configured with `ExpandEnumAsExecs` so you can wire each outcome to a different execution path.
 
-#### Friendly Fire: `CanCauseDamage`
+### Friendly Fire: `CanCauseDamage`
 
 `CanCauseDamage(Instigator, Target, bAllowDamageToSelf)` is the standard friendly fire gate. The logic works as follows:
 
@@ -82,7 +82,7 @@ Damage execution classes call `CanCauseDamage` to decide whether to apply damage
 
 ***
 
-### Changing Teams
+## Changing Teams
 
 `ChangeTeamForActor(Actor, NewTeamId)` is server-authority only. It handles the full team-change pipeline in a single call:
 
@@ -114,7 +114,7 @@ If the actor already belongs to the requested team, the function returns `true` 
 
 ***
 
-### Team Tags
+## Team Tags
 
 Teams can carry gameplay tag stacks on their info actors. These act as replicated counters attached to a team rather than an individual player, useful for tracking shared state that any client can read but only the server can modify.
 
@@ -153,7 +153,7 @@ Use cases include tracking team kills, deaths, score, objectives ("numbers of fl
 
 ***
 
-### Viewer Tracking
+## Viewer Tracking
 
 The subsystem tracks who the local player is currently observing. During normal play, this is the local player themselves. During spectating or a killcam, it switches to whoever is being watched.
 

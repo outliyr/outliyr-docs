@@ -8,7 +8,7 @@ This framework takes a different approach.
 
 ***
 
-### The Core Idea
+## The Core Idea
 
 All containers implement a single interface: `ILyraItemContainerInterface`. This creates a unified abstraction where:
 
@@ -53,7 +53,7 @@ The result: you write container-specific logic once (how slots work, what items 
 
 ***
 
-### What This Section Covers
+## What This Section Covers
 
 This documentation explains the **container-agnostic core**, the systems that make any container work. You'll learn:
 
@@ -68,7 +68,7 @@ Specific container implementations (Inventory, Equipment, Attachments, Tetris In
 
 ***
 
-### Reading Paths
+## Reading Paths
 
 Choose based on what you're trying to accomplish:
 
@@ -90,7 +90,7 @@ Read the [Architecture](item-container-architecture/) section first, then go to 
 
 ***
 
-### Key Concepts at a Glance
+## Key Concepts at a Glance
 
 Before diving in, here are the terms you'll encounter:
 

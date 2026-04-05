@@ -2,7 +2,7 @@
 
 The default camera mode comes from PawnData, set once when the character is configured. An aiming ability temporarily overrides it with a tighter view. A cutscene system takes full control of the camera position. Each of these uses a different integration mechanism.
 
-### Default Camera Mode
+## Default Camera Mode
 
 Every pawn has a `ULyraPawnData` data asset. One of its properties is `DefaultCameraMode`, the camera mode used when nothing else overrides it.
 
@@ -62,6 +62,6 @@ When a camera mode activates, it adds this tag as a loose gameplay tag on the pa
 
 Animation blueprints can check this tag to adjust their behavior based on the current camera perspective. For example, a first-person camera mode might tag the pawn so the animation blueprint activates an upper-body IK layer, while a third-person mode uses a different tag that skips head stabilization.
 
-## Engine Integration
+### Engine Integration
 
 `ALyraPlayerCameraManager` sits above `ULyraCameraComponent` in the engine pipeline. It holds infrastructure for a UI camera override, but this is currently a stub, gameplay camera modes always have priority. Default FOV is 80° with a pitch range of -89° to 89°.

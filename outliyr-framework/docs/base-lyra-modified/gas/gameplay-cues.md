@@ -4,7 +4,7 @@ Damage lands. Shield sparks fly. A health bar shakes. A hit marker flashes. None
 
 ***
 
-### How Cues Work
+## How Cues Work
 
 Cues are triggered by gameplay tags matching the `GameplayCue.*` prefix. When a matching tag fires, the cue system finds the corresponding handler and runs it. There are three event types:
 
@@ -16,8 +16,6 @@ Cues are triggered by gameplay tags matching the `GameplayCue.*` prefix. When a 
 
 Cues can be implemented as Blueprints (static handlers for one-shot events, actor-based handlers for ongoing effects that need to track state between Add and Remove) or in C++.
 
-***
-
 ### Triggering Cues
 
 **From a gameplay effect:** Add a `GameplayCue.*` tag to the effect's Gameplay Cue Tags array. The cue fires automatically when the effect applies (Add) and when it expires (Remove). Instant effects trigger Execute.
@@ -28,7 +26,7 @@ Either way, the cue receives context about what caused it, the instigator, targe
 
 ***
 
-### The Custom Cue Manager
+## The Custom Cue Manager
 
 A project with hundreds of gameplay cues can't load them all at startup, it would bloat memory and extend load times. The framework's cue manager (`ULyraGameplayCueManager`) loads cue assets on demand instead of all at once.
 

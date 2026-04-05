@@ -8,7 +8,7 @@ For the underlying MVVM architecture, see [MVVM](../../ui/item-container-ui-syst
 
 ***
 
-### Class Hierarchy
+## Class Hierarchy
 
 ```mermaid
 classDiagram
@@ -43,7 +43,7 @@ classDiagram
 
 ***
 
-### Index-Based Slots
+## Index-Based Slots
 
 Unlike equipment and attachment which are tag-based, inventory slots are identified by `SlotIndex` (0, 1, 2...). Slot ViewModels exist for every position, including empty ones, so your grid always has the right number of widgets.
 
@@ -62,7 +62,7 @@ See [Persistent Slot Pattern](../../ui/item-container-ui-system/data-layers-view
 
 ***
 
-### Capacity & Weight
+## Capacity & Weight
 
 These properties track the inventory's limits. All are FieldNotify-enabled, so UMG bindings update automatically.
 
@@ -82,7 +82,7 @@ WeightBar->SetPercent(InventoryVM->TotalWeight / InventoryVM->MaxWeight);
 
 ***
 
-### Slot Properties
+## Slot Properties
 
 Each `ULyraInventorySlotViewModel` represents a single position in the inventory grid.
 
@@ -113,7 +113,7 @@ Each `ULyraInventorySlotViewModel` represents a single position in the inventory
 
 ***
 
-### Delegates
+## Delegates
 
 | Delegate               | Signature                                                     | Fires When                                 |
 | ---------------------- | ------------------------------------------------------------- | ------------------------------------------ |
@@ -122,7 +122,7 @@ Each `ULyraInventorySlotViewModel` represents a single position in the inventory
 
 ***
 
-### Built-In Panels
+## Built-In Panels
 
 The system provides two ready-made panels that handle the common inventory layouts.
 
@@ -148,7 +148,7 @@ Build a custom panel if you need non-standard layouts (hexagonal, radial), compl
 
 ***
 
-### Drag-Drop
+## Drag-Drop
 
 Slot ViewModels carry a pre-built `SlotDescriptor` that plugs directly into the transaction system, no manual descriptor construction needed:
 

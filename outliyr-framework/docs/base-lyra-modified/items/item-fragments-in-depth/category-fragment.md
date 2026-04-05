@@ -2,13 +2,17 @@
 
 The `UInventoryFragment_Category` provides a simple mechanism to assign one or more **Gameplay Tags** to an item type, effectively placing it into different categories. This is primarily used for filtering, sorting, or applying category-specific logic in UI or gameplay systems.
 
-### Purpose
+***
+
+## Purpose
 
 * **Categorization:** Assign meaningful tags to items (e.g., `Item.Category.Weapon.Rifle`, `Item.Category.Consumable.Healing`, `Item.Category.Armor.Helmet`, `Item.Category.Material.Metal`).
 * **Filtering & Sorting:** Allow UI systems or inventory queries to easily filter or group items based on these category tags.
 * **Gameplay Logic:** Enable systems to quickly check if an item belongs to a certain category (e.g., "Does this item count as 'Quest Item'?").
 
-### Static Configuration (`UInventoryFragment_Category`)
+***
+
+## Static Configuration (`UInventoryFragment_Category`)
 
 This fragment purely holds static data configured in the Item Definition.
 

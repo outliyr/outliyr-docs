@@ -1,177 +1,166 @@
 # Transient Data Fragments
 
-While `ULyraInventoryItemFragment`s define the _static_ behaviors and base properties of an item type, often you need data that is unique to _each specific instance_ of that item. For **struct-based, relatively simple instance data**, the `FTransientFragmentData` system provides a lightweight and networked solution.
+Your scope needs to remember its zoom level. Your sword tracks its durability as a float. Your procedural weapon stores a random seed that makes it unique. These are per-instance values that don't fit neatly into a single integer [Stat Tag](stat-tags.md), they need a struct with named fields, and each item instance needs its own copy.
+
+`FTransientFragmentData` solves this. It's a lightweight, replicated `USTRUCT` that lives on a specific `ULyraInventoryItemInstance` and is logically tied to the static `ULyraInventoryItemFragment` that created it. The struct travels with the item, across inventory moves, drops, and pickups.
+
+```mermaid
+flowchart LR
+    subgraph Definition["Item Definition (shared)"]
+        Fragment["UInventoryFragment_Durability<br/><i>static fragment</i>"]
+    end
+
+    subgraph InstanceA["Instance A"]
+        DataA["FTransientFragmentData_Durability<br/>CurrentDurability: 87.0<br/>MaxDurability: 100.0"]
+    end
+
+    subgraph InstanceB["Instance B"]
+        DataB["FTransientFragmentData_Durability<br/>CurrentDurability: 42.5<br/>MaxDurability: 100.0"]
+    end
+
+    Fragment -->|creates| DataA
+    Fragment -->|creates| DataB
+```
 
 ***
 
-### Role and Purpose
+### When to Use This
 
-* **Instance-Specific Data:** Allows an `ULyraInventoryItemInstance` to store custom data payloads that persist with that instance, separate from other instances of the same `ItemDef`.
-* **Struct-Based:** Uses `USTRUCT`s for data storage. This is generally more memory-efficient than using full `UObject`s for simple data.
-* **Fragment Association:** Each `FTransientFragmentData` struct type is logically linked to a specific `ULyraInventoryItemFragment` type. The fragment dictates _which_ transient data struct (if any) should be created for instances of items containing that fragment.
-* **Lifecycle Callbacks:** Provides virtual functions that are automatically called by the core inventory and equipment systems when significant events happen to the owning `ULyraInventoryItemInstance`, allowing the transient data (and the logic within its functions) to react.
-* **Replication:** Stored within a replicated `TArray<FInstancedStruct>` on the `ULyraInventoryItemInstance`, allowing client access to the instance-specific data.
+Use `FTransientFragmentData` when your per-instance data:
 
-***
+* Can be represented as a `USTRUCT` (fields, not methods)
+* Doesn't need per-property `OnRep` callbacks
+* Doesn't need ticking, timers, or UObject lifecycle
+* Is logically owned by a specific fragment
 
-### When to Use `FTransientFragmentData`
-
-Use this system when you need instance-specific data that:
-
-* Can be represented cleanly within a `USTRUCT`.
-* Doesn't require complex UObject features like detailed replication graphs (`OnRep` functions on members), ticking, or extensive Blueprint exposure directly on the data payload itself.
-* Is logically tied to the functionality provided by a specific `ULyraInventoryItemFragment`.
-
-Good Examples:
-
-* **Unique ID/Seed:** Storing a generated unique ID or random seed for procedural aspects specific to this instance.
-*   **Simple State:** For tracking small flags or toggles specific to the instance (e.g., toggled on/off, selected state).
-
-    > Note: `StatTags` were originally introduced in Lyra as a workaround for the lack of instance data. While `FTransientFragmentData` now fills that role more robustly, `StatTags` remain useful for lightweight counters or gameplay-relevant flags that benefit from tag-based systems and built-in networking support. Use `StatTags` if the value is an integer or should be part of tag-based queries.
-* **Cached References:** Storing temporary, non-replicated pointers related to the item's current state (use with caution regarding replication and lifecycle). Make sure to destroy the reference when the item is destroyed using the `DestroyTransientFragment(ULyraInventoryItemInstance* ItemInstance)` callback.
-
-When to Consider `UTransientRuntimeFragment` Instead:
-
-* You need `UPROPERTY(ReplicatedUsing=...)` on specific data members within the payload.
-* You need complex UObject lifecycle functions (`BeginPlay`, `EndPlay`, Ticking).
-* You need to replicate nested UObjects owned by the transient payload.
+For anything requiring full UObject behavior, see [Transient Runtime Fragments](transient-runtime-fragments.md). For simple integer counters, [Stat Tags](stat-tags.md) are lighter still.
 
 {% hint style="success" %}
-Still unsure? Jump to the [instance-data comparison](creating-custom-fragments.md#step-2-choose-and-define-instance-data-optional).
+Still unsure? Jump to the [instance-data comparison](creating-custom-fragments.md#choose-and-define-instance-data-optional).
 {% endhint %}
 
 ***
 
-### Implementation Steps
+## Implementation
 
 {% stepper %}
 {% step %}
-#### Define the Data Struct
+**Define the Data Struct**
 
-* Create a new `USTRUCT` that inherits directly from `FTransientFragmentData`.
-* Add `UPROPERTY()` members to store your instance-specific data. Ensure they are replication-friendly types if needed (basic types, UObject pointers, other replicated structs).
-* Optionally override the virtual functions (`DestroyTransientFragment`, `AddedToInventory`, `OnEquipped`, etc.) to add custom logic tied to the item instance's lifecycle events.
+Create a `USTRUCT` inheriting from `FTransientFragmentData`. Add your instance-specific fields and optionally override lifecycle callbacks.
 
 ```cpp
-// Example: Simple Durability Data
 USTRUCT(BlueprintType)
 struct FTransientFragmentData_Durability : public FTransientFragmentData
 {
     GENERATED_BODY()
 
 public:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) // Replicated via the FInstancedStruct array
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float CurrentDurability = 100.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float MaxDurability = 100.0f;
 
-    // Example Lifecycle Hook: Reset durability slightly when added?
-    virtual void AddedToInventory(UActorComponent* Inventory, ULyraInventoryItemInstance* ItemInstance) override
-    {
-        // Maybe some logic here...
-        // CurrentDurability = FMath::Min(CurrentDurability + 5.0f, MaxDurability);
-    }
-
     virtual void DestroyTransientFragment(ULyraInventoryItemInstance* ItemInstance) override
     {
-        // Cleanup if needed when the item instance is fully destroyed
+        // Cleanup when the item instance is permanently destroyed
     }
 };
 ```
 {% endstep %}
 
 {% step %}
-#### Link from the Static Fragment
+**Link from the Static Fragment**
 
-* Open the corresponding `ULyraInventoryItemFragment` class (e.g., `UInventoryFragment_Durability`).
-* Override `GetTransientFragmentDataStruct()` to return the static struct type of your data struct.
+Override two functions on your `ULyraInventoryItemFragment` subclass to tell the system what struct to create and how to initialize it.
 
 ```cpp
-virtual UScriptStruct* GetTransientFragmentDataStruct() const override
+UScriptStruct* GetTransientFragmentDataStruct() const override
 {
     return FTransientFragmentData_Durability::StaticStruct();
 }
-```
 
-* Override `CreateNewTransientFragment()` to instantiate your data struct and initialize the output `FInstancedStruct`.
-
-```cpp
-virtual bool CreateNewTransientFragment(AActor* ItemOwner, ULyraInventoryItemInstance* ItemInstance, FInstancedStruct& NewInstancedStruct) override
+bool CreateNewTransientFragment(AActor* ItemOwner, ULyraInventoryItemInstance* ItemInstance,
+    FInstancedStruct& NewInstancedStruct) override
 {
-    FTransientFragmentData_Durability DurabilityData;
-    // Perform any initial setup on DurabilityData based on ItemOwner or ItemInstance if needed
-    DurabilityData.MaxDurability = 100.0f; // Example default
-    DurabilityData.CurrentDurability = DurabilityData.MaxDurability;
-
-    NewInstancedStruct.InitializeAs<FTransientFragmentData_Durability>(DurabilityData);
-    return true; // Indicate that transient data was created
+    FTransientFragmentData_Durability Data;
+    Data.MaxDurability = 100.0f;
+    Data.CurrentDurability = Data.MaxDurability;
+    NewInstancedStruct.InitializeAs<FTransientFragmentData_Durability>(Data);
+    return true;
 }
 ```
 {% endstep %}
 
 {% step %}
-#### Add Static Fragment to Definition
+**Add the Static Fragment to Your Item Definition**
 
-Ensure the `UInventoryFragment_Durability` fragment is added to the `Fragments` array of the relevant `ULyraInventoryItemDefinition` asset(s).
+Add your fragment (e.g., `UInventoryFragment_Durability`) to the `Fragments` array on the Item Definition asset. The transient data is created automatically when instances spawn.
 {% endstep %}
 {% endstepper %}
 
 ***
 
-### Accessing Transient Struct Data at Runtime
+## Accessing the Data at Runtime
 
 {% tabs %}
 {% tab title="C++" %}
-Use the templated `ResolveTransientFragment<T>()` helper on the `ULyraInventoryItemInstance`. `T` should be the _static_ fragment type (e.g., `UInventoryFragment_Durability`). The template automatically deduces the associated transient struct type.
+Use the templated `ResolveTransientFragment<T>()` on the item instance, where `T` is the _static_ fragment type. The template deduces the associated struct type automatically.
 
 ```cpp
-// example of getting the weight for each attachment
-ULyraInventoryItemInstance* MyInstance = ...;
-if(auto* TransientFragmentGun = ItemInstance->ResolveTransientFragment<UInventoryFragment_Gun>())
+if (auto* DurabilityData = ItemInstance->ResolveTransientFragment<UInventoryFragment_Durability>())
 {
-	// do stuff with the gun transient fragment
+    float Percent = DurabilityData->CurrentDurability / DurabilityData->MaxDurability;
 }
 ```
 {% endtab %}
 
-{% tab title="Blueprints" %}
+{% tab title="Blueprint" %}
 **From Blueprint/C++:** Use `ResolveStructTransientFragment(FragmentClass)` on the `ULyraInventoryItemInstance`. This returns an `FInstancedStruct`. You'll need to use `GetInstancedStructValue` and specific the transient struct from the wildcard `value` pin.
 
-<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 {% hint style="danger" %}
-Ensure you select the **Corresponding Transient Struct** of the original fragment specified in `ResolveStructTransientFragment` for the wildcard `value` pin.
+The wildcard pin must match the **transient struct type** that corresponds to the fragment class you specified. Selecting the wrong type will silently return nothing.
 {% endhint %}
 {% endtab %}
 {% endtabs %}
 
 {% hint style="info" %}
-**Updating:** To update the entire struct (less common), you can create a new instance of your data struct, modify it, and then call `ULyraInventoryItemInstance::SetTransientFragmentData()` with the new struct wrapped in an `FInstancedStruct`. This replaces the existing entry in the `TransientFragments` array.
+**Updating:** To update the struct, you can create a new instance of your data struct, modify it, and then call `ULyraInventoryItemInstance::SetTransientFragmentData()` with the new struct wrapped in an `FInstancedStruct`. This replaces the existing entry in the `TransientFragments` array.
 {% endhint %}
 
-***
-
-### Lifecycle Callbacks
-
-The virtual functions within `FTransientFragmentData` allow you to react to key events in the owning item instance's lifecycle:
-
-| Callback                                                                                                                | Description                                                                                                      |
-| ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `DestroyTransientFragment(ULyraInventoryItemInstance* ItemInstance)`                                                    | Called when the item instance is being _permanently destroyed_. Use for final cleanup.                           |
-| `AddedToContainer(UObject* Container, ULyraInventoryItemInstance* ItemInstance)`                                        | Called when the item is added to any container (inventory, equipment, attachment).                               |
-| `RemovedFromContainer(UObject* Container, ULyraInventoryItemInstance* ItemInstance)`                                    | Called when the item is removed from a container (but not necessarily destroyed).                                |
-| `ItemMoved(ULyraInventoryItemInstance* ItemInstance, const FInstancedStruct& OldSlot, const FInstancedStruct& NewSlot)` | Called when the item's `CurrentSlot` changes. Use to react to location changes.                                  |
-| `ReconcileWithPredictedFragment(FTransientFragmentData* PredictedFragment)`                                             | Called during prediction reconciliation to transfer local state from predicted to server-authoritative instance. |
+<figure><img src="../../../.gitbook/assets/image (14).png" alt=""><figcaption><p>Example of setting values for the gun transient fragment to record staged reload</p></figcaption></figure>
 
 ***
 
-### Replication
+## Lifecycle Callbacks
 
-* The `TransientFragments` array (`TArray<FInstancedStruct>`) on `ULyraInventoryItemInstance` is replicated.
-* `FInstancedStruct` handles replicating the underlying struct data polymorphically.
-* Changes to the data within a struct payload are automatically detected and replicated by the array replication system. No manual `MarkDirty` is usually required on the struct data itself.
+The struct provides virtual functions that fire at key moments in the owning item's life. Override the ones you need.
+
+| Callback                         | When It Fires                                                                                                                                     |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DestroyTransientFragment`       | The item instance is being permanently destroyed. Use for final cleanup of any external references.                                               |
+| `AddedToContainer`               | The item was added to any container (inventory, equipment, attachment slot).                                                                      |
+| `RemovedFromContainer`           | The item was removed from a container (but not necessarily destroyed).                                                                            |
+| `ItemMoved`                      | The item's `CurrentSlot` changed. Receives old and new slot as `FInstancedStruct`, inspect the slot type to determine what kind of move occurred. |
+| `ReconcileWithPredictedFragment` | During prediction reconciliation, transfers local client state from a predicted copy to the server-authoritative instance.                        |
+
+<details>
+
+<summary>Save interface</summary>
+
+For persistence support, three additional methods exist:
+
+* `PrepareForSave()` — clear UObject references or other non-serializable data before saving
+* `RestoreFromSavedCopy()` — restore nested data after loading from a save
+* `HasNestedSaveData()` — return `true` if the struct contains nested data that needs special save handling
+
+</details>
 
 ***
 
-`FTransientFragmentData` provides a structured and efficient way to add instance-specific data to items using familiar `USTRUCT`s, complete with lifecycle callbacks and replication support, making it ideal for many common instance state needs.
+## Replication
+
+The `TransientFragments` array on `ULyraInventoryItemInstance` is `TArray<FInstancedStruct>` and is replicated. `FInstancedStruct` handles polymorphic serialization of the underlying struct data. Changes to fields within the struct are automatically detected and replicated, no manual dirty-marking required.

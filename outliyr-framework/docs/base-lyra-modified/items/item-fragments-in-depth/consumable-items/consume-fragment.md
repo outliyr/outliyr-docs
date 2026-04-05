@@ -28,7 +28,7 @@ ID_HealthPotion
 
 ***
 
-### Properties
+## Properties
 
 #### Ability To Activate
 
@@ -55,7 +55,7 @@ Controls when the player can use another consumable:
 
 ***
 
-#### Action Menu Integration
+## Action Menu Integration
 
 This fragment implements `IItemActionProvider` to add a **Use** action to the item's context menu.
 
@@ -80,7 +80,7 @@ For the full action menu system, see [Context Menus & Action Logic](../../../ui/
 
 ***
 
-### What Happens at Runtime
+## What Happens at Runtime
 
 When the player uses an item with a Consume Fragment:
 
@@ -101,7 +101,7 @@ You don't need to manually remove items from inventory. Calling `ConsumeItem()` 
 
 ***
 
-### Examples
+## Examples
 
 <details>
 
@@ -151,7 +151,7 @@ The player is briefly blocked until the throw completes.
 
 </details>
 
-### Common Mistakes
+## Common Mistakes
 
 <details>
 

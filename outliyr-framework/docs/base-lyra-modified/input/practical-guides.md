@@ -4,7 +4,7 @@ Step-by-step walkthroughs for common input tasks. Each guide assumes familiarity
 
 ***
 
-### Adding a New Ability Input
+## Adding a New Ability Input
 
 **Goal:** Make pressing `'G'` trigger a `"Throw Grenade"` gameplay ability.
 
@@ -40,7 +40,7 @@ Play the game and press `'G'`.
 {% endstep %}
 {% endstepper %}
 
-**Troubleshooting:**
+### **Troubleshooting:**
 
 * Is the IMC actually added to the player's Enhanced Input subsystem?
 * Does the `AbilityInputActions` tag match the tag in the AbilitySet?
@@ -49,7 +49,7 @@ Play the game and press `'G'`.
 
 ***
 
-### Adding a New Native Input (Non-Ability)
+## Adding a New Native Input (Non-Ability)
 
 **Goal:** Make pressing `'H'` call a C++ function `ToggleHat()` on a custom component, without routing through the ability system.
 
@@ -110,7 +110,7 @@ Play the game and press `'H'`.
 {% endstep %}
 {% endstepper %}
 
-**Troubleshooting:**
+### **Troubleshooting:**
 
 * The entry must be in `NativeInputActions`, not `AbilityInputActions`.
 * The gameplay tag in C++ must match the one in the InputConfig.
@@ -119,13 +119,13 @@ Play the game and press `'H'`.
 
 ***
 
-### Changing Default Sensitivity or Deadzone Values
+## Changing Default Sensitivity or Deadzone Values
 
-#### Sensitivity Presets
+### Sensitivity Presets
 
 Open your `ULyraAimSensitivityData` asset in the editor. The `SensitivityMap` maps each `ELyraGamepadSensitivity` enum value to a float multiplier. Edit the float for any preset, for example, change `Normal` from `1.0` to `1.1` for a 10% bump. This is data-only and affects all players using that preset immediately.
 
-#### Mouse Sensitivity Defaults
+### Mouse Sensitivity Defaults
 
 In `LyraSettingsShared.h`, change the member initializers:
 
@@ -135,10 +135,10 @@ In `LyraSettingsShared.h`, change the member initializers:
 
 These set the starting values for new players. Existing saved settings override them, delete `Saved/SaveGames/` to test fresh defaults.
 
-#### Deadzone Defaults
+### Deadzone Defaults
 
 In the same class, modify `GamepadMoveStickDeadZone` and `GamepadLookStickDeadZone` default values and recompile. The `ULyraInputModifierDeadZone` modifier reads these at runtime via the corresponding getter functions.
 
-#### Per-Mapping Modifier Overrides
+### Per-Mapping Modifier Overrides
 
 Each modifier instance on an IMC mapping has its own properties. On `ULyraInputModifierDeadZone`, you can change `Type` (Axial vs Radial), `UpperThreshold`, and which stick it reads from. On `ULyraInputModifierGamepadSensitivity`, you can swap the `SensitivityLevelTable` data asset or change `TargetingType` between Normal and ADS. These are per-mapping overrides and don't affect the global player setting values.

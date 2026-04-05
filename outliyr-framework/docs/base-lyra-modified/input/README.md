@@ -2,7 +2,7 @@
 
 This system is foundational to how players interact with the game world, controlling characters and activating abilities. It's built upon two powerful Unreal Engine systems: **Enhanced Input** and the **Gameplay Ability System (GAS)**. Our goal here is to provide you with a clear understanding of how these systems work together, enabling you to effectively customize and extend input functionality.
 
-### Why Lyra's Approach to Input?
+## Why Lyra's Approach to Input?
 
 Lyra's input architecture is designed to be robust, flexible, and highly data-driven. This offers several key advantages for developers:
 

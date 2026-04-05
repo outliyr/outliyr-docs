@@ -11,7 +11,7 @@ This section will break down these core concepts, starting with this overview an
 
 ***
 
-### The Item Duo: Definition vs. Instance
+## The Item Duo: Definition vs. Instance
 
 The system makes a clear distinction between the _definition_ of an item and an _instance_ of that item:
 
@@ -32,7 +32,7 @@ The system makes a clear distinction between the _definition_ of an item and an 
 
 ***
 
-### Modularity: The Power of Fragments
+## Modularity: The Power of Fragments
 
 Instead of creating deeply nested classes for every item variation (e.g., `UWeaponItem -> URangedWeaponItem -> UAutomaticRifleItem`), this system uses a compositional approach via **Fragments**.
 
@@ -50,7 +50,7 @@ Instead of creating deeply nested classes for every item variation (e.g., `UWeap
   * When an `ULyraInventoryItemInstance` is created, the system instantiates these transient data payloads and stores them _on the instance_.
   * This allows fragments to define _both_ static behavior/data _and_ provide storage for unique runtime state on each instance, keeping instance data tightly coupled with the fragment that defines its meaning.
 
-### Structure of this Section
+## Structure of this Section
 
 The following sub-pages will provide detailed explanations of these core components:
 

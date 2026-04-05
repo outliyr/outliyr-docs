@@ -1,4 +1,4 @@
-# fragment initialization
+# Fragment Initialization
 
 You want every rifle to spawn with a red-dot sight and 60 rounds of ammo. But you also want a "Golden" variant with a 4x scope and 120 rounds, without creating a separate item definition. How do you customize individual item instances at spawn time?
 
@@ -6,7 +6,7 @@ Fragment Initialization solves this. It lets you attach per-instance overrides t
 
 ***
 
-### The Core Concept
+## The Core Concept
 
 An Item Definition describes _what_ an item is. Fragment Initialization describes _how a particular instance_ of that item should differ from the defaults.
 
@@ -36,7 +36,7 @@ Every starting item entry, whether it lives on an Equipment Manager, Inventory M
 {% endtab %}
 
 {% tab title="Blueprints" %}
-<figure><img src="../../../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 
@@ -49,7 +49,7 @@ The key properties of this design:
 
 ***
 
-### The Initialization Flow
+## The Initialization Flow
 
 When a container processes its starting items, every item follows the same lifecycle:
 
@@ -134,7 +134,7 @@ Every container type (Equipment Manager, Inventory Manager, Tetris Inventory) us
 
 ***
 
-### The Base Type: FLyraFragmentInitBase
+## The Base Type: `FLyraFragmentInitBase`
 
 All fragment initializers inherit from this struct. It provides three virtual methods:
 
@@ -163,9 +163,9 @@ struct FLyraFragmentInitBase
 
 ***
 
-### Built-in Initializers
+## Built-in Initializers
 
-#### Stat Tags
+### Stat Tags
 
 **Struct:** `FStatTagsFragmentInit` (Display Name: "Stat Tags")
 
@@ -196,9 +196,7 @@ struct FStatTagsFragmentInit : public FLyraFragmentInitBase
 Stat Tags is always available for every item definition, there is no `IsAvailableForItem()` filter because any item can have stat tag stacks.
 {% endhint %}
 
-***
-
-#### Attachments
+### Attachments
 
 **Struct:** `FAttachmentFragmentInit` (Display Name: "Attachments")
 
@@ -273,7 +271,7 @@ Because `CreateItemWithInit()` is called for each attachment, the nested `Fragme
 
 ***
 
-### Plugin-Provided Initializers
+## Plugin-Provided Initializers
 
 #### Container Contents (TetrisInventory Plugin)
 
@@ -308,7 +306,7 @@ This init type only appears for items that have an `InventoryFragment_Container`
 
 ***
 
-### Where FragmentInitData Appears
+## Where FragmentInitData Appears
 
 The `FragmentInitData` array is a shared pattern across all starting item structs. Every system that spawns items supports it:
 
@@ -330,7 +328,7 @@ FAttachmentEntry ────────────┘
 
 ***
 
-### Creating Custom Fragment Init Types
+## Creating Custom Fragment Init Types
 
 Need to initialize something specific to your game? Create a new struct that inherits from `FLyraFragmentInitBase`.
 
@@ -423,7 +421,7 @@ That is it. The editor automatically discovers your new struct type through Unre
 
 ***
 
-### Practical Example: Configuring a Starting Rifle
+## Practical Example: Configuring a Starting Rifle
 
 Suppose you want your player to spawn with an AR-15 that has 60 rounds of ammo and a red-dot sight in the optic slot. Here is what the starting item entry looks like on an Equipment Manager component:
 

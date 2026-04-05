@@ -2,9 +2,13 @@
 
 This page provides a detailed technical walkthrough of transaction execution, covering the ability internals, type dispatch, delta recording, and rollback mechanics.
 
+{% hint style="warning" %}
+This is a deep dive on the transaction system, you do not need to understand this page to be able to use the item transaction system. Feel free to skip this page if you aren't interested in the internals and don't plan to modify it.
+{% endhint %}
+
 ***
 
-### Entry Points
+## Entry Points
 
 Transactions enter the system through three paths:
 
@@ -30,7 +34,7 @@ The transaction ability activates via gameplay event tag. It extracts the reques
 
 ***
 
-### The Transaction Ability
+## The Transaction Ability
 
 `ULyraItemTransactionAbility` is a `LocalPredicted` gameplay ability that coordinates transaction execution.
 
@@ -38,7 +42,7 @@ The transaction ability activates via gameplay event tag. It extracts the reques
 This means each player must be granted this ability for client prediction to take place.
 {% endhint %}
 
-#### Key Data Structures
+### Key Data Structures
 
 The ability maintains several maps to track prediction state:
 
@@ -50,7 +54,7 @@ The ability maintains several maps to track prediction state:
 | `TxToPredictionKeyCurrent` | Maps transaction GUID to prediction key ID                                |
 | `PredictionKeyToTxId`      | Reverse lookup from key ID to transaction GUID                            |
 
-#### Lifecycle
+### Lifecycle
 
 {% stepper %}
 {% step %}
@@ -92,7 +96,7 @@ Ability ends, cleanup runs.
 
 ***
 
-### Pre-Filter: ShouldAbilityRespondToEvent
+## Pre-Filter: ShouldAbilityRespondToEvent
 
 Before the ability activates, a quick check rejects obviously invalid requests. This is a performance optimization, rejecting bad requests before activation is cheaper than activating and then failing.
 
@@ -118,7 +122,7 @@ Pre-filter is intended to be cheap, anything requiring container/object lookups 
 
 ***
 
-### ExecuteTransaction: The Core Loop
+## ExecuteTransaction: The Core Loop
 
 The main execution method follows a strict sequence to ensure atomicity.
 
@@ -227,7 +231,7 @@ Items are destroyed only after all ops succeed, ensuring rollback can restore th
 
 ***
 
-### Type Dispatch
+## Type Dispatch
 
 The ability uses a dispatch pattern to route operations to type-specific handlers:
 
@@ -256,11 +260,11 @@ switch op.Type:
 
 ***
 
-### Delta Recording
+## Delta Recording
 
 Every mutation records a delta for potential rollback.
 
-#### Delta Structure
+### Delta Structure
 
 ```
 Delta = {
@@ -280,7 +284,7 @@ Delta = {
 }
 ```
 
-#### Recording Example: Move Operation
+### Recording Example: Move Operation
 
 Moving an item from slot A to slot B records two deltas:
 
@@ -293,11 +297,11 @@ Both deltas reference the same item instance, enabling proper rollback.
 
 ***
 
-### Rollback Mechanics
+## Rollback Mechanics
 
 When the server rejects a prediction, the ability triggers rollback.
 
-#### The Rollback Process
+### The Rollback Process
 
 ```
 function OnPredictionKeyRejected(KeyId):
@@ -317,7 +321,7 @@ function OnPredictionKeyRejected(KeyId):
     BroadcastTransactionFailed(TransactionId)
 ```
 
-#### Why Reverse Order?
+### Why Reverse Order?
 
 Consider a swap operation with these deltas:
 
@@ -335,7 +339,7 @@ Forward rollback would fail because undoing early removals/additions can encount
 * Undo Delta\[1]: Add ItemB back to Slot2
 * Undo Delta\[0]: Add ItemA back to Slot1
 
-#### Inversion Rules
+### Inversion Rules
 
 | Original Operation | Rollback Action                 |
 | ------------------ | ------------------------------- |
@@ -349,7 +353,7 @@ The force flag on rollback additions bypasses occupancy checks, since the slot s
 
 ***
 
-### Prediction Key Delegates
+## Prediction Key Delegates
 
 The ability binds to GAS prediction key delegates to know when predictions are caught up or rejected.
 
@@ -380,11 +384,11 @@ function OnRejected(KeyId):
 
 ***
 
-### Server Notification RPCs
+## Server Notification RPCs
 
 In addition to GAS delegates, the server can explicitly notify clients of transaction results.
 
-#### Why Both Mechanisms?
+### Why Both Mechanisms?
 
 GAS delegates handle ability-level rejection (activation failed, ability interrupted). But transactions can also fail during execution after activation succeeded.
 
@@ -409,15 +413,15 @@ function OnServerNotifyFailed(TransactionId, Reason):
 
 ***
 
-### Pending Destructions
+## Pending Destructions
 
 Items marked for destruction aren't destroyed immediately during transaction execution.
 
-#### The Problem
+### The Problem
 
 If you destroy an item mid-transaction and a later operation fails, you can't roll back, the item is gone.
 
-#### The Solution
+### The Solution
 
 ```
 // During apply

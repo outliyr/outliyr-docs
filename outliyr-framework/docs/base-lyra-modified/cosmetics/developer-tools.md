@@ -4,7 +4,7 @@ Testing cosmetics during development requires quickly swapping parts without set
 
 ***
 
-### Console Commands
+## Console Commands
 
 These commands are defined in `ULyraCosmeticCheats` and run with authority only:
 
@@ -14,7 +14,7 @@ These commands are defined in `ULyraCosmeticCheats` and run with authority only:
 
 ***
 
-### Developer Settings
+## Developer Settings
 
 In Project Settings under the Cosmetics category (`ULyraCosmeticDeveloperSettings`):
 
@@ -25,6 +25,6 @@ In Project Settings under the Cosmetics category (`ULyraCosmeticDeveloperSetting
 
 ***
 
-### Source Tracking
+## Source Tracking
 
 The system tracks where each part came from via `ECharacterPartSource`: **Natural** (gameplay), **AppliedViaCheatManager** (console), or **AppliedViaDeveloperSettingsCheat** (editor settings). Natural parts can also be marked **NaturalSuppressedViaCheat** when cheats override them. When cheats are cleared, natural parts are restored to active. Developer settings reapply after cheat clearing.

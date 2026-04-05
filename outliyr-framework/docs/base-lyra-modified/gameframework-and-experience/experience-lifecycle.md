@@ -4,7 +4,7 @@ This page traces the complete lifecycle from "a map loads" to "a player is playi
 
 ***
 
-### Phase 1: Experience Selection
+## Phase 1: Experience Selection
 
 When a map loads, `ALyraGameMode::InitGame()` fires. Rather than selecting the experience immediately, it defers to the next tick via a timer, this gives startup settings time to initialize. On that next tick, `HandleMatchAssignmentIfNotExpectingOne()` runs through a precedence chain to determine which experience to load.
 
@@ -12,37 +12,37 @@ The chain checks each source in order, stopping at the first valid result:
 
 {% stepper %}
 {% step %}
-**URL Options** (`?Experience=...`)
+#### **URL Options** (`?Experience=...`)
 
 Parsed from the travel URL via `UGameplayStatics::ParseOption()`. This is the primary override for testing, launch a PIE session or use `open MapName?Experience=B_MyExperience` to force a specific experience without touching any other configuration.
 {% endstep %}
 
 {% step %}
-**Developer Settings** (PIE only)
+#### **Developer Settings** (PIE only)
 
 `ULyraDeveloperSettings::ExperienceOverride` is checked, but only when `World->IsPlayInEditor()` returns true. This lets developers set a global experience override in their editor preferences for rapid iteration without modifying map data. It never applies in packaged builds.
 {% endstep %}
 
 {% step %}
-**Command Line** (`Experience=...`)
+#### **Command Line** (`Experience=...`)
 
 Parsed from `FCommandLine::Get()`. Useful for automated testing, build farm validation, or launching specific experiences from shortcuts. Accepts both a plain name (`B_LyraDefaultExperience`) and a fully qualified `PrimaryAssetType:Name` format.
 {% endstep %}
 
 {% step %}
-**World Settings**
+#### **World Settings**
 
 `ALyraWorldSettings::GetDefaultGameplayExperience()` returns the map's configured default. This is stored as a `TSoftClassPtr<ULyraExperienceDefinition>` on the world settings actor. For most single-player and offline scenarios, this is where the experience comes from, the level designer sets it per map.
 {% endstep %}
 
 {% step %}
-**Dedicated Server Login**
+#### **Dedicated Server Login**
 
 If no experience has been found and this is a dedicated server on the default map, `TryDedicatedServerLogin()` initiates an online login flow. On success, it calls `HostDedicatedServerMatch()`, which loads a `ULyraUserFacingExperienceDefinition` (selected by command line or marked as the default) and creates a session hosting request. This path handles the matchmaking-driven case: the session system will travel to the correct map with the correct experience URL option.
 {% endstep %}
 
 {% step %}
-**Hardcoded Default**
+#### **Hardcoded Default**
 
 If every other source fails, the system falls back to `B_LyraDefaultExperience`. This ensures the game always has _something_ to load, even in a bare-bones test environment.
 {% endstep %}
@@ -67,7 +67,7 @@ The dedicated server login flow does not directly call `SetCurrentExperience()`.
 
 ***
 
-### Phase 2: Async Loading
+## Phase 2: Async Loading
 
 The `ULyraExperienceManagerComponent` manages a state machine that drives the entire load process. The component lives on the `ALyraGameState` and implements `ILoadingProcessInterface`, which keeps the loading screen visible until the experience reaches the `Loaded` state.
 
@@ -85,7 +85,7 @@ stateDiagram-v2
     Deactivating --> Unloaded : All actions deactivated
 ```
 
-#### Loading Stage
+### Loading Stage
 
 `StartExperienceLoad()` collects every asset that needs to be available before gameplay begins. It builds two sets:
 
@@ -94,7 +94,7 @@ stateDiagram-v2
 
 The asset manager's `ChangeBundleStateForPrimaryAssets()` triggers the async load at high priority. When the handle completes (or if assets were already resident), `OnExperienceLoadComplete()` fires.
 
-#### Game Feature Loading Stage
+### Game Feature Loading Stage
 
 With the base assets loaded, the system now collects game feature plugin URLs. It iterates through `CurrentExperience->GameFeaturesToEnable` and every action set's `GameFeaturesToEnable`, resolving each plugin name to a URL via `UGameFeaturesSubsystem::GetPluginURLByName()`. Duplicates are filtered with `AddUnique()`.
 
@@ -107,7 +107,7 @@ UGameFeaturesSubsystem::Get().LoadAndActivateGameFeaturePlugin(PluginURL,
 
 A counter (`NumGameFeaturePluginsLoading`) tracks outstanding loads. Each completion callback decrements it. Only when the counter reaches zero does the pipeline advance. If there are no plugins to load, this stage is skipped entirely.
 
-#### Chaos Testing Delay (Optional)
+### Chaos Testing Delay (Optional)
 
 `OnExperienceFullLoadCompleted()` checks two console variables before proceeding:
 
@@ -120,7 +120,7 @@ If the combined delay is greater than zero, the state machine enters `LoadingCha
 
 ***
 
-### Phase 3: Action Execution
+## Phase 3: Action Execution
 
 Once all features are loaded (and any chaos delay has elapsed), the state transitions to `ExecutingActions`. This is where the experience's configuration becomes live gameplay.
 
@@ -146,25 +146,25 @@ Before actions execute, the `UFragmentInjectorManager` scans each loaded plugin 
 
 ***
 
-### Phase 4: Experience Ready
+## Phase 4: Experience Ready
 
 After all actions have activated, the state transitions to `Loaded`. Three delegate tiers then broadcast in strict order:
 
 {% stepper %}
 {% step %}
-**`OnExperienceLoaded_HighPriority`**
+#### **`OnExperienceLoaded_HighPriority`**
 
 Subsystems that must prepare before general gameplay begins subscribe here. Team creation, game phase initialization, and other foundational systems use this tier to ensure they are ready before anything that depends on them.
 {% endstep %}
 
 {% step %}
-**`OnExperienceLoaded`**
+#### **`OnExperienceLoaded`**
 
 The standard tier. Most gameplay systems subscribe here. The `ALyraGameMode` itself uses this tier, its `OnExperienceLoaded` callback iterates all connected player controllers and calls `RestartPlayer()` on any that do not yet have a pawn.
 {% endstep %}
 
 {% step %}
-**`OnExperienceLoaded_LowPriority`**
+#### **`OnExperienceLoaded_LowPriority`**
 
 Systems that need everything else to be ready first. UI overlays, analytics, or any system that reads state established by higher-priority subscribers.
 {% endstep %}
@@ -176,7 +176,7 @@ Blueprints doesn't use any of the three delegate teirs instead it handles this u
 
 <figure><img src="../../.gitbook/assets/image (47).png" alt=""><figcaption></figcaption></figure>
 
-#### The CallOrRegister Pattern
+### The CallOrRegister Pattern
 
 This is the most important integration pattern in the framework.
 
@@ -201,7 +201,7 @@ Each tier has its own `CallOrRegister` variant: `CallOrRegister_OnExperienceLoad
 
 ***
 
-### Phase 5: Player Spawning
+## Phase 5: Player Spawning
 
 With the experience loaded and actions active, the framework can spawn players.
 
@@ -211,19 +211,19 @@ The spawning sequence:
 
 {% stepper %}
 {% step %}
-**Resolve PawnData**
+#### **Resolve PawnData**
 
 `GetPawnDataForController()` checks the player state first (it may have been set explicitly, for example by a team assignment system). If no pawn data is set, it falls back to `CurrentExperience->DefaultPawnData`. If that is also null, the asset manager's global default is used.
 {% endstep %}
 
 {% step %}
-**Spawn the Pawn**
+#### **Spawn the Pawn**
 
 `SpawnDefaultPawnAtTransform_Implementation()` spawns with `bDeferConstruction = true`, then finds the `ULyraPawnExtensionComponent` on the new pawn and calls `SetPawnData()` to configure it before `FinishSpawning()`. This deferred construction pattern ensures the pawn data is set before `BeginPlay` fires on any component.
 {% endstep %}
 
 {% step %}
-**Pawn Initialization**
+#### **Pawn Initialization**
 
 The `ULyraPawnExtensionComponent` drives its own initialization state machine (see [Character Initialization](../character/initialization.md)). Components bind to the Ability System Component, input mappings are wired, camera modes are configured. By the time this completes, the player is fully interactive.
 {% endstep %}
@@ -239,25 +239,25 @@ When the world is torn down (map transition, PIE end, or session disconnect), `E
 
 {% stepper %}
 {% step %}
-**Fragment Restoration**
+#### **Fragment Restoration**
 
 The `UFragmentInjectorManager` restores any fragments that were modified during Phase 3, returning experience definitions to their original state.
 {% endstep %}
 
 {% step %}
-**Plugin Deactivation**
+#### **Plugin Deactivation**
 
 Each game feature plugin URL is passed to `ULyraExperienceManager::RequestToDeactivatePlugin()`. If no other experience is holding the plugin active (a reference-counting mechanism), `UGameFeaturesSubsystem::DeactivateGameFeaturePlugin()` is called.
 {% endstep %}
 
 {% step %}
-**Action Deactivation**
+#### **Action Deactivation**
 
 If the experience was fully loaded, all actions are deactivated via `OnGameFeatureDeactivating(Context)` followed by `OnGameFeatureUnregistering()`. This reverses the hooks set up in Phase 3, the extension manager removes injected components from existing actors and stops injecting them into new ones.
 {% endstep %}
 
 {% step %}
-**State Reset**
+#### **State Reset**
 
 Once all deactivation completes (including any asynchronous pausers), `OnAllActionsDeactivated()` resets the state to `Unloaded` and clears the `CurrentExperience` pointer.
 {% endstep %}

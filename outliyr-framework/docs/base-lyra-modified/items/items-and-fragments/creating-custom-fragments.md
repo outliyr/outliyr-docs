@@ -4,205 +4,174 @@
 **Prerequisite:** Creating new fragment types currently requires C++ programming.
 {% endhint %}
 
+You want to add a new behavior to items, maybe durability decay, a charge meter, or a crafting recipe reference. The fragment system lets you encapsulate this as a self-contained module that any Item Definition can opt into. Here's how the pieces connect:
+
+```mermaid
+flowchart TB
+    StaticFrag["<b>Static Fragment</b><br/>UMyCustomFragment<br/><i>Lives on the Definition (shared)</i>"]
+    StaticFrag -->|"creates per instance"| TransientData
+
+    subgraph PerInstance["Per Item Instance"]
+        TransientData["<b>Instance Data</b><br/>FMyCustomData <i>or</i> UMyRuntimeFragment<br/><i>Unique to each instance</i>"]
+    end
+
+    ItemDef["Item Definition Asset<br/><i>Fragments array</i>"] --> StaticFrag
+```
+
+The static fragment holds editor-configurable properties (shared across all instances) and creates per-instance data when an item spawns. Instance data is optional, some fragments are purely static.
+
 {% stepper %}
 {% step %}
-### Goal
+#### Define the Static Fragment
 
-The goal is to encapsulate new item behaviors or properties into a modular fragment that can be added to `ULyraInventoryItemDefinition` assets in the editor. This might involve:
-
-* Adding new static data to item definitions.
-* Implementing custom logic for inventory interactions (weight, combination, add checks).
-* Storing unique data per item instance (durability, charge level, internal state).
-* Reacting to item lifecycle events (added to container, slot changes, etc.).
-{% endstep %}
-
-{% step %}
-### Define the Static Fragment (`ULyraInventoryItemFragment`)
-
-This is the base requirement for any new fragment type.
-
-Create a C++ class inheriting from `ULyraInventoryItemFragment`. Example:
+Every custom fragment starts here. Subclass `ULyraInventoryItemFragment`, add static properties as `UPROPERTY(EditDefaultsOnly)` for designer configuration, and override the virtual functions your fragment needs.
 
 {% code title="MyCustomFragment.h" %}
 ```cpp
-#pragma once
-
-#include "Inventory/LyraInventoryItemFragment.h"
-#include "MyCustomFragment.generated.h"
-
-UCLASS(MinimalAPI) // Or your module's API macro
+UCLASS()
 class UMyCustomFragment : public ULyraInventoryItemFragment
 {
     GENERATED_BODY()
 
 public:
-    // Add static properties editable in the Item Definition asset
+
+    // Static properties — configured per Item Definition in the editor
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CustomFragment")
     float StaticModifierValue = 1.0f;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CustomFragment")
     bool bEnableCoolFeature = false;
 
-    // Override necessary virtual functions from base class
+    // Lifecycle — runs once when an instance is created
     virtual void OnInstanceCreated(ULyraInventoryItemInstance* Instance) const override;
-    virtual float GetWeightContribution(const ULyraInventoryItemDefinition* InItemDef, ULyraInventoryItemInstance* InItemInstance) override;
-    // ... implement other virtuals like CombineItems, CanAddItemToContainer if needed ...
 
-    // --> Add functions from Step 3 here later <--
+    // Data contribution — how much weight does this fragment add?
+    virtual float GetWeightContribution(
+        const ULyraInventoryItemDefinition* InItemDef,
+        ULyraInventoryItemInstance* InItemInstance) override;
 };
 ```
 {% endcode %}
 
 {% code title="MyCustomFragment.cpp" %}
 ```cpp
-#include "MyCustomFragment.h"
-#include "Inventory/LyraInventoryItemInstance.h" // Include if needed
-
 void UMyCustomFragment::OnInstanceCreated(ULyraInventoryItemInstance* Instance) const
 {
-    Super::OnInstanceCreated(Instance); // Good practice to call Super
+    Super::OnInstanceCreated(Instance);
 
-    // Example: Initial setup based on static data
     if (bEnableCoolFeature && Instance)
     {
-        // Maybe add an initial StatTag?
-        // Instance->AddStatTagStack(TAG_MyFeature_IsEnabled, 1);
-        UE_LOG(LogTemp, Log, TEXT("MyCustomFragment: Feature enabled for instance of %s"), *GetNameSafe(Instance->GetItemDef()));
+        Instance->AddStatTagStack(TAG_MyFeature_IsEnabled, 1);
     }
 }
 
-float UMyCustomFragment::GetWeightContribution(const ULyraInventoryItemDefinition* InItemDef, ULyraInventoryItemInstance* InItemInstance)
+float UMyCustomFragment::GetWeightContribution(
+    const ULyraInventoryItemDefinition* InItemDef,
+    ULyraInventoryItemInstance* InItemInstance)
 {
-    // Example: This fragment adds a fixed weight
-    // return 0.5f;
-    return Super::GetWeightContribution(InItemDef, InItemInstance); // Default is 0
+    return 0.0f; // Override if this fragment contributes weight
 }
-
-// ... Implement other overridden functions ...
 ```
 {% endcode %}
 
-* Add static properties as `UPROPERTY(EditDefaultsOnly)` to be configured per item-definition in the editor.
-* Implement/override base virtuals such as `GetWeightContribution`, `GetItemCountContribution`, `CanCombineItems`, `CombineItems`, `CanAddItemToContainer`, and `OnInstanceCreated` if needed.
+At this point you have a working fragment, it can hold static data, react to instance creation, and contribute to weight calculations. If you don't need per-instance state, skip ahead to adding the fragment to an Item Definition.
 {% endstep %}
 
 {% step %}
-### Choose and Define Instance Data (Optional)
+#### Choose Instance Data (Optional)
 
-Most fragments need instance-unique data (durability, charges, internal state). Two main approaches:
+Most fragments eventually need data that varies per instance, durability, charge level, an internal ID. Three mechanisms exist, each at a different complexity level:
 
-* Replicated struct: `FTransientFragmentData` — lightweight, simple data.
-* Replicated UObject: `UTransientRuntimeFragment` — advanced logic, Blueprint interop and per-field OnRep hooks.
+| Decision Criterion            | Stat Tags                  | FTransientFragmentData             | UTransientRuntimeFragment                  |
+| ----------------------------- | -------------------------- | ---------------------------------- | ------------------------------------------ |
+| **Data shape**                | Single tag + int           | Any USTRUCT fields                 | Full UObject (vars + functions)            |
+| **Replicates automatically?** | Built-in                   | Whole struct                       | You implement `GetLifetimeReplicatedProps` |
+| **Per-field `OnRep`?**        | No                         | No (whole-struct only)             | Yes                                        |
+| **Blueprint exposure**        | Read-only (tag queries)    | Read & write values                | Read, write + call functions               |
+| **Per-frame / timer logic?**  | No                         | No                                 | Yes (Tick, timers, delegates)              |
+| **Overhead**                  | Minimal                    | Low                                | Highest                                    |
+| **Use when you need**         | Lightweight counters/flags | Small structured per-instance data | Complex state _plus_ behavior              |
 
-{% hint style="info" %}
-Not sure which one to pick? Use the comparison table below to choose the right mechanism.
-{% endhint %}
-
-#### Comparison Table: Selecting the Right Instance-Data Mechanism
-
-| Decision Criterion                           | Stat Tags (tag + stack)                                  | FTransientFragmentData (replicated struct) | UTransientRuntimeFragment (replicated UObject)   |
-| -------------------------------------------- | -------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------ |
-| **Data shape**                               | Single tag + int stack                                   | Any USTRUCT fields                         | Full UObject (vars + functions)                  |
-| **Replicates automatically?¹**               | ✔ built-in                                               | ✔ whole struct                             | ✔ but you implement `GetLifetimeReplicatedProps` |
-| **Per-field `OnRep` / fine-grained hooks?**  | ✖                                                        | ✖ (whole-struct only)                      | ✔ (`OnRep` per property, `ReplicateSubobjects`)  |
-| **Editable in Blueprints?²**                 | Read only (functions exposed by item to manipulate tags) | Read & write values                        | Read & write + call functions                    |
-| **Custom per-frame / timer logic?**          | ✖                                                        | ✖                                          | ✔ (`Tick`, timers, delegates)                    |
-| **Performance, memory & network overhead?³** | Minimal                                                  | Low                                        | Highest                                          |
-| **Use when you need …**                      | Lightweight counters / flags queried via GameplayTags    | Small, structured per-instance data        | Complex state _plus_ behavior                    |
-
-Notes:
-
-* **Replicates automatically?** Stat Tags and `FTransientFragmentData` live inside arrays already replicated by Lyra. Runtime fragments replicate like any custom sub-object: you must list properties in `GetLifetimeReplicatedProps`.
-* **Editable in Blueprints?** GameplayTags arrays are exposed but read-only. Struct members are UPROPERTY values (read/write in BP). Runtime fragments are full `UObjects` (call methods, bind events).
-* Runtime fragments have higher overhead, prefer struct fragments for common lightweight needs.
-
-Choosing a path:
-
-* If you don’t need instance-specific data, skip to Step 4.
-* If your data is simple and structured, use Option A, Struct-Based.
-* If your data requires Blueprint functions, replication hooks, or complex behavior, use Option B, UObject-Based.
+* **No instance data needed?** Skip to the final step.
+* **Simple structured data?** Use Option A (struct-based).
+* **UObject features (OnRep, ticking, Blueprint methods)?** Use Option B (UObject-based).
 {% endstep %}
 
 {% step %}
-### Option A: Struct-Based Instance Data (`FTransientFragmentData`)
+#### Option A: Struct-Based Instance Data
 
-1. Create a struct inheriting from `FTransientFragmentData`.
+Create a `USTRUCT` inheriting from `FTransientFragmentData`. Add fields and optionally override lifecycle callbacks.
 
 {% code title="MyCustomFragmentData.h" %}
 ```cpp
-// MyCustomFragmentData.h (or often within MyCustomFragment.h/cpp)
-#pragma once
-
-#include "Inventory/LyraInventoryItemDefinition.h" // Base for FTransientFragmentData
-#include "MyCustomFragmentData.generated.h"
-
 USTRUCT(BlueprintType)
 struct FMyCustomFragmentData : public FTransientFragmentData
 {
     GENERATED_BODY()
 
 public:
-    // Instance-specific data
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float CurrentValue = 0.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FName InstanceSpecificName = NAME_None;
 
-    // Optional: Override lifecycle callbacks
-    virtual void AddedToContainer(UObject* Container, ULyraInventoryItemInstance* ItemInstance) override;
-    virtual void RemovedFromContainer(UObject* Container, ULyraInventoryItemInstance* ItemInstance) override;
-    virtual void DestroyTransientFragment(ULyraInventoryItemInstance* ItemInstance) override;
-    virtual void ItemMoved(ULyraInventoryItemInstance* ItemInstance, const FInstancedStruct& OldSlot, const FInstancedStruct& NewSlot) override;
+    // React to the item's lifecycle
+    virtual void AddedToContainer(UObject* Container,
+        ULyraInventoryItemInstance* ItemInstance) override;
+    virtual void DestroyTransientFragment(
+        ULyraInventoryItemInstance* ItemInstance) override;
 };
 ```
 {% endcode %}
 
-2. Add `UPROPERTY()` members for instance data.
-3. Optionally implement lifecycle callbacks (`AddedToContainer`, `RemovedFromContainer`, `DestroyTransientFragment`, `ItemMoved`) in the .cpp.
+Then link it from your static fragment by overriding two functions:
+
+{% code title="MyCustomFragment.cpp (additions)" %}
+```cpp
+UScriptStruct* UMyCustomFragment::GetTransientFragmentDataStruct() const
+{
+    return FMyCustomFragmentData::StaticStruct();
+}
+
+bool UMyCustomFragment::CreateNewTransientFragment(
+    AActor* ItemOwner, ULyraInventoryItemInstance* ItemInstance,
+    FInstancedStruct& NewInstancedStruct)
+{
+    FMyCustomFragmentData Data;
+    Data.CurrentValue = StaticModifierValue; // Initialize from static config
+    NewInstancedStruct.InitializeAs<FMyCustomFragmentData>(Data);
+    return true;
+}
+```
+{% endcode %}
+
+The struct is stored in a replicated `TArray<FInstancedStruct>` on the item instance. Changes replicate automatically.
 {% endstep %}
 
 {% step %}
-### Option B: UObject-Based Instance Data (`UTransientRuntimeFragment`)
+#### Option B: UObject-Based Instance Data
 
-1. Create a UObject class inheriting from `UTransientRuntimeFragment`.
+Create a `UObject` subclass of `UTransientRuntimeFragment`. Add replicated properties, implement `GetLifetimeReplicatedProps`, and override lifecycle callbacks.
 
 {% code title="MyTransientRuntimeFragment.h" %}
 ```cpp
-// MyTransientRuntimeFragment.h
-#pragma once
-
-#include "Inventory/LyraInventoryItemDefinition.h" // Base for UTransientRuntimeFragment
-#include "MyTransientRuntimeFragment.generated.h"
-
 UCLASS(BlueprintType)
 class UMyTransientRuntimeFragment : public UTransientRuntimeFragment
 {
     GENERATED_BODY()
 public:
-    //~ UObject Interface (implement if needed)
     virtual bool IsSupportedForNetworking() const override { return true; }
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-    virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
-    //~ End UObject Interface
+    virtual void GetLifetimeReplicatedProps(
+        TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    //~ Lifecycle Callbacks (override if needed)
-    virtual void AddedToContainer(UObject* Container, ULyraInventoryItemInstance* ItemInstance) override;
-    virtual void RemovedFromContainer(UObject* Container, ULyraInventoryItemInstance* ItemInstance) override;
-    virtual void DestroyTransientFragment(ULyraInventoryItemInstance* ItemInstance) override;
-    virtual void ItemMoved(ULyraInventoryItemInstance* ItemInstance, const FInstancedStruct& OldSlot, const FInstancedStruct& NewSlot) override;
-
-    // Instance-specific data
     UPROPERTY(ReplicatedUsing = OnRep_SomeValue, BlueprintReadOnly)
     int32 ReplicatedInstanceValue = 0;
 
-    UPROPERTY(BlueprintReadOnly)
-    FString InstanceDescription;
-
-    UFUNCTION() // Example OnRep
+    UFUNCTION()
     void OnRep_SomeValue();
 
-    UFUNCTION(BlueprintCallable) // Example BP function
+    UFUNCTION(BlueprintCallable)
     void DoSomethingInstanceSpecific();
 };
 ```
@@ -210,114 +179,61 @@ public:
 
 {% code title="MyTransientRuntimeFragment.cpp" %}
 ```cpp
-// MyTransientRuntimeFragment.cpp
-#include "MyTransientRuntimeFragment.h"
-#include "Net/UnrealNetwork.h" // For DOREPLIFETIME
-
-void UMyTransientRuntimeFragment::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void UMyTransientRuntimeFragment::GetLifetimeReplicatedProps(
+    TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(UMyTransientRuntimeFragment, ReplicatedInstanceValue);
 }
-// ... Implement other functions ...
 ```
 {% endcode %}
 
-2. Add `UPROPERTY()` members and replication specifiers. Implement `GetLifetimeReplicatedProps`.
-3. Override `UObject` & lifecycle callbacks (Tick, `ReplicateSubobjects`, `AddedToContainer`, etc.) as needed.
-{% endstep %}
+Link it from your static fragment:
 
-{% step %}
-### Link Static Fragment to Instance Data
-
-Modify your static fragment (`UMyCustomFragment`) to tell the system which instance-data type to create.
-
-* If you chose Option A (Struct):
-
-{% code title="UMyCustomFragment (struct linkage) - snippets" %}
+{% code title="MyCustomFragment.cpp (additions)" %}
 ```cpp
-// In UMyCustomFragment class definition
-virtual UScriptStruct* GetTransientFragmentDataStruct() const override;
-virtual bool CreateNewTransientFragment(AActor* ItemOwner, ULyraInventoryItemInstance* ItemInstance, FInstancedStruct& NewInstancedStruct) override;
-
-// In MyCustomFragment.cpp
-#include "MyCustomFragmentData.h"
-
-UScriptStruct* UMyCustomFragment::GetTransientFragmentDataStruct() const
-{
-    return FMyCustomFragmentData::StaticStruct();
-}
-
-bool UMyCustomFragment::CreateNewTransientFragment(AActor* ItemOwner, ULyraInventoryItemInstance* ItemInstance, FInstancedStruct& NewInstancedStruct)
-{
-    FMyCustomFragmentData InstanceData;
-    // Initialize InstanceData based on ItemOwner, ItemInstance, or static props if needed
-    InstanceData.CurrentValue = 0.0f;
-    InstanceData.InstanceSpecificName = FName(*FString::Printf(TEXT("Instance_%d"), FMath::Rand())); // Example init
-
-    NewInstancedStruct.InitializeAs<FMyCustomFragmentData>(InstanceData);
-    return true; // We created data
-}
-```
-{% endcode %}
-
-* If you chose Option B (UObject):
-
-{% code title="UMyCustomFragment (UObject linkage) - snippets" %}
-```cpp
-// In UMyCustomFragment class definition
-virtual TSubclassOf<UTransientRuntimeFragment> GetTransientRuntimeFragment() const override;
-virtual bool CreateNewRuntimeTransientFragment(AActor* ItemOwner, ULyraInventoryItemInstance* ItemInstance, UTransientRuntimeFragment*& OutFragment) override;
-
-// In MyCustomFragment.cpp
-#include "MyTransientRuntimeFragment.h"
-
 TSubclassOf<UTransientRuntimeFragment> UMyCustomFragment::GetTransientRuntimeFragment() const
 {
     return UMyTransientRuntimeFragment::StaticClass();
 }
 
-bool UMyCustomFragment::CreateNewRuntimeTransientFragment(AActor* ItemOwner, ULyraInventoryItemInstance* ItemInstance, UTransientRuntimeFragment*& OutFragment)
+bool UMyCustomFragment::CreateNewRuntimeTransientFragment(
+    AActor* ItemOwner, ULyraInventoryItemInstance* ItemInstance,
+    UTransientRuntimeFragment*& OutFragment)
 {
-    // Create UObject, ItemInstance is a good Outer
-    UMyTransientRuntimeFragment* RuntimeData = NewObject<UMyTransientRuntimeFragment>(ItemInstance);
-    if (RuntimeData)
-    {
-         // Initialize RuntimeData based on ItemOwner, ItemInstance, or static props if needed
-         RuntimeData->InstanceDescription = FString::Printf(TEXT("Runtime Fragment for %s"), *GetNameSafe(ItemInstance)); // Example init
-
-         OutFragment = RuntimeData;
-         return true; // We created data
-    }
-    return false;
+    auto* Fragment = NewObject<UMyTransientRuntimeFragment>(ItemInstance);
+    OutFragment = Fragment;
+    return true;
 }
 ```
 {% endcode %}
 {% endstep %}
 
 {% step %}
-### Compile C++ Code
+#### Compile and Add to an Item Definition
 
-Compile your project so the new C++ classes are available in the editor.
+Compile your C++ code, then open the Item Definition asset in the editor. Add your fragment class to the `Fragments` array and configure any `EditDefaultsOnly` properties.
 {% endstep %}
 
 {% step %}
-### Add Fragment to Item Definition Asset
+#### Access Instance Data at Runtime
 
-1. Find or create the `ULyraInventoryItemDefinition` asset you want to modify.
-2. Open the asset, locate the `Fragments` array in the Details panel.
-3. Click `+` to add a new element, and select your static fragment class (e.g., `UMyCustomFragment`) from the dropdown.
-4. Configure any `EditDefaultsOnly` properties (e.g., `StaticModifierValue`, `bEnableCoolFeature`).
-{% endstep %}
+Both struct and UObject instance data are accessed through `ResolveTransientFragment<T>()` on the item instance, where `T` is the _static_ fragment class:
 
-{% step %}
-### Access Instance Data at Runtime
+```cpp
+// Struct-based
+if (auto* Data = ItemInstance->ResolveTransientFragment<UMyCustomFragment>())
+{
+    float Val = Data->CurrentValue;
+}
 
-Refer to the sections on these pages for examples:
+// UObject-based (same template, different return type)
+if (auto* Runtime = ItemInstance->ResolveTransientFragment<UMyCustomFragment>())
+{
+    Runtime->DoSomethingInstanceSpecific();
+}
+```
 
-* transient struct data: [transient-data-fragments](transient-data-fragments.md#accessing-transient-struct-data-at-runtime)
-* transient runtime fragment: [transient-runtime-fragments](transient-runtime-fragments.md#accessing-transient-runtime-fragments-at-runtime)
-
-By following these steps you can create new modular fragments in C++ to extend the inventory system with custom behaviors and instance-specific data, while keeping item definitions clean and functionality encapsulated. Remember to choose struct-based or UObject-based transient data based on complexity and networking needs.
+For Blueprint access, see the accessing sections in [Transient Data Fragments](transient-data-fragments.md) and [Transient Runtime Fragments](transient-runtime-fragments.md).
 {% endstep %}
 {% endstepper %}

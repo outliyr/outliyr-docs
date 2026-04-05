@@ -4,7 +4,7 @@ Every architectural decision involves trade-offs. This page explains _why_ the I
 
 ***
 
-### Why Container-Agnostic?
+## Why Container-Agnostic?
 
 **The problem:** Games have multiple container types (inventory, equipment, attachments, vendors, crafting stations). Each has different slot mechanics, but they share common operations: add, remove, move, query.
 
@@ -40,7 +40,7 @@ Define _what_ containers must do, let implementations decide _how_. This is the 
 
 ***
 
-### Why FInstancedStruct for Slot Descriptors?
+## Why FInstancedStruct for Slot Descriptors?
 
 **The problem:** Different containers use different slot identifiers (index, tag, path). The transaction system needs to pass slots around without knowing their type.
 
@@ -77,7 +77,7 @@ Polymorphic structs with value semantics. This is the chosen approach.
 
 ***
 
-### Why Per-Container Occupied Slot Behavior?
+## Why Per-Container Occupied Slot Behavior?
 
 **The problem:** When you move an item to an occupied slot, what happens? The answer depends on the game and the container:
 
@@ -118,7 +118,7 @@ Each container reports its behavior, transaction system respects it. This is the
 
 ***
 
-### Why Atomic Transactions?
+## Why Atomic Transactions?
 
 **The problem:** Moving an item involves multiple steps: validate, remove from source, add to destination. What if step 2 succeeds but step 3 fails?
 
@@ -154,7 +154,7 @@ All operations succeed or all fail, with recorded deltas for reversal. This is t
 
 ***
 
-### Why Opt-In Prediction?
+## Why Opt-In Prediction?
 
 **The problem:** Prediction adds latency hiding but requires careful state management. Not all containers benefit.
 
@@ -190,7 +190,7 @@ Containers declare prediction support. This is the chosen approach.
 
 ***
 
-### Why Overlay Composition?
+## Why Overlay Composition?
 
 **The problem:** Client needs to show predicted state while server state replicates. How do you merge them?
 
@@ -228,7 +228,7 @@ See [The Overlay Model](../prediction/the-overlay-model/) for the full explanati
 
 ***
 
-### Why Polymorphic Container Sources?
+## Why Polymorphic Container Sources?
 
 **The problem:** UI needs to display different containers. Each container type needs a ViewModel, but UI code shouldn't know about every container type.
 
@@ -264,7 +264,7 @@ A source struct knows how to create its ViewModel. This is the chosen approach.
 
 ***
 
-### Summary of Trade-offs
+## Summary of Trade-offs
 
 | Decision                   | Benefit                                         | Cost                       |
 | -------------------------- | ----------------------------------------------- | -------------------------- |
@@ -277,7 +277,7 @@ A source struct knows how to create its ViewModel. This is the chosen approach.
 
 ***
 
-### When to Break the Rules
+## When to Break the Rules
 
 These design decisions are guidelines, not laws. Break them when:
 
@@ -288,7 +288,3 @@ These design decisions are guidelines, not laws. Break them when:
 The framework is designed to be flexible. Use the patterns that help, adapt or bypass the ones that don't.
 
 ***
-
-### Next Steps
-
-Now that you understand the architecture, learn how operations flow through the system in [Transactions](../transactions/).

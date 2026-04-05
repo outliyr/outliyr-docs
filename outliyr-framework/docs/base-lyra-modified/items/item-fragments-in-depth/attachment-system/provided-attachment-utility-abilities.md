@@ -4,12 +4,12 @@ To streamline common attachment functionalities, specifically modifying stats on
 
 You typically **subclass** these utility abilities, configure their specific parameters in the subclass defaults, and then add your subclass to an `ULyraAbilitySet`. This Ability Set is then assigned to the `AbilitySetsToGrant` array within the `FAttachmentDetails` -> `FAttachmentBehaviour` of the relevant attachment's configuration (defined on the _host_ item's `UInventoryFragment_Attachment`).
 
-### Core Idea: Data-Driven Modifications via Abilities
+## Core Idea: Data-Driven Modifications via Abilities
 
 Instead of requiring custom C++ or complex Blueprint logic for every stat-modifying attachment, these abilities allow you to define the modifications largely through data:
 
 * **Attachment Configuration:** The `FAttachmentDetails` (on the host's fragment) specifies an `ULyraAbilitySet` to grant when the attachment is active.
-* [**Ability Set**](/broken/pages/WiPoTHwyzxiArjXzX2i7)**:** This set contains instances of your specialized ability subclasses.
+* [**Ability Set**](../../../gas/ability-sets.md)**:** This set contains instances of your specialized ability subclasses.
 * **Ability Subclass:** Your subclass (e.g., `GA_Grip_RecoilReduction` derived from `GA_EquipmentAttributeModifier`) has its default properties set to define _which_ stat to modify and _how_.
 * **Runtime:** When the attachment is active, the ability is granted and automatically applies (and later reverses) the configured modifications.
 

@@ -2,7 +2,7 @@
 
 This section details the system used to represent inventory items physically within the game world and allow players to pick them up. It relies on the `IPickupable` interface and provides `AWorldCollectableBase` as the abstract base class for world pickup actors.
 
-### The `IPickupable` Interface
+## The `IPickupable` Interface
 
 The `IPickupable` interface (`UINTERFACE`) defines a standard contract for any Actor or Actor Component that represents one or more items available for pickup in the world.
 
@@ -43,11 +43,11 @@ Data Structures
 
 ***
 
-### The World Collectable Actor Hierarchy
+## The World Collectable Actor Hierarchy
 
 The world collectable system uses an abstract base class with concrete subclasses for different mesh types.
 
-#### `AWorldCollectableBase` (Abstract)
+### `AWorldCollectableBase` (Abstract)
 
 The abstract base class providing common functionality for all world collectables.
 
@@ -108,7 +108,7 @@ struct FPickupAbilityData_SourceItem : public FAbilityData_SourceItem
 Unlike other slot types, pickup slots distinguish between templates and instances. Templates are lightweight data (item definition + stack count) while instances are full `ULyraInventoryItemInstance` objects.
 {% endhint %}
 
-#### `AWorldCollectable_Static`
+### `AWorldCollectable_Static`
 
 Concrete subclass for items with static meshes.
 
@@ -119,7 +119,7 @@ Features
 * Implements `RebuildVisual()` to set the static mesh from the item's `UInventoryFragment_PickupItem`.
 * Has `DefaultPlaceholderMesh` for when no fragment mesh is found.
 
-#### `AWorldCollectable_Skeletal`
+### `AWorldCollectable_Skeletal`
 
 Concrete subclass for items with skeletal meshes.
 
@@ -131,7 +131,7 @@ Features
 
 ***
 
-### Interaction Profile System
+## Interaction Profile System
 
 The `UPickupInteractionProfile` data asset provides configurable interaction behavior for world collectables.
 
@@ -157,7 +157,7 @@ The `UPickupInteractionProfile` data asset provides configurable interaction beh
 
 ***
 
-### Role of `InventoryFragment_PickupItem`
+## Role of `InventoryFragment_PickupItem`
 
 The `InventoryFragment_PickupItem` plays a key role in the intended workflow for representing items in the world:
 
@@ -167,7 +167,7 @@ The `InventoryFragment_PickupItem` plays a key role in the intended workflow for
 
 ***
 
-### Workflow Example (Picking Up)
+## Workflow Example (Picking Up)
 
 {% stepper %}
 {% step %}
@@ -191,6 +191,49 @@ The `InventoryFragment_PickupItem` plays a key role in the intended workflow for
 {% endstep %}
 {% endstepper %}
 
+<details>
+
+<summary>Mermaid Diagram</summary>
+
+```mermaid
+sequenceDiagram
+    participant Player
+    participant Client
+    participant Server
+    participant Collectable as AWorldCollectableBase
+    participant Inventory
+    participant Pickupable as IPickupable
+    participant Subsystem as ULyraItemSubsystem
+
+    Player->>Client: Press interact
+    Client->>Server: Trigger Gameplay Event/Ability
+
+    Server->>Collectable: Get interacted actor
+    Server->>Pickupable: Get IPickupable interface
+    Server->>Inventory: Get player's inventory container
+
+    Server->>Pickupable: AddPickupToInventory(Container, Collectable)
+
+    Pickupable->>Inventory: Attempt to merge/add items
+    Pickupable->>Subsystem: Create new items if needed
+
+    alt Items successfully added
+        Pickupable->>Collectable: Remove items from FItemPickup
+
+        alt Pickup empty
+            Pickupable-->>Server: Return true
+            Server->>Collectable: Destroy actor
+        else Partial pickup
+            Pickupable-->>Server: Return false
+        end
+
+    else Inventory full / failed
+        Pickupable-->>Server: Return false
+    end
+```
+
+</details>
+
 ***
 
 The `IPickupable` interface and `AWorldCollectableBase` hierarchy provide the standard mechanism for items to exist and be interacted with in the game world, bridging the gap between the abstract inventory system and the physical level environment. The `InventoryFragment_PickupItem` is the key data source for defining _how_ an item appears when it takes this physical form.
@@ -198,5 +241,5 @@ The `IPickupable` interface and `AWorldCollectableBase` hierarchy provide the st
 {% hint style="info" %}
 **Looking for client-predicted pickups?**
 
-For responsive pickups with automatic rollback and game-mode specific routing, see Client-Predicted Pickup Ability.
+For responsive pickups with automatic rollback and game-mode specific routing, see [Client-Predicted Pickup Ability](client-predicted-pickup-ability.md).
 {% endhint %}

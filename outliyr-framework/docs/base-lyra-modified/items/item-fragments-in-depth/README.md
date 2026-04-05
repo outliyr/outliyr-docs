@@ -4,7 +4,7 @@ Having covered the core concepts of Items, the Inventory Manager, GAS integratio
 
 As established in the "Core Concepts" section, Fragments are modular pieces of data and logic attached to `ULyraInventoryItemDefinition`s. They allow you to compose complex item behaviors by simply adding and configuring these fragments in the item definition asset, rather than relying on complex inheritance.
 
-### Purpose of this Section
+## Purpose of this Section
 
 This section serves as a reference guide for the various concrete `ULyraInventoryItemFragment` classes available in the system. For each significant fragment type, its dedicated sub-page will detail:
 
@@ -14,7 +14,7 @@ This section serves as a reference guide for the various concrete `ULyraInventor
 * **Core Logic:** How does it interact with the Inventory Manager, Equipment System, GAS, or other systems? Which virtual functions does it typically override?
 * **Usage Example:** How and when would you typically add this fragment to an Item Definition?
 
-### Available Fragment Types (Examples)
+## Available Fragment Types (Examples)
 
 This asset provides several fragment types to handle common inventory and item functionalities. Here are some examples of fragments:
 
@@ -32,7 +32,7 @@ This asset provides several fragment types to handle common inventory and item f
 Note: The [Container](../../../core-modules/tetris-inventory/item-fragments-tetris-specific/inventoryfragment_container.md) and [Combine](../../../core-modules/tetris-inventory/item-fragments-tetris-specific/inventoryfragment_combine.md) Fragment belong in the Tetris Inventory Plugin and **will not** be covered in this page. For more details on TetrisInventory fragments read this [page](../../../core-modules/tetris-inventory/item-fragments-tetris-specific/).
 {% endhint %}
 
-### Finding the Right Fragment
+## Finding the Right Fragment
 
 When designing a new item, consider the features it needs and select the appropriate fragments to add to its Definition:
 
@@ -48,7 +48,7 @@ When designing a new item, consider the features it needs and select the appropr
 
 You can combine multiple fragments on a single Item Definition to create items with rich, multifaceted behaviors.
 
-### Structure of this Section
+## Structure of this Section
 
 Explore the following sub-pages for detailed information on each fragment type:
 

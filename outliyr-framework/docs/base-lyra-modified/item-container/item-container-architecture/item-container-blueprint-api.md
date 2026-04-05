@@ -4,7 +4,9 @@ The `ILyraItemContainerInterface` uses C++ constructs like `FPredictionKey` and 
 
 This page covers when to use the function library, what it provides, and how it relates to the C++ interface.
 
-### Why a Function Library?
+***
+
+## Why a Function Library?
 
 Blueprints can't:
 
@@ -18,7 +20,9 @@ The function library wraps these operations in Blueprint-callable functions, han
 **C++ developers:** You can use either the interface directly or the function library. The function library is convenient for permission-checked operations and slot resolution. For performance-critical code, the interface methods avoid the wrapper overhead.
 {% endhint %}
 
-### Categories of Functions
+***
+
+## Categories of Functions
 
 The function library organizes operations into logical groups.
 
@@ -103,8 +107,6 @@ static bool FindAvailableSlot(
 
 Finds an available slot for an item in a container. The `ExcludedItemIds` parameter lets you treat slots containing specific items as available, useful for swap operations.
 
-***
-
 ### Move Validation
 
 #### `CanMoveItem`
@@ -124,8 +126,6 @@ Use this for:
 * UI drag-and-drop feedback
 * Enabling/disabling move actions
 * Pre-validation before committing
-
-***
 
 ### Transaction Execution
 
@@ -159,8 +159,6 @@ Executes a batch of transaction operations. The request can contain multiple ope
 
 See [How Transactions Work](../transactions/how-transactions-work/) for details on building transaction requests.
 
-***
-
 ### Stack Information
 
 #### `GetStackInfoFromSlot`
@@ -180,8 +178,6 @@ Gets stack count information for an item in a slot. Returns:
 * `OutCurrentStack`: Current stack count
 * `OutMaxStack`: Maximum stack size (0 = unlimited)
 * `OutItem`: The item instance
-
-***
 
 ### Server-Only Operations
 
@@ -228,8 +224,6 @@ static bool AddItemDefinitionToAvailableSlot(
 
 Creates an item from a definition and adds it to the first available slot. Checks slot availability **before** creating the item to avoid orphans.
 
-***
-
 ### Search and Removal
 
 #### `SearchForCombinationOfItems`
@@ -273,6 +267,53 @@ Parameters:
 * `bOnlyRemoveIfAllItemsFound`: If true, only removes when the full amount can be satisfied
 * `bDestroy`: If true, destroys the removed items via `DestroyItem()`
 
+#### **`SearchForItemRequirements`**
+
+```cpp
+UFUNCTION(BlueprintCallable, Category = "ItemContainer|Query")
+static bool SearchForItemRequirements(
+    TScriptInterface<ILyraItemContainerInterface> Container,
+    const TArray<FItemRequirement>& Requirements,
+    TArray<ULyraInventoryItemInstance*>& OutFoundItems,
+    bool& OutFoundAllRequirements);
+```
+
+Searches a container for items satisfying a list of per-item-type requirements. Each `FItemRequirement` pairs an item definition with a required count. **Read-only**, doesn't modify the container.
+
+<details>
+
+<summary>How it differs from SearchForCombinationOfItems</summary>
+
+`SearchForCombinationOfItems` treats all definitions as interchangeable, pooling toward a single shared amount e.g. "find 10 total of any wood, stone, or iron". `SearchForItemRequirements` treats each entry as a distinct requirement with its own count e.g. "find 3 wood AND 5 stone AND 1 iron". Duplicate item definitions in the input are consolidated internally.
+
+</details>
+
+Use for:
+
+* Validating crafting recipes with specific ingredient counts
+* Checking multi-resource costs (e.g. 5 wood + 3 iron)
+* Any scenario where each item type has its own required quantity
+
+#### **`RemoveItemRequirements`**
+
+```cpp
+UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "ItemContainer|Server")
+static bool RemoveItemRequirements(
+    TScriptInterface<ILyraItemContainerInterface> Container,
+    const TArray<FItemRequirement>& Requirements,
+    bool bOnlyRemoveIfAllRequirementsMet,
+    bool bDestroy,
+    TArray<ULyraInventoryItemInstance*>& OutRemovedItems,
+    bool& OutFoundAllRequirements);
+```
+
+Searches and removes items matching all requirements in one operation. Server-only.
+
+Parameters:
+
+* `bOnlyRemoveIfAllRequirementsMet`: If true, only removes when every requirement can be fully satisfied
+* `bDestroy`: If true, destroys the removed items via `DestroyItem()`
+
 ***
 
 ### Validation Utilities
@@ -289,6 +330,4 @@ static bool WouldCreateCircularReference(
 
 Checks if adding an item to a container would create circular nesting. Prevents putting a backpack inside itself or inside a container that's inside it.
 
-### Next Steps
-
-Understand the reasoning behind these design choices in [Design Philosophy](design-philosophy.md).
+***

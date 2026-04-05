@@ -6,7 +6,7 @@ A networked character is actually two actors cooperating. The **ASC** lives on t
 
 ***
 
-### ASC Replication
+## ASC Replication
 
 GAS offers three replication modes for the Ability System Component. The framework uses **Mixed** on all ASC owners (`LyraPlayerState`, `LyraCharacterWithAbilities`, `LyraGameState`, and `ActorWithAbility`).
 
@@ -55,7 +55,7 @@ The compression is lossy, quantizing to 256 steps per axis discards precision. B
 
 ***
 
-### Shared Movement Replication
+## Shared Movement Replication
 
 Standard Unreal movement replication goes through the property replication system, which can be throttled or delayed by the engine's net update frequency. For smoother results, the framework uses a custom path that bypasses property-level throttling entirely.
 
@@ -83,6 +83,6 @@ All simulated proxies receive the multicast and apply the movement state directl
 
 ***
 
-### Net Update Frequency
+## Net Update Frequency
 
 Both `PlayerState` and `LyraCharacterWithAbilities` set their net update frequency to **100 Hz**. The ASC requires high-frequency updates so that gameplay effects and attribute changes replicate responsively, a heal or damage event should not wait for a slow replication tick to reach the client.

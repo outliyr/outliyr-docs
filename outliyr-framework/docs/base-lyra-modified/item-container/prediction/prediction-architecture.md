@@ -4,7 +4,7 @@ Before diving into overlays and reconciliation, it helps to understand the predi
 
 ***
 
-### Component Overview
+## Component Overview
 
 The prediction system is built from layered components, each with a specific responsibility:
 
@@ -18,7 +18,7 @@ The prediction system is built from layered components, each with a specific res
 
 ***
 
-### Layered Architecture
+## Layered Architecture
 
 The components form a layered stack. Your container code interacts with the top layer, which delegates downward:
 
@@ -59,7 +59,7 @@ flowchart TB
     Engine --> Store
 ```
 
-#### Layer Responsibilities
+### Layer Responsibilities
 
 **Runtime (Top Layer)**
 
@@ -84,7 +84,7 @@ flowchart TB
 
 ***
 
-### Data Flows
+## Data Flows
 
 Understanding the three main data flows helps you trace what happens during prediction.
 
@@ -142,11 +142,11 @@ flowchart TB
 
 ***
 
-### The Traits Pattern
+## The Traits Pattern
 
 The prediction templates are generic, they don't know about your specific container types. Traits bridge this gap.
 
-#### Why Traits Exist
+### Why Traits Exist
 
 The prediction system needs to work with any container's data types. Consider what the runtime must do:
 
@@ -166,7 +166,7 @@ An interface like `ILyraPredictedContainer` could define virtual methods. But in
 **Why not template parameters directly?** \
 You could template the runtime on `TPayload, TServerEntry, TViewEntry`. But then you'd need to pass conversion functions somehow. Traits bundle the types _and_ the operations together in one place.
 
-#### What Traits Do
+### What Traits Do
 
 Traits are a struct of static methods that the templates call to interact with your container:
 
@@ -187,7 +187,7 @@ struct FMyContainerTraits
 };
 ```
 
-#### Why Static Methods?
+### Why Static Methods?
 
 {% stepper %}
 {% step %}
@@ -215,7 +215,7 @@ Clear mapping between container types and prediction types.
 {% endstep %}
 {% endstepper %}
 
-#### Required Trait Methods
+### Required Trait Methods
 
 | Category            | Methods                                                                | Purpose                         |
 | ------------------- | ---------------------------------------------------------------------- | ------------------------------- |
@@ -237,9 +237,9 @@ Also remember: prediction is opt-in. You don't need any of this to create a work
 
 ***
 
-### Key Types
+## Key Types
 
-#### `FPredictedOp`
+### `FPredictedOp`
 
 A single predicted operation stored in the overlay:
 
@@ -253,7 +253,7 @@ struct FPredictedOp
 };
 ```
 
-#### `FGuidOverlay`
+### `FGuidOverlay`
 
 Per-GUID overlay with operation history and cached effective state:
 
@@ -268,7 +268,7 @@ struct FGuidOverlay
 };
 ```
 
-#### `TGuidKeyedOverlay`
+### `TGuidKeyedOverlay`
 
 The overlay store with indices for efficient operations:
 
@@ -282,7 +282,7 @@ struct TGuidKeyedOverlay
 };
 ```
 
-#### `FContainerPredictionStamp`
+### `FContainerPredictionStamp`
 
 Embedded in each replicated entry to track prediction metadata:
 
@@ -301,7 +301,7 @@ struct FContainerPredictionStamp
 
 **`LastLocalPredictedKeyId`**: Used locally to track whether this entry has a pending prediction. Set when the client records an overlay, cleared when the prediction is confirmed or rejected.
 
-#### `EReplicatedDeltaKind`
+### `EReplicatedDeltaKind`
 
 Indicates what kind of change occurred during replication:
 
@@ -316,7 +316,7 @@ enum class EReplicatedDeltaKind : uint8
 
 ***
 
-### How Components Connect
+## How Components Connect
 
 Here's how a typical predicted container wires everything together:
 
@@ -397,7 +397,3 @@ This is a brevity example showing the key wiring points. For the complete implem
 {% endhint %}
 
 ***
-
-### Next Steps
-
-Now that you understand the structure, learn how overlays compose with server state in [The Overlay Model](/broken/pages/610384bbe4519e6e7c91af00b5a5225c00660f0c).

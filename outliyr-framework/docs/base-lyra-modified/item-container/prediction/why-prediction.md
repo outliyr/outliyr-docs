@@ -2,7 +2,7 @@
 
 Before diving into how prediction works, let's understand _why_ it exists and what problem it solves.
 
-### The Latency Reality
+## The Latency Reality
 
 Every action in a multiplayer game travels across the network:
 
@@ -37,11 +37,11 @@ That's one full round-trip before the player sees any feedback. At 100ms RTT, th
 
 ***
 
-### Pessimistic vs Optimistic UI
+## Pessimistic vs Optimistic UI
 
 There are two philosophies for handling this latency:
 
-#### Pessimistic UI
+### Pessimistic UI
 
 _"Don't show anything until the server confirms."_
 
@@ -60,7 +60,7 @@ Click → Wait → Server confirms → Show result
 * Every action has visible delay
 * Players complain "the game is slow"
 
-#### Optimistic UI
+### Optimistic UI
 
 _"Show the expected result immediately, correct if wrong."_
 
@@ -84,7 +84,7 @@ The prediction system implements optimistic UI for item containers.
 
 ***
 
-### When Prediction Matters
+## When Prediction Matters
 
 Not every interaction benefits equally from prediction:
 
@@ -120,7 +120,7 @@ The player isn't repeatedly interacting. A brief delay is acceptable.
 
 ***
 
-### The Prediction Philosophy
+## The Prediction Philosophy
 
 The system is built on several core principles:
 
@@ -142,7 +142,7 @@ Containers that don't need prediction shouldn't pay for it. The system is opt-in
 
 ***
 
-### What "Prediction" Means Here
+## What "Prediction" Means Here
 
 {% stepper %}
 {% step %}
@@ -172,8 +172,6 @@ When the server responds, the overlay is cleared.
 
 The client doesn't literally "predict" what the server will do, it _does the same thing_ the server will do, just earlier. Because both use the same validation and execution logic, they should reach the same result.
 
-***
-
 ### The Cost of Prediction
 
 Prediction isn't free:
@@ -181,8 +179,6 @@ Prediction isn't free:
 <table><thead><tr><th width="244.9090576171875">Cost</th><th>Description</th></tr></thead><tbody><tr><td>Memory</td><td>Overlays store predicted state alongside server state</td></tr><tr><td>Complexity</td><td>Two code paths (predicted vs authoritative)</td></tr><tr><td>Testing</td><td>Must verify rollback works correctly</td></tr><tr><td>Edge cases</td><td>Race conditions, multiple predictions in flight</td></tr></tbody></table>
 
 The framework absorbs most of this complexity. Containers that opt into prediction get it through the prediction runtime without implementing the machinery themselves.
-
-***
 
 ### When Not to Predict
 

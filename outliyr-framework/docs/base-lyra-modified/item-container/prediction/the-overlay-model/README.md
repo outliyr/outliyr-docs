@@ -4,7 +4,7 @@ The prediction system uses a **compose model** where predicted state layers on t
 
 ***
 
-### The Core Insight
+## The Core Insight
 
 ```
 EffectiveView = Compose(ServerState, Overlay)
@@ -19,7 +19,7 @@ The UI never reads `ServerState` directly. It always reads the **`EffectiveView`
 
 ***
 
-### Operation History
+## Operation History
 
 Each GUID in the overlay stores a history of predicted operations. This enables correct partial confirmation when multiple predictions are in flight.
 
@@ -63,7 +63,7 @@ CachedValue = {slot: 5}          // Still show at slot 5 (now from server + K2 c
 
 ***
 
-### Compose Rules
+## Compose Rules
 
 When building the effective view, these rules apply in order:
 
@@ -96,7 +96,7 @@ Add server entries that don't have overlays.
 
 ***
 
-### Cache Rebuild
+## Cache Rebuild
 
 The overlay caches an effective value for each GUID. This cache is rebuilt when:
 
@@ -134,11 +134,11 @@ Store the final value and tombstone state in the cache.
 
 ***
 
-### Example: Moving an Item
+## Example: Moving an Item
 
 Player drags an item from Inventory slot 3 to Equipment slot Primary.
 
-#### Before (Server State)
+### Before (Server State)
 
 ```
 Inventory:
@@ -150,7 +150,7 @@ Equipment:
   [Primary] (empty)
 ```
 
-#### Prediction Applied
+### Prediction Applied
 
 Two operations are recorded in separate container overlays:
 
@@ -164,7 +164,7 @@ Two operations are recorded in separate container overlays:
 * Records: Add operation for Item B's GUID at Primary slot
 * Cache result: Item B at Primary
 
-#### Effective View (What UI Shows)
+### Effective View (What UI Shows)
 
 ```
 Inventory:
@@ -176,7 +176,7 @@ Equipment:
   [Primary] Item B  ← Add overlay shows Item B
 ```
 
-#### Server Confirms
+### Server Confirms
 
 Server replicates:
 
@@ -187,7 +187,7 @@ The prediction key's `CaughtUp` delegate fires when the server finishes processi
 
 ***
 
-### View Caching
+## View Caching
 
 Computing the effective view on every query would be expensive. The system uses lazy caching:
 
@@ -202,7 +202,7 @@ Subscribers are notified when the view becomes dirty, enabling efficient UI upda
 
 ***
 
-### GUID Index for O(1) Lookup
+## GUID Index for `O(1)` Lookup
 
 During cache rebuild, the Runtime needs to find server entries by GUID. A linear scan would be O(n) per dirty overlay.
 
@@ -214,7 +214,7 @@ The Runtime maintains a **GUID index** that maps each GUID to its position in th
 
 ***
 
-### Multiple Predictions in Flight
+## Multiple Predictions in Flight
 
 The operation history model handles multiple predictions naturally:
 
@@ -227,7 +227,7 @@ T=60:  Server finishes K2, CaughtUp fires
 
 Each operation is tagged with its prediction key. When a prediction key catches up, only operations with that key are cleared.
 
-#### Chained Operations
+### Chained Operations
 
 Operations on the same GUID can chain across prediction keys:
 
@@ -240,7 +240,7 @@ Operations on the same GUID can chain across prediction keys:
 
 ***
 
-### GUID Stability
+## GUID Stability
 
 The overlay system is keyed by GUID, not by position or pointer. This is crucial because:
 
@@ -251,17 +251,3 @@ The overlay system is keyed by GUID, not by position or pointer. This is crucial
 For operations that create new items (like stack splits), the client generates the GUID before sending the operation to the server. The server then uses that same GUID when creating the authoritative item.
 
 ***
-
-<details>
-
-<summary>Deep Dive</summary>
-
-For implementation details including the data structures, recording algorithms, and cache rebuild mechanics, see [Overlay Internals](overlay-internals.md).
-
-</details>
-
-***
-
-### Next Steps
-
-Learn what happens when the server responds in [Reconciliation](../reconciliation/).

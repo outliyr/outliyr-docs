@@ -3,12 +3,12 @@
 This example demonstrates a fully predicted vendor flow where both the item transfer and currency change happen atomically with client prediction.
 
 {% hint style="info" %}
-**This is an advanced pattern.** The server-authoritative vendor in [Implementing the Interface](implementing-the-interface.md) is simpler and works well for most games. This page shows the predicted approach for completeness.
+Most projects do not need this. This exists to demonstrate how the transaction system can unify predicted item and numeric-resource changes in a single atomic flow
 {% endhint %}
 
 ***
 
-### How It Works
+## How It Works
 
 In a server-authoritative vendor, currency is deducted after the transaction succeeds:
 
@@ -28,11 +28,11 @@ This requires currency to be a container that the transaction system can operate
 
 ***
 
-### Currency Container
+## Currency Container
 
 A currency container is a lightweight container that stores numeric amounts rather than item instances.
 
-#### Storage: Numeric, Not Item Instances
+### Storage: Numeric, Not Item Instances
 
 Unlike inventory, the currency container stores amounts directly:
 
@@ -106,11 +106,11 @@ ULyraInventoryItemInstance* ULyraCurrencyContainerComponent::GetItemInSlot(
 
 The cached instance's stack count reflects the currency amount. When UI queries the item, it sees the predicted amount.
 
-#### Prediction Without Item Instances
+### Prediction Without Item Instances
 
 The prediction runtime is GUID-keyed. It tracks overlays by item GUID. But currency containers don't have item instances. How does prediction work?
 
-**Solution: Deterministic GUIDs from tags.**
+#### **Solution: Deterministic GUIDs from tags.**
 
 The slot descriptor generates a stable GUID from the currency tag:
 
@@ -157,8 +157,6 @@ Request.AddOp(FItemTxOp_ModifyTagStack(CurrencySlot, StatTags.StackCount, -100))
 ```
 
 Since this is inside the transaction, it predicts along with any other operations in the same request.
-
-***
 
 ### Predicted Buy Flow
 
@@ -213,7 +211,7 @@ void UBuyFromVendorAbility::ActivateAbility(...)
 #### Server validation
 
 * Is the catalog index valid?
-* Does player have enough gold?
+* Does player have enough gold? The `ModifyTagStack` handler's built-in underflow check rejects the transaction if the resulting amount would go below zero, no custom validation needed
 * Can player inventory accept the item?
 {% endstep %}
 

@@ -2,7 +2,7 @@
 
 A player opens the keybinding menu and sees every action mapped to a key. They click "Jump," press Space, and the binding updates. They can set primary and secondary bindings, detect conflicts with other actions, and reset individual bindings to defaults. Behind the scenes, this integrates with Unreal's Enhanced Input system.
 
-### Keyboard & Mouse Bindings
+## Keyboard & Mouse Bindings
 
 The settings registry discovers all rebindable actions from Enhanced Input's player-mappable key profiles. It iterates through every profile and its mapping rows, creating a settings entry for each action that has valid keyboard-type mappings. Each action appears as a row in the Mouse & Keyboard settings page, grouped by its display category.
 

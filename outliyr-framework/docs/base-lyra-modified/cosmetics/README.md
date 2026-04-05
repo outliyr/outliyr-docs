@@ -4,7 +4,7 @@ A player customizes their character with a helmet, backpack, and weapon skin. Ea
 
 ***
 
-### Two-Component Architecture
+## Two-Component Architecture
 
 The system splits cosmetic management across two components, one persistent and one per-life:
 
@@ -68,7 +68,7 @@ graph TD
 
 ***
 
-### Sub-Pages
+## Sub-Pages
 
 * [**Cosmetic Parts**](cosmetic-parts.md) - How parts are defined, applied, persisted, and replicated.
 * [**Body Style & Animation**](body-style-and-animation.md) - How equipped parts drive body mesh and animation layer selection.

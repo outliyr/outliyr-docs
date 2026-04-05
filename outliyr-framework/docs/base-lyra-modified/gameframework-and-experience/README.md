@@ -8,7 +8,7 @@ Experiences solve this by separating _what gameplay rules apply_ from _which map
 
 ***
 
-### Design Principles
+## Design Principles
 
 **Data-driven** — Game modes are data assets, not C++ subclasses. Creating a new mode means creating a new `ULyraExperienceDefinition` in the editor, not writing a new class.
 
@@ -20,7 +20,7 @@ Experiences solve this by separating _what gameplay rules apply_ from _which map
 
 ***
 
-### Architecture
+## Architecture
 
 The flow from map load to active gameplay passes through several systems, each with a single responsibility.
 
@@ -48,7 +48,7 @@ The Experience Manager Component drives the entire async pipeline. It loads the 
 
 ***
 
-### Sub-pages
+## Sub-pages
 
 {% stepper %}
 {% step %}
@@ -64,7 +64,7 @@ The full lifecycle from map load to gameplay, experience selection, async loadin
 {% endstep %}
 
 {% step %}
-[**Game Features**](/broken/pages/MMuer3tX1noU84k4jem8)
+[**Game Features**](game-features.md)
 
 The modularity system, plugins loaded on demand, all action types, and how the extension system injects functionality.
 {% endstep %}

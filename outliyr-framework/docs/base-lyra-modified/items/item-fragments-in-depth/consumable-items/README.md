@@ -4,7 +4,7 @@ A consumable item runs a gameplay effect in exchange for consuming one or more i
 
 ***
 
-#### How It Works
+## How It Works
 
 When a player presses "Use" on an item, three pieces work together:
 
@@ -28,7 +28,7 @@ For the full internal architecture (orchestrator flow, ability task lifecycle, s
 
 ***
 
-#### Quick Start
+## Quick Start
 
 {% stepper %}
 {% step %}
@@ -71,7 +71,7 @@ ActivateAbility
 
 ***
 
-#### What Happens When You Call `ConsumeItem()`
+## What Happens When You Call `ConsumeItem()`
 
 When your ability calls `ConsumeItem()`:
 
@@ -87,7 +87,7 @@ The item transaction uses client prediction for responsive gameplay. For details
 
 ***
 
-#### Finish Policy
+## Finish Policy
 
 The **Finish Policy** controls when the player can use another consumable after using this one:
 
@@ -99,7 +99,7 @@ The **Finish Policy** controls when the player can use another consumable after 
 
 ***
 
-#### Sub pages
+## Sub pages
 
 * **Consume Fragment** - Configuring items to be consumable (properties, action menu, runtime flow)
 * **FromConsume Ability** - Implementing the effect logic (key functions, common patterns, debugging)

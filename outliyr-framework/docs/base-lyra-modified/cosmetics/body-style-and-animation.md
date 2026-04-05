@@ -4,7 +4,7 @@ A character equips heavy armor. The body mesh changes from a light build to a bu
 
 ***
 
-### Tag-Driven Selection
+## Tag-Driven Selection
 
 Every cosmetic part can carry gameplay tags. When parts are attached to a pawn, the pawn component collects tags from all equipped parts into a single combined tag set.
 
@@ -14,7 +14,7 @@ This pattern is used in two places: body mesh selection and animation layer sele
 
 ***
 
-### Body Mesh Selection
+## Body Mesh Selection
 
 The pawn component holds a `BodyMeshes` property, a body style selection set that maps tag combinations to skeletal meshes.
 
@@ -103,7 +103,7 @@ This entire flow is automatic. No manual triggering is needed, the pawn componen
 
 ***
 
-### Animation Layer Selection
+## Animation Layer Selection
 
 Animation layer selection works the same way as body mesh selection, rules that map tag combinations to animation layer classes.
 
@@ -189,7 +189,7 @@ Animation layers are more complex. The AnimBP may need to blend between layers o
 
 ***
 
-### How Selection Rules Work
+## How Selection Rules Work
 
 Each rule has a set of required tags and a result (a mesh or a layer class). Rules are evaluated top to bottom. The first rule whose required tags are **all** present in the combined tag set wins. If no rule matches, the default is used.
 

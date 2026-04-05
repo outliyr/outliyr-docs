@@ -6,7 +6,7 @@ This page walks through how the interaction prompt widgets are created, what dat
 
 ***
 
-### How Prompt Widgets Are Spawned
+## How Prompt Widgets Are Spawned
 
 Every interaction option returned by an interactable can define its own UI via:
 
@@ -21,8 +21,6 @@ If no custom widget is provided, the system will use a **default interaction pro
 * Hold progress (for delayed interactions)
 
 This widget appears at a 3D world location (typically above the object or a specified component) and follows the camera using screen projection.
-
-***
 
 ### The Role of `ULyraIndicatorManagerComponent`
 
@@ -40,8 +38,6 @@ For a deeper understanding of how this overlay system works, refer to the dedica
 [**Lyra Indicator System**](../ui/lyra-indicator-system/)\
 &#xNAN;_(I recommend reading that page before attempting to customize the interaction prompt widgets, then returning here.)_
 {% endhint %}
-
-***
 
 ### Data Passed to the Widget
 
@@ -68,8 +64,6 @@ This interface allows the widget to **bind and extract information** from the pr
 
 <figure><img src="../../.gitbook/assets/image (143).png" alt=""><figcaption><p><strong>Blueprint of a widget implementing IIndicatorWidgetInterface and extracting information from InteractionDataObject</strong></p></figcaption></figure>
 
-***
-
 ### Where the Prompt Appears
 
 The prompt is positioned in 3D space based on:
@@ -87,11 +81,3 @@ This allows for precise control, for example:
 * Attach to a specific point on an NPC
 
 ***
-
-### Summary
-
-* Each interaction option can define its own prompt widget, or fall back to a powerful default.
-* The widget is managed by the [**Lyra Indicator System**](../ui/lyra-indicator-system/), which handles screen projection.
-* The widget receives a `UInteractionDataObject`, containing the interactable and its `FInteractionOption`.
-* The widget must implement `IIndicatorWidgetInterface` to bind this data.
-* Prompts are positioned using either a specific component or the actor root.

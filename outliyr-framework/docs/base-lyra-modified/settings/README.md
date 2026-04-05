@@ -16,7 +16,7 @@ The system aims to achieve these goals by being:
 
 ***
 
-### The Split
+## The Split
 
 * **Shared settings** save per-player as a SaveGame file. Sensitivity, colorblind mode, subtitles, language preference, anything that should follow the player across machines.
 * **Local settings** save per-machine as `GameUserSettings.ini`. Resolution, graphics quality, frame rate limits, audio device, anything tied to the hardware.
@@ -25,7 +25,7 @@ The UI doesn't care which backend a setting uses. The registry handles routing.
 
 ***
 
-### The Registry
+## The Registry
 
 Settings aren't defined in UMG. They're created in C++ as setting objects organized into categories (Video, Audio, Gameplay, Mouse & Keyboard, Gamepad). The UI reads these objects and renders them dynamically.
 
@@ -33,7 +33,7 @@ This means adding a new setting is a code change, not a widget tree change.
 
 ***
 
-### **System Architecture**
+## **System Architecture**
 
 Understanding how the different pieces fit together is crucial. At a high level, Lyra's settings system can be visualized as follows:
 
@@ -74,7 +74,7 @@ graph TD
 
 ***
 
-### Structure of This Section
+## Structure of This Section
 
 {% stepper %}
 {% step %}
@@ -84,7 +84,7 @@ How settings persist: the shared (SaveGame) and local (INI) backends, what each 
 {% endstep %}
 
 {% step %}
-#### [Input & Keybindings](/broken/pages/jxfjqxlenXXCsaOS9Ceq)
+#### [Input Settings](input-settings.md)
 
 Key remapping, gamepad configuration, and Enhanced Input integration.
 {% endstep %}

@@ -4,7 +4,7 @@ The save system is designed to be extended without modifying its core. Custom co
 
 ***
 
-### Saving Custom Container Config
+## Saving Custom Container Config
 
 If you create a new container type (a shop inventory, a crafting station, a quest reward pool) and it has configuration that should persist, layout, capacity, allowed items, implement `ILyraSaveableInterface`:
 
@@ -80,7 +80,7 @@ The existing containers already implement this: `ULyraInventoryManagerComponent`
 
 ***
 
-### Saving Runtime Fragment State
+## Saving Runtime Fragment State
 
 UObject-based runtime fragments (`UTransientRuntimeFragment`) are recreated from the item definition every time an item is instantiated. By default, nothing from the previous session carries over, the fragment starts fresh.
 
@@ -148,7 +148,7 @@ These methods are `BlueprintNativeEvent`, so Blueprint-only runtime fragments ca
 
 ***
 
-### Struct Fragment Persistence
+## Struct Fragment Persistence
 
 Struct-based transient fragments (`FTransientFragmentData`) are saved automatically, every `FInstancedStruct` in the item's `TransientFragments` array is copied into `FSavedItemData::SavedFragmentData`. No opt-in needed.
 
@@ -205,7 +205,7 @@ The deserializer calls `HasNestedSaveData()` to detect fragments that need speci
 
 ***
 
-### Saving Non-Container Object Config
+## Saving Non-Container Object Config
 
 `ILyraSaveableInterface` isn't limited to containers. Any UObject, an actor, a component, a subsystem, can implement it and persist config through `SaveObjectConfig` / `LoadObjectConfig`:
 
@@ -266,7 +266,7 @@ For containers, you don't need `SaveObjectConfig` / `LoadObjectConfig`, the cont
 
 ***
 
-### Saving Arbitrary Game Data
+## Saving Arbitrary Game Data
 
 For non-item data, use `SaveCustomData` and `LoadCustomData`. These store `FInstancedStruct` values under `FGameplayTag` keys in the same save file.
 
@@ -293,7 +293,7 @@ Avoid storing `TObjectPtr` or raw `UObject*` in custom data structs. These becom
 
 ***
 
-### Replacing the Storage Backend
+## Replacing the Storage Backend
 
 The current implementation writes `.sav` files to the local disk (or the server's disk for dedicated servers). This works for development and single-server deployments, but production games with multiple server instances need a shared backend, a database, cloud storage, or a custom web service.
 
@@ -324,7 +324,7 @@ graph LR
     E --> F
 ```
 
-#### Approach
+### Approach
 
 1. **Subclass `ULyraSaveSubsystem`** — override `SavePlayerData`, `SavePlayerDataSync`, and `LoadPlayerSaveRemote` (or make them virtual first)
 2. **Serialize to binary or JSON** — `ULyraPlayerSaveGame` is a `USaveGame` with `UPROPERTY` fields, so UE's serialization handles conversion
@@ -337,7 +337,9 @@ The caller code (`SaveContainer`, `LoadContainerInto`, etc.) is completely unawa
 For most projects, the disk-based implementation is sufficient through development and early production. Migrate to a backend when you need multiple server instances accessing the same player data.
 {% endhint %}
 
-### A Note on World-State Persistence
+***
+
+## A Note on World-State Persistence
 
 This save system is **per-player**, every operation is keyed by an `APlayerController*`. It's designed for data that belongs to a specific player: their inventory, equipment, currency, progression.
 

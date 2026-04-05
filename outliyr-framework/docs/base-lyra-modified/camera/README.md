@@ -4,7 +4,7 @@ Your character runs through a corridor, slides under cover, aims down sights, th
 
 ***
 
-### How It Works
+## How It Works
 
 Each frame, the camera component asks "which camera mode should be active right now?" That question is answered by a delegate, typically bound to the hero component, which checks if a gameplay ability is overriding the camera. If not, it falls back to the default mode defined in PawnData.
 
@@ -82,7 +82,7 @@ graph TD
 
 ***
 
-### Key Classes
+## Key Classes
 
 | Class                         | Role                                                                                                        |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------- |
@@ -95,7 +95,7 @@ graph TD
 
 ***
 
-### Sub-Pages
+## Sub-Pages
 
 * [**Camera Modes**](camera-modes.md) — How camera modes work, the blending stack, and the view data each mode produces
 * [**Third-Person Camera**](third-person-camera.md) — Pitch-based offsets, crouch handling, and the collision avoidance system

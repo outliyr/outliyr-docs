@@ -200,7 +200,7 @@ int32 UVendorComponent::CanAcceptItem(const FInstancedStruct& SlotInfo,
 }
 ```
 
-Key insight: `CanAcceptItem` answers "can the player sell this here?" For vendors, that means checking if any catalog entry buys this item type.
+`CanAcceptItem` answers "can the player sell this here?". This is because the function is checking if an item can be transferred to the vendor i.e. selling. For vendors, that means checking if any catalog entry buys this item type.
 
 ***
 
@@ -243,7 +243,7 @@ int32 UVendorComponent::CanRemoveItem(const FInstancedStruct& SlotInfo,
 }
 ```
 
-Key insight: `CanRemoveItem` is the purchase validation. It's read-only, no state changes. Returning a quantity enables partial purchases for stackable items.
+`CanRemoveItem` is the purchase validation. It's read-only, no state changes. Returning a quantity enables partial purchases for stackable items. This is because this function checks what can leave the vendor i.e buying.
 
 ***
 
@@ -275,7 +275,7 @@ bool UVendorComponent::AddItemToSlot(const FInstancedStruct& SlotInfo,
 }
 ```
 
-Key insight: Vendor doesn't need to store the item permanently. Currency is handled separately by the Sell ability, not here.
+Vendor doesn't need to store the item permanently. Currency is handled separately by the Sell ability, not here. Which will be shown below
 
 ***
 
@@ -311,14 +311,14 @@ ULyraInventoryItemInstance* UVendorComponent::RemoveItemFromSlot(
     }
 
     // Create a new item instance for the player
-    ULyraInventoryItemInstance* NewItem = NewObject<ULyraInventoryItemInstance>(this);
-    NewItem->SetItemDef(Entry.ItemDef);
+    ULyraItemSubsystem* ItemSubsystem = GetWorld()->GetSubsystem<ULyraItemSubsystem>();
+    ULyraInventoryItemInstance* NewItem = ItemSubsystem->CreateItemInstance(Entry.ItemDef, 1);
 
     return NewItem;
 }
 ```
 
-Key insight: Vendor creates items on-demand. It doesn't "store" instances, it has a catalog and manufactures instances when purchased.
+Vendor creates items on-demand. It doesn't "store" instances, it has a catalog and manufactures instances when purchased.
 
 ***
 
@@ -410,7 +410,14 @@ bool UVendorComponent::CanParticipateInClientPrediction(
 
 The vendor validates affordability in `CanRemoveItem`, but where does the actual currency deduction happen?
 
-#### The "Ability-Handles-Currency" Pattern
+{% hint style="success" %}
+**Design Pattern: Container validates, ability applies side effects**
+
+The container is responsible for answering **"can this item be moved?"** and performing the container mutation itself.\
+Side effects such as **deducting currency, granting rewards, triggering quests, or playing progression logic** belong in the **ability layer after the transaction succeeds**.
+
+This keeps containers generic and reusable, while abilities handle game-specific consequences.
+{% endhint %}
 
 Currency deduction happens in the ability layer, not in the container. When a purchase transaction succeeds, the ability deducts currency:
 
@@ -440,7 +447,7 @@ Why This Pattern?
 3. Matches existing patterns - Currency after successful transaction
 4. Flexibility - Different abilities can handle currency differently
 
-Query Methods for UI
+#### Query Methods for UI
 
 ```cpp
 int32 UVendorComponent::GetBuyPrice(int32 CatalogIndex) const
@@ -499,7 +506,7 @@ The key insight is that purchasing doesn't need special treatment:
 └──────────────────────────────────────────────────────────────┘
 ```
 
-CanRemoveItem Is the Validation Layer
+#### CanRemoveItem Is the Validation Layer
 
 All purchase business logic lives in `CanRemoveItem`:
 
@@ -509,7 +516,7 @@ All purchase business logic lives in `CanRemoveItem`:
 
 This is declarative, the transaction system asks "can this happen?" before doing anything.
 
-Currency Flexibility
+#### Currency Flexibility
 
 Different vendors can check different currencies in `CanRemoveItem`:
 
@@ -539,7 +546,7 @@ int32 UTokenVendorComponent::CanRemoveItem(...) const
 }
 ```
 
-Server Authority
+#### Server Authority
 
 Because `CanRemoveItem` runs on both client and server:
 
@@ -552,7 +559,7 @@ Stock and currency can't be exploited, the server always has final say.
 
 ***
 
-### What About Prediction?
+## What About Prediction?
 
 Notice we didn't implement:
 
@@ -567,7 +574,7 @@ For containers that need prediction (player inventory, equipment), the pattern c
 
 ***
 
-### Implementation Checklist
+## Implementation Checklist
 
 Use this checklist when implementing any custom container.
 
@@ -609,6 +616,6 @@ Use this checklist when implementing any custom container.
 
 ***
 
-### Next Steps
+## Next Steps
 
 This vendor works but has network latency on every purchase. For containers where that matters, see [Adding Prediction](adding-prediction.md) to understand how the implementation pattern changes.

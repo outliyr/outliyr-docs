@@ -4,7 +4,7 @@ When the server responds to a predicted operation, the client must reconcile its
 
 ***
 
-### The Four Phases
+## The Four Phases
 
 Every item delta goes through one of four phases:
 
@@ -15,7 +15,7 @@ Every item delta goes through one of four phases:
 | **PredictionConfirmed**  | Server confirmed client's prediction          |
 | **PredictionRejected**   | Server rejected client's prediction           |
 
-#### Execution Matrix
+### Execution Matrix
 
 | Phase                  | Predicting Client | Server | Simulated Proxies |
 | ---------------------- | ----------------- | ------ | ----------------- |
@@ -30,7 +30,7 @@ Every item delta goes through one of four phases:
 
 ***
 
-### Happy Path: Confirmation
+## Happy Path: Confirmation
 
 When the server confirms a prediction:
 
@@ -117,11 +117,11 @@ For details on how this works, see [Phase Classification](phase-classification.m
 
 ***
 
-### State Transfer
+## State Transfer
 
 When a prediction is confirmed, state must transfer from the predicted representation to the authoritative one.
 
-#### Item Reconciliation
+### Item Reconciliation
 
 The predicted and authoritative items are different objects with the same GUID. When the server confirms a prediction:
 
@@ -151,7 +151,7 @@ Transfer spawned actors, bindings, and other container-specific state.
 {% endstep %}
 {% endstepper %}
 
-#### Container-Specific State
+### Container-Specific State
 
 Different containers have different state to transfer:
 
@@ -170,7 +170,7 @@ Each container's Traits define what state needs transferring via `TransferPredic
 
 ***
 
-### Recovery Path: Rejection
+## Recovery Path: Rejection
 
 When the server rejects a prediction:
 
@@ -196,7 +196,7 @@ sequenceDiagram
     Note over Overlay: Overlay empty (or ops removed)
 ```
 
-#### What Happens
+### What Happens
 
 {% stepper %}
 {% step %}
@@ -232,11 +232,11 @@ UI reverts to show server state.
 
 ***
 
-### Overlay Cleanup via `CaughtUp`
+## Overlay Cleanup via `CaughtUp`
 
 Overlays are cleaned up through the GAS CaughtUp delegate, which fires after the server has finished processing a prediction key.
 
-#### Cleanup Flow
+### Cleanup Flow
 
 | Event                         | Action                         | Result                  |
 | ----------------------------- | ------------------------------ | ----------------------- |
@@ -246,7 +246,7 @@ Overlays are cleaned up through the GAS CaughtUp delegate, which fires after the
 
 This design ensures consistent cleanup for all overlay types. Replication marks caches dirty (base changed), but `CaughtUp` handles the actual op removal.
 
-#### Why `CaughtUp` Instead of Immediate Cleanup?
+### Why `CaughtUp` Instead of Immediate Cleanup?
 
 Immediate cleanup during replication creates edge cases:
 
@@ -260,7 +260,7 @@ Immediate cleanup during replication creates edge cases:
 
 ***
 
-### Partial Confirmation
+## Partial Confirmation
 
 The op-history model handles partial confirmation naturally.
 
@@ -288,7 +288,7 @@ Only the K1 op is removed. K2's op remains in the overlay, and the cache is rebu
 
 ***
 
-### Removal Confirmation
+## Removal Confirmation
 
 Removals use GUID matching for phase classification instead of stamp-based classification.
 
@@ -301,7 +301,7 @@ GUID matching is simpler and more reliable than correlating stamps for removals.
 
 ***
 
-### Side Effect Phases
+## Side Effect Phases
 
 Different phases trigger different side effects:
 
@@ -354,7 +354,3 @@ Rollback predicted state:
 </details>
 
 ***
-
-### Deep Dive
-
-For technical details on phase classification including the `FPredictionKey::NetSerialize` trick and edge cases, see [Phase Classification](phase-classification.md).

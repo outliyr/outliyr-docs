@@ -4,7 +4,7 @@ Settings need to persist, but not all settings belong in the same place. Mouse s
 
 ***
 
-### Shared Settings
+## Shared Settings
 
 Stored as a SaveGame file per player. Loads asynchronously when the local player is created.
 
@@ -43,7 +43,7 @@ bool ChangeValueAndDirty(T& CurrentValue, const T& NewValue)
 
 ***
 
-### Local Settings
+## Local Settings
 
 Stored in `GameUserSettings.ini`. Loads synchronously at startup.
 
@@ -78,7 +78,7 @@ class ULyraSettingsLocal : public UGameUserSettings
 
 ***
 
-### How They Work Together
+## How They Work Together
 
 {% stepper %}
 {% step %}
@@ -104,7 +104,7 @@ Player confirms, both backends save (shared async, local sync).
 
 ***
 
-### Accessing Settings in Code
+## Accessing Settings in Code
 
 Both settings classes expose getter/setter pairs for each setting (e.g., `GetMouseSensitivityX()` / `SetMouseSensitivityX()`). The registry binds these automatically when building the settings UI, so you rarely call them directly. For the full list, see `LyraSettingsShared.h` and `LyraSettingsLocal.h`.
 
@@ -138,7 +138,7 @@ For the full list of available getters/setters, see `LyraSettingsShared.h` and `
 
 ***
 
-### Loading and Timing
+## Loading and Timing
 
 Local settings load synchronously from .ini at startup. They're available immediately, the engine needs them for resolution and graphics before the first frame renders.
 
@@ -160,7 +160,7 @@ static bool AsyncLoadOrCreateSettings(const ULyraLocalPlayer* LocalPlayer, FOnSe
 
 ***
 
-### How Settings Apply
+## How Settings Apply
 
 Shared settings apply immediately when set. Calling `SetMouseSensitivityX()` updates the value and applies it to the input system in the same frame. Same for subtitles, colorblind mode, and input sensitivity.
 
@@ -175,7 +175,7 @@ Saving is separate from applying. Settings take effect immediately, but they onl
 
 ***
 
-### Platform-Specific Handling
+## Platform-Specific Handling
 
 **Device profiles** interact with scalability. Console platforms define quality presets (Quality, Performance) as device profile suffixes. The settings system selects the appropriate profile and applies it, which sets baseline CVars for that hardware tier.
 

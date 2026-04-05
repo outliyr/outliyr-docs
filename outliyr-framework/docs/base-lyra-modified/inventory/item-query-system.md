@@ -6,7 +6,7 @@ Your weapon component needs to know how much compatible ammo the player is carry
 
 ***
 
-### How It Works
+## How It Works
 
 You define a query by specifying a target `ULyraInventoryManagerComponent` and one or more `ULyraInventoryItemDefinition` classes to track. The system:
 
@@ -44,7 +44,7 @@ graph TD
 
 ***
 
-### C++ - `ULyraInventoryQuery`
+## C++ - `ULyraInventoryQuery`
 
 Create a `ULyraInventoryQuery` as a `UPROPERTY` member. Call `Initialize` with the item definitions and target inventory, bind your delegate, and you're done.
 
@@ -97,7 +97,7 @@ void UMyWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 Declare the query as a `UPROPERTY()` to prevent garbage collection. Call `StopListening()` during cleanup, `BeginDestroy` on the query also handles this, but explicit cleanup is good practice.
 {% endhint %}
 
-#### Accessors
+### Accessors
 
 | Method                 | Returns                                           | Description                                                             |
 | ---------------------- | ------------------------------------------------- | ----------------------------------------------------------------------- |
@@ -105,7 +105,7 @@ Declare the query as a `UPROPERTY()` to prevent garbage collection. Call `StopLi
 | `GetInventory()`       | `ULyraInventoryManagerComponent*`                 | The inventory being monitored                                           |
 | `GetTrackedItemDefs()` | `TSet<TSubclassOf<ULyraInventoryItemDefinition>>` | The item definitions this query tracks                                  |
 
-#### Delegates
+### Delegates
 
 | Delegate                   | Signature                                                                                | Description                                                         |
 | -------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
@@ -114,7 +114,7 @@ Declare the query as a `UPROPERTY()` to prevent garbage collection. Call `StopLi
 
 ***
 
-### Blueprint - `UAsyncAction_ItemQuery`
+## Blueprint - `UAsyncAction_ItemQuery`
 
 <figure><img src="../../.gitbook/assets/image (66).png" alt="" width="380"><figcaption></figcaption></figure>
 

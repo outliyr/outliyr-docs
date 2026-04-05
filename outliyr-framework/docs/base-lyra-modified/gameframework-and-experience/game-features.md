@@ -4,15 +4,13 @@ Game features are the modularity mechanism. Instead of hardcoding "this game mod
 
 ***
 
-### What a Game Feature Is
+## What a Game Feature Is
 
 A game feature plugin is a standard Unreal plugin that participates in the Game Features framework. It lives under your project's `Plugins/GameFeatures/` directory, and it contains two categories of things: **content assets** (abilities, widgets, input configs, sub-levels, gameplay cues) and **Game Feature Actions** that inject that content into the world when the feature activates.
 
 The lifecycle is demand-driven. When an experience references a game feature plugin, the framework loads the plugin and fires its actions. When the experience deactivates (a map change, a mode switch, a session ending), the actions clean up after themselves. The plugin can then be unloaded, keeping memory usage proportional to what the current game mode actually uses. A racing experience never pays for the inventory system sitting in a shooter feature plugin.
 
 This also means features compose freely. A "Core Shooter" feature might add weapon abilities and an ammo HUD. A "Battle Royale" feature might add zone shrinking and a player count display. An experience that references both gets all of it. An experience that only references "Core Shooter" gets weapons without zone logic. The features themselves are oblivious to each other.
-
-***
 
 ### Game Feature Actions
 
@@ -94,8 +92,6 @@ This is how game modes inject mode-specific level content. A Battle Royale exper
 `UGameFeatureAction_SplitscreenConfig` controls whether splitscreen is allowed during this experience. It exposes a single `bDisableSplitscreen` flag (defaults to true, meaning it disables splitscreen when the feature is active). The implementation uses a voting system through `GlobalDisableVotes` and `LocalDisableVotes`, multiple features can each cast a disable vote, and splitscreen only re-enables when all votes are removed. This prevents one feature's deactivation from re-enabling splitscreen while another feature still wants it off.
 
 <figure><img src="../../.gitbook/assets/image (55).png" alt=""><figcaption></figcaption></figure>
-
-***
 
 ### How Actions Clean Up
 

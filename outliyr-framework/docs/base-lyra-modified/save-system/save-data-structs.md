@@ -4,7 +4,7 @@ When a container is saved, every item in it is broken down into a flat, serializ
 
 ***
 
-### What Gets Saved
+## What Gets Saved
 
 A single item's journey from live object to disk:
 
@@ -35,7 +35,7 @@ FSavedContainerData
 
 ***
 
-### FSavedItemData
+## FSavedItemData
 
 Each saved item captures everything needed to reconstruct the live instance:
 
@@ -47,13 +47,13 @@ Each saved item captures everything needed to reconstruct the live instance:
 | `CurrentSlot`       | `FInstancedStruct`                            | The item's position in its container. Type depends on the container: `FInventoryAbilityData_SourceTetrisItem` for grid inventories (position, rotation, clump), `FEquipmentAbilityData_SourceEquipment` for equipment (slot tag), `FAttachmentAbilityData_SourceAttachment` for attachments |
 | `SavedFragmentData` | `TArray<FInstancedStruct>`                    | All fragment data for the item. Struct-based transient fragments are copied directly. Runtime fragments that opt in via `WantsSave()` contribute their save data here too                                                                                                                   |
 
-#### IsValid
+### IsValid
 
 `FSavedItemData` exposes an `IsValid()` helper that checks whether the `ItemDef` soft pointer is non-null. The deserializer skips invalid entries silently.
 
 ***
 
-### FSavedContainerData
+## FSavedContainerData
 
 Captures a complete container snapshot, its identity, configuration, and contents:
 
@@ -67,13 +67,13 @@ Captures a complete container snapshot, its identity, configuration, and content
 | `LimitItemInstancesStacks` | `int32`                          | Saved slot count limit override                                                                                                                                                                               |
 | `SpecificData`             | `TArray<FInstancedStruct>`       | Container-type-specific config. Each container type defines its own struct (e.g., `FSavedTetrisConfig` for grid layout, `FSavedEquipmentConfig` for held slots). The save system treats these as opaque blobs |
 
-#### Config via ILyraSaveableInterface
+### Config via ILyraSaveableInterface
 
 Containers that implement `ILyraSaveableInterface` can persist custom configuration through `SpecificData`. During save, `GetSaveableConfig()` produces the array; during load, `ApplySavedConfig()` restores it. This is how tetris grid layouts and equipment slot configurations round-trip through the save.
 
 ***
 
-### ULyraPlayerSaveGame
+## ULyraPlayerSaveGame
 
 The root save game object, inheriting from `ULocalPlayerSaveGame`. One instance per player per save slot.
 
@@ -82,7 +82,7 @@ The root save game object, inheriting from `ULocalPlayerSaveGame`. One instance 
 | `SavedContainers` | `TArray<FSavedContainerData>`          | All saved containers, each keyed by `SaveTag`. A player might have entries for `Save.PlayerInventory`, `Save.PlayerEquipment`, `Save.BankStorage`, etc. |
 | `CustomSaveData`  | `TMap<FGameplayTag, FInstancedStruct>` | Generic key-value store for arbitrary game data. Quest progress, currency, settings, anything that fits in an `FInstancedStruct`                        |
 
-#### Key Methods
+### Key Methods
 
 | Method                          | Returns                | Description                                                 |
 | ------------------------------- | ---------------------- | ----------------------------------------------------------- |
@@ -96,13 +96,13 @@ The root save game object, inheriting from `ULocalPlayerSaveGame`. One instance 
 
 ***
 
-### Stale Reference Protection
+## Stale Reference Protection
 
 Item slot structs and transient fragments can contain `TObjectPtr` members pointing to live components (the inventory manager, equipment manager, child inventory). These pointers become stale after map travel, the old world is destroyed, but the cached save game still holds the pointers.
 
 Three mechanisms prevent this:
 
-#### 1. ClearContainerReference on Slot Structs
+### 1. ClearContainerReference on Slot Structs
 
 Every slot struct inherits from `FAbilityData_SourceItem`, which provides a virtual `ClearContainerReference()`. `SerializeItem` calls this immediately after copying the slot, nulling out the component pointer while preserving the positional data (grid position, rotation, equipment slot tag).
 
@@ -113,12 +113,12 @@ Every slot struct inherits from `FAbilityData_SourceItem`, which provides a virt
 | `FEquipmentAbilityData_SourceEquipment`   | `EquipmentManager`                             |
 | `FAttachmentAbilityData_SourceAttachment` | Recursively clears nested `RootAttachmentSlot` |
 
-#### 2. PrepareForSave on Fragment Structs
+### 2. PrepareForSave on Fragment Structs
 
 `FTransientFragmentData` provides a virtual `PrepareForSave()` called by `SerializeItem` on every copied fragment. Subclasses override it to null out their UObject pointers.
 
 The container fragment (`FTransientFragmentData_Container`) uses this to serialize its child inventory's items into `SavedChildInventory` and then null the `ChildInventory` pointer, preventing the GC from tracing into the old world.
 
-#### 3. Automatic Cache Clearing
+### 3. Automatic Cache Clearing
 
 The save subsystem binds to `FCoreUObjectDelegates::PreLoadMap`. When any map starts loading, the in-memory cache is emptied. Even if some stale pointers slipped through, they're discarded before the new world loads. The next `GetOrCreateSaveGame` call reloads clean data from disk.

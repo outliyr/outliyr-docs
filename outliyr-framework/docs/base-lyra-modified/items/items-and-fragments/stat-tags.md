@@ -1,121 +1,85 @@
 # Stat Tags
 
-Each `ULyraInventoryItemInstance` contains a `StatTags` property, which is an instance of `FGameplayTagStackContainer`. This system, originating from the base Lyra framework, provides a way to associate **persistent integer counts** (stacks) with specific **Gameplay Tags** on an item instance.
+Your rifle shows 30/30 in the magazine. Your potion stack reads 5. Your pickaxe has 87 durability remaining. All of these are **Stat Tags**, persistent integer counts stored directly on an item instance, keyed by Gameplay Tags.
+
+Stat Tags are the simplest form of per-instance data. Each `ULyraInventoryItemInstance` contains a `StatTags` property (an `FGameplayTagStackContainer`) that maps Gameplay Tags to integer values. Different instances of the same item can have different counts, and those counts persist across inventory moves, drops, and pickups as long as the instance survives.
+
+### Common Use Cases
+
+| Gameplay Tag                | Represents                                                          |
+| --------------------------- | ------------------------------------------------------------------- |
+| `Lyra.Inventory.Item.Count` | Stack size (used by `InventoryFragment_InventoryIcon` for stacking) |
+| `Weapon.Ammo.Magazine`      | Current magazine ammo                                               |
+| `Weapon.Ammo.Reserve`       | Reserve ammo pool                                                   |
+| `Item.Charges.Current`      | Remaining charges on a consumable                                   |
+| `Item.Durability`           | Durability points                                                   |
+
+Any Gameplay Tag can be used. A stack count > 0 can also serve as a boolean flag (e.g., `Item.State.IsJammed`).
 
 ***
 
-### Role and Purpose
+## The Typical Workflow
 
-* **Instance-Specific Counts:** Stores integer values directly on the item instance, allowing different instances of the same item type to have varying counts for specific tagged properties.
-* **Persistence:** Unlike some transient data, these counts persist with the item instance even when it's moved between inventories, dropped, or picked up (assuming the instance itself persists).
-* **Primary Use Cases:**
-  * **Stack Size:** Tracking the quantity of stackable items (e.g., 30/30 Rifle Ammo, 3/5 Health Potions). The Gameplay Tag `Lyra.Inventory.Item.Count` is often used by convention for this primary stack count, especially by fragments like `InventoryFragment_InventoryIcon`.
-  * **Ammo/Charges:** Storing current magazine ammo, reserve ammo counts, or charges remaining on a usable item.
-  * **Durability:** Representing durability as an integer value (e.g., 100/100 points).
-  * **Simple Flags/States:** While primarily for counts, a stack count > 0 can implicitly act as a boolean flag (e.g., `Item.State.IsJammed = 1`).
+```mermaid
+flowchart LR
+    A["Define Initial Values<br/><i>InventoryFragment_SetStats</i>"] --> B["Instance Created<br/><i>Tags applied automatically</i>"]
+    B --> C["Read at Runtime<br/><i>GetStatTagStackCount</i>"]
+    B --> D["Modify on Server<br/><i>Add / Set / Remove</i>"]
+    D --> E["Delegate Fires<br/><i>OnItemStatTagChanged</i>"]
+    E --> F["UI Updates"]
+```
 
-***
+{% stepper %}
+{% step %}
+### Initialize with `InventoryFragment_SetStats`
 
-### Comparison with Transient Fragments
+Add the `InventoryFragment_SetStats` fragment to your Item Definition and configure its `InitialItemStats` map. When an instance is created, `OnInstanceCreated` automatically calls `AddStatTagStack` for each entry.
 
-It's important to understand when to use Stat Tags versus the Transient Fragment system:
+Example configuration:
 
-| Feature            | Stat Tags (`FGameplayTagStackContainer`)                 | Transient Fragments (`FTransientFragmentData`/`UTransientRuntimeFragment`)       |
-| ------------------ | -------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| **Data Type**      | `int32` (Stack Count)                                    | Any `USTRUCT` or `UObject`                                                       |
-| **Association**    | `FGameplayTag` -> `int32`                                | Specific `ULyraInventoryItemFragment` -> Specific Data Type                      |
-| **Persistence**    | High (Persists with item instance across moves)          | High (Persists with item instance across moves)                                  |
-| **Primary Use**    | Integer counts, charges, durability points, simple flags | Complex state, non-integer data, related data groups, UObject logic              |
-| **Initialization** | Can be initialized via `InventoryFragment_SetStats`      | Initialized via `CreateNewTransientFragment`/`CreateNewRuntimeTransientFragment` |
-| **Flexibility**    | Good for simple integer tracking                         | Very high - allows arbitrary data structures and UObject features                |
+* `Lyra.Inventory.Item.Count` → `1`
+* `Weapon.Ammo.Magazine` → `30`
+* `Item.Charges.Current` → `3`
+{% endstep %}
 
-**Rule of Thumb:**
+{% step %}
+### Read and Modify at Runtime
 
-* Use **Stat Tags** for simple, persistent integer counts directly associated with the item instance (like ammo or quantity).
-* Use **Transient Fragments** for more complex, potentially non-integer instance-specific state, especially when that state is logically tied to a specific fragment's functionality (like attachment data being tied to the Attachment fragment, or heat data tied to a Weapon Mechanics fragment).
+{% tabs %}
+{% tab title="C++" %}
+```cpp
+// Read (Client & Server)
+int32 Ammo = ItemInstance->GetStatTagStackCount(TAG_Weapon_Ammo_Magazine);
+bool bHasAmmo = ItemInstance->HasStatTag(TAG_Weapon_Ammo_Magazine);
 
-***
+// Modify (Server Only)
+ItemInstance->SetStatTagStack(TAG_Weapon_Ammo_Magazine, 30);  // Set to exact value
+ItemInstance->AddStatTagStack(TAG_Weapon_Ammo_Magazine, 5);   // Add to current
+ItemInstance->RemoveStatTagStack(TAG_Weapon_Ammo_Magazine, 1); // Subtract from current
+```
+{% endtab %}
 
-### Key Functions (on `ULyraInventoryItemInstance`)
+{% tab title="Blueprint" %}
+<figure><img src="../../../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+{% endtabs %}
 
-These functions operate on the `StatTags` container within the item instance:
+Modification functions are **authority-only** to maintain network consistency. If a count reaches zero or below, the tag is removed entirely.
+{% endstep %}
 
-* `AddStatTagStack(FGameplayTag Tag, int32 StackCount)`
-  * **Authority Only.**
-  * Adds the specified `StackCount` to the existing count for the `Tag`. If the tag doesn't exist, it's added with the given count. Does nothing if `StackCount` <= 0.
+{% step %}
+### Listen for Changes
 
-<figure><img src="../../../.gitbook/assets/image (18) (1) (1) (1) (1) (1).png" alt="" width="334"><figcaption></figcaption></figure>
-
-* `SetStatTagStack(FGameplayTag Tag, int32 StackCount)`
-  * **Authority Only.**
-  * Sets the count for the `Tag` directly to `StackCount`. If `StackCount` <= 0, the tag is effectively removed. If the tag doesn't exist and `StackCount` > 0, it's added.
-
-<figure><img src="../../../.gitbook/assets/image (19) (1) (1) (1) (1) (1).png" alt="" width="332"><figcaption></figcaption></figure>
-
-* `RemoveStatTagStack(FGameplayTag Tag, int32 StackCount)`
-  * **Authority Only.**
-  * Removes the specified `StackCount` from the existing count for the `Tag`. If the resulting count is <= 0, the tag is removed entirely. Does nothing if `StackCount` <= 0 or the tag doesn't exist.
-
-<figure><img src="../../../.gitbook/assets/image (20) (1) (1) (1) (1).png" alt="" width="325"><figcaption></figcaption></figure>
-
-* `GetStatTagStackCount(FGameplayTag Tag) const`
-  * **Client & Server.**
-  * Returns the current stack count associated with the `Tag`, or 0 if the tag is not present.
-
-<figure><img src="../../../.gitbook/assets/image (21) (1) (1) (1) (1).png" alt="" width="344"><figcaption></figcaption></figure>
-
-* `HasStatTag(FGameplayTag Tag) const`
-  * **Client & Server.**
-  * Returns `true` if the `Tag` exists in the container (i.e., has a stack count > 0), `false` otherwise.
-
-<figure><img src="../../../.gitbook/assets/image (22) (1) (1) (1) (1).png" alt="" width="331"><figcaption></figcaption></figure>
-
-***
-
-### Initialization (`InventoryFragment_SetStats`)
-
-While you can manually call `SetStatTagStack` after creating an item instance, the common way to set initial default values is using the `UInventoryFragment_SetStats` fragment on the `ULyraInventoryItemDefinition`.
-
-1. Add `InventoryFragment_SetStats` to your Item Definition's `Fragments` array.
-2. Configure its `InitialItemStats` TMap property: Add entries mapping the desired `FGameplayTag` to its initial `int32` count.
-3. When an instance of this item definition is created (e.g., via `UGlobalInventoryManager::CreateNewItem`), the `UInventoryFragment_SetStats::OnInstanceCreated` function will automatically iterate through this map and call `Instance->AddStatTagStack()` for each entry.
-
-_Example `InitialItemStats` Configuration:_
-
-* `Inventory.Item.Count` -> `1` (Default stack size)
-* `Weapon.Ammo.Magazine` -> `30` (Initial mag capacity)
-* `Item.Charges.Max` -> `3` (Max charges)
-* `Item.Charges.Current` -> `3` (Current charges)
-
-***
-
-### Replication
-
-The `StatTags` property (`FGameplayTagStackContainer`) on `ULyraInventoryItemInstance` is marked `UPROPERTY(Replicated)` and uses `FFastArraySerializer` internally (`FGameplayTagStack` deriving from `FFastArraySerializerItem`).
-
-* **Efficiency:** Changes to stack counts are replicated efficiently.
-* **Client Access:** Clients can safely call `GetStatTagStackCount` and `HasStatTag` to query the replicated state.
-* **Authority:** Modification functions (`Add`, `Set`, `Remove`) are authority-only to maintain network consistency.
-
-***
-
-#### Change Notifications (Delegates)
-
-When stat tag values change, item instances broadcast a delegate to notify interested systems like UI widgets:
+When any stat tag changes, the item instance broadcasts a delegate:
 
 ```cpp
 UPROPERTY(BlueprintAssignable, Category="Inventory|Stats")
 FOnGameplayTagStackChangedDynamic OnItemStatTagChanged;
+// Signature: (FGameplayTag Tag, int32 NewCount, int32 OldCount)
 ```
 
-**Delegate Signature:**
-
-* `Tag` (`FGameplayTag`): The tag that changed
-* `NewCount` (`int32`): The new stack count
-* `OldCount` (`int32`): The previous stack count
-
-**Usage Example (C++):**
-
+{% tabs %}
+{% tab title="C++" %}
 ```cpp
 ItemInstance->OnItemStatTagChanged.AddDynamic(this, &UMyWidget::HandleStatChanged);
 
@@ -127,40 +91,48 @@ void UMyWidget::HandleStatChanged(FGameplayTag Tag, int32 NewCount, int32 OldCou
     }
 }
 ```
+{% endtab %}
 
-**Usage Example (Blueprint):** Bind to the `OnItemStatTagChanged` event on your item instance reference to receive notifications when any stat tag changes.
+{% tab title="Blueprint" %}
+<figure><img src="../../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+{% endtabs %}
 
-**Prediction Support**
+This same delegate pattern is used consistently across the framework:
 
-The item instance stat tag system includes prediction support for responsive UI updates:
-
-* **`RecordPredictedTagDelta(Tag, Delta, PredKeyId)`**: Records a predicted change that will be applied immediately to `GetStatTagStackCount()` results, allowing UI to show the predicted value before server confirmation.
-* **`PendingTagDeltas`**: Internal map tracking predicted changes keyed by prediction ID.
-* **`ClearPredictedDeltasForKey(PredKeyId)`**: Called when a prediction is confirmed or rejected to clean up pending deltas.
-
-**Prediction Behavior:**
-
-1. When a predicted delta is recorded, the delegate fires immediately with the predicted value
-2. The replicated value updates separately via server replication
-3. When prediction is cleared, the delegate fires with the final confirmed value
-4. If prediction is rejected, the rollback broadcasts the corrected value
-
-This allows UI to show immediate feedback (e.g., ammo decrementing when firing) while maintaining server authority over the actual values.
-
-***
-
-#### Related Delegates
-
-The stat tag delegate pattern is used consistently across the framework:
-
-| Class                        | Delegate                 | Purpose                                      |
+| Class                        | Delegate                 | Tracks                                       |
 | ---------------------------- | ------------------------ | -------------------------------------------- |
 | `ULyraInventoryItemInstance` | `OnItemStatTagChanged`   | Item-level stats (ammo, durability, charges) |
 | `ALyraPlayerState`           | `OnPlayerStatTagChanged` | Player-level stats (kills, deaths, score)    |
 | `ALyraTeamInfoBase`          | `OnTeamTagChanged`       | Team-level stats (objectives, resources)     |
 
-All three delegates share the same signature: `(FGameplayTag Tag, int32 NewCount, int32 OldCount)`
+All three share the same signature: `(FGameplayTag Tag, int32 NewCount, int32 OldCount)`.
+{% endstep %}
+{% endstepper %}
 
 ***
 
-In essence, `StatTags` provide a straightforward, networked way to manage simple integer states that belong intrinsically to an item instance and need to persist with it. They complement the more complex and flexible Transient Fragment system for handling other types of instance-specific data.
+## Prediction Support
+
+In a networked game, waiting for the server to confirm a stat change before updating the UI creates visible lag, the player fires their weapon but the ammo counter doesn't decrement for a round trip. The stat tag system includes client prediction to solve this.
+
+`RecordPredictedTagDelta(Tag, Delta, PredKey)` records a predicted change that immediately affects `GetStatTagStackCount()` results and fires the delegate. The prediction system handles the rest:
+
+1. **Predicted delta recorded** — delegate fires with the predicted value, UI updates instantly
+2. **Server replicates** — the authoritative value arrives separately
+3. **Prediction confirmed** — `ClearPredictedDeltasForKey` removes the delta, delegate fires with the final value
+4. **Prediction rejected** — rollback broadcasts the corrected value
+
+This allows UI to show immediate feedback (ammo decrementing on fire) while the server remains authoritative.
+
+***
+
+## Replication
+
+The `StatTags` container is `UPROPERTY(Replicated)` and uses `FFastArraySerializer` internally, so changes replicate efficiently. Clients can safely call the read functions (`GetStatTagStackCount`, `HasStatTag`) against the replicated state.
+
+***
+
+### Stat Tags vs. Transient Fragments
+
+Stat Tags are the right choice for simple integer tracking. For anything more complex, see the Transient Fragment system.

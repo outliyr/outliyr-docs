@@ -4,7 +4,7 @@ Your player spends ten minutes organizing their inventory, fitting a rifle into 
 
 The Save System provides the persistence layer that makes this possible. It serializes any item container, inventories, equipment, attachment slots, nested backpacks, into a format that survives game restarts. It works for both local and dedicated server players out of the box, and it's generic enough for any game mode to use.
 
-### What You Get
+## What You Get
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
@@ -24,7 +24,7 @@ The Save System provides the persistence layer that makes this possible. It seri
 
 The system is container-agnostic. It doesn't know about tetris grids, equipment slots, or attachment points, it works through the `ILyraItemContainerInterface` and `FInstancedStruct`, so any container type, including ones you create, can participate without modifying the save system itself.
 
-### How It Builds on the Item System
+## How It Builds on the Item System
 
 The save system extends the existing item and container architecture. It doesn't replace anything, it adds a persistence layer on top:
 
@@ -40,7 +40,7 @@ The save system extends the existing item and container architecture. It doesn't
 You should be familiar with the [Item System](../items/) and [Item Container Architecture](../item-container/) before diving into save-specific concepts. This documentation focuses on what the save system adds.
 {% endhint %}
 
-### Key Concepts
+## Key Concepts
 
 A quick orientation of the major ideas you'll encounter:
 
@@ -58,7 +58,7 @@ On a dedicated server, remote player save files are keyed by `PlayerState->GetUn
 * **Object Config** — Any UObject that implements `ILyraSaveableInterface` can persist its configuration through `SaveObjectConfig` and `LoadObjectConfig`. The object defines its own config struct; the save system stores it as opaque data under a gameplay tag. This works for containers (where it's called automatically during `SaveContainer`/`LoadContainerInto`) and for non-container objects like custom actors or components.
 * **Custom Data** — `SaveCustomData` and `LoadCustomData` let you store arbitrary `FInstancedStruct` data under gameplay tag keys, quest progress, currency, unlocks, without touching the container system. Blueprint users can create User Defined Structs and save/load them with zero C++.
 
-### Architecture Overview
+## Architecture Overview
 
 ```mermaid
 graph TD
@@ -93,7 +93,7 @@ graph TD
 
 The save subsystem sits between your game logic and the save file. You call `SaveContainer` to serialize a container into the in-memory save game, then `SavePlayerData` to flush it to disk. Loading is the reverse: `GetOrCreateSaveGame` loads from disk (or returns the cached version), then `LoadContainerInto` populates a live container from the saved data.
 
-### Documentation Structure
+## Documentation Structure
 
 | Section                                                       | What It Covers                                                                                                                                   |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |

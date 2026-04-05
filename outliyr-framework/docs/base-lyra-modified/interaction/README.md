@@ -14,7 +14,7 @@ The interaction system is entirely opt-in and driven by gameplay tags, interface
 
 ***
 
-### How the Interaction System Works
+## How the Interaction System Works
 
 The interaction system enables players to interact with world objects through a coordinated series of steps:
 
@@ -28,9 +28,9 @@ The interaction system enables players to interact with world objects through a 
 
 ***
 
-### Actor Responsibilities
+## Actor Responsibilities
 
-#### `IInteractableTarget`
+### `IInteractableTarget`
 
 Implemented by any actor or component that can be interacted with. It defines:
 
@@ -38,7 +38,7 @@ Implemented by any actor or component that can be interacted with. It defines:
 * How it customizes the event data (`CustomizeInteractionEventData`)
 * Cosmetic effects on proximity (`Nearby`, `NoLongerNearby`, `SetFocused`)
 
-#### `ULyraGameplayAbility_Interact`
+### `ULyraGameplayAbility_Interact`
 
 This is the core ability used by the player to manage nearby interactions:
 
@@ -47,7 +47,7 @@ This is the core ability used by the player to manage nearby interactions:
 * Sends interaction events when triggered
 * Focuses interactables for highlight/feedback
 
-#### `FInteractionOption`
+### `FInteractionOption`
 
 Defines how an interaction works, including:
 
@@ -56,7 +56,7 @@ Defines how an interaction works, including:
 * UI to display
 * Duration of hold, etc.
 
-#### `UAbilityTask_GrantNearbyInteraction`
+### `UAbilityTask_GrantNearbyInteraction`
 
 Runs in the background while the interaction ability is active:
 
@@ -64,13 +64,13 @@ Runs in the background while the interaction ability is active:
 * Grants abilities defined in interaction options
 * Notifies actors when the player enters/exits range
 
-#### `UAbilityTask_WaitForInteractableTargets`
+### `UAbilityTask_WaitForInteractableTargets`
 
 Similar to the above, but uses ray traces to detect interactables based on where the player is looking.
 
 ***
 
-### GAS Integration
+## GAS Integration
 
 This system heavily utilizes the Gameplay Ability System for:
 
@@ -87,7 +87,7 @@ It ensures that:
 
 ***
 
-### Typical Use Case
+## Typical Use Case
 
 1. You place an actor in the world and implement `IInteractableTarget`.
 2. When the player is near (or looking at) the actor, it is detected by the appropriate task.
@@ -97,7 +97,7 @@ It ensures that:
 
 ***
 
-### Extending the System
+## Extending the System
 
 You can extend the system by:
 
@@ -108,9 +108,3 @@ You can extend the system by:
 * Creating new interaction abilities that use `ULyraGameplayAbility_Interact` as a base.
 
 ***
-
-### Notes
-
-* All interaction logic is multiplayer-aware and GAS-safe.
-* Cosmetic feedback (e.g. UI, highlighting) only occurs client-side.
-* All triggering of abilities is done through `FGameplayEventData` for flexibility and decoupling.

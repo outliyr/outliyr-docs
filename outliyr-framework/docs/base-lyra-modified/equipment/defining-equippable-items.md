@@ -7,22 +7,22 @@ The answer involves two assets working together:
 * **`UInventoryFragment_EquippableItem`** - Added to your inventory item definition, flagging it as equippable
 * **`ULyraEquipmentDefinition`** - The actual blueprint for equipment behavior
 
-This separation exists for a reason: your inventory item knows _what_ it is (a rifle, a helmet), while the Equipment Definition knows _how_ it behaves when equipped. Keeping them separate lets you reuse equipment behaviors across multiple item variants - ten different rifle skins can share one Equipment Definition.
+This separation exists for a reason: your inventory item knows _what_ it is (a rifle, a helmet), while the Equipment Definition knows _how_ it behaves when equipped. Keeping them separate lets you reuse equipment behaviors across multiple item variants, ten different rifle skins can share one Equipment Definition.
 
 ***
 
-### The Fragment: Marking Items as Equippable
+## The Fragment: Marking Items as Equippable
 
 The `UInventoryFragment_EquippableItem` fragment is your item's ticket into the equipment system. Without it, the Equipment Manager won't know what to do with your item.
 
 <figure><img src="../../.gitbook/assets/image (203).png" alt=""><figcaption></figcaption></figure>
 
-#### **Purpose:**
+**Purpose:**
 
 * **Flags the item as equippable:** Tells the `ULyraEquipmentManagerComponent` that this item type can potentially be processed.
 * **Links to the Equipment Definition:** Contains the crucial pointer to the `ULyraEquipmentDefinition` asset that holds all the specific equipment behavior.
 
-#### Adding the Fragment
+### Adding the Fragment
 
 {% stepper %}
 {% step %}
@@ -48,10 +48,6 @@ Add `InventoryFragment_EquippableItem` and assign your Equipment Definition
 Link Equipment Definition
 {% endfile %}
 
-{% hint style="info" %}
-The `EquipItemToSlot` function checks for this fragment. No fragment = equip fails.
-{% endhint %}
-
 <details>
 
 <summary>Action Menu Integration</summary>
@@ -75,16 +71,16 @@ For the full action menu system, see [Context Menus & Action Logic](../ui/item-c
 
 ***
 
-### The Definition: Equipment Behavior Blueprint
+The Definition: Equipment Behavior Blueprint
 
-`ULyraEquipmentDefinition` is where you define what actually happens when equipment is equipped. The key insight is the **two-behavior model** that mirrors the [two-level slot system](/broken/pages/c9b23bc52916a98e54f08d446ce79c303ebd42e3):
+`ULyraEquipmentDefinition` is where you define what actually happens when equipment is equipped. The key insight is the **two-behavior model** that mirrors the [two-level slot system](equipment-manager-component.md#the-two-level-slot-model) in the equipment manager component:
 
 * **HolsteredBehaviors** - What happens when the item is equipped but NOT held
 * **HeldBehaviors** - What happens when the item IS held
 
 <figure><img src="../../.gitbook/assets/image (204).png" alt=""><figcaption></figcaption></figure>
 
-#### Why Two Maps?
+### Why Two Maps?
 
 Consider a rifle:
 
@@ -97,7 +93,7 @@ These are completely different visual and mechanical states. Rather than complex
 
 ***
 
-### HolsteredBehaviors: Storage Slot → Behavior
+## HolsteredBehaviors: Storage Slot → Behavior
 
 ```cpp
 TMap<FEquipmentSlotTagKey, FLyraEquipmentDetails> HolsteredBehaviors;
@@ -120,7 +116,7 @@ Different storage slots can spawn different actors. A rifle on your back looks d
 
 ***
 
-### HeldBehaviors: Held Slot → Behavior
+## HeldBehaviors: Held Slot → Behavior
 
 ```cpp
 TMap<FGameplayTag, FLyraEquipmentDetails> HeldBehaviors;
@@ -140,9 +136,9 @@ HeldBehaviors:
     └── AbilitySetsToGrant: [GAS_RifleAbilities]
 ```
 
-#### The Empty Map Rule
+### The Empty Map Rule
 
-If `HeldBehaviors` is empty, the equipment **cannot be held**. This is how you define passive equipment like armor or backpacks - they exist only in storage slots, never in hands.
+If `HeldBehaviors` is empty, the equipment **cannot be held**. This is how you define passive equipment like armor or backpacks, they exist only in storage slots, never in hands.
 
 ```cpp
 // Derived from the map, not a separate property
@@ -151,7 +147,7 @@ bool CanBeHeld() const { return HeldBehaviors.Num() > 0; }
 
 ***
 
-### Held Slot Policy: One Hand or Two?
+## Held Slot Policy: One Hand or Two?
 
 ```cpp
 UPROPERTY(EditDefaultsOnly)
@@ -168,12 +164,12 @@ This controls how weapons interact with the akimbo system:
 A two-handed rifle marks both Primary and Secondary slots as claimed. A one-handed pistol only claims the slot it's in, leaving the other free for a second weapon.
 
 {% hint style="info" %}
-For details on how the Equipment Manager handles slot claiming, see [The Akimbo System](/broken/pages/c9b23bc52916a98e54f08d446ce79c303ebd42e3#the-akimbo-system).
+For details on how the Equipment Manager handles slot claiming, see [The Akimbo System](equipment-manager-component.md#akimbo).
 {% endhint %}
 
 ***
 
-### `FLyraEquipmentDetails`: What Behaviors Contain
+## `FLyraEquipmentDetails`: What Behaviors Contain
 
 Both maps use the same value type:
 
@@ -194,7 +190,7 @@ struct FLyraEquipmentDetails
 };
 ```
 
-#### Actor Spawn Configuration
+### Actor Spawn Configuration
 
 ```cpp
 struct FLyraEquipmentActorToSpawn
@@ -205,7 +201,7 @@ struct FLyraEquipmentActorToSpawn
 };
 ```
 
-Actors spawn attached to the pawn's mesh at the specified socket. Different states can spawn completely different actors - a rifle held in hands vs. slung on back.
+Actors spawn attached to the pawn's mesh at the specified socket. Different states can spawn completely different actors, a rifle held in hands vs. slung on back.
 
 {% hint style="success" %}
 When it comes to input mapping and input config, you would rarely use this functionality. For inputs that are generic and can be shared amongst equipment they are better going in the player's pawn data. An example would be weapon firing and reloading, this is generic and would be better served in the hero's input mapping and input config.
@@ -213,7 +209,7 @@ When it comes to input mapping and input config, you would rarely use this funct
 
 ***
 
-### Instance Type: Custom Equipment Classes
+## Instance Type: Custom Equipment Classes
 
 ```cpp
 UPROPERTY(EditDefaultsOnly)
@@ -233,7 +229,7 @@ See [Equipment Instance](equipment-instance.md) for guidance on when to subclass
 
 ***
 
-### Creating Equipment: Step by Step
+## Creating Equipment: Step by Step
 
 {% stepper %}
 {% step %}
@@ -301,7 +297,7 @@ Create Equipment Definition
 
 ***
 
-### Equipment Example Configurations
+## Equipment Example Configurations
 
 <details>
 

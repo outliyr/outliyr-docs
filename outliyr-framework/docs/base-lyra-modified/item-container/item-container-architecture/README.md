@@ -4,7 +4,7 @@ This section covers the structural foundations of the ItemContainer system, the 
 
 ***
 
-### What You'll Learn
+## What You'll Learn
 
 | Page                   | Description                                                                                                                                                       |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -15,7 +15,7 @@ This section covers the structural foundations of the ItemContainer system, the 
 
 ***
 
-### The Two Layers
+## The Two Layers
 
 Understanding the architecture means understanding two distinct layers:
 
@@ -43,7 +43,7 @@ If you're working in Blueprints, you use the function library. The transactions 
 
 ***
 
-### Recommended Reading Order
+## Recommended Reading Order
 
 **For understanding the system:**
 
@@ -58,7 +58,3 @@ If you're working in Blueprints, you use the function library. The transactions 
 3. Then move to Creating Containers for step-by-step guidance
 
 ***
-
-### Next Steps
-
-Start with The Container Contract to understand the foundation.

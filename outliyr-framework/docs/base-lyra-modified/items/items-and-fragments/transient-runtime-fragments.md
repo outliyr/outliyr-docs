@@ -1,99 +1,64 @@
 # Transient Runtime Fragments
 
-While `FTransientFragmentData` provides a way to store instance-specific **struct** data, sometimes you need more power and flexibility. **Transient Runtime Fragments**, based on `UTransientRuntimeFragment`, allow you to associate a full **`UObject`** instance with each `ULyraInventoryItemInstance` that uses a particular static fragment.
+Sometimes per-instance data needs more than flat fields in a struct. It needs to react to individual property changes on the client, own and replicate nested objects, tick every frame, or expose callable functions to Blueprint. [Transient Data Fragments](transient-data-fragments.md) can't do any of that, they're lightweight by design. `UTransientRuntimeFragment` fills the gap by giving each item instance a full `UObject` with the complete Unreal Object system at its disposal.
+
+Runtime fragments are full `UObject` instances that live on a `ULyraInventoryItemInstance`, giving you access to the complete Unreal Object system: fine-grained replication with `OnRep`, ticking, timers, Blueprint-callable functions, and gameplay message listening. Like struct-based transient data, each runtime fragment is logically tied to a specific static `ULyraInventoryItemFragment`.
 
 ***
 
-### Role and Purpose
+## The Cost of Full UObjects
 
-* **Complex Instance State & Logic:** Enables storing more complex data structures and encapsulating related logic directly within the UObject payload.
-* **Full UObject Features:** Leverages the standard Unreal Object system, offering features unavailable to simple structs:
-  * **Detailed Replication:** Use `UPROPERTY(ReplicatedUsing=...)` for fine-grained replication control with `OnRep` functions. Replicate nested UObjects owned by the fragment using `ReplicateSubobjects`. Implement `GetLifetimeReplicatedProps`.
-  * **Ticking:** Can implement the `Tick` function if per-frame updates are needed (use sparingly for performance).
-  * **Blueprint Exposure:** Easily expose functions (`UFUNCTION(BlueprintCallable)`) and properties (`UPROPERTY(BlueprintReadOnly)`) from the runtime fragment to Blueprints, allowing BP-based logic to interact with the instance-specific state.
-  * **Timers & Latent Actions:** Utilize standard UObject timer management.
-  * **Gameplay Message Listening:** Can register as a listener with the `UGameplayMessageSubsystem`.
-* **Fragment Association:** Like struct-based fragments, each `UTransientRuntimeFragment` type is logically linked to a specific `ULyraInventoryItemFragment` type on the item definition.
-* **Lifecycle Callbacks:** Inherits the same set of lifecycle virtual functions as `FTransientFragmentData` (`DestroyTransientFragment`, `AddedToInventory`, `OnEquipped`, etc.) allowing it to react to the owning item instance's state changes.
-* **Replication:** Stored within a replicated `TArray<TObjectPtr<UTransientRuntimeFragment>>` on the `ULyraInventoryItemInstance`. Requires the owning component (`ULyraInventoryManagerComponent`, etc.) to correctly handle subobject replication for these UObjects.
+Before reaching for a runtime fragment, understand what you're paying for:
 
-***
+> Each runtime fragment is a full `UObject`. If you define 5 fragment types as runtime fragments, every item instance creates **6 UObjects**, 1 for the instance itself, plus 5 fragments. Multiply by hundreds of items per player, and you're creating thousands of persistent, GC-tracked objects.
 
-### When to Use `UTransientRuntimeFragment`
+This is why the system offers three tiers:
 
-Use a `UTransientRuntimeFragment` when your instance-specific needs **go beyond simple data storage** and require **full UObject behavior**, such as fine-grained replication, timers, ticking, or complex Blueprint integration.
+| Tier                                                    | Type                            | Overhead | Use When                                 |
+| ------------------------------------------------------- | ------------------------------- | -------- | ---------------------------------------- |
+| [Stat Tags](stat-tags.md)                               | Tag + int32                     | Minimal  | Simple counters, flags                   |
+| [Transient Data Fragments](transient-data-fragments.md) | `USTRUCT` in `FInstancedStruct` | Low      | Structured data without UObject features |
+| **Transient Runtime Fragments**                         | `UObject` subclass              | Highest  | Complex state _plus_ behavior            |
 
-Before choosing this path, consider the cost:
+Use a runtime fragment **only when** you genuinely need:
 
-> Each runtime fragment is a full `UObject`.\
-> So if you have 5 fragment types marked as runtime fragments, every item instance using them will create **6 UObjects**, 1 for the `ULyraInventoryItemInstance`, and 5 more for the fragments.
+* **Per-property `OnRep`** — reacting to specific field changes on the client
+* **Sub-object replication** — the fragment owns other UObjects that must replicate
+* **Ticking or timers** — per-frame logic tied to instance state
+* **Blueprint-callable methods with internal state** — exposing instance-specific functions that depend on data stored inside the UObject
 
-This overhead **adds up quickly** in inventory-heavy games (e.g., hundreds of items per player).\
-That’s exactly why Lyra uses **static fragments (shared, per-class)** and why `FTransientFragmentData` exists, it’s a **lightweight**, stack-allocated alternative with no GC cost, stored inside a replicated `FInstancedStruct` array.
-
-Use `UTransientRuntimeFragment` when:
-
-* **Complex Networking:** You need `OnRep` notifications for specific variables within the instance payload, or you need to replicate owned UObjects (e.g., an internal component list).
-* **Blueprint Interaction:** You want Blueprints (like abilities or UI widgets) to directly call functions or easily read properties on the instance-specific data object.
-* **Encapsulated Logic:** The instance-specific data requires significant associated logic that benefits from being encapsulated within its own UObject class (potentially including ticking).
-* **Standard UObject Features:** You need timers, message bus integration, or other features inherent to `UObject`s.
-
-Examples:
-
-* **Attachment Container (`UTransientRuntimeFragment_Attachment`):** Manages the list (`FAppliedAttachmentArray`) of attached items, handles activation/deactivation logic triggered by `OnEquipped`/`OnHolster`, and needs to replicate the array and potentially the attached item instances as subobjects.
-* **Procedural Effects:** A fragment managing a complex, ongoing procedural effect on the item might use a UObject to handle ticking, state transitions, and potentially replicate visual parameters.
-* **Resource Generation:** An item that passively generates a resource over time could use a ticking UObject fragment to manage the generation logic and current resource level.
-
-Don't use runtime fragments just for Blueprint exposure
-
-If you're only trying to expose a function like:
-
-```cpp
-UFUNCTION(BlueprintCallable)
-float GetDamageMultiplier(const ULyraInventoryItemInstance* ItemInstance) const;
-```
-
-you can do that directly on the **static fragment**, just pass the `ItemInstance` as a parameter. Static fragments are shared, so they can’t access per-instance state unless you give it to them via arguments, but that’s often enough.
-
-Only use a runtime fragment if your logic truly **depends on internal state** stored inside the UObject itself.
+{% hint style="info" %}
+If you only need a Blueprint-callable function that reads per-instance data, you can put it on the _static_ fragment and pass the `ItemInstance` as a parameter. Only use a runtime fragment if the logic depends on internal UObject state.
+{% endhint %}
 
 {% hint style="success" %}
-Still unsure? Jump to the [instance-data comparison](creating-custom-fragments.md#step-2-choose-and-define-instance-data-optional).
+Still unsure? Jump to the [instance-data comparison](creating-custom-fragments.md#choose-and-define-instance-data-optional).
 {% endhint %}
 
 ***
 
-### Implementation Steps
+## Real-World Example: Attachments
+
+The attachment system is the primary user of runtime fragments. `UTransientRuntimeFragment_Attachment` manages a replicated array of attached items, grants and revokes ability sets when the host weapon transitions between held and holstered states, and spawns/destroys visual actors. None of this is possible with a struct.
+
+***
+
+## Implementation
 
 {% stepper %}
 {% step %}
-#### Define the Runtime Fragment Class
+**Define the Runtime Fragment Class**
 
-* Create a new C++ class inheriting from `UTransientRuntimeFragment`.
-* Add `UPROPERTY()` members for the instance-specific data. Use standard replication specifiers (`Replicated`, `ReplicatedUsing`) as needed.
-* Implement `GetLifetimeReplicatedProps` if you have replicated properties.
-* Optionally implement `Tick`, `BeginPlay`, `EndPlay`, etc., if needed.
-* Implement `ReplicateSubobjects` if this fragment owns other UObjects that need replication.
-* Optionally override the lifecycle virtual functions (`DestroyTransientFragment`, `AddedToContainer`, `ItemMoved`, etc.) inherited from the base class to add custom logic.
-
-**Example: Simple Charge Meter (UObject version)**
+Create a `UObject` subclass of `UTransientRuntimeFragment`. Add replicated properties, implement `GetLifetimeReplicatedProps`, and override lifecycle callbacks as needed.
 
 ```cpp
-// Example: Simple Charge Meter (UObject version)
 UCLASS(BlueprintType)
 class UTransientRuntimeFragment_Charge : public UTransientRuntimeFragment
 {
     GENERATED_BODY()
 public:
-    //~ UObject Interface
     virtual bool IsSupportedForNetworking() const override { return true; }
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-    //~ End UObject Interface
-
-    //~ Lifecycle Callbacks
-    virtual void ItemMoved(ULyraInventoryItemInstance* ItemInstance, const FInstancedStruct& OldSlot, const FInstancedStruct& NewSlot) override;
-    virtual void Tick(float DeltaTime); // If ticking is needed
-    //~ End Lifecycle
 
     UPROPERTY(ReplicatedUsing = OnRep_CurrentCharge, BlueprintReadOnly)
     float CurrentCharge = 0.0f;
@@ -102,7 +67,7 @@ public:
     float MaxCharge = 100.0f;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-    float ChargeRate = 5.0f; // Units per second while held
+    float ChargeRate = 5.0f;
 
     UFUNCTION()
     void OnRep_CurrentCharge();
@@ -110,185 +75,112 @@ public:
     UFUNCTION(BlueprintCallable)
     void Discharge(float Amount);
 
-private:
-    bool bIsCharging = false;
-    FTimerHandle ChargeTimerHandle;
+    // Lifecycle — react to equipment state changes
+    virtual void ItemMoved(ULyraInventoryItemInstance* ItemInstance,
+        const FInstancedStruct& OldSlot, const FInstancedStruct& NewSlot) override;
 };
+```
 
-// .cpp
-void UTransientRuntimeFragment_Charge::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+```cpp
+void UTransientRuntimeFragment_Charge::GetLifetimeReplicatedProps(
+    TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(UTransientRuntimeFragment_Charge, CurrentCharge);
 }
-
-void UTransientRuntimeFragment_Charge::ItemMoved(ULyraInventoryItemInstance* ItemInstance, const FInstancedStruct& OldSlot, const FInstancedStruct& NewSlot)
-{
-    Super::ItemMoved(ItemInstance, OldSlot, NewSlot);
-
-    // Check if moved to/from held equipment slot
-    const auto* OldEquipSlot = OldSlot.GetPtr<FEquipmentAbilityData_SourceEquipment>();
-    const auto* NewEquipSlot = NewSlot.GetPtr<FEquipmentAbilityData_SourceEquipment>();
-
-    bool bWasHeld = OldEquipSlot && OldEquipSlot->ActiveHeldSlot.IsValid();
-    bool bIsHeld = NewEquipSlot && NewEquipSlot->ActiveHeldSlot.IsValid();
-
-    if (!bWasHeld && bIsHeld)
-    {
-        // Item is now held - start charging
-        bIsCharging = true;
-    }
-    else if (bWasHeld && !bIsHeld)
-    {
-        // Item is no longer held - stop charging
-        bIsCharging = false;
-    }
-}
-
-void UTransientRuntimeFragment_Charge::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
-    if (bIsCharging && GetOwner()->HasAuthority())
-    {
-        CurrentCharge = FMath::Min(CurrentCharge + ChargeRate * DeltaTime, MaxCharge);
-    }
-}
-// ... other implementations ...
 ```
 {% endstep %}
 
 {% step %}
-#### Link from the Static Fragment
+**Link from the Static Fragment**
 
-* Open the corresponding `ULyraInventoryItemFragment` class (e.g., `UInventoryFragment_Chargeable`).
-* Override `GetTransientRuntimeFragment()` to return the static class of your runtime fragment UObject:
+Override two functions on your `ULyraInventoryItemFragment` subclass:
 
 ```cpp
-virtual TSubclassOf<UTransientRuntimeFragment> GetTransientRuntimeFragment() const override
+TSubclassOf<UTransientRuntimeFragment> GetTransientRuntimeFragment() const override
 {
     return UTransientRuntimeFragment_Charge::StaticClass();
 }
-```
 
-* Override `CreateNewRuntimeTransientFragment()` to instantiate your runtime fragment UObject using `NewObject` (typically with the `ItemInstance` as the Outer) and assign it to the output parameter:
-
-```cpp
-virtual bool CreateNewRuntimeTransientFragment(AActor* ItemOwner, ULyraInventoryItemInstance* ItemInstance, UTransientRuntimeFragment*& OutFragment) override
+bool CreateNewRuntimeTransientFragment(AActor* ItemOwner,
+    ULyraInventoryItemInstance* ItemInstance,
+    UTransientRuntimeFragment*& OutFragment) override
 {
-    UTransientRuntimeFragment_Charge* ChargeFragment = NewObject<UTransientRuntimeFragment_Charge>(ItemInstance); // Outer is ItemInstance
-    if (ChargeFragment)
-    {
-        // Perform any initial setup on ChargeFragment if needed
-        // ChargeFragment->MaxCharge = GetMaxChargeFromStaticFragmentData(); // Example
-        OutFragment = ChargeFragment;
-        return true; // Indicate that transient data was created
-    }
-    return false;
+    auto* Fragment = NewObject<UTransientRuntimeFragment_Charge>(ItemInstance);
+    OutFragment = Fragment;
+    return true;
 }
 ```
 {% endstep %}
 
 {% step %}
-#### Add Static Fragment to Definition
+**Add the Static Fragment to Your Item Definition**
 
-Ensure the `UInventoryFragment_Chargeable` fragment is added to the `Fragments` array of the relevant `ULyraInventoryItemDefinition` asset(s).
+Add your fragment to the `Fragments` array. The runtime fragment is created automatically when instances spawn.
 {% endstep %}
 {% endstepper %}
 
 ***
 
-### Accessing Transient Runtime Fragments at Runtime
+## Accessing Runtime Fragments
 
 {% tabs %}
 {% tab title="C++" %}
-**From C++:** Use the templated `ResolveTransientFragment<T>()` helper on the `ULyraInventoryItemInstance`. `T` should be the _static_ fragment type (e.g., `UInventoryFragment_Chargeable`). The template automatically deduces the associated runtime fragment UObject type.
+Use the same `ResolveTransientFragment<T>()` template as struct fragments — it detects at compile time whether the associated type is a `UObject` and routes to the correct array.
 
 ```cpp
-// example of getting the weight for each attachment
-ULyraInventoryItemInstance* MyInstance = ...;
-if(const auto* AttachmentTransientData = ItemInstance->ResolveTransientFragment<UInventoryFragment_Attachment>())
+if (auto* AttachmentData = ItemInstance->ResolveTransientFragment<UInventoryFragment_Attachment>())
 {
-	// do stuff with the attachment transient runtime fragment
+    // AttachmentData is a UTransientRuntimeFragment_Attachment*
 }
 ```
 {% endtab %}
 
-{% tab title="Blueprints" %}
+{% tab title="Blueprint" %}
 **From Blueprint/C++:** Use `ResolveRuntimeTransientFragment(FragmentClass)` on the `ULyraInventoryItemInstance`, passing the _static_ fragment class. This returns a pointer to the `UTransientRuntimeFragment` base. You'll need to cast this pointer to your specific derived class (e.g., `UTransientRuntimeFragment_Charge`) to access its unique members and functions.
 
-<figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 {% hint style="danger" %}
-Ensure you cast to **Corresponding Transient Runtime Object** of the original fragment specified in `ResolveRuntimeTransientFragment`.
+Cast to the **specific runtime fragment class** that corresponds to the fragment you specified, not the base `UTransientRuntimeFragment`.
 {% endhint %}
 {% endtab %}
 {% endtabs %}
 
 ***
 
-### Lifecycle Callbacks
+## Lifecycle Callbacks
 
-The `UTransientRuntimeFragment` base class provides the same set of virtual lifecycle functions as `FTransientFragmentData`:
+Runtime fragments provide the same lifecycle hooks as struct-based fragments:
 
-| Callback                                                                                                                | Description                                                   |
-| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `DestroyTransientFragment(ULyraInventoryItemInstance* ItemInstance)`                                                    | Called when the item instance is being permanently destroyed. |
-| `AddedToContainer(UObject* Container, ULyraInventoryItemInstance* ItemInstance)`                                        | Called when the item is added to any container.               |
-| `RemovedFromContainer(UObject* Container, ULyraInventoryItemInstance* ItemInstance)`                                    | Called when the item is removed from a container.             |
-| `ItemMoved(ULyraInventoryItemInstance* ItemInstance, const FInstancedStruct& OldSlot, const FInstancedStruct& NewSlot)` | Called when the item's slot changes.                          |
-| `ReconcileWithPredictedFragment(UTransientRuntimeFragment* PredictedFragment)`                                          | Called during prediction reconciliation.                      |
+| Callback                         | When It Fires                                                                                             |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `DestroyTransientFragment`       | Item instance is being permanently destroyed                                                              |
+| `AddedToContainer`               | Item added to any container                                                                               |
+| `RemovedFromContainer`           | Item removed from a container                                                                             |
+| `ItemMoved`                      | Item's slot changed — inspect the old and new `FInstancedStruct` to determine equipment state transitions |
+| `ReconcileWithPredictedFragment` | Transfer local state from predicted copy during reconciliation                                            |
 
-> Note: The old `OnEquipped`, `OnUnequipped`, `OnHolster`, and `OnUnholster` callbacks have been removed. Use `ItemMoved()` to detect slot changes and check the slot type to determine equipment state transitions.
-
-Override these in your derived UObject class to execute logic when the owning item instance undergoes state changes.
-
-***
-
-### Replication
-
-* The `RuntimeFragments` array (`TArray<TObjectPtr<UTransientRuntimeFragment>>`) on `ULyraInventoryItemInstance` is replicated.
-* **Crucially:** For the UObject instances themselves and their internal properties to replicate, the owning component (`ULyraInventoryManagerComponent`, `ULyraEquipmentManagerComponent`, etc.) **must** implement `ReplicateSubobjects` correctly and add these `UTransientRuntimeFragment` instances to the list of replicated subobjects (using `AddReplicatedSubObject`). The provided `ULyraInventoryManagerComponent` and `ULyraEquipmentManagerComponent` code already handles this.
-* Internal replication within your `UTransientRuntimeFragment` subclass follows standard UObject replication rules (implement `GetLifetimeReplicatedProps`, use `DOREPLIFETIME` macros, handle `OnRep` functions).
-* If your runtime fragment owns _other_ UObjects that need replicating, you must also override `ReplicateSubobjects` within your runtime fragment class itself to handle those nested subobjects.
-
-***
+> Note: The old `OnEquipped`, `OnUnequipped`, `OnHolster`, and `OnUnholster` callbacks have been removed. Use `ItemMoved()` and check the slot type to detect equipment state transitions.
 
 <details>
 
-<summary>Why not just use UObjects for everything?</summary>
+<summary>Save interface</summary>
 
-It’s tempting to always use `UTransientRuntimeFragment` when you need custom logic or instance data, but there’s a **real performance and memory cost** to that approach, especially at scale.
+Runtime fragments can opt into persistence through `BlueprintNativeEvent` methods:
 
-**Here's what happens:**
-
-If you define 5 different fragment types as runtime fragments, then:
-
-* Every `ULyraInventoryItemInstance` spawns 5 additional `UObject`s (1 per fragment).
-* These `UObject`s:
-  * Live on the heap
-  * Are tracked by the garbage collector (GC)
-  * May be replicated as subobjects
-* Multiply that by hundreds of item instances per player or per game world, and you can quickly create thousands of persistent UObjects.
-
-This is **why this asset architecture prefers**:
-
-* **Static fragments** (`ULyraInventoryItemFragment`)
-  * shared, instanced once per asset, not per instance.
-* **Struct-based fragments** (`FTransientFragmentData`)
-  * stack-allocated, replicated via `FInstancedStruct`, **lightweight** and GC-free.
-
-**When are runtime fragments worth it?**
-
-Use `UTransientRuntimeFragment` **only when**:
-
-* You need complex `OnRep` behavior or per-property replication.
-* You require timers, ticking, or other UObject features.
-* You need to expose internal state directly to Blueprints (and passing an `ItemInstance` isn’t enough).
-
-For everything else, durability, charge levels, internal IDs, flags, a simple struct is faster, lighter, and easier to maintain.
+* `WantsSave()` — return `true` to opt this fragment into the save system
+* `SaveFragmentData()` — serialize the fragment's state for persistence
+* `LoadFragmentData()` — restore state from a save
 
 </details>
 
 ***
 
-`UTransientRuntimeFragment` offers the full power of the Unreal Object system for managing complex, instance-specific item state and logic. Choose this option when you need advanced networking, Blueprint interaction, ticking, or other UObject features that go beyond the capabilities of simple `FTransientFragmentData` structs. Remember that proper subobject replication setup on the owning component is essential for these fragments to function correctly in a networked environment.
+## Replication
+
+The `RuntimeFragments` array on `ULyraInventoryItemInstance` is `TArray<TObjectPtr<UTransientRuntimeFragment>>` and is replicated. For the UObject instances and their internal properties to replicate correctly:
+
+* The owning component (`ULyraInventoryManagerComponent`, `ULyraEquipmentManagerComponent`, etc.) must implement `ReplicateSubobjects` and add these fragments via `AddReplicatedSubObject`. The provided components already handle this.
+* Internal replication follows standard UObject rules, implement `GetLifetimeReplicatedProps`, use `DOREPLIFETIME`, handle `OnRep` functions.
+* If your runtime fragment owns _other_ UObjects that need replicating, override `ReplicateSubobjects` within your fragment class to handle those nested sub-objects.

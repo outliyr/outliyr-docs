@@ -6,7 +6,7 @@ This page walks through the core components on every Lyra pawn, what problems th
 
 ***
 
-### How the components connect at runtime
+## How the components connect at runtime
 
 ```mermaid
 flowchart TD
@@ -23,7 +23,7 @@ flowchart TD
 
 ***
 
-### The Coordinator — `ULyraPawnExtensionComponent`
+## The Coordinator — `ULyraPawnExtensionComponent`
 
 Every other component waits for this one.
 
@@ -35,7 +35,7 @@ It also finds and caches the ASC, whether it lives on the PlayerState or on the 
 
 The component implements `IGameFrameworkInitStateInterface` and participates in the [InitState system](initialization.md) to coordinate the full startup sequence.
 
-#### Coordination flow
+### Coordination flow
 
 {% stepper %}
 {% step %}
@@ -71,7 +71,7 @@ Health, hero, and any other resource components initialize themselves using the 
 
 For a full explanation of where the ASC lives and how it gets initialized, see [ASC Setup](../gas/asc-setup.md).
 
-#### Key Operations
+### Key Operations
 
 | Method                                       | Purpose                                       |
 | -------------------------------------------- | --------------------------------------------- |
@@ -83,7 +83,7 @@ For a full explanation of where the ASC lives and how it gets initialized, see [
 
 ***
 
-### Input & Camera — `ULyraHeroComponent`
+## Input & Camera — `ULyraHeroComponent`
 
 The player interface. Handles input binding and camera mode selection.
 
@@ -91,7 +91,7 @@ A player presses the fire button. The keypress enters Unreal's Enhanced Input sy
 
 It waits for the PawnExtensionComponent to finish its setup, then reads the `ULyraInputConfig` from PawnData. That config maps Enhanced Input actions to gameplay tags. When the player presses a bound key, the component routes the tag to the ASC, which activates the matching ability. Release works the same way.
 
-#### How input flows
+### How input flows
 
 ```mermaid
 flowchart TD
@@ -109,13 +109,13 @@ On top of the tag-routed ability inputs, the component also handles movement, ca
 
 The `DefaultInputMappings` array (configured in Blueprint defaults) defines the baseline input contexts that are always active. You can layer additional input configs at runtime and remove them later, which is useful for game modes or vehicle controls that add temporary bindings.
 
-#### Camera
+### Camera
 
 The HeroComponent decides which camera mode is active. The camera component queries it each frame through a delegate.
 
 Under normal conditions, it returns the default camera mode defined in PawnData. But abilities can override the camera, a scoping ability might push a zoomed mode, and a third-person finisher might push a cinematic mode. The override is keyed to the specific ability instance, so only the ability that set the override can clear it. When the ability ends, the camera returns to the PawnData default.
 
-#### Key Operations
+### Key Operations
 
 | Method                        | Purpose                                      |
 | ----------------------------- | -------------------------------------------- |
@@ -125,7 +125,7 @@ Under normal conditions, it returns the default camera mode defined in PawnData.
 
 ***
 
-### Health & Resources — `ULyraResourceComponent`
+## Health & Resources — `ULyraResourceComponent`
 
 The base for any depletable resource, health, shields, mana, stamina.
 
@@ -135,11 +135,11 @@ When the ASC initializes, the resource component finds the matching attribute se
 
 For how attribute sets work and how to create new resources, see [Attribute Sets](../gas/attribute-sets.md).
 
-#### Automatic lifecycle
+### Automatic lifecycle
 
 `ALyraCharacter` discovers all `ULyraResourceComponent` instances on itself and initializes them when the ASC becomes available. It uninitializes them when the ASC is removed. No Blueprint wiring needed, add the component, set `ResourceSetClass`, and it works.
 
-#### Reading values
+### Reading values
 
 | Method                    | Returns                        |
 | ------------------------- | ------------------------------ |
@@ -147,7 +147,7 @@ For how attribute sets work and how to create new resources, see [Attribute Sets
 | `GetMaxResource()`        | Current maximum resource value |
 | `GetResourceNormalized()` | Resource as a 0.0–1.0 fraction |
 
-#### Reacting to changes
+### Reacting to changes
 
 | Delegate               | Fires when                     | Signature                                             |
 | ---------------------- | ------------------------------ | ----------------------------------------------------- |
@@ -203,16 +203,16 @@ The component can also programmatically kill its owner through `DamageSelfDestru
 
 ***
 
-### Movement — `ULyraCharacterMovementComponent`
+## Movement — `ULyraCharacterMovementComponent`
 
 Custom character movement with two key behaviors.
 
-#### Tag-based movement stopping
+### Tag-based movement stopping
 
 If the `Gameplay.MovementStopped` tag is present on the ASC, both `GetMaxSpeed()` and `GetDeltaRotation()` return zero. The character freezes in place but the movement component stays fully active, physics, replication, and everything else keeps working.
 
 This means any system, abilities, gameplay effects, Blueprint logic, can freeze a character just by adding a tag. No coupling, no special movement modes, no state flags to manage.
 
-#### Compressed acceleration replication
+### Compressed acceleration replication
 
 The component packs acceleration into 3 bytes instead of the default 24, reducing bandwidth for simulated proxies. See [networking](networking.md) for details.

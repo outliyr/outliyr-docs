@@ -4,9 +4,9 @@ While the [Static Fragment](static-fragment.md) says "what CAN attach," the `UTr
 
 ***
 
-### Why a Full Container?
+## Why a Full Container?
 
-The runtime fragment (`UTransientRuntimeFragment_Attachment`) implements `ILyraItemContainerInterface` - the same interface that Inventory and Equipment use.
+The runtime fragment (`UTransientRuntimeFragment_Attachment`) implements `ILyraItemContainerInterface`, the same interface that Inventory and Equipment use.
 
 This matters because:
 
@@ -22,7 +22,7 @@ For the shared container patterns, see [Item Container Interface](../../../item-
 
 ***
 
-### The Attachment Entry
+## The Attachment Entry
 
 Each attached item is tracked as an `FAppliedAttachmentEntry`:
 
@@ -55,7 +55,7 @@ The FastArray provides:
 
 ***
 
-### The Attachment Flow
+## The Attachment Flow
 
 Here's what happens when a player attaches a scope to their rifle:
 
@@ -141,7 +141,7 @@ Behavior application includes:
 
 ***
 
-### State Tracking
+## State Tracking
 
 The container tracks the parent item's equipment state:
 
@@ -155,7 +155,7 @@ Slot Descriptor → Result:
 * Equipment, no held slot → `Holstered`
 * Equipment, valid held slot → `Equipped`
 
-#### Responding to Parent State Changes
+### Responding to Parent State Changes
 
 When the parent item moves (equipped/held/holstered), the container receives:
 
@@ -174,9 +174,9 @@ This triggers:
 
 ***
 
-### Actor Management
+## Actor Management
 
-#### Spawning
+### Spawning
 
 ```cpp
 void SpawnAttachmentActor(AActor* AttachTarget,
@@ -199,7 +199,7 @@ Context → What Spawns:
 * Owning client (predicted) → Local-only actor → prediction overlay
 * Simulated proxy → Waits for replicated actor
 
-#### Destruction
+### Destruction
 
 ```cpp
 void RemoveAttachmentActors(FAppliedAttachmentEntry& Attachment,
@@ -209,7 +209,7 @@ void RemoveAttachmentActors(FAppliedAttachmentEntry& Attachment,
 * `bPredictedOnly = false` - Destroys both replicated and predicted
 * `bPredictedOnly = true` - Only predicted (during reconciliation)
 
-#### Visibility Control
+### Visibility Control
 
 During prediction reconciliation:
 
@@ -222,7 +222,7 @@ When client predicts removal, the server actor hides until server confirms.
 
 ***
 
-### Prediction Flow
+## Prediction Flow
 
 {% hint style="info" %}
 For the full prediction model, see [Prediction Architecture](../../../item-container/prediction/prediction-architecture.md). This section covers attachment-specific aspects.
@@ -306,7 +306,7 @@ The full `ILyraItemContainerInterface` implementation:
 
 ***
 
-### Replication
+## Replication
 
 #### Why the Fragment Overrides ReplicateSubobjects
 

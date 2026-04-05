@@ -2,7 +2,9 @@
 
 The `UInventoryFragment_InventoryIcon` is a fundamental fragment, essential for most items that need to interact with the base `ULyraInventoryManagerComponent` and be represented in inventory UIs. It defines core properties like stacking behavior, weight, basic display information, and visual representation.
 
-### Purpose
+***
+
+## Purpose
 
 * **Basic Item Identity:** Provides the `Name` and `Description` used for display in UI tooltips or detail panels.
 * **Visual Representation:** Specifies the `InventoryIcon` texture used in inventory slots.
@@ -10,7 +12,17 @@ The `UInventoryFragment_InventoryIcon` is a fundamental fragment, essential for 
 * **Base Weight:** Defines the `Weight` contributed by a single unit of this item type towards the inventory's total weight limit.
 * **UI Styling:** Includes a `BackgroundColour` property that UI systems can optionally use for styling inventory slots containing this item.
 
-### Static Configuration (`UInventoryFragment_InventoryIcon`)
+{% hint style="warning" %}
+This fragment is **required** for nearly all items intended to be managed by item containers. Without it:
+
+* Items generally won't stack.
+* Items won't contribute correctly to weight or item count limits.
+* UI systems will lack the necessary data (icon, name, description, stack info) to display the item meaningfully.
+{% endhint %}
+
+***
+
+## Static Configuration (`UInventoryFragment_InventoryIcon`)
 
 Add this fragment to an `ULyraInventoryItemDefinition` and configure its properties:
 
@@ -59,7 +71,7 @@ _Example Configuration (`ID_Rifle_Standard`):_
 
 ***
 
-#### Action Menu Integration
+## Action Menu Integration
 
 This fragment implements `IItemActionProvider` to add a **Split Stack** action to the item's context menu.
 
@@ -84,16 +96,6 @@ For example, with 30 bullets, the player can split off 1-29 bullets into a new s
 {% hint style="info" %}
 For the full action menu system, see [Context Menus & Action Logic](../../ui/item-container-ui-system/interaction-and-transactions/context-menus-and-action-logic.md).
 {% endhint %}
-
-***
-
-### Importance
-
-This fragment is **highly recommended** for nearly all items intended to be managed by item containers. Without it:
-
-* Items generally won't stack.
-* Items won't contribute correctly to weight or item count limits.
-* UI systems will lack the necessary data (icon, name, description, stack info) to display the item meaningfully.
 
 ***
 

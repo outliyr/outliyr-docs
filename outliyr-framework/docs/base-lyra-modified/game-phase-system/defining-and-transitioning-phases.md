@@ -2,7 +2,7 @@
 
 Leveraging the Game Phase System involves two main steps: first, defining the distinct phases your game requires using Gameplay Tags and `ULyraGamePhaseAbility` subclasses, and second, triggering transitions between these phases using the `ULyraGamePhaseSubsystem`.
 
-### 1. Defining a New Game Phase
+## 1. Defining a New Game Phase
 
 Follow these steps for each unique stage or state in your game flow:
 
@@ -23,7 +23,9 @@ Follow these steps for each unique stage or state in your game flow:
 
 Repeat these steps for every distinct phase required by your game mode or experience.
 
-### 2. How Phase Abilities Are Activated
+***
+
+## 2. How Phase Abilities Are Activated
 
 The `ULyraGamePhaseSubsystem` handles activation of phase abilities internally. When a phase transition is triggered via `StartPhase`, the subsystem:
 
@@ -33,13 +35,15 @@ The `ULyraGamePhaseSubsystem` handles activation of phase abilities internally. 
 
 This on-demand approach ensures a clean and streamlined activation pipeline with minimal asset management overhead.
 
-### 3. Initiating a Phase Transition
+***
+
+## 3. Initiating a Phase Transition
 
 Transitions don't happen automatically based on time (unless you build timer logic); they are **explicitly triggered** by your game logic when conditions are met (e.g., warmup timer ends, score limit reached, objective completed).
 
 <figure><img src="../../.gitbook/assets/image (127).png" alt="" width="563"><figcaption><p>Example starting the warmup phase in Search And Destroy</p></figcaption></figure>
 
-**Blueprint Execution Flow**
+### **Blueprint Execution Flow**
 
 1. Authority checks are made (this is crucial as modifying the current gameplay phase can only be run on the server)
 2. Wait for the experience to finish loading everything. (Only neccessary after BeginPlay)

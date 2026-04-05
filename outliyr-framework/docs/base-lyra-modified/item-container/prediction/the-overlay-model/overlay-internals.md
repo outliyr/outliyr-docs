@@ -2,11 +2,15 @@
 
 This page provides a detailed technical reference for the overlay storage and prediction engine. It covers the data structures, algorithms, and cleanup mechanisms.
 
+{% hint style="warning" %}
+This is a deep dive on the overlay model, you do not need to understand this page to be able to use the item transaction system. Feel free to skip this page if you aren't interested in the internals and don't plan to modify it.
+{% endhint %}
+
 ***
 
-### Data Structures
+## Data Structures
 
-#### `FPredictedOp`
+### `FPredictedOp`
 
 A single predicted operation stored in an overlay's history:
 
@@ -25,7 +29,7 @@ struct FPredictedOp
 };
 ```
 
-#### `FGuidOverlay`
+### `FGuidOverlay`
 
 Per-GUID overlay with operation history and cached effective state:
 
@@ -77,7 +81,7 @@ struct TGuidKeyedOverlay
 
 ***
 
-### Recording Operations
+## Recording Operations
 
 When the client predicts an operation, it's recorded to the overlay:
 
@@ -103,7 +107,7 @@ Key points:
 * Cache is marked dirty, not immediately rebuilt
 * The KeyToGuids index is updated for later cleanup
 
-#### Operation Kinds
+### Operation Kinds
 
 | Kind   | Meaning                | Effect on Cache                        |
 | ------ | ---------------------- | -------------------------------------- |
@@ -113,7 +117,7 @@ Key points:
 
 ***
 
-### Cache Rebuild
+## Cache Rebuild
 
 The cache is rebuilt lazily when needed. The rebuild replays operations on top of a base value:
 
@@ -142,7 +146,7 @@ RebuildCache(guid, baseValue):
     overlay.CacheDirty = false
 ```
 
-#### Base Value Source
+### Base Value Source
 
 The Runtime passes the base value from server entries:
 
@@ -156,7 +160,7 @@ DirtyGuids.clear()
 
 The overlay doesn't fetch its own base. The Runtime passes the base value from server entries, maintaining clean layer separation.
 
-#### When Cache Rebuilds
+### When Cache Rebuilds
 
 The cache is marked dirty (and later rebuilt) when:
 
@@ -166,11 +170,11 @@ The cache is marked dirty (and later rebuilt) when:
 
 ***
 
-### Clearing Mechanisms
+## Clearing Mechanisms
 
 Overlays are cleared through the prediction key lifecycle, not during replication.
 
-#### The `KeyToGuids` Index
+### The `KeyToGuids` Index
 
 The KeyToGuids map enables efficient clearing. Instead of scanning all overlays to find matching keys, we look up which GUIDs are affected:
 
@@ -182,7 +186,7 @@ if affectedGuids exists:
         // Process only affected overlays
 ```
 
-#### `CaughtUp` (Confirmation Path)
+### `CaughtUp` (Confirmation Path)
 
 When the server finishes processing a prediction key, the `CaughtUp` delegate fires:
 
@@ -215,7 +219,7 @@ OnPredictionKeyCaughtUp(keyId):
 
 Key insight: Only operations with the matching PredictionKeyId are removed. Other operations (from different prediction keys) remain, enabling correct partial confirmation.
 
-#### Rejected (Rollback Path)
+### Rejected (Rollback Path)
 
 Rejection uses the same clearing mechanism, but also broadcasts rejection events:
 
@@ -233,7 +237,7 @@ OnPredictionKeyRejected(keyId):
 
 ***
 
-### View Composition
+## View Composition
 
 The Runtime composes the effective view by merging overlay and server state:
 
@@ -304,7 +308,7 @@ Finally: ViewDirty = false and return CachedView.
 
 ***
 
-### Authority-Aware Recording
+## Authority-Aware Recording
 
 The Runtime routes operations based on authority:
 
@@ -327,7 +331,7 @@ This eliminates boilerplate in containers, they call `RecordAdd/Change/Remove` a
 
 ***
 
-### Replication Processing
+## Replication Processing
 
 When server state replicates to the client:
 
@@ -350,7 +354,7 @@ Overlays are not cleared during replication. The `CaughtUp` delegate handles cle
 
 ***
 
-### State Transfer
+## State Transfer
 
 On replication confirmation, the Runtime transfers state from overlay to server entry:
 
@@ -373,7 +377,7 @@ OnConfirmation(guid):
 
 ***
 
-### Change Accumulation
+## Change Accumulation
 
 The engine accumulates changes for batched broadcasting:
 

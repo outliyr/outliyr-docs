@@ -6,7 +6,7 @@ The framework ships two executions that handle this: one for damage and one for 
 
 ***
 
-### Damage Execution
+## Damage Execution
 
 {% stepper %}
 {% step %}
@@ -60,8 +60,6 @@ FinalDamage = BaseDamage * DistanceAttenuation * SurfaceAttenuation * TeamMultip
 
 All factors are clamped so the result is never negative.
 
-***
-
 ### Priority-Based Resource Routing
 
 When routing damage, the execution discovers every resource attribute set on the target's ability system component and sorts them by `DamageAbsorptionPriority` (descending). Damage flows through the list, and each resource absorbs what it can before the remainder overflows to the next.
@@ -92,8 +90,6 @@ New resource types (like armor or energy shields) slot in automatically based on
 
 </details>
 
-***
-
 ### Resource Targeting
 
 By default, the damage execution routes through **all** resource attribute sets on the target, ordered by priority. You can restrict which resources an execution targets by configuring `TargetResourceSets` on the execution class.
@@ -107,7 +103,7 @@ This is how you create damage that bypasses certain resources. For example, zone
 
 ***
 
-### Heal Execution
+## Heal Execution
 
 The heal execution works like damage in reverse. It captures `BaseHeal` from the source's [combat set](attribute-sets.md#combat-set-ulyracombatset), clamps it to zero or above, and applies the result to the target's resource sets as healing.
 

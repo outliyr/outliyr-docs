@@ -4,7 +4,7 @@ The `UInventoryFragment_Attachment` is added to an item definition to make that 
 
 ***
 
-### What the Fragment Does
+## What the Fragment Does
 
 Unlike most fragments that just add data, this one does several things:
 
@@ -16,7 +16,7 @@ Unlike most fragments that just add data, this one does several things:
 
 ***
 
-### The `CompatibleAttachments` Map
+## The `CompatibleAttachments` Map
 
 This is the core configuration - a two-level map that defines everything:
 
@@ -25,7 +25,7 @@ UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attachment)
 TMap<FAttachmentSlotTagKey, FAttachmentSlotDetails> CompatibleAttachments;
 ```
 
-#### Structure
+### Structure
 
 <figure><img src="../../../../.gitbook/assets/image (221).png" alt=""><figcaption></figcaption></figure>
 
@@ -59,7 +59,7 @@ CompatibleAttachments
 
 </details>
 
-#### Why Behavior Lives Here
+### Why Behavior Lives Here
 
 You might wonder: "Why is behavior configuration on the HOST item, not on the attachment itself?"
 
@@ -73,7 +73,7 @@ The host item knows its own sockets and what behaviors make sense. The attachmen
 
 ***
 
-### Tag Filtering
+## Tag Filtering
 
 The `FAttachmentSlotTagKey` wrapper restricts which tags appear in the editor:
 
@@ -89,7 +89,7 @@ This means:
 * You can't accidentally use an unrelated tag
 * Consistent hierarchy across all attachment definitions
 
-#### Adding New Slots
+### Adding New Slots
 
 * Add the tag to your tag table: `Lyra.Attachment.Slot.YourNewSlot`
 * Add entries to `CompatibleAttachments` using that tag
@@ -97,7 +97,7 @@ This means:
 
 ***
 
-### `DefaultAttachments`
+## `DefaultAttachments`
 
 Items that come with attachments pre-installed:
 
@@ -121,7 +121,7 @@ When the rifle instance is created, the iron sights automatically attach. The pl
 
 ***
 
-### How It Creates the Runtime Container
+## How It Creates the Runtime Container
 
 When a weapon instance is created, this fragment creates the runtime container:
 
@@ -168,7 +168,7 @@ You don't call this directly, it happens automatically during item creation via 
 
 ***
 
-### Compatibility Queries
+## Compatibility Queries
 
 #### Checking If an Item Can Attach
 
@@ -204,7 +204,7 @@ Searches all slots for one that accepts this item. Returns the first match and o
 
 ***
 
-### Drag-Drop Attachment
+## Drag-Drop Attachment
 
 The fragment implements the `CanCombineItems`/`CombineItems` pattern to enable drag-drop attachment in UI.
 
@@ -249,7 +249,7 @@ CanCombineItems checks IsCompatible
 
 ***
 
-### Action Menu Integration
+## Action Menu Integration
 
 This fragment also implements `IItemActionProvider` to add an **Attachments** action to the item's context menu.
 
@@ -267,7 +267,7 @@ For the full action menu system, see [Context Menus & Action Logic](../../../ui/
 
 ***
 
-### Weight Contribution
+## Weight Contribution
 
 Attachments add to the host item's weight:
 
@@ -281,7 +281,7 @@ This iterates through all attached items and sums their weights. When the invent
 
 ***
 
-### Static Helpers
+## Static Helpers
 
 #### `CanAttachItem`
 
@@ -307,7 +307,7 @@ Updates the attachment item's `CurrentSlot` descriptor to reflect its position i
 
 ***
 
-### Attachment Definition Examples
+## Attachment Definition Examples
 
 <details>
 

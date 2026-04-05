@@ -6,7 +6,7 @@ This page outlines key extension points and examples of how to push the system f
 
 ***
 
-### Adding New Interaction Types
+## Adding New Interaction Types
 
 Instead of returning a single `FInteractionOption` from `GatherInteractionOptions`, an actor can return **multiple distinct options**, each representing a different type of interaction.
 
@@ -20,7 +20,7 @@ You can use gameplay tags or gameplay state to conditionally enable/disable cert
 
 ***
 
-### Conditional Logic in `GatherInteractionOptions`
+## Conditional Logic in `GatherInteractionOptions`
 
 You can dynamically generate interaction options based on:
 
@@ -40,7 +40,7 @@ You can also omit returning any options if the actor shouldn’t be interactable
 
 ***
 
-### Customizing the Event Payload
+## Customizing the Event Payload
 
 To modify what happens during the interaction, or redirect it to another actor, override:
 
@@ -58,7 +58,7 @@ This is your hook to customize GAS behavior at runtime.
 
 ***
 
-### Creating Specialized Interaction Widgets
+## Creating Specialized Interaction Widgets
 
 You can create unique UMG widgets for different interaction types or categories. These widgets:
 
@@ -78,7 +78,7 @@ Use gameplay tags on the interaction option or actor to select different widget 
 
 ***
 
-### Integrating With Other Systems
+## Integrating With Other Systems
 
 Because interactions use GAS and gameplay events, they integrate well with:
 
@@ -91,7 +91,7 @@ You can build your own `UGameplayAbility` subclasses that encapsulate the specif
 
 ***
 
-### Creating Interaction Menus
+## Creating Interaction Menus
 
 In cases where multiple interactions are possible, you can present the options in a **custom menu**. To support this, implement the `IInteractionInstigator` interface on your pawn or controller:
 
@@ -111,7 +111,7 @@ This approach is ideal for multi-purpose terminals, NPCs, or densely interactive
 
 ***
 
-### Using Gameplay Tags
+## Using Gameplay Tags
 
 If your interaction options need to react to gameplay state or other temporary data, consider attaching gameplay tags to:
 
@@ -123,7 +123,7 @@ This allows your GAS abilities to branch and react cleanly to context (e.g., “
 
 ***
 
-### Replacing the Core Ability
+## Replacing the Core Ability
 
 The system uses `ULyraGameplayAbility_Interact` by default to:
 

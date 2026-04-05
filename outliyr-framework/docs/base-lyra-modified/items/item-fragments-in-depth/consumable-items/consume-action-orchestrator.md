@@ -6,7 +6,7 @@
 
 ***
 
-### Architecture Overview
+## Architecture Overview
 
 The consumable system has three layers:
 
@@ -20,7 +20,7 @@ You only interact with the **Data** and **Effect** layers. The orchestration lay
 
 ***
 
-### The Orchestrator: `GA_Consume`
+## The Orchestrator: `GA_Consume`
 
 When the player presses "Use" on an item, `ULyraGameplayAbility_Consume` is activated. It:
 
@@ -60,7 +60,7 @@ The orchestrator never applies effects, removes items, or plays animations. It's
 
 ***
 
-### The Task: `ActivateConsumeEffectAndWait`
+## The Task: `ActivateConsumeEffectAndWait`
 
 The orchestrator delegates to an internal **Ability Task**. This task:
 
@@ -98,7 +98,7 @@ You never interact with this task directly.
 
 ***
 
-### Finish Policy Behavior
+## Finish Policy Behavior
 
 The Finish Policy controls when the orchestrator ends:
 
@@ -141,7 +141,7 @@ sequenceDiagram
 
 ***
 
-### Why This Structure?
+## Why This Structure?
 
 You might wonder: why not activate the effect ability directly?
 
@@ -155,7 +155,7 @@ You might wonder: why not activate the effect ability directly?
 
 ***
 
-### Key Implementation Details
+## Key Implementation Details
 
 #### The orchestrator is lightweight
 

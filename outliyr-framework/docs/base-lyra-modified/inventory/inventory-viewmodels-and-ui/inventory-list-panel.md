@@ -6,7 +6,7 @@ You're showing a loot drop, a shop inventory, or a crafting ingredient list. You
 
 ***
 
-### When to Use This
+## When to Use This
 
 Choose List Panel when:
 
@@ -23,7 +23,7 @@ Choose [Tile Panel](inventory-tile-panel.md) instead when:
 
 ***
 
-### Key Difference: ItemViewModels, Not SlotViewModels
+## Key Difference: ItemViewModels, Not SlotViewModels
 
 The tile panel uses SlotViewModels (one per slot, including empty). The list panel uses ItemViewModels directly (only existing items).
 
@@ -35,7 +35,7 @@ This means:
 
 ***
 
-### Setting Up
+## Setting Up
 
 {% stepper %}
 {% step %}
@@ -106,9 +106,9 @@ void UMyLootPanel::ShowLoot(ULyraInventoryManagerComponent* LootContainer)
 
 ***
 
-### Navigation
+## Navigation
 
-#### Navigation Axis
+### Navigation Axis
 
 Control which directions navigate the list:
 
@@ -123,7 +123,7 @@ ListPanel->NavigationAxis = ELyraListNavigationAxis::Horizontal;
 ListPanel->NavigationAxis = ELyraListNavigationAxis::Both;
 ```
 
-#### Wrap Navigation
+### Wrap Navigation
 
 ```cpp
 // Wrap at list ends
@@ -135,7 +135,7 @@ ListPanel->bWrapNavigation = false;
 
 ***
 
-### Selection Sync
+## Selection Sync
 
 Like the tile panel, selection syncs bidirectionally:
 
@@ -149,7 +149,7 @@ InventoryVM->SetFocusedSlot(2);
 
 ***
 
-### Practical Example: Loot Drop UI
+## Practical Example: Loot Drop UI
 
 <details>
 

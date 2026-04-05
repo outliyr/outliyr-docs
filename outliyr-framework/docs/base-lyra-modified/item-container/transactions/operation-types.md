@@ -2,8 +2,6 @@
 
 The transaction system supports five operation types, each handling a specific kind of container mutation. This page documents each type, when to use it, and how to construct it.
 
-### Overview
-
 | Operation                  | Purpose                                  | Predictable |
 | -------------------------- | ---------------------------------------- | ----------- |
 | `FItemTxOp_Move`           | Move/swap items between slots            | Yes         |
@@ -27,11 +25,13 @@ struct FItemTransactionOpBase
 };
 ```
 
-### `FItemTxOp_Move`
+***
+
+## `FItemTxOp_Move`
 
 Moves an item from one slot to another. Handles same-container moves, cross-container transfers, and swaps.
 
-#### Structure
+### Structure
 
 ```cpp
 USTRUCT(BlueprintType)
@@ -48,7 +48,7 @@ struct FItemTxOp_Move : public FItemTransactionOpBase
 };
 ```
 
-#### Usage
+### Usage
 
 ```cpp
 // Simple move
@@ -63,7 +63,7 @@ MoveOp.ItemInstance = SpecificItem;
 Request.Ops.Add(FInstancedStruct::Make(MoveOp));
 ```
 
-#### Behavior
+### Behavior
 
 The executor queries `GetOccupiedSlotBehavior()` on the destination container:
 
@@ -75,17 +75,19 @@ The executor queries `GetOccupiedSlotBehavior()` on the destination container:
 | `FragmentCombine` | Delegates to fragment logic                   |
 | `SameItem`        | Internal repositioning (for multi-cell items) |
 
-#### Validation
+### Validation
 
 * Source slot contains an item
 * Destination container can accept the item (or swap is valid)
 * Player has required permissions on both containers
 
-### `FItemTxOp_ModifyTagStack`
+***
+
+## `FItemTxOp_ModifyTagStack`
 
 Modifies any gameplay tag stack on an item. Generalized for stack counts, durability, charges, or custom stats.
 
-#### Structure
+### Structure
 
 ```cpp
 USTRUCT(BlueprintType)
@@ -105,7 +107,7 @@ struct FItemTxOp_ModifyTagStack : public FItemTransactionOpBase
 };
 ```
 
-#### Usage
+### Usage
 
 ```cpp
 // Consume 5 items from a stack
@@ -120,24 +122,26 @@ DurabilityOp.bClampToBounds = true;
 Request.Ops.Add(FInstancedStruct::Make(DurabilityOp));
 ```
 
-#### Behavior
+### Behavior
 
 * Reads current tag stack value
 * Applies delta
 * Records old/new values for rollback
 * If `bClampToBounds` is false and result would be negative or exceed max, validation fails
 
-#### Validation
+### Validation
 
 * Slot contains an item
 * Tag exists on the item (or can be added)
 * Result stays within bounds (unless clamping)
 
-### `FItemTxOp_SplitStack`
+***
+
+## `FItemTxOp_SplitStack`
 
 Splits a stack, creating a new item with a portion of the original.
 
-#### Structure
+### Structure
 
 ```cpp
 USTRUCT(BlueprintType)
@@ -157,7 +161,7 @@ struct FItemTxOp_SplitStack : public FItemTransactionOpBase
 };
 ```
 
-#### Usage
+### Usage
 
 ```cpp
 // Split 10 items to a new slot
@@ -173,7 +177,7 @@ SplitOp.SplitItemGUID = FGuid::NewGuid();  // Must generate before sending!
 Request.Ops.Add(FInstancedStruct::Make(SplitOp));
 ```
 
-#### Behavior
+### Behavior
 
 {% stepper %}
 {% step %}
@@ -197,7 +201,7 @@ Uses `SplitItemGUID` so client can match predicted item to server item.
 {% endstep %}
 {% endstepper %}
 
-#### Validation
+### Validation
 
 * Source contains stackable item
 * `AmountToSplit` > 0 and < current stack count
@@ -207,11 +211,13 @@ Uses `SplitItemGUID` so client can match predicted item to server item.
 **GUID is required for prediction.** The client generates `SplitItemGUID` before sending. The server uses this same GUID when creating the item, allowing the client to reconcile its predicted item with the authoritative one.
 {% endhint %}
 
-### `FItemTxOp_RemoveItem`
+***
+
+## `FItemTxOp_RemoveItem`
 
 Removes an item from a container entirely. Supports destruction, dropping to world, or transfer to holding.
 
-#### Structure
+### Structure
 
 ```cpp
 USTRUCT(BlueprintType)
@@ -241,7 +247,7 @@ struct FItemTxOp_RemoveItem : public FItemTransactionOpBase
 };
 ```
 
-#### Removal Policies
+### Removal Policies
 
 ```cpp
 enum class EItemRemovalPolicy : uint8
@@ -252,7 +258,7 @@ enum class EItemRemovalPolicy : uint8
 };
 ```
 
-#### Usage
+### Usage
 
 ```cpp
 // Destroy an item
@@ -275,24 +281,26 @@ PartialOp.SplitItemGUID = FGuid::NewGuid();
 Request.Ops.Add(FInstancedStruct::Make(PartialOp));
 ```
 
-#### Behavior
+### Behavior
 
 * `QuantityToRemove = 0`: Removes entire item
 * `QuantityToRemove > 0`: Splits stack, removes split portion
 * `Destroy`: Item added to `PendingDestructions`, destroyed on confirmation
 * `DropToWorld`: Spawns appropriate collectable actor
 
-#### Validation
+### Validation
 
 * Slot contains an item
 * For `DropToWorld`: collectable class specified
 * For partial: `QuantityToRemove` <= stack count
 
-### `FItemTxOp_AddItem`
+***
+
+## `FItemTxOp_AddItem`
 
 Adds an item to a container. Supports creating new items or adding existing ones.
 
-#### Structure
+### Structure
 
 ```cpp
 USTRUCT(BlueprintType)
@@ -324,7 +332,7 @@ struct FItemTxOp_AddItem : public FItemTransactionOpBase
 };
 ```
 
-#### Usage
+### Usage
 
 ```cpp
 // Create new item
@@ -345,7 +353,7 @@ CreateOp.InitialStatTags.Add(TAG_Item_Ammo, 30);
 Request.Ops.Add(FInstancedStruct::Make(CreateOp));
 ```
 
-#### Modes
+### Modes
 
 {% stepper %}
 {% step %}
@@ -367,7 +375,7 @@ Request.Ops.Add(FInstancedStruct::Make(CreateOp));
 {% endstep %}
 {% endstepper %}
 
-#### Merge Behavior
+### Merge Behavior
 
 {% stepper %}
 {% step %}
@@ -387,7 +395,7 @@ If source fully merged, adds to pending destruction.
 {% endstep %}
 {% endstepper %}
 
-#### **SourcePickupActor for World Pickups**
+### **SourcePickupActor for World Pickups**
 
 When adding an item from an actor with IPickupable interface e.g. `AWorldCollectableBase`, set `SourcePickupActor` to enable server-side validation:
 
@@ -400,7 +408,7 @@ AddOp.ItemDef = ItemDefClass;                // For template pickups
 AddOp.ExistingItem = ItemInstance;           // For instance pickups
 ```
 
-**Server Validation Flow:**
+#### **Server Validation Flow:**
 
 {% stepper %}
 {% step %}
@@ -424,7 +432,7 @@ If validation fails (pickup destroyed, already empty, etc.), client prediction i
 {% endstep %}
 {% endstepper %}
 
-**Why This Matters:**
+#### **Why This Matters:**
 
 Without `SourcePickupActor`, clients could potentially add items they don't have legitimate access to. By requiring the server to validate and extract from the actual pickup actor, the system ensures:
 
@@ -436,13 +444,15 @@ Without `SourcePickupActor`, clients could potentially add items they don't have
 `SourcePickupActor` is only processed during server execution. On clients, the field is ignored, the client optimistically assumes the item will be available.
 {% endhint %}
 
-#### Validation
+### Validation
 
 * Destination slot can accept item
 * For create: `ItemDef` is valid
 * For existing: item exists and isn't already in a container
 
-### Combining Operations
+***
+
+## Combining Operations
 
 Operations compose naturally for complex behaviors:
 

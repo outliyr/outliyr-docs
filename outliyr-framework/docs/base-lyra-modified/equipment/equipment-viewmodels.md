@@ -8,7 +8,7 @@ For the underlying MVVM architecture and why ViewModels exist, see [MVVM](../ui/
 
 ***
 
-### Class Hierarchy
+## Class Hierarchy
 
 ```mermaid
 classDiagram
@@ -45,7 +45,7 @@ classDiagram
 
 ***
 
-### Tag-Based Slots
+## Tag-Based Slots
 
 Equipment slots are identified by `FGameplayTag`, not by index. This means your paperdoll layout is completely decoupled from how the equipment system stores data internally, you request the slots your UI cares about, and each one is created on demand.
 
@@ -63,8 +63,6 @@ Requesting a slot that doesn't exist yet creates it. Different UI layouts can re
 See [Persistent Slot Pattern](../ui/item-container-ui-system/data-layers-view-models/persistent-slot-pattern.md) for why slot ViewModels persist even when their slot is empty.
 {% endhint %}
 
-***
-
 ### The `bIsHeld` Property
 
 This is what makes equipment slots unique. Equipment has two visual states: **holstered** (on your back, in its slot) and **held** (actively in the character's hands).
@@ -80,8 +78,6 @@ BackSlotVM->bIsHeld      // false - now holstered
 ```
 
 Use this for visual feedback, glow or highlight when held, dim or desaturate when holstered. The property updates automatically when the equipment system changes held state.
-
-***
 
 ### Slot Properties
 
@@ -115,7 +111,7 @@ Equipment-Specific:
 
 ***
 
-### Equipment Instance Access
+## Equipment Instance Access
 
 For advanced use cases, reading weapon stats, accessing the underlying inventory item, you can reach through to the actual equipment instance:
 
@@ -136,8 +132,6 @@ if (Equipment)
 {% endtab %}
 {% endtabs %}
 
-***
-
 ### Delegates
 
 | Delegate               | Signature                                                     | Fires When                                              |
@@ -147,7 +141,7 @@ if (Equipment)
 
 ***
 
-### Drag-Drop
+## Drag-Drop
 
 Slot ViewModels carry a pre-built `SlotDescriptor` that plugs directly into the transaction system:
 

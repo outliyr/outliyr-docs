@@ -1,112 +1,107 @@
 # Customization & Advanced Topics
 
-This section explores more advanced ways to customize Lyra's UI Indicator System, discusses performance considerations, and offers ideas for deeper integration with other game systems.
+The indicator system is designed to be extended without touching the core projection or rendering code. This page covers the main extension points and performance considerations.
 
 ***
 
-### **Extending `UIndicatorDescriptor`**
+## Passing Custom Data to Widgets
 
-While the base `UIndicatorDescriptor` provides a rich set of properties, you might encounter scenarios where your indicator UMG widget needs to access more specific data or trigger custom logic on the game object it represents.
+The `DataObject` property on `UIndicatorDescriptor` is a generic `UObject*` slot that your widget can access after casting. Two patterns are common:
 
-* **Using `DataObject` for Rich Interaction and Custom Data:**
-  * The `DataObject` property (`UObject*`) on `UIndicatorDescriptor` is a powerful way to link your indicator UMG widget directly to the underlying game entity or a dedicated data payload. This allows the widget to query data or even send messages back to the game object.
-  * **Common Pattern: The `DataObject` is the Game Entity Itself (e.g., an Actor):**
-    1. **Define an Interface (Optional but Recommended for Decoupling):**
-       * Create a Blueprint Interface (e.g., `BPI_IndicatorDataSource`) with functions that your UMG widget might need to call on the `DataObject`. Examples: `GetDisplayName()`, `GetCurrentHealth()`, `GetInteractionPromptText()`, or even event-like functions like `NotifyIndicatorClicked()`.
-    2. **Implement the Interface:** The Actor class (or other `UObject` class) that will serve as the `DataObject` should implement this interface and provide logic for its functions. For instance, an "Objective" actor might implement `BPI_IndicatorDataSource` to return its current status or name.
-    3.  **Set the `DataObject`:** When creating the `UIndicatorDescriptor`, set the instance of your Actor (or other relevant `UObject`) as the `DataObject`.
+### Pattern 1: The Game Entity Itself
 
-        ```c++
-        // In C++ when setting up the descriptor
-        MyObjectiveActor* Objective = /* ... get your objective actor ... */;
-        IndicatorDescriptor->SetDataObject(Objective); 
-        ```
+Set the actor, that the indicator represents as the `DataObject`. The widget casts it and queries live state directly.
 
-        ```blueprint
-        // In Blueprint
-        // Assuming 'MyObjectiveActor' is a variable holding your objective actor instance
-        NewDescriptor -> Set Data Object (DataObject: MyObjectiveActor)
-        ```
-    4.  **Interact from the UMG Widget:**
+{% stepper %}
+{% step %}
+**Define an Interface (recommended)**
 
-        * In your UMG widget's `Event Bind Indicator`, get the `DataObject` from the `UIndicatorDescriptor`.
-        * Attempt to call interface messages on this `DataObject`. If the object implements the interface, the messages will be executed.
-        * You can also cast the `DataObject` to its known class if you need to access properties or functions not exposed via an interface, though using interfaces promotes better decoupling.
+Create a Blueprint Interface (e.g., `BPI_IndicatorDataSource`) with functions like `GetDisplayName()`, `GetCurrentHealth()`, or `GetInteractionPromptText()`. This keeps your widget decoupled from specific actor classes.
+{% endstep %}
 
-        ```cpp
-        // In WBP_MyIndicator's Event Bind Indicator
-        Set MyIndicatorDescriptor (From Event Parameter)
-        LocalDataObject = MyIndicatorDescriptor -> GetDataObject
+{% step %}
+**Implement on Your Actor**
 
-        if (IsValid(LocalDataObject)) {
-            // Option 1: Using an Interface (Preferred for decoupling)
-            // Assuming BPI_IndicatorDataSource has a function 'GetIndicatorDisplayName'
-            if (LocalDataObject -> DoesImplementInterface (BPI_IndicatorDataSource)) {
-                DisplayName = BPI_IndicatorDataSource::GetIndicatorDisplayName (Target: LocalDataObject)
-                MyTextBlock_Name -> SetText (DisplayName)
-            }
+The objective actor, enemy pawn, or interactive item implements the interface and returns its live data.
+{% endstep %}
 
-            // Option 2: Direct Casting (If you know the specific type and need direct access)
-            // MyObjectiveActorReference = Cast To MyObjectiveActor (Object: LocalDataObject)
-            // if (IsValid(MyObjectiveActorReference)) {
-            //    SomeValue = MyObjectiveActorReference.ObjectiveSpecificProperty
-            // }
-        }
-        ```
-    5. **Benefits:** Allows the UMG widget to directly query live game state from the relevant actor or send events back to it without hard-coding dependencies on specific actor classes in the widget (if using interfaces). The game entity remains the source of truth for its data.
-  * **Alternative Pattern: The `DataObject` is a Dedicated Data Payload `UObject`:**
-    1. Create a custom `UObject` C++ class or Blueprint (e.g., `MyIndicatorDataPayload`) specifically designed to hold all the static or snapshot data your indicator widget needs.
-    2. When creating the `UIndicatorDescriptor`, instantiate this payload object, populate it with the necessary data, and then assign it via `SetDataObject()`.
-    3. In your UMG widget's `Event Bind Indicator`, get the `DataObject`, cast it to `MyIndicatorDataPayload`, and then access its properties.
-    4. **Benefits:** Useful when the data for the indicator is a snapshot at the time of creation or doesn't need to be live from an actor. Can be simpler if you don't need two-way communication or interface calls.
-  * **Key Idea:** The `DataObject` is flexible. It can be the actual game world entity (like an Actor) that the indicator represents, allowing for rich, dynamic interaction through interfaces, or it can be a more passive UObject just carrying data. The choice depends on the needs of your specific indicator.
-* **Subclassing `UIndicatorDescriptor` (C++):**
-  * For more complex behavior or if you need to add new functions directly to the descriptor itself, you can create a C++ subclass of `UIndicatorDescriptor`.
-  * **Process:**
-    1. Create a new C++ class inheriting from `UIndicatorDescriptor`.
-    2. Add your new properties and functions to this subclass.
-    3. When creating indicators, instantiate your subclass instead of the base `UIndicatorDescriptor`.
-    4. Your UMG widget, in `BindIndicator`, can then cast the received `UIndicatorDescriptor` to your subclass to access the extended functionality.
-  * **Considerations:** This approach is more involved and should be used when the `DataObject` method isn't sufficient, particularly if the new functionality is tightly coupled with the descriptor's core identity.
+{% step %}
+**Set the DataObject**
 
-**Modifying Projection Behavior (`FIndicatorProjection`)**
+```cpp
+IndicatorDescriptor->SetDataObject(MyObjectiveActor);
+```
+{% endstep %}
 
-The `FIndicatorProjection::Project` method contains the core logic for translating 3D world positions to 2D screen coordinates.
+{% step %}
+**Read from the Widget**
 
-* **Understanding the Existing Logic:** Before making changes, thoroughly understand how each `EActorCanvasProjectionMode` is currently implemented. Pay attention to how it handles targets behind the camera and its interaction with screen bounds.
-* **Adding New Projection Modes:**
-  1. Add a new entry to the `EActorCanvasProjectionMode` enum.
-  2. In `FIndicatorProjection::Project`, add a new `case` to the `switch` statement for your new mode.
-  3. Implement the custom projection logic. This might involve new ways of interpreting the target component, custom math for screen positioning, or unique handling of depth.
-* **Modifying Existing Modes:**
-  * Carefully consider the implications. Changes here will affect all indicators using that projection mode.
-  * For example, you might want to change how bounding box anchors are interpreted or how off-screen targets are handled before clamping.
-* **Performance:** Projection calculations happen frequently for visible indicators. Ensure any new or modified logic is performant. Avoid overly complex calculations or expensive operations within the `Project` method.
+In your widget's `BindIndicator`, get the `DataObject`, check if it implements the interface, and query it:
+
+```cpp
+UObject* Data = Descriptor->GetDataObject();
+if (Data && Data->GetClass()->ImplementsInterface(UBPI_IndicatorDataSource::StaticClass()))
+{
+    FText Name = IBPI_IndicatorDataSource::Execute_GetDisplayName(Data);
+    NameTextBlock->SetText(Name);
+}
+```
+
+The widget can also query the `DataObject` on tick for live updates (health bars, status changes).
+{% endstep %}
+{% endstepper %}
+
+{% tabs %}
+{% tab title="Passing the data object" %}
+<figure><img src="../../../.gitbook/assets/image (5).png" alt=""><figcaption><p>Example passing the control point actor as an indicator</p></figcaption></figure>
+{% endtab %}
+
+{% tab title="Using the data object in widget" %}
+<figure><img src="../../../.gitbook/assets/image (6).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+{% endtabs %}
+
+### Pattern 2: A Dedicated Data Payload
+
+Create a custom `UObject` (e.g., `UMyIndicatorPayload`) that holds snapshot data. Populate it when creating the descriptor, set it as the `DataObject`, and cast in the widget. This is simpler when you don't need two-way communication or live updates.
 
 ***
 
-### **Performance Considerations**
+## Subclassing `UIndicatorDescriptor`
 
-While the system is designed with performance in mind (e.g., widget pooling), several factors can impact its performance, especially with many indicators:
+If the `DataObject` pattern isn't sufficient, for example, you need new functions directly on the descriptor or tightly coupled custom behavior, create a C++ subclass:
 
-* **Number of Active Indicators:** The most direct impact. Each active (even if not currently visible due to `bVisible=false` on descriptor) indicator adds some overhead in `SActorCanvas`'s update loop for checking visibility and auto-removal. Each _visible_ indicator undergoes projection and layout calculations.
-  * **Mitigation:** Only add indicators when necessary. Remove them promptly when they are no longer needed. Use `bAutoRemoveWhenIndicatorComponentIsNull` judiciously.
-* **UMG Widget Complexity:**
-  * Complex UMG widgets with many elements, heavy `Tick` logic, or frequent updates can be costly.
-  * **Mitigation:**
-    * Keep indicator UMGs as simple as possible.
-    * Avoid using `Tick` in UMG widgets if updates can be event-driven (e.g., via `BindIndicator` or custom events from your `DataObject`).
-    * Optimize UMG widget textures and materials.
-* **`FUserWidgetPool` (in `SActorCanvas`):**
-  * This pool significantly helps by reusing UMG widget instances, avoiding repeated construction/destruction costs. The system handles this automatically.
-* **`bDrawIndicatorWidgetsInOrder` (on `UIndicatorLayer`):**
-  * When `false` (default), Slate can batch draw calls for similar widgets, improving rendering performance.
-  * Setting this to `true` forces Slate to draw widgets strictly in their sorted order, which can break batching and increase draw calls. Only enable it if strict draw order is absolutely critical and you've identified Z-fighting or ordering issues that cannot be solved by `Priority` and depth sorting alone.
-* **Projection Mode Complexity:**
-  * Simpler modes like `ComponentPoint` are generally faster than bounding box modes, which require more calculations.
-  * **Mitigation:** Use the simplest projection mode that meets your needs.
-* **Frequency of Updates:**
-  * `SActorCanvas` updates via an active timer. The default interval (0) means it runs every frame. If extreme performance is needed for a very high number of indicators and updates don't need to be per-frame, one could theoretically modify the timer registration, but this is an advanced and potentially risky change.
+1. Inherit from `UIndicatorDescriptor`
+2. Add properties and functions
+3. Instantiate your subclass instead of the base class when creating indicators
+4. Cast in the widget's `BindIndicator` to access the extensions
 
-By thinking about these integration points, you can make the UI Indicator System a deeply embedded and highly informative part of your game's user experience.
+Use this sparingly, `DataObject` handles most cases without adding new descriptor types.
 
+***
+
+## Custom Projection Modes
+
+The `FIndicatorProjection::Project` method contains a `switch` over `EActorCanvasProjectionMode`. To add a new mode:
+
+1. Add an entry to the `EActorCanvasProjectionMode` enum
+2. Add a `case` in `FIndicatorProjection::Project` with your custom math
+3. Use the new mode on descriptors
+
+Keep projection logic performant, it runs for every visible indicator every frame. Prefer the simplest mode that meets your needs (`ComponentPoint` is fastest).
+
+***
+
+## Performance Considerations
+
+The system handles widget pooling and efficient Slate rendering automatically, but these factors can still affect performance at scale:
+
+| Factor                          | Impact                                                         | Mitigation                                                                                          |
+| ------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Number of active indicators** | Each visible indicator undergoes projection + layout per frame | Add only when needed, remove promptly. Use `bAutoRemoveWhenIndicatorComponentIsNull`.               |
+| **Widget complexity**           | Heavy UMG widgets with many elements or tick logic are costly  | Keep indicator widgets simple. Prefer event-driven updates over tick.                               |
+| **Projection mode**             | Bounding box modes cost more than `ComponentPoint`             | Use the simplest mode that works                                                                    |
+| **Draw order**                  | `bDrawIndicatorWidgetsInOrder = true` breaks Slate batching    | Leave `false` (default) unless you have confirmed Z-fighting issues that priority/depth can't solve |
+| **Update frequency**            | Canvas updates every frame by default                          | For extreme indicator counts, the timer interval could be increased, but this is an advanced change |
+
+Widget pooling via `FUserWidgetPool` is automatic, the canvas reuses instances rather than creating and destroying them. No configuration needed.

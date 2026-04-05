@@ -4,17 +4,17 @@ The framework extends Unreal's standard GameMode and GameState to support data-d
 
 ***
 
-### `ALyraGameMode`
+## `ALyraGameMode`
 
 The GameMode orchestrates two things: selecting which experience to load, and managing the player lifecycle. It inherits from `AModularGameModeBase`, which provides the hooks that game feature plugins use to inject components and extend behavior.
 
-#### Experience Selection
+### Experience Selection
 
 When the map loads, `InitGame` kicks off experience selection. The GameMode determines which experience to use by checking multiple sources in precedence order, URL options, command line arguments, developer settings, and the map's World Settings default. Once resolved, the result is passed to the `ULyraExperienceManagerComponent` on the GameState via `OnMatchAssignmentGiven`. See [Experience Lifecycle](experience-lifecycle.md) for the full selection chain.
 
 The GameMode also listens for the experience to finish loading. `OnExperienceLoaded` fires when the experience is fully activated, at which point the GameMode processes any players that joined early and were waiting for the experience before receiving pawns.
 
-#### Player Lifecycle
+### Player Lifecycle
 
 The GameMode controls how players join and get their pawns:
 
@@ -27,29 +27,29 @@ The GameMode controls how players join and get their pawns:
 
 After a player is fully initialized, the **`OnGameModePlayerInitialized`** delegate fires. Subsystems that need to respond to new players, team assignment, spectator setup, analytics, bind to this delegate rather than overriding GameMode methods directly.
 
-#### Bot Management
+### Bot Management
 
 The GameMode provides `ControllerCanRestart()` as an agnostic version of `PlayerCanRestart` that works for both player controllers and AI controllers, keeping the restart logic unified across human and bot players.
 
 ***
 
-### `ALyraGameState`
+## `ALyraGameState`
 
 The GameState hosts the experience and provides game-wide services. It inherits from `AModularGameStateBase` and implements `IAbilitySystemInterface`, making it a valid target for gameplay effects and cues at the game level.
 
-#### Core Components
+### Core Components
 
 * **`ULyraExperienceManagerComponent`** — the private component that manages the entire experience lifecycle: loading, activation, deactivation, and broadcasting readiness to the rest of the framework. The GameState is where this component lives because the GameState replicates to all clients, which is how the experience ID reaches joining players.
 * **`ULyraAbilitySystemComponent`** — a game-wide ASC used for global gameplay cues and game-level effects. Accessible via `GetLyraAbilitySystemComponent()` (Blueprint-callable) or the standard `IAbilitySystemInterface::GetAbilitySystemComponent()`. This is not the per-pawn ASC, it exists for effects that apply to the match as a whole.
 
-#### Messaging
+### Messaging
 
 The GameState provides two multicast message functions for broadcasting `FLyraVerbMessage` structs to all clients:
 
 * **`MulticastMessageToClients()`** — unreliable. Use for notifications that can tolerate being lost (elimination feeds, cosmetic events).
 * **`MulticastReliableMessageToClients()`** — reliable. Use for notifications that must arrive (round transitions, critical game state changes).
 
-#### Supplementary State
+### Supplementary State
 
 * **`ServerFPS`** — replicated server frame rate for client-side performance monitoring.
 * **`RecorderPlayerState`** — tracks which player state recorded a replay, used to select the correct pawn to follow during replay playback. The `OnRecorderPlayerStateChangedEvent` delegate fires when this changes.
@@ -58,7 +58,7 @@ The GameState also overrides `AddPlayerState` and `RemovePlayerState` to partici
 
 ***
 
-### `ALyraWorldSettings`
+## `ALyraWorldSettings`
 
 Each map can specify a default experience in its World Settings. `ALyraWorldSettings` extends `AWorldSettings` with a single meaningful addition: the `DefaultGameplayExperience` property, a soft class pointer to a `ULyraExperienceDefinition`.
 
@@ -68,7 +68,7 @@ In editor builds, `ForceStandaloneNetMode` lets you mark front-end or standalone
 
 ***
 
-### `ULyraGameInstance`
+## `ULyraGameInstance`
 
 Minimal. `ULyraGameInstance` inherits from `UCommonGameInstance` (from the CommonGame plugin) and provides the game instance lifecycle. It offers `GetPrimaryPlayerController()` for quick access to the first local player's controller, handles `CanJoinRequestedSession()` for online session flow, and manages user initialization through `HandlerUserInitialized()`.
 
@@ -76,6 +76,6 @@ The GameInstance also handles network encryption handshakes (`ReceivedNetworkEnc
 
 ***
 
-### `ALyraGameSession`
+## `ALyraGameSession`
 
 `ALyraGameSession` inherits from `AGameSession` and handles online session management. It overrides `ProcessAutoLogin` to disable the default auto-login behavior, and provides `HandleMatchHasStarted` / `HandleMatchHasEnded` hooks for session lifecycle events. The class is intentionally thin, it integrates with the framework's player initialization flow without adding significant custom logic.

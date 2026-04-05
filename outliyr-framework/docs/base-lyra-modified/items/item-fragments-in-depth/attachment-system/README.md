@@ -6,7 +6,7 @@ The Attachment System is a way for items to host other items, with behavior that
 
 ***
 
-### The Core Concept
+## The Core Concept
 
 The attachment system solves a specific problem: **items need to contain other items, and those contained items need to react to their parent's state**.
 
@@ -16,7 +16,7 @@ This works for more than weapons. A tactical vest can have armor plate modules, 
 
 ***
 
-### Two-Piece Architecture
+## Two-Piece Architecture
 
 The system splits into two parts. The runtime/configuration separation keeps shared configuration on the item definition while runtime state is per-instance:
 
@@ -38,7 +38,7 @@ This separation means configuration is shared (all assault rifles accept the sam
 
 ***
 
-### State-Aware Behavior
+## State-Aware Behavior
 
 The key insight is [**state inheritance**](state-behaviors.md). Attachments don't poll for changes or register callbacks everywhere - they simply inherit state from their parent.
 

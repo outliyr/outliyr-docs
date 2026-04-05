@@ -6,7 +6,7 @@ Every pawn in the framework is configured by a `ULyraPawnData` data asset. This 
 
 ***
 
-### What PawnData Contains
+## What PawnData Contains
 
 Each property on `ULyraPawnData` controls a different axis of pawn configuration:
 
@@ -21,16 +21,12 @@ Each property on `ULyraPawnData` controls a different axis of pawn configuration
 
 <figure><img src="../../.gitbook/assets/image (110).png" alt=""><figcaption><p><code>HeroData_ShooterBase</code> PawnData</p></figcaption></figure>
 
-***
-
 ### Where PawnData Comes From
 
 PawnData reaches the pawn through two paths, and the GameMode arbitrates between them:
 
 * **Experience DefaultPawnData** — the experience definition specifies a default `ULyraPawnData` for all players. This is the baseline. When the GameMode calls `GetPawnDataForController()` and no team-specific override exists, it returns this default. Most symmetric game modes (everyone plays the same character type) use only this path.
 * **Per-team PawnData** — the `ULyraTeamCreationComponent` (which lives on the GameState and is injected by the experience) can override PawnData per team through its `TeamPawnData` map. This maps team IDs to PawnData assets. In asymmetric modes, hunters vs. prey, attackers vs. defenders, different teams get entirely different pawn configurations: different classes, different abilities, different input, different cameras. The `SetTeamPawnData()` function can update a team's PawnData at runtime, optionally re-applying the change to players already on that team.
-
-***
 
 ### How PawnData Is Applied
 
@@ -70,8 +66,6 @@ As the pawn's initialization state machine progresses, each component pulls its 
 All systems have read their configuration. The pawn has its abilities, its input responds to player actions, the camera is in the correct mode, and the HUD is configured. The pawn is ready for gameplay.
 {% endstep %}
 {% endstepper %}
-
-***
 
 ### Creating a Custom PawnData
 

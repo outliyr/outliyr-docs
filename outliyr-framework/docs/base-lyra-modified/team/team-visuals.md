@@ -4,7 +4,7 @@ A team needs more than an ID, it needs a visual identity that players can instan
 
 ***
 
-### Display Assets
+## Display Assets
 
 A team's visual identity lives in a `ULyraTeamDisplayAsset`, a data asset with three maps of named parameters:
 
@@ -18,7 +18,7 @@ You name the parameters whatever makes sense for your project. There is no prede
 
 The asset also carries a `TeamShortName` (`FText`) for localized team names in UI, scoreboards, kill feeds, team selection screens.
 
-#### Application Methods
+### Application Methods
 
 The display asset provides four methods for pushing its parameters into the rendering pipeline, each building on the last:
 
@@ -32,13 +32,13 @@ The display asset provides four methods for pushing its parameters into the rend
 
 <figure><img src="../../.gitbook/assets/image (39).png" alt=""><figcaption></figcaption></figure>
 
-#### Live Editing
+### Live Editing
 
 In the editor, modifying a display asset's properties triggers `PostEditChangeProperty`, which iterates all active `ULyraTeamSubsystem` instances and calls `NotifyTeamDisplayAssetModified`. This broadcasts the change to every registered team color observer, so you see team color updates live in PIE without restarting. Tweak a color in the data asset, and every character, particle, and UI widget using that team's colors updates immediately.
 
 ***
 
-### Perspective Mode
+## Perspective Mode
 
 Consider a standard two-team setup: Team 1 is blue, Team 2 is red. That works for spectators, but not for players. In an FPS, you expect to always be the "blue" team and your opponents to always be "red", regardless of which team ID you were actually assigned. A Team 2 player shouldn't see themselves as red; they should see allies as blue and enemies as red, just like a Team 1 player does.
 
@@ -49,7 +49,7 @@ Perspective mode solves this. When enabled, the subsystem maintains two special 
 
 If perspective mode is off, or no viewer team is provided, it falls back to the raw per-team display asset.
 
-#### Configuration
+### Configuration
 
 Perspective assets are configured on `ULyraTeamCreationComponent` through its `PerspectiveColorConfig` property, an `FLyraPerspectiveColorConfig` struct with three fields:
 
@@ -61,7 +61,7 @@ Perspective assets are configured on `ULyraTeamCreationComponent` through its `P
 
 During team creation (`BeginPlay`), the component registers these assets with the subsystem via `RegisterPerspectiveDisplayAsset` and enables perspective mode via `SetPerspectiveColourMode`. From that point forward, all calls to `GetEffectiveTeamDisplayAsset` are perspective-aware.
 
-#### Choosing the Right Accessor
+### Choosing the Right Accessor
 
 `GetEffectiveTeamDisplayAsset(TeamId, ViewerTeamId)` is what you should use for anything the player sees, character materials, UI elements, world markers. It respects perspective mode and returns the correct asset for the viewer's context.
 
@@ -69,11 +69,11 @@ During team creation (`BeginPlay`), the component registers these assets with th
 
 ***
 
-### Reacting to Team Changes
+## Reacting to Team Changes
 
 Polling for team state every frame is wasteful and fragile. The framework provides three async actions for event-driven updates. Each one fires once immediately on creation with the current state, so you never need to manually query the initial value, just bind your logic and the first callback gives you the starting point.
 
-#### ObserveViewerTeam
+### ObserveViewerTeam
 
 This is the most common observer and the one you will reach for first. This observer monitors when the _viewed_ player changes and what team they belong to. It is built for spectator and killcam systems.
 
@@ -87,7 +87,7 @@ Use this for spectator UI that needs to update when switching between observed p
 The two observers below return team colors based on the **actor's actual team**, not the viewer's perspective. Use them when colors should stay fixed regardless of who's watching, for example, a control point that's always blue for Team 1 and red for Team 2, even during a killcam or spectating. If instead you want colors to shift with the viewer's perspective (teammates are always blue, enemies always red, even when spectating someone else), use `ObserveViewerTeam` above.
 {% endhint %}
 
-#### ObserveTeamColors
+### ObserveTeamColors
 
 It monitors both team membership and display asset changes.
 
@@ -116,7 +116,7 @@ The delegate fires again whenever:
 
 Use this for health bars, nameplates, crosshair colors, outline effects, anything that should react to team visuals.
 
-#### ObserveTeam
+### ObserveTeam
 
 A simpler variant that only monitors team ID changes, ignoring display asset updates.
 
@@ -126,7 +126,7 @@ Use this for logic that cares about team membership but not colors, showing or h
 
 ***
 
-### Getting Colors Safely
+## Getting Colors Safely
 
 Reading parameters from a display asset can fail in several ways: the asset might be null (actor has no team yet), or it might not have the specific parameter you need (different game modes use different parameter sets). `ULyraTeamStatics` provides typed accessors that handle both cases gracefully:
 
@@ -138,7 +138,7 @@ Reading parameters from a display asset can fail in several ways: the asset migh
 
 These are the safest way to read team parameters from Blueprints. Your UI never crashes because a team doesn't have a specific parameter defined, it just falls back to the default you provided.
 
-#### Viewer Helpers
+### Viewer Helpers
 
 `ULyraTeamStatics` also provides quick access to the current viewer's team information, useful for any system that needs to know whose perspective is active:
 

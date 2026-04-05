@@ -2,7 +2,7 @@
 
 A shotgun blast hits a target 30 meters away. The damage execution needs to know which weapon fired, how far the shot traveled, and what surface it hit, headshot or body armor. All of this metadata travels with the gameplay effect through a custom effect context.
 
-### What Gameplay Effects Do
+## What Gameplay Effects Do
 
 Effects are how GAS modifies attributes. An instant effect applies damage. A duration effect buffs attack speed for 10 seconds. An infinite effect represents a passive stat bonus that lasts until explicitly removed.
 

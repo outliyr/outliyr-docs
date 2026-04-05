@@ -18,11 +18,11 @@ flowchart LR
 
 ***
 
-### Enhanced Input Layer
+## Enhanced Input Layer
 
 Enhanced Input is Unreal's built-in input system. The framework builds on top of it rather than replacing it, so all standard Enhanced Input concepts apply.
 
-#### Input Mapping Contexts (IMCs)
+### Input Mapping Contexts (IMCs)
 
 An IMC is a data asset that maps hardware inputs (keys, buttons, analog axes) to abstract Input Actions. Think of it as a binding table: "W maps to IA\_Move", "Space maps to IA\_Jump", "LMB maps to IA\_PrimaryFire".
 
@@ -34,7 +34,7 @@ The framework registers IMCs from three sources:
 * **HeroComponent** — `ULyraHeroComponent::DefaultInputMappings` layers additional contexts on top (e.g., mode-specific overrides).
 * **Game Features** — `UGameFeatureAction_AddInputContextMapping` pushes contexts when a feature activates, and removes them when it deactivates.
 
-#### Input Actions (IAs)
+### Input Actions (IAs)
 
 An Input Action represents player intent in the abstract, "Move", "Jump", "Fire". Each IA declares a value type that determines the shape of data it carries:
 
@@ -49,7 +49,7 @@ The value type should match the hardware producing it. A button press is `Bool`.
 
 IAs are the handoff point between Enhanced Input and the framework. Enhanced Input knows how to fire them; the framework's `ULyraInputConfig` knows what they mean.
 
-#### Triggers and Modifiers
+### Triggers and Modifiers
 
 **Triggers** determine _when_ an action fires:
 
@@ -72,7 +72,7 @@ The framework provides custom modifiers for gamepad sensitivity, aim-assist dead
 
 ***
 
-### Lyra's Bridge — `ULyraInputConfig`
+## Lyra's Bridge — `ULyraInputConfig`
 
 Enhanced Input produces abstract Input Actions. The framework's ability system speaks Gameplay Tags. `ULyraInputConfig` is the bridge, a data asset that maps each Input Action to a Gameplay Tag.
 
@@ -164,7 +164,7 @@ Broadcasts `NAME_BindInputsNow` so game features and other systems know input is
 
 After initialization, game features and other runtime systems can layer additional input configs by calling `AddAdditionalInputConfig()` on the HeroComponent, which binds the new config's ability actions and returns handles for later removal via `RemoveAdditionalInputConfig()`.
 
-#### Two Dispatch Paths
+### Two Dispatch Paths
 
 Once bindings are in place, every input follows one of two paths:
 
@@ -187,19 +187,19 @@ Native handlers respect gameplay-tag blocks. `Input_Move` and the look handlers 
 
 ***
 
-### Ability Activation
+## Ability Activation
 
 The ASC has received an input tag. Now it needs to find a matching ability and activate it.
 
-#### The Tag Connection
+### The Tag Connection
 
 When an ability is granted (typically through a `ULyraAbilitySet`), its `InputTag` from the grant entry is added to the ability spec's `DynamicSpecSourceTags`. This is the only link between an input and the ability it triggers, the ability class itself has no knowledge of which key drives it. The same ability class can respond to different inputs depending on how it was granted.
 
-#### The Matching Process
+### The Matching Process
 
 When `AbilityInputTagPressed(Tag)` is called, the ASC iterates all granted specs in `ActivatableAbilities.Items` and checks each spec's `DynamicSpecSourceTags` for an exact match. Every match gets its handle added to `InputPressedSpecHandles` and `InputHeldSpecHandles`. On release, matching handles move to `InputReleasedSpecHandles` and are removed from `InputHeldSpecHandles`.
 
-#### `ProcessAbilityInput` — the Per-Frame Loop
+### `ProcessAbilityInput` — the Per-Frame Loop
 
 `ProcessAbilityInput()` runs each tick and is where activation decisions happen:
 
@@ -241,7 +241,7 @@ For each handle in `InputReleasedSpecHandles`, `AbilitySpecInputReleased` is cal
 {% endstep %}
 {% endstepper %}
 
-#### Activation Policies
+### Activation Policies
 
 Each `ULyraGameplayAbility` declares an `ActivationPolicy`:
 

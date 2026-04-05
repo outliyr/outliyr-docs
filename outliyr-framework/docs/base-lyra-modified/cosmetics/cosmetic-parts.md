@@ -4,7 +4,7 @@ A cosmetic part is an actor that attaches to the character, a helmet, a backpack
 
 ***
 
-### What a Part Is
+## What a Part Is
 
 A part is defined by an actor class to spawn, a socket to attach to (or the mesh root if unspecified), and a collision mode. Collision is either disabled entirely or left as-is from the part actor's own settings.
 
@@ -20,7 +20,7 @@ You can create a part with no actor class at all, just tags. This adds metadata 
 
 </details>
 
-#### Dedicated Server Behaviour
+### Dedicated Server Behaviour
 
 Cosmetic parts are **not spawned on dedicated servers**. This is handled explicitly inside `FLyraCharacterPartList::SpawnActorForEntry`, which includes a check to skip spawning cosmetic part actors on dedicated servers.
 
@@ -40,7 +40,7 @@ Parts are never spawned on dedicated servers, only on clients/listen server who 
 
 ***
 
-### The Controller Component
+## The Controller Component
 
 `ULyraControllerComponent_CharacterParts` lives on the player controller. This component stores the list of parts the player wants applied to their character. Because the player controller outlives the pawn, this list survives death and respawn. You manage it through `AddCharacterPart()` to add a part, `RemoveCharacterPart()` to remove a specific part by definition, and `RemoveAllCharacterParts()` to clear everything.
 
@@ -74,7 +74,7 @@ Each desired part that doesn't already have a valid handle (and isn't suppressed
 
 This is why cosmetics survive respawns, the desired state lives on the controller, not the pawn.
 
-#### Key Operations
+### Key Operations
 
 | Method                    | Purpose                                            |
 | ------------------------- | -------------------------------------------------- |
@@ -84,7 +84,7 @@ This is why cosmetics survive respawns, the desired state lives on the controlle
 
 ***
 
-### The Pawn Component
+## The Pawn Component
 
 `ULyraPawnComponent_CharacterParts` lives on the pawn. This component handles the actual spawning of cosmetic actors and their replication to all clients. It exposes `AddCharacterPart()` and `RemoveCharacterPart()`  to manage individual parts, `RemoveAllCharacterParts()` to clear everything, and `GetCharacterPartActors()` to retrieve all currently spawned part actors.
 
@@ -128,7 +128,7 @@ The pawn component collects gameplay tags from all spawned parts and fires a cha
 {% endstep %}
 {% endstepper %}
 
-#### Key Operations
+### Key Operations
 
 | Method                              | Purpose                                             |
 | ----------------------------------- | --------------------------------------------------- |
@@ -141,7 +141,7 @@ The pawn component collects gameplay tags from all spawned parts and fires a cha
 
 ***
 
-### Tag Collection
+## Tag Collection
 
 The pawn component collects gameplay tags from all spawned cosmetic actors that implement the gameplay tag asset interface, plus any extra tags defined directly on the parts. These combined tags drive body mesh selection and animation layer selection (see [body-style-and-animation](body-style-and-animation.md)).
 
@@ -149,7 +149,7 @@ External systems can bind to the `OnCharacterPartsChanged` delegate to react whe
 
 ***
 
-### Replication
+## Replication
 
 Parts replicate using delta serialization, only changes are sent, not the full list every time. When a part is added on the server, clients receive the addition and spawn the actor locally. When a part is removed, clients destroy the actor. When a part changes, clients destroy the old actor and respawn it, there is no fine-grained update path.
 

@@ -2,7 +2,7 @@
 
 Setting up teams starts with a single component on the game state. The `ULyraTeamCreationComponent` is added as part of your Experience definition, and it carries all the configuration needed to describe which teams exist, how they look, and how players get assigned. Once the experience finishes loading, the component takes over and builds the team infrastructure automatically.
 
-### The Creation Component
+## The Creation Component
 
 `ULyraTeamCreationComponent` inherits from `UGameStateComponent`, so it lives on the game state and participates in the experience lifecycle. You configure it in the Experience's action set or directly on a game state Blueprint. Its properties define the shape of your team setup:
 

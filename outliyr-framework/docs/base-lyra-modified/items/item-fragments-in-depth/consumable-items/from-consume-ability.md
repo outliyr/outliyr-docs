@@ -11,7 +11,7 @@
 
 ***
 
-### Your Responsibilities
+## Your Responsibilities
 
 {% stepper %}
 {% step %}
@@ -37,13 +37,13 @@ That's it. The system handles everything else (granting, networking, cleanup, it
 
 ***
 
-### Basic Structure
+## Basic Structure
 
 {% stepper %}
 {% step %}
 Event ActivateAbility
 
-* \[Optional] Check conditions (CanConsumeItem already ran)
+* \[Optional] Check conditions (`CanConsumeItem` already ran)
 {% endstep %}
 
 {% step %}
@@ -159,7 +159,7 @@ Return `false` to cancel the ability. Examples:
 
 ***
 
-### Common Patterns
+## Common Patterns
 
 {% stepper %}
 {% step %}
@@ -193,20 +193,6 @@ Finish Policy: `BlockOtherConsumes`
 {% endstep %}
 
 {% step %}
-#### Throwable (Spawn Actor)
-
-```
-ActivateAbility
-  → Play Throw Animation
-  → Spawn Projectile Actor
-  → ConsumeItem()
-  → EndAbility()
-```
-
-Finish Policy: `WaitForConsumeEffect`
-{% endstep %}
-
-{% step %}
 ### Conditional Effect
 
 ```
@@ -222,7 +208,7 @@ ActivateAbility
 
 ***
 
-### Debugging
+## Debugging
 
 | Symptom                       | Likely Cause                                 | Fix                                       |
 | ----------------------------- | -------------------------------------------- | ----------------------------------------- |

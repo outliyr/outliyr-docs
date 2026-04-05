@@ -6,7 +6,7 @@ The framework provides three pawn classes, each at a different point on the comp
 
 ***
 
-### Inheritance Hierarchy
+## Inheritance Hierarchy
 
 ```mermaid
 classDiagram
@@ -19,7 +19,7 @@ classDiagram
 
 ***
 
-### Feature Comparison
+## Feature Comparison
 
 | Feature                       | `ALyraCharacter`                              | `ALyraCharacterWithAbilities`                           | `ALyraPawn`                                         |
 | ----------------------------- | --------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------- |
@@ -36,18 +36,18 @@ classDiagram
 
 ***
 
-### `ALyraCharacter`
+## `ALyraCharacter`
 
 This is your go-to for any character a player controls or that needs a full humanoid body. It comes with everything you need for a walking, jumping, crouching character that participates in the Gameplay Ability System.
 
-#### Components created in the constructor
+### Components created in the constructor
 
 * **`ULyraPawnExtensionComponent`** - Coordinates ASC initialization, holds the PawnData reference, and manages the pawn extension lifecycle.
 * **`ULyraHealthComponent`** - Monitors the `HealthSet` on the ASC and drives the death sequence (`OnDeathStarted` / `OnDeathFinished`).
 * **`ULyraCameraComponent`** - Provides camera management, positioned at `(-300, 0, 75)` by default.
 * **`ULyraCharacterMovementComponent`** - Replaces the default `UCharacterMovementComponent` via `FObjectInitializer::SetDefaultSubobjectClass`. Configured with custom gravity, acceleration, friction, and crouch settings out of the box.
 
-#### Where does the ASC come from?
+### Where does the ASC come from?
 
 `ALyraCharacter` does not own an Ability System Component. Instead, it delegates `GetAbilitySystemComponent()` through the `ULyraPawnExtensionComponent`, which resolves the ASC from the owning PlayerState. This means the character's abilities, attributes, and gameplay effects all live on the PlayerState rather than the pawn itself.
 
@@ -63,7 +63,7 @@ The PlayerState is replicated to all clients, so other players can query it for 
 
 </details>
 
-#### Interfaces
+### Interfaces
 
 `ALyraCharacter` implements several interfaces, each serving a distinct purpose:
 
@@ -74,7 +74,7 @@ The PlayerState is replicated to all clients, so other players can query it for 
 
 ***
 
-### `ALyraPawn`
+## `ALyraPawn`
 
 Need something lighter? `ALyraPawn` is a bare-bones pawn with nothing but team identification. No mesh, no movement component, no GAS integration. Just `ILyraTeamAgentInterface`.
 
@@ -84,11 +84,11 @@ Like `ALyraCharacter`, it inherits from a modular base class (`AModularPawn`), s
 
 ***
 
-### `ALyraCharacterWithAbilities`
+## `ALyraCharacterWithAbilities`
 
 Some actors need the full ability system but don't have a player behind them. `ALyraCharacterWithAbilities` extends `ALyraCharacter` with a self-contained ASC, so it gets everything `ALyraCharacter` has, skeletal mesh, capsule, movement, health, cameram plus its own ability system that doesn't depend on a PlayerState.
 
-#### What it adds on top of ALyraCharacter
+### What it adds on top of ALyraCharacter
 
 * **`ULyraAbilitySystemComponent`** - Created as a default subobject, replicated in `Mixed` mode. The actor's net update frequency is set to 100 Hz to keep ability state synchronized.
 * **`ULyraHealthSet`** - Health attribute set, created as a default subobject so the ASC detects it during `InitializeComponent`.
@@ -110,7 +110,7 @@ In shooter game modes where AI are suppose to represent players like team deathm
 
 ***
 
-### ASC Ownership
+## ASC Ownership
 
 Where the Ability System Component lives determines whether ability state survives pawn death. This is the single most important architectural decision when choosing a pawn class.
 

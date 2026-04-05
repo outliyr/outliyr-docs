@@ -2,7 +2,7 @@
 
 You're in third-person exploration mode. The player aims down sights, the camera smoothly transitions to a tighter over-shoulder view. They release, it blends back. Each of these perspectives is a camera mode, and the transitions are handled by a blending stack.
 
-### What a Camera Mode Is
+## What a Camera Mode Is
 
 <figure><img src="../../.gitbook/assets/image (253).png" alt=""><figcaption></figcaption></figure>
 

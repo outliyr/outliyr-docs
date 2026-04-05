@@ -2,16 +2,18 @@
 
 The `ULyraItemSubsystem` is a `UWorldSubsystem` responsible for centralized item lifecycle management. It provides a standardized way to create, track, and destroy item instances with proper fragment initialization.
 
-### Role and Purpose
+## Role and Purpose
 
 * **Standardized Item Instance Creation:** Provides `CreateItemInstance()` for creating new `ULyraInventoryItemInstance` objects with proper initialization, including fragment setup.
 * **GUID-Based Item Tracking:** Maintains a fast lookup map of all managed items by their GUID, enabling cross-container item references and prediction reconciliation.
 * **Item Lifecycle Management:** Provides `DestroyItem()` for proper cleanup including GUID map removal and fragment destruction.
 * **Prediction Support:** Supports client prediction by allowing items to be created with explicit GUIDs that match between client and server.
 
-### Key Functions
+***
 
-#### `CreateItemInstance`
+## Key Functions
+
+### `CreateItemInstance`
 
 Two overloads are available:
 
@@ -22,7 +24,7 @@ Two overloads are available:
 Directly calling `NewObject<ULyraInventoryItemInstance>` will not automatically initialize the crucial Transient Fragment data payloads. Use `CreateItemInstance` to guarantee correct setup according to the item's definition.
 {% endhint %}
 
-Creation Process:
+#### Creation Process:
 
 {% stepper %}
 {% step %}
@@ -56,9 +58,7 @@ Creation Process:
 * Guarantees correct transient fragment initialization that would be missed by directly constructing the UObject.
 * Ensures items are properly registered for GUID-based lookup and prediction reconciliation.
 
-***
-
-#### `FindItemByGuid`
+### `FindItemByGuid`
 
 ```cpp
 ULyraInventoryItemInstance* FindItemByGuid(const FGuid& ItemGuid) const;
@@ -70,9 +70,7 @@ ULyraInventoryItemInstance* FindItemByGuid(const FGuid& ItemGuid) const;
   * Prediction reconciliation (matching client-predicted items with server-authoritative items).
   * View models resolving item references.
 
-***
-
-#### `DestroyItem`
+### `DestroyItem`
 
 ```cpp
 void DestroyItem(ULyraInventoryItemInstance* Item);
@@ -84,9 +82,7 @@ void DestroyItem(ULyraInventoryItemInstance* Item);
   2. Calls `PrepareForDestruction()` on the item (cleans up fragments).
   3. Calls `ConditionalBeginDestroy()` for proper UObject cleanup.
 
-***
-
-#### `RegisterItem / UnregisterItem`
+### `RegisterItem / UnregisterItem`
 
 ```cpp
 void RegisterItem(ULyraInventoryItemInstance* Item);
@@ -111,9 +107,9 @@ void UnregisterItem(ULyraInventoryItemInstance* Item);
 
 ***
 
-### Usage Examples
+## Usage Examples
 
-Creating an item from code:
+#### Creating an item from code
 
 ```cpp
 ULyraItemSubsystem* ItemSubsystem = GetWorld()->GetSubsystem<ULyraItemSubsystem>();
@@ -124,7 +120,7 @@ if (ItemSubsystem)
 }
 ```
 
-Finding an item by GUID:
+#### Finding an item by GUID
 
 ```cpp
 ULyraItemSubsystem* ItemSubsystem = GetWorld()->GetSubsystem<ULyraItemSubsystem>();
@@ -138,7 +134,7 @@ if (ItemSubsystem)
 }
 ```
 
-Creating a predicted item:
+#### Creating a predicted item
 
 ```cpp
 // During client prediction
@@ -151,7 +147,7 @@ PredictedItem->bIsClientPredicted = true;
 
 ***
 
-### Technical Details
+## Technical Details
 
 * **Subsystem Type:** `UWorldSubsystem` - automatically created per-world.
 * **GUID Map:** Uses `TMap<FGuid, TWeakObjectPtr<ULyraInventoryItemInstance>>` for efficient lookups. Weak pointers allow items to be garbage collected without requiring explicit unregistration (though `UnregisterItem()` is called during destruction for cleanup).

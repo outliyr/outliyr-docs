@@ -10,25 +10,25 @@ Together they form a layered system: PawnData provides the foundation, Game Feat
 
 ***
 
-### Pawn-Level Configuration
+## Pawn-Level Configuration
 
 Every pawn's baseline input comes from its `ULyraPawnData` data asset, which carries two input-related properties:
 
-<figure><img src="../../.gitbook/assets/image (2).png" alt=""><figcaption><p>Pawn data asset showcasing the input section</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (2) (1).png" alt=""><figcaption><p>Pawn data asset showcasing the input section</p></figcaption></figure>
 
 * **`InputConfig`** (`ULyraInputConfig*`) — maps Input Actions to Gameplay Tags. During initialization, `ULyraHeroComponent` reads this config and passes it to `ULyraInputComponent`, which binds both native actions (move, look) and ability actions (tag-routed).
 
-<figure><img src="../../.gitbook/assets/image.png" alt=""><figcaption><p>Input config asset</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (15).png" alt=""><figcaption><p>Input config asset</p></figcaption></figure>
 
 * **`InputMappings`** (`TArray<FPawnInputMappingContextAndPriority>`) — an array of Input Mapping Contexts defining hardware-to-action bindings. Each entry has a `Priority` (higher wins on conflicts) and a `bRegisterWithSettings` flag that controls whether the IMC appears in the player's key-rebinding UI.
 
-<figure><img src="../../.gitbook/assets/image (1).png" alt=""><figcaption><p>Input Mapping asset</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (1) (1).png" alt=""><figcaption><p>Input Mapping asset</p></figcaption></figure>
 
-#### HeroComponent's DefaultInputMappings
+### HeroComponent's DefaultInputMappings
 
 `ULyraHeroComponent` has its own `DefaultInputMappings` property (`TArray<FInputMappingContextAndPriority>`). These IMCs are registered regardless of which PawnData is active, making them the right place for platform-specific overrides or controls shared across every pawn type (e.g., menu navigation, universal chat bindings).
 
-#### How They Combine
+### How They Combine
 
 During `InitializePlayerInput`, the HeroComponent registers PawnData's `InputMappings` first, then its own `DefaultInputMappings`. Both sets are added to the `UEnhancedInputLocalPlayerSubsystem` with their respective priorities, so all IMCs are active simultaneously and priority determines which wins on hardware conflicts.
 
@@ -52,11 +52,11 @@ ULyraHeroComponent::InitializePlayerInput()
 
 ***
 
-### Modular Input with Game Features
+## Modular Input with Game Features
 
 Game Features can inject input at runtime without modifying the base pawn. Two Game Feature Actions handle this, each targeting a different layer of the input stack.
 
-#### `GameFeatureAction_AddInputBinding`
+### `GameFeatureAction_AddInputBinding`
 
 Adds `ULyraInputConfig` assets (logical bindings) when the feature activates. For each pawn that is ready to bind inputs (signaled by `NAME_BindInputsNow`), it calls `ULyraHeroComponent::AddAdditionalInputConfig`, which binds the config's ability actions on the pawn's input component. On deactivation, bindings are removed via `RemoveAdditionalInputConfig`.
 
@@ -64,9 +64,9 @@ The configs are referenced through `TSoftObjectPtr<const ULyraInputConfig>`, so 
 
 **When to use:** A game feature introduces new abilities that need input bindings, a vehicle mode adding drive/brake, a gadget system adding gadget activation.
 
-<figure><img src="../../.gitbook/assets/image (3).png" alt=""><figcaption><p>Input binding game feature action in experience data asset</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (3) (1).png" alt=""><figcaption><p>Input binding game feature action in experience data asset</p></figcaption></figure>
 
-#### `GameFeatureAction_AddInputContextMapping`
+### `GameFeatureAction_AddInputContextMapping`
 
 Adds Input Mapping Contexts (hardware bindings) to the Enhanced Input subsystem for local player controllers. Each entry carries a `Priority` and a `bRegisterWithSettings` flag; when true, the IMC registers with the Input Registry subsystem so its actions appear in the rebinding UI.
 
@@ -74,9 +74,9 @@ This action hooks into two lifecycle stages: registration (`OnGameFeatureRegiste
 
 **When to use:** A game feature needs new hardware-to-action mappings, adding gamepad bindings for a keyboard-only feature, or a vehicle mode that remaps WASD to throttle/steer.
 
-<figure><img src="../../.gitbook/assets/image (4).png" alt=""><figcaption><p>input mapping gamefeature action in experience data asset</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (4) (1).png" alt=""><figcaption><p>input mapping gamefeature action in experience data asset</p></figcaption></figure>
 
-#### When to Use Which
+### When to Use Which
 
 | Action                     | What it adds                 | Layer                       |
 | -------------------------- | ---------------------------- | --------------------------- |
@@ -87,7 +87,7 @@ Most features that introduce new abilities only need **AddInputBinding**, the ha
 
 ***
 
-### Ability Set Input Tags
+## Ability Set Input Tags
 
 Abilities don't reference input directly. The connection happens entirely through Gameplay Tags at grant time.
 
@@ -99,7 +99,7 @@ AbilitySpec.GetDynamicSpecSourceTags().AddTag(AbilityToGrant.InputTag);
 
 When the player presses a key, the HeroComponent calls `Input_AbilityInputTagPressed(Tag)`, which forwards to `ULyraAbilitySystemComponent::AbilityInputTagPressed(Tag)`. The ASC searches all ability specs for ones whose `DynamicSpecSourceTags` contain that tag, then activates them. Neither the input layer nor the ability class references the other, the tag is the only coupling.
 
-#### The Full Chain
+### The Full Chain
 
 ```cpp
 IMC:         Space Bar  -->  IA_Jump                        (hardware to action)

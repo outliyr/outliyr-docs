@@ -4,11 +4,11 @@ Before any transaction executes, it must pass validation. This page explains the
 
 ***
 
-### Two-Stage Validation
+## Two-Stage Validation
 
 Validation happens in two phases, each serving a different purpose.
 
-#### Stage 1: Pre-Filter (Cheap Checks)
+### Stage 1: Pre-Filter (Cheap Checks)
 
 Before the ability even activates, `ShouldAbilityRespondToEvent` performs quick sanity checks:
 
@@ -45,7 +45,7 @@ What it skips:
 * Item existence checks (requires container queries)
 * Full permission validation (requires permission component access)
 
-#### Stage 2: Full Validation
+### Stage 2: Full Validation
 
 Once the ability activates, each operation is fully validated:
 
@@ -73,7 +73,7 @@ Only after **all** operations pass validation do any execute.
 
 ***
 
-### Permissions in Validation
+## Permissions in Validation
 
 Each operation's final validation step checks the caller's permissions on the relevant containers. Different operations require different permission flags.
 
@@ -92,11 +92,11 @@ For full details on how Access Rights and Permissions work, including the enum d
 
 ***
 
-### Validation Per Operation Type
+## Validation Per Operation Type
 
 Each operation type has specific validation requirements beyond permissions.
 
-#### Move Validation
+### Move Validation
 
 <details>
 
@@ -190,7 +190,7 @@ Verify the destination can accept the item. If occupied, check swap behavior. Fo
 {% endstep %}
 {% endstepper %}
 
-#### ModifyTagStack Validation
+### ModifyTagStack Validation
 
 <details>
 
@@ -256,7 +256,7 @@ Compute the new tag stack value and ensure it stays within bounds (unless `bClam
 {% endstep %}
 {% endstepper %}
 
-#### SplitStack Validation
+### SplitStack Validation
 
 <details>
 
@@ -329,7 +329,7 @@ A valid GUID for the split item must be included for prediction reconciliation.
 {% endstep %}
 {% endstepper %}
 
-#### AddItem Validation
+### AddItem Validation
 
 <details>
 
@@ -389,7 +389,7 @@ For creating new items: `ItemDef` must be valid, `StackCount` must be positive, 
 {% endstep %}
 {% endstepper %}
 
-#### RemoveItem Validation
+### RemoveItem Validation
 
 <details>
 
@@ -459,7 +459,7 @@ If `QuantityToRemove` is specified, it must not exceed the stack count. Partial 
 
 ***
 
-### Containers Without Permissions
+## Containers Without Permissions
 
 Not all containers use permissions. The slot descriptor's `HasPermission` defaults to allowing operations:
 
@@ -474,7 +474,3 @@ virtual bool HasPermission(APlayerController* PC, EItemContainerPermissions Perm
 Simple containers can skip the permission component entirely. When no permission component is present, all operations are allowed by default.
 
 ***
-
-#### Next Steps
-
-With transactions understood, learn how prediction makes them responsive in multiplayer in the [Prediction](../prediction/) section.

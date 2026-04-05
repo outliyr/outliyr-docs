@@ -6,7 +6,7 @@ The transaction system handles all of this. It provides atomic operations that e
 
 ***
 
-### What You'll Learn
+## What You'll Learn
 
 | Page                                                | Description                                                                                                                                  |
 | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -16,7 +16,7 @@ The transaction system handles all of this. It provides atomic operations that e
 
 ***
 
-### The Core Idea
+## The Core Idea
 
 A **transaction** is a batch of operations that execute atomically:
 
@@ -33,7 +33,7 @@ Both operations must succeed, or neither happens. If the move succeeds but the a
 
 ***
 
-### Why Atomicity Matters
+## Why Atomicity Matters
 
 Consider equipping a weapon that requires removing the current weapon:
 
@@ -53,7 +53,7 @@ The transaction system validates all operations before applying any. If validati
 
 ***
 
-### Transaction Flow
+## Transaction Flow
 
 ```mermaid
 flowchart TD
@@ -103,7 +103,3 @@ Server confirms (deltas discarded) or rejects (deltas reversed).
 {% endstepper %}
 
 ***
-
-## Next Steps
-
-Start with [How Transactions Work](how-transactions-work/) to understand the execution model.

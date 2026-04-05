@@ -4,7 +4,7 @@ This guide provides a practical, recommended workflow for creating new game mode
 
 ***
 
-### Guiding Principles
+## Guiding Principles
 
 * **Game Features for Modularity:** Encapsulate distinct game modes or major features within their own Game Feature Plugins. This promotes clean separation, allows for optional content, and simplifies dependency management. Your "Target Practice" mode, for example, will be its own Game Feature.m
 * **One-Way Dependencies:** Your game mode plugin depends on core plugins (ShooterBase, LyraGame), never the reverse.
@@ -24,7 +24,7 @@ If you haven't read the earlier pages in this section, start with [Experiences](
 
 ***
 
-### The Walkthrough — Target Practice Mode
+## The Walkthrough — Target Practice Mode
 
 {% stepper %}
 {% step %}
@@ -142,7 +142,7 @@ Without these entries, the asset manager will not find your assets and the exper
 
 ***
 
-### What You've Built
+## What You've Built
 
 Your Target Practice mode is a self-contained Game Feature plugin. It depends on ShooterBase for weapon and character functionality but adds its own scoring, targets, and HUD. If you disable the plugin, the mode disappears cleanly. If you want to add this mode to a different map, set that map's World Settings to point at your experience definition.
 

@@ -8,7 +8,7 @@ For the underlying MVVM architecture and why ViewModels exist, see [MVVM](../../
 
 ***
 
-### Class Hierarchy
+## Class Hierarchy
 
 ```mermaid
 classDiagram
@@ -67,7 +67,7 @@ This follows the same pattern used by equipment slots. See [Persistent Slot Patt
 
 ***
 
-### The `ParentActiveState` Property
+## The `ParentActiveState` Property
 
 This is what makes attachment slots unique. Attachments inherit behavior from their parent item's equipment state:
 
@@ -116,7 +116,7 @@ Use this for visual feedback, glow when the parent weapon is held, dim when hols
 
 ***
 
-### Nested Attachments
+## Nested Attachments
 
 Attachments can have their own attachments. A tactical scope might have a laser sight module:
 
@@ -140,7 +140,7 @@ if (ScopeItem)
 
 ***
 
-### Dynamic Context Updates
+## Dynamic Context Updates
 
 When the parent item moves (e.g., a rifle moves from the player's hands to the backpack), the path to every attachment changes. The ViewModel detects the move, recalculates the `ContainerPath` and `SlotDescriptor` for every slot, and propagates the update. Drag-and-drop operations continue to work seamlessly even if the parent item is moved while the attachment window is open.
 
@@ -150,7 +150,7 @@ For how the transaction system handles nested container paths, see [Runtime Cont
 
 ***
 
-### Delegates
+## Delegates
 
 | Delegate    | Signature | Fires When                                                 |
 | ----------- | --------- | ---------------------------------------------------------- |
@@ -158,7 +158,7 @@ For how the transaction system handles nested container paths, see [Runtime Cont
 
 ***
 
-### Drag-Drop
+## Drag-Drop
 
 Slot ViewModels carry a pre-built `SlotDescriptor` that plugs directly into the transaction system:
 
@@ -169,7 +169,7 @@ ItemTransactionAbility->MoveItem(SourceSlot, DestSlot);
 ```
 
 {% hint style="info" %}
-For the full drag-and-drop flow, see [UI Transaction Pipeline](/broken/pages/ee5ae57a62fa7edb6e3fba0277b6baab5b1d6979).
+For the full drag-and-drop flow, see [UI Transaction Pipeline](../../../ui/item-container-ui-system/interaction-and-transactions/ui-transaction-pipeline.md).
 {% endhint %}
 
 ***

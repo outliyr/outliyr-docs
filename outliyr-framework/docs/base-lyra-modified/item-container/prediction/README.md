@@ -6,7 +6,7 @@ The prediction system solves this by applying operations locally while waiting f
 
 ***
 
-### What You'll Learn
+## What You'll Learn
 
 | Page                                                  | Description                                                                                       |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -17,7 +17,7 @@ The prediction system solves this by applying operations locally while waiting f
 
 ***
 
-### The Core Idea
+## The Core Idea
 
 The prediction system implements a **compose model**:
 
@@ -87,8 +87,6 @@ sequenceDiagram
     end
 ```
 
-***
-
 ### Key Concepts
 
 | Concept            | What It Means                                              |
@@ -98,8 +96,6 @@ sequenceDiagram
 | **Phase**          | Where in the prediction lifecycle an event occurred        |
 | **Reconciliation** | Matching predicted state with server state on confirmation |
 | **Rollback**       | Clearing overlays when server rejects                      |
-
-***
 
 ### The Four Phases
 
@@ -113,8 +109,6 @@ Every item change goes through one of four phases:
 | `PredictionRejected`   | Server rejects client's prediction  | Predicting client only |
 
 Understanding phases is crucial for implementing side effects correctly. See [Reconciliation](reconciliation/) for details.
-
-***
 
 ### When to Use Prediction
 

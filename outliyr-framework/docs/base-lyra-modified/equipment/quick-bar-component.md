@@ -4,7 +4,7 @@ Press "1" for your rifle. Press "2" for your pistol. Scroll the mouse wheel to c
 
 ***
 
-### Why It Lives on the Controller
+## Why It Lives on the Controller
 
 The Quick Bar sits on the **PlayerController**, not the Pawn. This is intentional:
 
@@ -18,11 +18,11 @@ When the pawn dies, equipment is destroyed. When the player respawns with a new 
 
 ***
 
-### Mirroring Equipment
+## Mirroring Equipment
 
 Quick Bar slots don't own items, they **reference** items in the Equipment Manager. The Equipment Manager is the authoritative owner; the Quick Bar is a selection interface on top.
 
-#### Equipment Slot Mapping
+### Equipment Slot Mapping
 
 For structured loadouts, you can map equipment slot tags to Quick Bar indices:
 
@@ -46,7 +46,7 @@ With this mapping:
 * Pressing "1" always selects your primary weapon
 * The system enforces "one weapon per slot" naturally
 
-#### Auto-Sync with Equipment
+### Auto-Sync with Equipment
 
 The Quick Bar subscribes to the Equipment Manager's `OnViewDirtied` delegate. Whenever equipment changes, i.e. through transactions, replication, or prediction reconciliation, the Quick Bar updates its slots to match.
 
@@ -64,9 +64,9 @@ When the controller's possessed pawn changes, the Quick Bar automatically rebind
 
 ***
 
-### Slot Selection
+## Slot Selection
 
-#### Basic Selection
+### Basic Selection
 
 | Function                      | Purpose                                      |
 | ----------------------------- | -------------------------------------------- |
@@ -75,7 +75,7 @@ When the controller's possessed pawn changes, the Quick Bar automatically rebind
 | `CycleActiveSlotBackward()`   | Mouse wheel down - previous valid slot       |
 | `RevalidateActiveSelection()` | Find next valid slot when current disappears |
 
-#### Binding Input
+### Binding Input
 
 ```cpp
 void AMyPlayerController::HandleWeaponSlot1()
@@ -134,11 +134,11 @@ From the player's perspective, the weapon was there the whole time.
 
 ***
 
-### Quick Swap Pickup
+## Quick Swap Pickup
 
 For Instant weapon pickup with automatic swap, the Quick Bar provides specialized functions.
 
-#### From World Pickups
+### From World Pickups
 
 ```cpp
 FQuickSwapResult Result = QuickBar->TryQuickSwapPickupFromPickup(
@@ -152,7 +152,7 @@ FQuickSwapResult Result = QuickBar->TryQuickSwapPickupFromPickup(
 
 This uses server validation, the client predicts the pickup, but the server validates that the pickup actor exists and the player can legitimately take it.
 
-#### From Existing Items
+### From Existing Items
 
 ```cpp
 FQuickSwapResult Result = QuickBar->TryQuickSwapPickup(
@@ -165,7 +165,7 @@ FQuickSwapResult Result = QuickBar->TryQuickSwapPickup(
     OverrideEquipmentSlot);                     // Optional: target specific slot
 ```
 
-#### Slot Policies
+### Slot Policies
 
 | Policy             | Behavior                                   | Best For                     |
 | ------------------ | ------------------------------------------ | ---------------------------- |
@@ -174,7 +174,7 @@ FQuickSwapResult Result = QuickBar->TryQuickSwapPickup(
 | `AnySlot`          | Use any available slot, swap if full       | Flexible loadouts            |
 | `AddOnly`          | Only add if empty slot exists, never swap  | Collecting without replacing |
 
-#### The Result Struct
+### The Result Struct
 
 ```cpp
 struct FQuickSwapResult
@@ -190,13 +190,13 @@ struct FQuickSwapResult
 
 ***
 
-### UI Integration
+## UI Integration
 
 The Quick Bar broadcasts gameplay messages when slots or selection changes.
 
-#### Message Types
+### Message Types
 
-**Slots Changed:**
+#### **Slots Changed:**
 
 ```cpp
 USTRUCT(BlueprintType)
@@ -207,7 +207,7 @@ struct FLyraQuickBarSlotsChangedMessage
 };
 ```
 
-**Active Selection Changed:**
+#### **Active Selection Changed:**
 
 ```cpp
 USTRUCT(BlueprintType)
@@ -235,7 +235,7 @@ void UQuickBarWidget::NativeConstruct()
 
 ***
 
-### Configuration
+## Configuration
 
 | Property               | Default | Purpose                                               |
 | ---------------------- | ------- | ----------------------------------------------------- |
@@ -245,7 +245,7 @@ void UQuickBarWidget::NativeConstruct()
 
 ***
 
-#### Querying State
+## Querying State
 
 ```cpp
 // Get all slot contents
@@ -263,7 +263,7 @@ int32 FreeSlot = QuickBar->GetNextFreeItemSlot();
 
 ***
 
-#### Troubleshooting
+## Troubleshooting
 
 {% hint style="info" %}
 **Weapon switch feels delayed?** Verify that:

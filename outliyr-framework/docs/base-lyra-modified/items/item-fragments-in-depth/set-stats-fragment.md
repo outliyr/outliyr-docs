@@ -2,13 +2,17 @@
 
 The `UInventoryFragment_SetStats` fragment provides a convenient, data-driven way to initialize specific **Stat Tags** (`FGameplayTagStackContainer`) on a `ULyraInventoryItemInstance` the moment it is created.
 
-### Purpose
+***
+
+## Purpose
 
 * **Initial State:** Set default integer values for Stat Tags when an item instance first comes into existence.
 * **Data-Driven Configuration:** Allows designers to define these initial Stat Tag values directly within the `ULyraInventoryItemDefinition` asset, without needing custom code for simple initialization.
 * **Complements Stat Tags:** Works directly with the `StatTags` system inherent to `ULyraInventoryItemInstance`.
 
-### Static Configuration (`UInventoryFragment_SetStats`)
+***
+
+## Static Configuration (`UInventoryFragment_SetStats`)
 
 This fragment holds the initialization data configured in the Item Definition.
 

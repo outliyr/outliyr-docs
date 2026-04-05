@@ -14,7 +14,7 @@ GAS is Unreal Engine's built-in framework for abilities, effects, attributes, an
 
 ***
 
-### What This Framework Adds
+## What This Framework Adds
 
 **ASC ownership patterns.** The framework supports two patterns for where the Ability System Component lives. On simple pawns, the ASC sits on the pawn itself and is destroyed with it. On player-controlled characters, the ASC lives on the player state so that granted abilities, active cooldowns, and tag state survive respawns. Initialization handles both cases transparently.
 

@@ -4,13 +4,17 @@ In [Implementing the Interface](implementing-the-interface.md), we built a Vendo
 
 But what about containers where latency matters? Player inventory, equipment, attachments, these need instant response. This guide explains **Pattern 2: Client-Predicted** and how it fundamentally changes your implementation approach.
 
+{% hint style="warning" %}
+Vendors are usually best kept server-authoritative rather than client-predicted. This example uses a vendor only as a teaching tool to show how a container can be adapted to support prediction.
+{% endhint %}
+
 ***
 
-### The Architectural Shift
+## The Architectural Shift
 
 Adding prediction isn't just "adding a component." It changes where your logic lives.
 
-#### Pattern 1: Server-Authoritative (Vendor)
+### Pattern 1: Server-Authoritative (Vendor)
 
 ```
 Interface Method → Contains Full Logic → Modifies Storage Directly
@@ -18,7 +22,7 @@ Interface Method → Contains Full Logic → Modifies Storage Directly
 
 The vendor's `RemoveItemFromSlot` does everything: validates stock, decrements count, creates the item instance. Simple and straightforward.
 
-#### Pattern 2: Client-Predicted
+### Pattern 2: Client-Predicted
 
 ```
 Interface Method → Thin Wrapper → Delegates to Prediction Runtime → Runtime Handles Everything
@@ -29,7 +33,7 @@ The interface methods become minimal. They extract slot info, build a payload, a
 * **On server:** Modify the actual array, stamp with prediction key, mark dirty
 * **On client:** Record to overlay, mark view dirty, await confirmation
 
-#### Why the Shift?
+### Why the Shift?
 
 Two reasons drive this architectural change:
 
@@ -65,7 +69,7 @@ To predict the complete buy flow, you'd need currency changes _inside_ the trans
 
 ***
 
-### What You Need
+## What You Need
 
 Adding prediction requires these components working together:
 
@@ -228,6 +232,10 @@ The payload is simpler than your server entry, it only needs what the client pre
 ### Step 3: Traits
 
 Traits are the bridge between your container-specific types and the generic prediction system. They're a struct of static methods that the runtime calls.
+
+{% hint style="info" %}
+At first glance this looks like a lot, but most trait methods are simple adapters around your existing storage and entry types.
+{% endhint %}
 
 #### Required Trait Methods
 
@@ -609,7 +617,7 @@ The two callbacks serve different purposes:
 
 ***
 
-### Comparing the Two Patterns
+## Comparing the Two Patterns
 
 | Aspect                | Server-Authoritative          | Client-Predicted                 |
 | --------------------- | ----------------------------- | -------------------------------- |
@@ -622,7 +630,7 @@ The two callbacks serve different purposes:
 
 ***
 
-### When to Use Each Pattern
+## When to Use Each Pattern
 
 #### Use Server-Authoritative When:
 
@@ -640,9 +648,9 @@ The two callbacks serve different purposes:
 
 ***
 
-### Testing Prediction
+## Testing Prediction
 
-#### Network Emulation
+### Network Emulation
 
 {% stepper %}
 {% step %}
@@ -658,7 +666,7 @@ The two callbacks serve different purposes:
 {% endstep %}
 {% endstepper %}
 
-#### Checklist
+### Checklist
 
 * [ ] Item moves update UI instantly
 * [ ] Server confirmation doesn't cause visual glitches
@@ -666,7 +674,7 @@ The two callbacks serve different purposes:
 * [ ] Multiple rapid operations don't cause duplicates
 * [ ] Cross-container moves work correctly
 
-#### Debug Logging
+### Debug Logging
 
 Log at key points:
 
@@ -676,7 +684,7 @@ Log at key points:
 
 ***
 
-### Summary
+## Summary
 
 Adding prediction transforms your container architecture:
 
@@ -691,7 +699,7 @@ The vendor example shows Pattern 1 in its purest form, logic in interface method
 
 ***
 
-### Next Steps
+## Next Steps
 
 With prediction working, connect your container to the UI system. See [UI Integration](ui-integration.md).
 

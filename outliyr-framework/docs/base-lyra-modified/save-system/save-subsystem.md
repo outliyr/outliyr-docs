@@ -6,7 +6,7 @@ Every public method takes an `APlayerController*`. The subsystem handles the res
 
 ***
 
-### How Saving Works
+## How Saving Works
 
 Saving is a two-step process: **serialize** into the in-memory save game, then **persist** to disk.
 
@@ -32,7 +32,7 @@ This separation matters for atomic operations. You might serialize both inventor
 
 ***
 
-### How Loading Works
+## How Loading Works
 
 Loading mirrors saving: **load from disk** (or cache), then **populate** a live container.
 
@@ -82,7 +82,7 @@ Each item is added to the container at its saved slot position via `AddItemToSlo
 
 ***
 
-### Local vs Remote Players
+## Local vs Remote Players
 
 The subsystem transparently handles both player types. You never need to check, just pass the `APlayerController*`.
 
@@ -106,7 +106,7 @@ In PIE without a real online subsystem, remote player IDs contain random suffixe
 
 ***
 
-### Cache Lifecycle
+## Cache Lifecycle
 
 The subsystem maintains an in-memory cache (`TMap<FString, ULyraPlayerSaveGame*>`) to avoid reloading from disk on every access. Understanding when the cache is populated and cleared matters for map travel scenarios.
 
@@ -120,7 +120,7 @@ If you serialize containers into the save game and then trigger a map change, ca
 
 ***
 
-### Synchronous vs Asynchronous Saves
+## Synchronous vs Asynchronous Saves
 
 Two persistence methods are available:
 
@@ -133,7 +133,7 @@ The synchronous variant guarantees data is on disk before the next line of code 
 
 ***
 
-### Container Save and Load
+## Container Save and Load
 
 The core operations for persisting item containers:
 
@@ -159,7 +159,7 @@ These methods accept `TScriptInterface<ILyraItemContainerInterface>`, which mean
 
 ***
 
-### Custom Data
+## Custom Data
 
 For non-item data (quest progress, currency, player preferences), use the custom data API:
 
@@ -185,17 +185,17 @@ Both operate on `FGameplayTag` keys and `FInstancedStruct` values. In Blueprint,
 {% endtab %}
 
 {% tab title="Saving" %}
-<figure><img src="../../.gitbook/assets/image (13).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (13) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 
 {% tab title="Loading" %}
-<figure><img src="../../.gitbook/assets/image (15).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (15) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 
 ***
 
-### API Reference
+## API Reference
 
 | Method                                      | Returns                       | Description                                                           |
 | ------------------------------------------- | ----------------------------- | --------------------------------------------------------------------- |

@@ -1,134 +1,175 @@
 # Dropping Items & World Collectable Lifecycle
 
-This section details the process of dropping items from an inventory into the game world, how `AWorldCollectableBase` actors are spawned and managed during their physical lifecycle (including physics simulation and settling), and the utility functions that facilitate this.
+A player drops a rifle from their inventory. What actually happens? The server removes the item from the container, spawns a physics-enabled actor in the world, gives it an impulse so it tumbles forward, monitors its velocity until it settles, then locks it in place as a static, interactable pickup. This page walks through that entire lifecycle.
 
-### The `UPickupableStatics` Library
+***
 
-The `UPickupableStatics` (`UBlueprintFunctionLibrary`) class provides static helper functions for common operations related to `IPickupable` interfaces and dropping items.
+## The Lifecycle at a Glance
 
-* `GetFirstPickupableFromActor(AActor* Actor)`
-  * Purpose: A utility function to retrieve the first `IPickupable` interface found on an `AActor` or any of its `UActorComponent`s. This is useful when you have an actor reference and need to interact with its pickupable capabilities without knowing the exact type.
-  * Usage: Often used by interaction systems to determine if a target actor can be picked up.
-* `ResolvePickupFragment(const FItemPickup& Inventory)`
-  * Purpose: Returns the `UInventoryFragment_PickupItem` from the first instance or template in the inventory.
-  * Usage: Used to determine mesh representation and other properties for world collectables.
-* `SelectCollectableClassFromInventory(Inventory, StaticSubclass, SkeletalSubclass)`
-  * Purpose: Determines which collectable subclass to spawn based on the item's fragment.
-  * Logic: If the fragment has a `SkeletalMesh`, returns `SkeletalSubclass`; otherwise returns `StaticSubclass`.
-  * Usage: Called internally by `DropItem` and `DropItemAtLocation` to auto-select the appropriate class.
-* `DropItem(Dropper, Inventory, StaticCollectableClass, SkeletalCollectableClass, Params)`
-  * Purpose: Centralized, authoritative function for robustly spawning world collectable actors when items are dropped from an inventory or generated as world loot.
-  * Parameters:
-    * `Dropper`: Actor dropping the item (e.g., player character); used to compute relative drop location.
-    * `Inventory`: The `FItemPickup` (templates and/or instances) to represent in the world.
-    * `StaticCollectableClass`: The `AWorldCollectable_Static` subclass to spawn for static mesh items.
-    * `SkeletalCollectableClass`: The `AWorldCollectable_Skeletal` subclass to spawn for skeletal mesh items.
-    * `Params`: `FDropParams` controlling distance, scatter, relative eye-height band, tries, and initial impulse.
-  * Logic Flow (Server-Side):
-    1. Class Selection: Uses `SelectCollectableClassFromInventory` to determine which class to spawn.
-    2. Location Search: Attempts `MaxTries` to find a valid, non-overlapping location in front of the `Dropper` using a box derived from the item's mesh bounds and overlap tests.
-    3. Smart Fallbacks: If no free spot is found, performs a capsule sweep downwards to land safely on nearby ground; if that still fails, uses an emergency position just in front of the dropper.
-    4. Actor Spawning: Spawns the selected collectable class with `ESpawnActorCollisionHandlingMethod::AlwaysSpawn`.
-    5. Inventory Transfer: Calls `SetPickupInventory` on the newly spawned collectable.
-    6. Interaction Profile: Applies `OverrideInteractionProfile` from params if provided.
-    7. Initial Physics Setup: Configures the mesh for physics (movable, collision, gravity) and optionally applies `InitialImpulse`.
-    8. Physics Settling Monitoring: Calls `StartMonitoringPhysicsSettling()` to begin settling detection.
-* `DropItemAtLocation(WorldContextObject, Inventory, StaticCollectableClass, SkeletalCollectableClass, Location, Params, bProjectToGround)`
-  * Purpose: Spawns a world collectable at an explicit world-space location, instead of in front of a dropper. Useful for scripted spawns, loot chests, kill rewards, or designers placing drops via tools.
-  * Authority: Server-only. If called on a client, returns `nullptr`.
-  * Parameters:
-    * `WorldContextObject`: Provides the `UWorld`.
-    * `Inventory`: Items to represent in the world (`FItemPickup`).
-    * `StaticCollectableClass`: The static mesh collectable subclass.
-    * `SkeletalCollectableClass`: The skeletal mesh collectable subclass.
-    * `Location`: Desired bottom location (the item's bottom is projected here, independent of mesh origin).
-    * `Params`: `FDropParams` for initial physics behavior.
-    * `bProjectToGround`: If true, will sweep down to find ground if the desired location is floating or overlapping.
-  * Placement & Collision Behavior:
-    1. Bounds-Aware Fit: Derives a bounding box from the item's meshes. Attempts to place the item so that its bottom sits at `Location`, performing an overlap test.
-    2. Ground Projection (optional): If the initial spot overlaps and `bProjectToGround` is true, performs a capsule sweep downwards; on hit, re-tries placement with the bottom aligned to the ground.
-    3. Last Resort: If still overlapping, nudges the Z up slightly and spawns.
-    4. Physics Setup: Same as `DropItem` - transfers inventory, configures physics/collision, applies `InitialImpulse`, and enables settling monitoring.
-
-#### The `FDropParams` Struct
-
-This struct provides configurable parameters for the drop functions, allowing designers to control the physics and placement behavior of dropped items.
-
-* `MinDist`: (float, cm) Minimum forward distance from the dropper (used by `DropItem`).
-* `MaxDist`: (float, cm) Maximum forward distance from the dropper (used by `DropItem`).
-* `MaxYawOffset`: (float, deg) Max yaw offset from the dropper's facing for scatter (used by `DropItem`).
-* `MinRelativeEyeHeight`: (float, cm) Minimum vertical offset relative to the dropper's eye position when sampling spawn points (used by `DropItem`).
-* `MaxRelativeEyeHeight`: (float, cm) Maximum vertical offset relative to the eye when sampling spawn points (used by `DropItem`).
-* `MaxTries`: (int32) Max attempts to find a valid, non-overlapping location (used by `DropItem`).
-* `InitialImpulse`: (FVector, cm/s) Initial impulse applied to the physics mesh after spawning (both `DropItem` and `DropItemAtLocation`).
-* `OverrideInteractionProfile`: (`UPickupInteractionProfile*`) Optional interaction profile to apply to the spawned collectable, overriding its default.
-
-### `AWorldCollectableBase` Physics Lifecycle
-
-The `AWorldCollectableBase` and its subclasses manage dynamic physics during dropping and settling into a static state.
-
-* Components & Replication:
-  * Subclasses provide mesh components: `AWorldCollectable_Static` has `StaticRoot`, `AWorldCollectable_Skeletal` has `SkeletalRoot`.
-  * `GetMeshComponent()` returns the active visual component.
-  * Actor replicates, but movement replication is disabled (settling finalizes pose).
-  * Subobject replication includes each `ULyraInventoryItemInstance` in `StaticInventory.Instances` and any `UTransientRuntimeFragment` those instances own.
-* Inventory & Visuals (`SetPickupInventory`, `RebuildVisual`, `OnRep_StaticInventory`):
-  * `StaticInventory` is replicated; `OnRep_StaticInventory` triggers `RebuildVisual()` on clients.
-  * `RebuildVisual()` (implemented by subclasses) selects the mesh from the item's `UInventoryFragment_PickupItem` (instances preferred, then templates).
-  * If neither provides a mesh, subclasses may use a `DefaultPlaceholderMesh`.
-* Interaction (`IInteractableTarget`):
-  * `GatherInteractionOptions_Implementation` builds options from the `InteractionProfile`.
-  * If no profile is set, provides a default "Collect" option.
-  * Option text is resolved via `ResolveOptionText()` based on the profile's `EOptionTextMode`.
-  * The `InteractionWidgetComponent` provides the world-space location for interaction UI.
-* Physics Simulation & Settling (`Tick`, `OnPhysicsSettled`):
-  * Server-only settling monitor using `bIsMonitoringPhysicsSettling`, `SettlingVelocityThresholdSq` (default 16 cm²/s²), and `SettlingTimeRequiredSeconds` (default 0.5s).
-  * `StartMonitoringPhysicsSettling()` enables tick and begins monitoring.
-  * Each `Tick`, checks if velocity is below threshold. If so, accumulates time; once `SettlingTimeRequiredSeconds` is reached, calls `OnPhysicsSettled()`.
-  * When settled:
-    * Physics is turned off.
-    * Collision becomes QueryOnly with:
-      * Overlap: `Visibility`, `Camera`, `Lyra_TraceChannel_Interaction`, `Pawn`.
-      * Block: `WorldStatic`, `WorldDynamic`.
-    * Actor tick is disabled.
-    * `UpdateInteractionWidgetLocation()` is called to position the interaction dot.
-
-### Full Workflow Example (Dropping, Settling & Picking Up)
+```mermaid
+flowchart LR
+    A["Remove from<br/>Container"] --> B["Spawn<br/>Collectable"]
+    B --> C["Physics<br/>Simulation"]
+    C --> D["Settling<br/>Detection"]
+    D --> E["Static Pickup<br/><i>Ready for interaction</i>"]
+```
 
 {% stepper %}
 {% step %}
-#### Drop Action (Server)
+**Drop Action (Server)**
 
-* Player triggers "Drop" (UI or Gameplay Ability).
-* Server resolves `ULyraInventoryItemInstance* DroppedItemInstance` from the player's inventory.
-* Verifies `UInventoryFragment_PickupItem` exists; otherwise fails.
-* Removes item (or partial stack) from the inventory.
-* Calls one of:
-  * `UPickupableStatics::DropItem(PlayerActor, Pickup, StaticClass, SkeletalClass, DropParams)` or
-  * `UPickupableStatics::DropItemAtLocation(GameModeOrActor, Pickup, StaticClass, SkeletalClass, TargetWorldLocation, DropParams, /*bProjectToGround=*/true)`
-* `SetPickupInventory` and `RebuildVisual()` configure visuals; physics begins; settling monitor is enabled.
+A gameplay ability or UI action triggers the drop. The server resolves the `ULyraInventoryItemInstance` from the player's inventory, verifies it has a `UInventoryFragment_PickupItem` (which provides the world mesh), removes the item from the container, and calls one of the drop functions to spawn the collectable.
 {% endstep %}
 
 {% step %}
-#### Physics Settling (Server-Side)
+**Spawn & Physics**
 
-* Server `Tick` monitors velocity until below threshold for required time.
-* `OnPhysicsSettled()` finalizes collision/mobility, positions interaction widget, and disables unnecessary ticking.
+The system spawns an `AWorldCollectableBase` subclass at a valid location. The item's mesh is configured for physics simulation with gravity and collision enabled. An optional initial impulse sends it tumbling forward. On clients, `OnRep_StaticInventory` triggers `RebuildVisual()` to display the correct mesh.
 {% endstep %}
 
 {% step %}
-#### Interaction (Client -> Server)
+**Settling**
 
-* Player looks at the settled collectable and interacts.
-* Interaction system triggers a server ability/event targeting the collectable.
+The server ticks the collectable, checking velocity each frame. Once velocity drops below a threshold (default: 4 cm/s) and stays there for a configurable duration (default: 0.5s), `OnPhysicsSettled()` fires. Physics is disabled, collision switches to query-only, actor tick stops, and the interaction widget is positioned.
 {% endstep %}
 
 {% step %}
-#### Pickup Logic (Server)
+**Ready for Interaction**
 
-* Server gets the `IPickupable` from the collectable.
-* Fetches the player's inventory container.
-* Calls `Pickupable->AddPickupToInventory(Container, WorldCollectable, OutStacked, OutNew)`.
-* On success (collectable inventory now empty), destroys the collectable; on partial/failed add, it remains with updated contents.
+The settled collectable is now a static pickup. Players can look at it, see its interaction prompt, and trigger a pickup ability. The [Client Predicted Pickup Ability](client-predicted-pickup-ability.md) handles the rest, adding items to the player's inventory and destroying the collectable if empty.
 {% endstep %}
 {% endstepper %}
+
+***
+
+## Drop Functions
+
+All dropping goes through `UPickupableStatics`, a Blueprint function library. Two functions cover the common cases:
+
+### Dropping from a Character
+
+`DropItem` finds a valid spawn location in front of the dropper. It samples multiple positions within a configurable arc and distance, checks for overlaps, and falls back to a capsule sweep or emergency position if needed.
+
+```cpp
+AWorldCollectableBase* UPickupableStatics::DropItem(
+    const AActor* Dropper,
+    const FItemPickup& Inventory,
+    TSubclassOf<AWorldCollectableBase> StaticCollectableClass,
+    TSubclassOf<AWorldCollectableBase> SkeletalCollectableClass,
+    const FDropParams& Params);
+```
+
+### Dropping at a Location
+
+`DropItemAtLocation` spawns at an explicit world position, useful for scripted spawns, loot from killed enemies, or designer-placed drops.
+
+```cpp
+AWorldCollectableBase* UPickupableStatics::DropItemAtLocation(
+    const UObject* WorldContextObject,
+    const FItemPickup& Inventory,
+    TSubclassOf<AWorldCollectableBase> StaticCollectableClass,
+    TSubclassOf<AWorldCollectableBase> SkeletalCollectableClass,
+    const FVector& Location,
+    const FDropParams& Params,
+    bool bProjectToGround = true);
+```
+
+Both functions are **server-only** (`BlueprintAuthorityOnly`). They automatically select between static and skeletal mesh collectable classes based on the item's `UInventoryFragment_PickupItem`.
+
+<details>
+
+<summary>FDropParams reference</summary>
+
+| Field                        | Type                        | Default | Purpose                                                 |
+| ---------------------------- | --------------------------- | ------- | ------------------------------------------------------- |
+| `MinDist`                    | float                       | 75 cm   | Minimum forward distance from dropper                   |
+| `MaxDist`                    | float                       | 200 cm  | Maximum forward distance from dropper                   |
+| `MaxYawOffset`               | float                       | 45 deg  | Max yaw scatter from dropper's facing                   |
+| `MinRelativeEyeHeight`       | float                       | -10 cm  | Min vertical offset relative to dropper's eye           |
+| `MaxRelativeEyeHeight`       | float                       | 30 cm   | Max vertical offset relative to eye                     |
+| `MaxTries`                   | int32                       | 10      | Max attempts to find a non-overlapping spot             |
+| `InitialImpulse`             | FVector                     | Zero    | Impulse applied after spawning                          |
+| `OverrideInteractionProfile` | UPickupInteractionProfile\* | nullptr | Override the collectable's default interaction behavior |
+
+</details>
+
+<details>
+
+<summary>Utility helpers on UPickupableStatics</summary>
+
+Beyond dropping, the library provides helpers for querying pickups:
+
+| Function                              | Purpose                                                               |
+| ------------------------------------- | --------------------------------------------------------------------- |
+| `GetFirstPickupableFromActor`         | Find the `IPickupable` interface on an actor or its components        |
+| `ResolvePickupFragment`               | Get the `UInventoryFragment_PickupItem` from an `FItemPickup`         |
+| `SelectCollectableClassFromInventory` | Choose static vs. skeletal collectable based on the item's mesh type  |
+| `PickupHasItems`                      | Check if an `FItemPickup` contains any items                          |
+| `GetPickupEntryCount`                 | Number of entries in a pickup                                         |
+| `GetPickupTotalStackCount`            | Total item count across all entries                                   |
+| `GetAllPickupItems`                   | Retrieve all item entries from a pickup                               |
+| `CalculateContainerCapacityForItem`   | Calculate how many items of a type a container can accept             |
+| `BuildPickupToInventoryTransaction`   | Build a transaction request for adding pickup contents to a container |
+
+</details>
+
+***
+
+## The World Collectable Actor
+
+`AWorldCollectableBase` is the actor that represents items in the world. Two subclasses handle the visual:
+
+| Subclass                     | Root Component           | Use Case                                    |
+| ---------------------------- | ------------------------ | ------------------------------------------- |
+| `AWorldCollectable_Static`   | `UStaticMeshComponent`   | Most items, weapons, consumables, resources |
+| `AWorldCollectable_Skeletal` | `USkeletalMeshComponent` | Items that need skeletal animation          |
+
+Both share the same base behavior: inventory storage, physics settling, interaction, replication, and client prediction support.
+
+### Inventory & Visuals
+
+The collectable stores its items in a replicated `StaticInventory` (`FItemPickup`). When this replicates to clients, `OnRep_StaticInventory` calls `RebuildVisual()`, which reads the `UInventoryFragment_PickupItem` to select the appropriate mesh. If no mesh is found, subclasses can fall back to a `DefaultPlaceholderMesh`.
+
+### Interaction
+
+`AWorldCollectableBase` implements `IInteractableTarget`. When a player looks at the collectable, `GatherInteractionOptions` builds options from the assigned `InteractionProfile` data asset. If no profile is set, a default "Collect" option is provided. The `InteractionWidgetComponent` provides the world-space position for the interaction prompt UI.
+
+### Physics Settling
+
+After spawning with physics enabled, the server monitors the collectable:
+
+```mermaid
+flowchart LR
+    A["Spawned<br/><i>Physics ON</i>"] --> B{"Velocity < threshold?"}
+    B -->|No| B
+    B -->|Yes| C["Accumulate<br/>settled time"]
+    C --> D{"Settled long enough?"}
+    D -->|No| B
+    D -->|Yes| E["OnPhysicsSettled<br/><i>Physics OFF, tick OFF</i>"]
+```
+
+When settled, the actor transitions to a lightweight state:
+
+* Physics disabled, mobility set to static
+* Collision becomes query-only (overlap for interaction traces, block for world static/dynamic)
+* Actor tick disabled
+* Interaction widget positioned at the item's visual bounds
+
+<details>
+
+<summary>Settling configuration</summary>
+
+| Property                      | Default               | Purpose                                     |
+| ----------------------------- | --------------------- | ------------------------------------------- |
+| `SettlingVelocityThresholdSq` | 16.0 (4 cm/s squared) | Velocity must stay below this               |
+| `SettlingTimeRequiredSeconds` | 0.5s                  | How long velocity must stay below threshold |
+
+</details>
+
+### Client Prediction Support
+
+When the [Client Predicted Pickup Ability](client-predicted-pickup-ability.md) predicts a pickup, it calls `HideForPrediction()` on the collectable to provide instant visual feedback without destroying the actor (only the server can do that). If the server rejects the pickup, `RestoreFromRejectedPrediction()` makes it visible again.
+
+### Container Interface
+
+`AWorldCollectableBase` implements `ILyraItemContainerInterface`, making it a valid source and destination for the transaction system. This means items can be moved to/from world collectables using the same transaction pipeline as any other container.

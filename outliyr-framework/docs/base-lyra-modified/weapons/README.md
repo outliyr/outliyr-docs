@@ -2,7 +2,9 @@
 
 The Weapon System builds directly upon the foundation laid by the **Equipment System**, specializing its concepts to handle the unique requirements of firearms and other wieldable offensive tools within the game. It provides specialized components and data structures for managing weapon state, firing mechanics, visual representation, and UI feedback like reticles and hit markers.
 
-### Purpose: Specialized Equipment Handling
+***
+
+## Purpose: Specialized Equipment Handling
 
 While the core Equipment System handles generic equipping, ability granting, and actor spawning, the Weapon System focuses on aspects specific to weapons:
 
@@ -12,7 +14,9 @@ While the core Equipment System handles generic equipping, ability granting, and
 * **Controller Feedback:** Handling client-side effects like hit marker confirmation and input device properties (haptics).
 * **UI Integration:** Linking weapon definitions to specific UI reticle widgets.
 
-### Building on Equipment & Inventory
+***
+
+## Building on Equipment & Inventory
 
 It's crucial to remember that the Weapon System is **not** entirely separate. It leverages and extends existing systems:
 
@@ -29,7 +33,9 @@ It's crucial to remember that the Weapon System is **not** entirely separate. It
   * Core weapon actions (Fire, Reload, Aim, Melee Attack) are implemented as `UGameplayAbility` instances, granted via the `ULyraEquipmentDefinition`.
   * Abilities read state from the `ULyraWeaponInstance` (e.g., spread, heat) and the associated `ULyraInventoryItemInstance` (e.g., ammo count).
 
-### Key Weapon System Components
+***
+
+## Key Weapon System Components
 
 This system introduces several specialized classes:
 
@@ -48,7 +54,9 @@ This system introduces several specialized classes:
   * An inventory fragment added to weapon definitions (`ULyraInventoryItemDefinition`).
   * Specifies which `ULyraReticleWidgetBase` classes should be displayed when this weapon is equipped.
 
-### Simplified Interaction Diagram
+***
+
+## High Level Interaction Diagram
 
 ```mermaid
 graph LR
@@ -109,9 +117,7 @@ graph LR
     style EquipDef fill:#dfd,stroke:#333,stroke-width:1px
 ```
 
-_(Note: Simplified view focusing on weapon-specific interactions)_
-
-### Structure of this Section
+## Structure of this Section
 
 The following pages will delve into the details of the weapon-specific components:
 

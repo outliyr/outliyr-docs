@@ -2,7 +2,7 @@
 
 This subsystem provides a powerful and flexible framework for managing the different stages, states, or "phases" of your gameplay session using Gameplay Tags and the Gameplay Ability System (GAS).
 
-### Purpose
+## Purpose
 
 Most games progress through distinct stages – think of a match starting with a setup period, moving into active play, perhaps hitting overtime or sudden death, and finally concluding with a scoreboard display. The Game Phase System aims to:
 
