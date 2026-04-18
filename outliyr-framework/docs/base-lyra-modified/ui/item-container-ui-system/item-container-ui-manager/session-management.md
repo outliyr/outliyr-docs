@@ -8,7 +8,7 @@ Windows in an inventory system are rarely independent. They exist in logical gro
 
 The **Session System** models these relationships as a tree structure.
 
-### The Session Structure
+## The Session Structure
 
 A session is defined by its `Handle`, its `ParentSession`, and arrays of its `Windows` and `ChildSessions`. It also carries a `SourceContext` (`FInstancedStruct`), which preserves the data that originally triggered the session's creation.
 
@@ -79,14 +79,22 @@ graph TD
     Note[If Chest Session closes, everything below it vanishes]
 ```
 
-### Session Lifecycle
+***
+
+## Session Lifecycle
 
 The `UIManager` maintains a map of all active sessions: `TMap<FGuid, FItemWindowSession>`.
 
-#### Creating a Session
+### Creating a Session
 
 You typically create a session when opening a new root window (like a Chest).
 
+{% tabs %}
+{% tab title="Blueprints" %}
+<figure><img src="../../../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+
+{% tab title="C++" %}
 ```cpp
 // 1. Define the source context (The Chest's Inventory using FInventoryContainrSouce)
 FInstancedStruct ChestSource = ...;
@@ -102,8 +110,10 @@ FItemWindowSessionHandle ChestSession = UIManager->CreateChildSession(
 WindowSpec.SessionHandle = ChestSession;
 UIManager->RequestOpenWindow(WindowSpec);
 ```
+{% endtab %}
+{% endtabs %}
 
-#### Closing a Session (`CloseSession`)
+### Closing a Session (`CloseSession`)
 
 When a session is closed, the Manager performs a **Cascade Closure**:
 
@@ -113,7 +123,9 @@ When a session is closed, the Manager performs a **Cascade Closure**:
 
 This ensures that closing a parent "cleanly" removes the entire branch of the UI tree.
 
-### Dynamic Reparenting
+***
+
+## Dynamic Reparenting
 
 The most complex part of session management is handling items moving between containers.
 
@@ -136,7 +148,7 @@ If the Chest is closed later, the Backpack (and its inspection window) will corr
 
 ***
 
-### Session Best Practices
+## Session Best Practices
 
 {% hint style="success" %}
 **Always use sessions** for external containers. Never open a chest window in the base session, it should close when the player walks away.

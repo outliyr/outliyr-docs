@@ -1,14 +1,14 @@
 # Geometric Algorithm
 
-At the heart of cross-window navigation is `LyraItemContainerLayer::FindWindowInDirection`. The algorithm uses **Exit/Entry Point scoring**. A geometric approach that measures the distance between where the cursor "leaves" one window and where it would "enter" each candidate, rewarding candidates that share perpendicular alignment. The result is a scoring system that "just feels right", it naturally prefers aligned, nearby windows without any magic numbers or hand-tuned thresholds.
+At the heart of cross-window navigation is `LyraItemContainerLayer::FindWindowInDirection`. The algorithm uses **Exit/Entry Point scoring**: a geometric approach that measures the distance between where the cursor "leaves" one window and where it would "enter" each candidate, rewarding candidates that share perpendicular alignment. The result is a scoring system that "just feels right", it naturally prefers aligned, nearby windows without any magic numbers or hand-tuned thresholds.
 
-### The Concept: Exit and Entry Points
+## The Concept: Exit and Entry Points
 
 Imagine every window has a **doorway on each edge**. When you press Right, the algorithm imagines the cursor stepping out through the source window's right-side doorway and looking for the closest doorway to step into on a neighboring window's left side. The position of each doorway is aligned with where the cursor currently sits, so if you're on row three, the exit doorway is at row three's height on the source edge, and the entry doorway is at the same height on the target edge.
 
 {% stepper %}
 {% step %}
-**Direction Filtering (Edge-to-Edge)**
+#### **Direction Filtering (Edge-to-Edge)**
 
 Before scoring, the algorithm filters candidates using the source and target `FBox2D` rects. The target must be **strictly beyond** the source's edge in the navigation direction:
 
@@ -21,7 +21,7 @@ There is no arbitrary threshold, the comparison is purely geometric, rect-to-rec
 {% endstep %}
 
 {% step %}
-**Spatial Scoring**
+#### **Spatial Scoring**
 
 After filtering to valid candidates, each window is scored with four components. The window with the **lowest** score wins:
 
@@ -32,19 +32,21 @@ Score = A + B + C - D
 * **A**: Euclidean distance from exit point to entry point (straight-line distance).
 * **B**: Distance along the navigation axis (how far you have to travel).
 * **C**: Distance perpendicular to the navigation axis (lateral offset).
-* **D**: Overlap bonus, rewards windows that share perpendicular space with the source.
+* **D**: Perpendicular alignment bonus, rewards windows that share perpendicular-axis range with the source (e.g., overlapping Y-ranges for horizontal navigation).
 
 The first three components are penalties (higher = worse). The fourth is a reward (higher = better, so it is subtracted).
 {% endstep %}
 {% endstepper %}
 
-### The Scoring Formula
+***
+
+## The Scoring Formula
 
 ```
 Score = A + B + C - D   (lower is better)
 ```
 
-#### A — Euclidean Distance
+### A — Euclidean Distance
 
 The straight-line distance between the exit point on the source and the entry point on the target:
 
@@ -54,7 +56,21 @@ const float A = FVector2D::Distance(ExitPoint, EntryPoint);
 
 This captures the overall "closeness" of the two windows from the cursor's perspective.
 
-#### B — Navigation Axis Distance
+```
+     Navigating Right →
+
+┌───────────┐                    ┌───────────┐
+│  Source   │                    │  Target   │
+│           │                    │           │
+│         Exit╌ ╌ ╌ ╌ ╌ ╌ ╌ ╌Entry           │
+│           │         A          │           │
+│           │   (straight-line)  │           │
+└───────────┘                    └───────────┘
+
+  A = Euclidean distance of the dotted line
+```
+
+### B — Navigation Axis Distance
 
 The distance along the direction of travel. For horizontal navigation, this is the X-axis gap; for vertical, the Y-axis gap:
 
@@ -65,7 +81,27 @@ B = FMath::Abs(EntryPoint.Y - ExitPoint.Y);  // Vertical navigation
 
 This heavily penalizes windows that are far away in the direction you're pressing.
 
-#### C — Perpendicular Axis Distance
+```
+     Navigating Right →
+
+┌───────────┐                    ┌───────────┐
+│  Source   │                    │  Target   │
+│           │                    │           │
+│         Exit──────────────────Entry        │
+│           │                    │           │
+│           │                    │           │
+└───────────┘                    └───────────┘
+             |◄─────── B ──────►|
+                  (X-axis gap)
+
+  B = distance along the navigation axis only
+```
+
+{% hint style="info" %}
+**Why do A and B both exist?** A is the Euclidean distance `sqrt(B² + C²)`, so B is already a component of A. Having both is intentional, it amplifies axis-specific penalties. Two windows at the same Euclidean distance A will score very differently if one is directly ahead (B high, C zero) versus diagonally offset (B low, C high). Without the separate B and C terms, the scoring would not penalize diagonal offsets strongly enough.
+{% endhint %}
+
+### C — Perpendicular Axis Distance
 
 The distance on the axis perpendicular to navigation. For horizontal movement, this is the Y-axis offset; for vertical, the X-axis offset:
 
@@ -76,34 +112,76 @@ C = FMath::Abs(EntryPoint.X - ExitPoint.X);  // Vertical navigation
 
 This penalizes windows that are offset from the cursor's current row or column.
 
-#### D — Overlap Bonus (Subtracted)
+```
+     Navigating Right →
 
-The perpendicular overlap between source and target windows, square-rooted for diminishing returns:
+┌───────────┐
+│  Source   │
+│         Exit  ↑          
+│           │   |                
+└───────────┘   |  
+                | C      C = vertical offset only
+                |            (perpendicular axis)
+┌───────────┐   |
+│  Target   │   |
+│         Entry ↓
+│           │
+└───────────┘
+```
+
+### D — Perpendicular Alignment Bonus (Subtracted)
+
+How much two windows share along the axis perpendicular to navigation (e.g., shared Y-range for horizontal movement), square-rooted for diminishing returns:
 
 ```cpp
 const float D = CalculatePerpendicularOverlap(Source, Target, Direction);
 ```
 
 {% hint style="info" %}
-Why subtract D? The overlap bonus is a reward, not a penalty. A target window that shares vertical space (for horizontal navigation) with the source gets a lower score, making it more likely to be selected. This creates the "sticky lane" feelingm windows aligned in the same row are strongly preferred over windows that are offset.
+Why subtract D? The alignment bonus is a reward, not a penalty. A target window that shares vertical range (for horizontal navigation) with the source gets a lower score, making it more likely to be selected. This creates the "sticky lane" feeling, windows aligned in the same row are strongly preferred over windows that are offset.
 {% endhint %}
+
+```
+     Navigating Right →
+
+┌───────────┐                    ┌──────────────┐
+│  Source   │                    │   Target     │
+│           │                    │              │
+│           │                    │              │
+│           │                    │              │
+│           │                    │              │
+└───────────┘                    └──────────────┘
+      ▲                               ▲
+      │         shared Y-range        │
+      │◄─────────────────────────────►│
+      │              D                │
+      │  (both windows occupy this    │
+      │   vertical range)             │ 
+
+  D = sqrt(shared perpendicular range)
+  Larger D → lower score → window is preferred
+```
 
 The combined effect: a directly aligned window further away will beat a closer window that's significantly offset. Navigation feels predictable and spatially consistent.
 
 ***
 
-### Exit and Entry Points
+## Exit and Entry Points
 
 The exit and entry points are the anchor coordinates for the A, B, and C distance calculations. They represent where the cursor "leaves" the source and "arrives" at the target.
 
-**Exit Point** — On the source window's edge facing the navigation direction. The perpendicular coordinate is clamped to the source rect so the point always sits on the window's boundary:
+### **Exit Point**
+
+On the source window's edge facing the navigation direction. The perpendicular coordinate is clamped to the source rect so the point always sits on the window's boundary:
 
 ```cpp
 // Navigating Right: exit from the right edge, Y aligned with cursor
 FVector2D(Rect.Max.X, FMath::Clamp(CursorPos.Y, Rect.Min.Y, Rect.Max.Y))
 ```
 
-**Entry Point** — On the target window's edge opposite to the navigation direction. Same perpendicular clamping ensures alignment:
+### **Entry Point**
+
+On the target window's edge opposite to the navigation direction. Same perpendicular clamping ensures alignment:
 
 ```cpp
 // Navigating Right: enter on the left edge, Y aligned with cursor
@@ -132,9 +210,9 @@ Both points share the same Y coordinate (clamped to their respective window boun
 
 ***
 
-### Perpendicular Overlap
+## Perpendicular Overlap
 
-`CalculatePerpendicularOverlap` measures how much two windows share along the axis perpendicular to navigation. For horizontal movement, it checks Y-axis overlap; for vertical, X-axis overlap.
+`CalculatePerpendicularOverlap` measures how much two windows share along the axis perpendicular to navigation. For horizontal movement, it checks Y-axis overlap; for vertical, X-axis.
 
 ```cpp
 float ULyraItemContainerLayer::CalculatePerpendicularOverlap(
@@ -160,11 +238,15 @@ float ULyraItemContainerLayer::CalculatePerpendicularOverlap(
 }
 ```
 
-The square root provides **diminishing returns**. A window that overlaps by 100 pixels is not ten times better than one overlapping by 10 pixels, it is roughly three times better. This prevents very tall or wide windows from dominating scoring purely through size.
+The square root provides **diminishing returns**. A window that aligns by 100 pixels on the perpendicular axis is not ten times better than one aligning by 10 pixels, it is roughly three times better. This prevents very tall or wide windows from dominating scoring purely through size.
+
+{% hint style="info" %}
+The C++ function is named `CalculatePerpendicularOverlap`, here "overlap" refers to shared range on the perpendicular axis between non-overlapping windows, not windows that physically intersect on screen.
+{% endhint %}
 
 ***
 
-### The Implementation
+## The Implementation
 
 ```cpp
 FindWindowInDirection(FromWindow, Direction, CursorScreenPos):
@@ -218,7 +300,21 @@ bool ULyraItemContainerLayer::IsInNavigationDirection(
 ```
 
 {% hint style="warning" %}
-Overlapping windows are filtered out by design. If a window's edge falls within the source bounds, it will never pass direction validation in any direction. This is intentional, overlapping windows should be accessed via [shoulder button cycling](window-cycling.md), not directional navigation. Spatial navigation only targets windows that are fully clear of the source in the requested direction.
+**Spatially overlapping windows** (windows whose screen rects physically intersect) are filtered out by design. If any part of a target window's rect falls within the source window's bounds, `IsInNavigationDirection` will reject it in every direction, there is no direction where the target is "fully beyond" the source's edge.
+
+This is distinct from the D component's perpendicular alignment, which measures shared range on the perpendicular axis between windows that do not intersect.
+
+```
+┌─────────────┐
+│   Source    │
+│       ┌─────┼────────┐
+│       │  overlap     │   ← Filtered out in ALL directions.
+└───────┼─────┘        │     Use LB/RB cycling instead.
+        │   Target     │
+        └──────────────┘
+```
+
+Overlapping windows should be accessed via [shoulder button cycling](/broken/pages/85c8ebba6454b12bd44d40137826b95f11b38860), not directional navigation.
 {% endhint %}
 
 ### Score Calculation
@@ -256,7 +352,7 @@ float ULyraItemContainerLayer::CalculateSpatialNavigationScore(
 
 ***
 
-### Visualizing the Search
+## Visualizing the Search
 
 ```mermaid
 graph LR
@@ -271,7 +367,9 @@ graph LR
     end
 ```
 
-### Developer Tips for Debugging
+***
+
+## Developer Tips for Debugging
 
 {% stepper %}
 {% step %}

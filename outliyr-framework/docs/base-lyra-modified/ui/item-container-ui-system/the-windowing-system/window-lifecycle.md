@@ -4,12 +4,14 @@ Windows are the containers for your item container UI. They can be opened, close
 
 ***
 
-### Opening Windows
+## Opening Windows
 
-#### The Request Pattern
+### The Request Pattern
 
 Windows are opened via requests to the UI Manager:
 
+{% tabs %}
+{% tab title="C++" %}
 ```cpp
 FLyraWindowOpenRequest Request;
 Request.WindowType = MyWindowTypeTag;           // Identifies content widget class
@@ -20,7 +22,31 @@ Request.Placement = EWindowPlacement::Automatic;
 UIManager->RequestOpenWindow(Request);
 ```
 
-#### Window Placement Options
+```cpp
+void UMyGameplayCode::OpenInventoryWindow()
+{
+    ULyraItemContainerUIManager* UIManager =
+        ULocalPlayer::GetSubsystem<ULyraItemContainerUIManager>(GetLocalPlayer());
+
+    FInventoryContainerSource Source;
+    Source.InventoryComponent = PlayerInventoryComponent;
+
+    FLyraWindowOpenRequest Request;
+    Request.WindowType = TAG_UI_Window_Inventory;
+    Request.SourceDesc = FInstancedStruct::Make(Source);
+    Request.SessionHandle = UIManager->GetOrCreateBaseSession();
+
+    UIManager->RequestOpenWindow(Request);
+}
+```
+{% endtab %}
+
+{% tab title="Blueprints" %}
+<figure><img src="../../../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+{% endtabs %}
+
+### Window Placement Options
 
 | Placement          | Behavior                                 |
 | ------------------ | ---------------------------------------- |
@@ -30,7 +56,7 @@ UIManager->RequestOpenWindow(Request);
 | `Explicit`         | Uses `Request.ExplicitPosition`          |
 | `Cascade`          | Offset from previous window              |
 
-#### What Happens on Open
+### What Happens on Open
 
 ```mermaid
 sequenceDiagram
@@ -52,7 +78,7 @@ sequenceDiagram
     Layer->>Layer: FocusWindow()
 ```
 
-#### Content Widget Interface
+### Content Widget Interface
 
 Content widgets must implement `ILyraItemContainerWindowContentInterface`:
 
@@ -77,12 +103,14 @@ See [The Window Content Interface](the-window-content-interface.md) for details.
 
 ***
 
-### Closing Windows
+## Closing Windows
 
 Windows can close in several ways:
 
-#### Manual Close
+### Manual Close
 
+{% tabs %}
+{% tab title="C++" %}
 ```cpp
 // User clicks close button
 WindowShell->RequestClose();
@@ -90,18 +118,36 @@ WindowShell->RequestClose();
 // Or programmatically
 UIManager->RequestCloseWindow(WindowHandle);
 ```
+{% endtab %}
 
-#### Session Close
+{% tab title="Blueprints" %}
+<figure><img src="../../../../.gitbook/assets/image (4).png" alt=""><figcaption></figcaption></figure>
+
+Or if you are inside a content widget
+
+<figure><img src="../../../../.gitbook/assets/image (5).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+{% endtabs %}
+
+### Session Close
 
 When a session closes, all windows in that session close:
 
+{% tabs %}
+{% tab title="C++" %}
 ```cpp
 // Close an entire session
 UIManager->CloseSession(SessionHandle);
 // All windows registered to this session are destroyed
 ```
+{% endtab %}
 
-#### Automatic Close (Lifecycle Events)
+{% tab title="Second Tab" %}
+<figure><img src="../../../../.gitbook/assets/image (6).png" alt=""><figcaption></figcaption></figure>
+{% endtab %}
+{% endtabs %}
+
+### Automatic Close (Lifecycle Events)
 
 The UI Manager monitors lifecycle events and closes windows automatically:
 
@@ -120,7 +166,7 @@ flowchart TB
     Check -->|No| Nothing[No action]
 ```
 
-#### Close Sequence
+### Close Sequence
 
 ```mermaid
 sequenceDiagram
@@ -143,9 +189,9 @@ sequenceDiagram
 
 ***
 
-### Focus and Z-Order
+## Focus and Z-Order
 
-#### Focus Management
+### Focus Management
 
 Only one window has focus at a time. The focused window:
 
@@ -164,7 +210,7 @@ FItemWindowHandle Focused = Layer->GetFocusedWindow();
 TArray<FItemWindowHandle> Windows = Layer->GetWindowsByFocusOrder();
 ```
 
-#### Z-Order
+### Z-Order
 
 The Layer tracks when each window was last focused and uses this for z-order:
 
@@ -214,11 +260,11 @@ The `UCanvasPanelSlot::ZOrder` for each window is updated.
 
 ***
 
-### Window Dragging
+## Window Dragging
 
 Windows can be dragged by their title bar:
 
-#### Drag Constraints
+### Drag Constraints
 
 | Constraint          | Description                           |
 | ------------------- | ------------------------------------- |
@@ -226,7 +272,7 @@ Windows can be dragged by their title bar:
 | **Minimum visible** | At least N pixels must remain visible |
 | **Snap to edge**    | Optional snapping to screen edges     |
 
-#### Drag Operations
+### Drag Operations
 
 The Layer handles window drag operations:
 
@@ -249,39 +295,9 @@ During dragging:
 
 ***
 
-### Opening Windows Example
+## Window Types (GameplayTags)
 
-{% tabs %}
-{% tab title="Blueprints" %}
-<figure><img src="../../../../.gitbook/assets/image (194).png" alt=""><figcaption></figcaption></figure>
-{% endtab %}
-
-{% tab title="C++" %}
-```cpp
-void UMyGameplayCode::OpenInventoryWindow()
-{
-    ULyraItemContainerUIManager* UIManager =
-        ULocalPlayer::GetSubsystem<ULyraItemContainerUIManager>(GetLocalPlayer());
-
-    FInventoryContainerSource Source;
-    Source.InventoryComponent = PlayerInventoryComponent;
-
-    FLyraWindowOpenRequest Request;
-    Request.WindowType = TAG_UI_Window_Inventory;
-    Request.SourceDesc = FInstancedStruct::Make(Source);
-    Request.SessionHandle = UIManager->GetOrCreateBaseSession();
-
-    UIManager->RequestOpenWindow(Request);
-}
-```
-{% endtab %}
-{% endtabs %}
-
-***
-
-### Window Types (GameplayTags)
-
-Window types are identified by `GameplayTags`, this will be discussed in more detail in the [Item Container Layer](/broken/pages/3abc32b6a7989ab09aac6dda0a7f3992dc39bbbc):
+Window types are identified by `GameplayTags`, this will be discussed in more detail in the [Item Container Layer](the-item-container-layer.md):
 
 ```cpp
 // In your GameplayTags file

@@ -19,7 +19,7 @@ Two deadzone modes are available via the `Type` property:
 
 Values below the threshold are zeroed out entirely. Values above it are rescaled into the 0-to-1 range (up to `UpperThreshold`, which defaults to 1.0), so the usable range still covers the full spectrum without a dead jump at the threshold boundary.
 
-<figure><img src="../../.gitbook/assets/image (8) (1).png" alt=""><figcaption><p>Input Action with a deadzone modifier</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (8) (1) (1).png" alt=""><figcaption><p>Input Action with a deadzone modifier</p></figcaption></figure>
 
 ### `ULyraInputModifierGamepadSensitivity`
 
@@ -32,13 +32,13 @@ Each context stores its own independent preset, so players can have fast hip-fir
 
 The modifier resolves the preset through a `ULyraAimSensitivityData` asset (referenced via the `SensitivityLevelTable` property). This data asset is a `UPrimaryDataAsset` containing a `TMap<ELyraGamepadSensitivity, float>` called `SensitivityMap`. The `ELyraGamepadSensitivity` enum defines ten levels: `Slow` (0.5x), `SlowPlus`, `SlowPlusPlus`, `Normal` (1.0x), `NormalPlus`, `NormalPlusPlus`, `Fast`, `FastPlus`, `FastPlusPlus`, and `Insane` (2.5x). At runtime the modifier calls `SensitivtyEnumToFloat()` on the data asset and multiplies the input value by the result.
 
-<figure><img src="../../.gitbook/assets/image (6) (1).png" alt=""><figcaption><p>Input Action with gamepad sensitivity modifier</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (6) (1) (1).png" alt=""><figcaption><p>Input Action with gamepad sensitivity modifier</p></figcaption></figure>
 
 ### `ULyraInputModifierAimInversion`
 
 Inverts the vertical and/or horizontal look axis. This modifier has no configurable properties of its own, it reads `GetInvertVerticalAxis()` and `GetInvertHorizontalAxis()` from `ULyraSettingsShared` and multiplies the corresponding component by -1 when the toggle is enabled. Both default to `false`.
 
-<figure><img src="../../.gitbook/assets/image (7) (1).png" alt=""><figcaption><p>Input Action with aim inversion modifier</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (7) (1) (1).png" alt=""><figcaption><p>Input Action with aim inversion modifier</p></figcaption></figure>
 
 ### `ULyraSettingBasedScalar`
 
@@ -52,7 +52,7 @@ Each axis also has `MinValueClamp` and `MaxValueClamp` bounds (defaulting to 0 a
 
 This is used for mouse sensitivity (`MouseSensitivityX`, `MouseSensitivityY`, `TargetingMultiplier`) and any custom scaling needs beyond the standard gamepad presets.
 
-<figure><img src="../../.gitbook/assets/image (9) (1).png" alt=""><figcaption><p>Input Action with setting based scalar modifier</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (9) (1) (1).png" alt=""><figcaption><p>Input Action with setting based scalar modifier</p></figcaption></figure>
 
 ***
 
@@ -60,7 +60,7 @@ This is used for mouse sensitivity (`MouseSensitivityX`, `MouseSensitivityY`, `T
 
 **Gamepad:** Ten preset levels defined in `ULyraAimSensitivityData`, ranging from 0.5x to 2.5x. The player selects a preset name (e.g., `"Normal+"`) rather than entering a raw number. Separate presets are stored for general look and ADS targeting, both defaulting to `Normal`.
 
-<figure><img src="../../.gitbook/assets/image (10) (1).png" alt=""><figcaption><p>GamepadAimSensitivity_Targeting in ShooterBase</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (10) (1) (1).png" alt=""><figcaption><p>GamepadAimSensitivity_Targeting in ShooterBase</p></figcaption></figure>
 
 **Mouse:** Three raw `double` values on `ULyraSettingsShared`, `MouseSensitivityX` (default 1.0), `MouseSensitivityY` (default 1.0), and `TargetingMultiplier` (default 0.5). These bypass the preset system entirely and are consumed through `ULyraSettingBasedScalar` modifiers configured with the corresponding property names.
 

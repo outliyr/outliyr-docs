@@ -4,7 +4,7 @@ The Item Container UI is **reactive**, when data changes in the backend, the UI 
 
 ***
 
-### The Reactive Loop
+## The Reactive Loop
 
 ```mermaid
 sequenceDiagram
@@ -24,11 +24,11 @@ sequenceDiagram
 
 ***
 
-### FieldNotify: Unreal's Reactive Secret
+## FieldNotify: Unreal's Reactive Secret
 
 Unreal's `FieldNotify` system (used by UMG View Binding) is the foundation of reactivity. Here's how it works:
 
-#### Declaring a Reactive Property
+### Declaring a Reactive Property
 
 ```cpp
 UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "Item")
@@ -37,7 +37,7 @@ FText DisplayName;
 
 The `FieldNotify` specifier tells Unreal to track this property for binding.
 
-#### Setting a Reactive Property
+### Setting a Reactive Property
 
 ```cpp
 // This macro does two things:
@@ -50,7 +50,7 @@ UE_MVVM_SET_PROPERTY_VALUE(DisplayName, NewName);
 **Never set FieldNotify properties directly!** Using `DisplayName = NewName;` bypasses the notification system and your UI won't update.
 {% endhint %}
 
-#### Binding in Blueprint
+### Binding in Blueprint
 
 {% stepper %}
 {% step %}
@@ -76,7 +76,7 @@ Now whenever `DisplayName` changes, the Text widget updates automatically.
 
 ***
 
-### How Backend Changes Reach the UI
+## How Backend Changes Reach the UI
 
 Let's trace what happens when an item is added to inventory:
 
@@ -107,9 +107,9 @@ flowchart TB
     Step1 --> Step2 --> Step3 --> Step4
 ```
 
-#### Step-by-Step Breakdown
+### Step-by-Step Breakdown
 
-**1. Backend Change**
+#### **1. Backend Change**
 
 ```cpp
 // On server
@@ -117,7 +117,7 @@ InventoryManager->AddItemToSlot(ItemInstance, SlotIndex);
 // FLyraInventoryList marks entry dirty for replication
 ```
 
-**2. Signal Fires**
+#### **2. Signal Fires**
 
 ```cpp
 // In ULyraInventoryManagerComponent
@@ -128,7 +128,7 @@ void PostReplicatedAdd(const FLyraInventoryEntry& Entry)
 }
 ```
 
-**3. ViewModel Rebuilds**
+#### **3. ViewModel Rebuilds**
 
 ```cpp
 // In ULyraInventoryViewModel
@@ -154,7 +154,7 @@ void RebuildItemsList()
 }
 ```
 
-**4. Widget Updates**
+#### **4. Widget Updates**
 
 ```cpp
 // ListView is bound to Items property
@@ -165,7 +165,7 @@ void RebuildItemsList()
 
 ***
 
-### The "Never Manual Refresh" Philosophy
+## The "Never Manual Refresh" Philosophy
 
 Traditional UI code is littered with manual updates:
 
@@ -194,7 +194,7 @@ void OnItemPickedUp() { /* Backend handles it */ }
 
 ***
 
-### Stable Identity: Preserving Selection
+## Stable Identity: Preserving Selection
 
 When the item list rebuilds, you don't want to lose selection state. The system uses **stable identity** via `SlotIndex`:
 
@@ -216,7 +216,7 @@ flowchart LR
     Before -->|"RebuildItemsList"| After
 ```
 
-**How it works:**
+### **How it works:**
 
 ```cpp
 ULyraItemViewModel* GetOrCreateItemViewModel(int32 SlotIndex)
@@ -238,15 +238,15 @@ The same ViewModel instance is reused for the same slot, so any state on it (foc
 
 ***
 
-### Property Change Events
+## Property Change Events
 
 For more control, you can subscribe to specific property changes:
 
-#### In Blueprints
+### In Blueprints
 
 Use the `OnFieldValueChanged` node with the property name.
 
-#### In C++
+### In C++
 
 ```cpp
 // Subscribe to a specific property change
@@ -266,7 +266,7 @@ ItemViewModel->FieldNotifyDelegate(
 
 ***
 
-### Debugging Data Flow
+## Debugging Data Flow
 
 If your UI isn't updating, check these points in order:
 
@@ -288,7 +288,3 @@ flowchart TB
 {% endhint %}
 
 ***
-
-## Next Steps
-
-Now that you understand how data flows, let's look at why the system uses windows instead of a single panel in [The Window Model](the-window-model.md).

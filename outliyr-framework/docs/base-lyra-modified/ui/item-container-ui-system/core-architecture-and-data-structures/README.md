@@ -13,7 +13,9 @@ If we wrote a separate UI widget for each of these, we would end up with `W_Inve
 
 This system solves that via **Polymorphism**. We abstract the specific implementation details of the container away from the UI, providing a unified interface for the visual layer.
 
-### The Polymorphic Source
+***
+
+## The Polymorphic Source
 
 The heart of this abstraction is the **Container Source Descriptor**.
 
@@ -23,7 +25,7 @@ Instead of passing a raw pointer (like `ULyraInventoryManagerComponent*`) to the
 Each Item Containers has a Slot Source Description using `FAbilityData_SourceItem` . This is not what this page is discussing. This page is referring to the `FLyraContainerSourceBase` . The former is for slot descriptions while the latter is for container descriptions.
 {% endhint %}
 
-#### The Abstraction Flow
+### The Abstraction Flow
 
 The UI Manager exposes a single function: `AcquireViewModel(Source)`. It doesn't care if the source is a backpack or a weapon attachment point. It simply asks the Source to generate the correct ViewModel.
 
@@ -51,13 +53,15 @@ graph LR
 
 By decoupling the _request_ for UI from the _creation_ of the UI, we allow plugins (like a Tetris Inventory or a Crafting System) to define their own Sources and ViewModels without modifying the core UI Manager.
 
-### The ViewModel Hierarchy
+***
+
+## The ViewModel Hierarchy
 
 Once a Source is resolved, it creates a **ViewModel**. This is the object your UMG widgets actually bind to.
 
 The hierarchy is split into two distinct branches to separate **Global Container Logic** from **Specific Item Logic**.
 
-#### Class Diagram
+### Class Diagram
 
 ```mermaid
 classDiagram
@@ -95,7 +99,7 @@ classDiagram
     LyraSlotViewModelBase o-- LyraItemViewModel : Proxies
 ```
 
-#### Key Design Decision: Slots vs. Items
+### Key Design Decision: Slots vs. Items
 
 A common mistake in Unreal UI is binding a widget directly to an Item Data object. This causes the **"Null Binding" Problem**:
 
@@ -117,7 +121,9 @@ When you look at the `ULyraSlotViewModelBase`, you will notice it duplicates pro
 
 **This ensures your UMG widgets never have to check `IsValid` on the item.** They simply bind to `Slot.ItemIcon`, and it "just works."
 
-### In This Section
+***
+
+## In This Section
 
 We will now break down these concepts into their specific implementations:
 

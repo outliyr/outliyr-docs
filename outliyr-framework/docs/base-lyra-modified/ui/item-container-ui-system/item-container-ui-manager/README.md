@@ -1,10 +1,12 @@
-# The Item Container UI Manager
+# Item Container UI Manager
 
-The `ULyraItemContainerUIManager` is the primary entry point for any developer interacting with the inventory UI. It exists as a `LocalPlayerSubsystem`, meaning there is exactly one instance per local player.
+The `ULyraItemContainerUIManager` is the primary entry point for any developer interacting with the item container UI. It exists as a `LocalPlayerSubsystem`, meaning there is exactly one instance per local player.
 
 Its primary responsibility is to act as the **Source of Truth** for all active container data.
 
-### Why Do We Need a Manager?
+***
+
+## Why Do We Need a Manager?
 
 In naive implementations, a widget often creates its own ViewModel:
 
@@ -16,7 +18,7 @@ void UMyInventoryWidget::NativeConstruct() {
 }
 ```
 
-**The Problem:**
+#### **The Problem:**
 
 1. **Duplication:** If you have an Inventory Window open AND a Crafting Window that shows your inventory, you now have two ViewModels processing the same data twice.
 2. **State Desync:** If the Inventory Window selects an item, the Crafting Window doesn't know about it.
@@ -24,7 +26,9 @@ void UMyInventoryWidget::NativeConstruct() {
 
 **The Solution:** The UI Manager holds a centralized **Cache**. Widgets request access ("Acquire") and return access ("Release").
 
-### Core Responsibilities
+***
+
+## Core Responsibilities
 
 The UI Manager handles three critical systems, which are detailed in the sub-pages below.
 
@@ -52,14 +56,21 @@ In a multiplayer game, the state of the world changes constantly.
 
 The Manager listens to the Gameplay Message Subsystem (`Lyra.Item.Message.*`) and acts as the "Enforcer," forcibly closing sessions when their underlying data becomes invalid.
 
-### Integration Point
+***
 
+## Integration Point
+
+{% tabs %}
+{% tab title="Blueprint" %}
+<figure><img src="../../../../.gitbook/assets/image.png" alt=""><figcaption><p>Example of using the Item Container UI manager to get the interaction view model</p></figcaption></figure>
+{% endtab %}
+
+{% tab title="C++" %}
 If you are writing a custom C++ widget, you will interact with this manager to get your data:
 
-```cpp
-void UMyCustomWidget::SetSource(const FInstancedStruct& Source)
-{
-    ULyraItemContainerUIManager* Manager = GetLocalPlayer()->GetSubsystem<ULyraItemContainerUIManager>();
+<pre class="language-cpp"><code class="lang-cpp"><strong>void UMyCustomWidget::SetSource(const FInstancedStruct&#x26; Source)
+</strong>{
+    ULyraItemContainerUIManager* Manager = GetLocalPlayer()->GetSubsystem&#x3C;ULyraItemContainerUIManager>();
     
     // 1. Get the shared ViewModel
     MyViewModel = Manager->AcquireViewModel(Source);
@@ -76,7 +87,9 @@ void UMyCustomWidget::NativeDestruct()
         GetManager()->ReleaseViewModel(Source);
     }
 }
-```
+</code></pre>
+{% endtab %}
+{% endtabs %}
 
 {% hint style="info" %}
 _If you use the provided `LyraItemContainerWindowShell`, this Acquire/Release logic is handled for you automatically._

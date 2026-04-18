@@ -53,11 +53,11 @@ The widget can also query the `DataObject` on tick for live updates (health bars
 
 {% tabs %}
 {% tab title="Passing the data object" %}
-<figure><img src="../../../.gitbook/assets/image (5).png" alt=""><figcaption><p>Example passing the control point actor as an indicator</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (5) (1).png" alt=""><figcaption><p>Example passing the control point actor as an indicator</p></figcaption></figure>
 {% endtab %}
 
 {% tab title="Using the data object in widget" %}
-<figure><img src="../../../.gitbook/assets/image (6).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (6) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 

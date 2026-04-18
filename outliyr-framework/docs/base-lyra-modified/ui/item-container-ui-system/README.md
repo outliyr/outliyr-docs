@@ -10,15 +10,15 @@ Instead of your UMG widgets talking directly to the server or casting to specifi
 
 ***
 
-### The Design Philosophy
+## The Design Philosophy
 
-#### 1. The Disconnected UI
+### 1. The Disconnected UI
 
 The UI does not "own" the data; it leases it. When a player opens an inventory window, the system creates a ViewModel that acts as a live proxy for the underlying component. When the window closes, the ViewModel is released and cleaned up.
 
 This means your UI logic is **container-agnostic**. The same generic code handles a 1D Inventory list, a Tetris grid, an Equipment slot, or an Attachment hierarchy. The system uses **Polymorphic Descriptors** to bridge the gap, allowing the UI to interact with any container type without knowing its specific implementation.
 
-#### 2. The "Ghost World" (Prediction)
+### 2. The "Ghost World" (Prediction)
 
 In a high-latency environment, waiting for the server to confirm a drag-and-drop operation makes the UI feel sluggish.
 
@@ -27,13 +27,13 @@ This system implements a **Predictive "Ghost" Layer**. When a player moves an it
 * **Success:** The server confirms the move, and the "Ghost" status is silently removed.
 * **Rejection:** The server denies the move, and the UI automatically rolls back to the correct state.
 
-#### 3. Unified Interaction
+### 3. Unified Interaction
 
 Whether the player is using a Mouse (Drag & Drop), a Gamepad (Navigation & Context Actions), or a Keyboard (Shortcuts), the underlying logic is identical. The **Interaction Engine** unifies all inputs into a single transaction pipeline, ensuring that gameplay abilities are triggered consistently regardless of the input method.
 
 ***
 
-### Why This System Exists
+## Why This System Exists
 
 Building inventory UI sounds simple until you hit these walls:
 
@@ -47,7 +47,7 @@ Building inventory UI sounds simple until you hit these walls:
 
 ***
 
-### The Ghost World
+## The Ghost World
 
 When a player picks up an item in a networked game, there's a moment of uncertainty. The client _thinks_ the pickup should succeed, but only the server knows for sure. Rather than freeze the UI waiting for confirmation, this system shows **ghost items**, predicted state that appears immediately but hasn't been confirmed yet.
 
@@ -69,7 +69,7 @@ Ghost items can be styled differently (transparency, different color, pulsing ef
 
 ***
 
-### The Big Picture
+## The Big Picture
 
 ```mermaid
 flowchart TB
@@ -104,13 +104,13 @@ flowchart TB
     INT --> WIN
 ```
 
-**Three layers, clear responsibilities:**
+### **Three layers, clear responsibilities:**
 
 <table><thead><tr><th width="174">Layer</th><th>What It Does</th><th>Key Classes</th></tr></thead><tbody><tr><td><strong>Backend</strong></td><td>Owns the actual data, handles server authority</td><td><code>LyraInventoryManagerComponent</code>, <code>LyraEquipmentManagerComponent</code></td></tr><tr><td><strong>ViewModel</strong></td><td>Transforms backend data into UI-friendly format, handles interactions</td><td><code>LyraContainerViewModel</code>, <code>LyraItemViewModel</code>, <code>LyraInteractionViewModel</code></td></tr><tr><td><strong>Presentation</strong></td><td>Displays data, captures input</td><td><code>LyraItemContainerWindowShell</code>, <code>LyraInventoryListPanel</code>, <code>LyraInventoryTilePanel</code></td></tr></tbody></table>
 
 ***
 
-### Where Should I Start?
+## Where Should I Start?
 
 {% tabs %}
 {% tab title="I want to understand how it works" %}
@@ -126,9 +126,5 @@ This documentation is split into several detailed sections to help you navigate 
 
 {% tab title="I want to extend the system" %}
 [**Extension Guide**](extension-and-integration-guide/) Practical guides on how to create new container types, custom windows, and debug the system using built-in logging tools.
-{% endtab %}
-
-{% tab title="I want to build something" %}
-
 {% endtab %}
 {% endtabs %}

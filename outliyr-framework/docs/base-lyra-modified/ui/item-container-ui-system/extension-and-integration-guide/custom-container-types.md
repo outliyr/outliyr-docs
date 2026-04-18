@@ -4,7 +4,7 @@ The Item Container UI system is designed to be extended. This guide shows how to
 
 ***
 
-### When You Need a Custom Container Type
+## When You Need a Custom Container Type
 
 Create a new container type when:
 
@@ -16,7 +16,7 @@ If you just need a different visual layout, you probably don't need a custom typ
 
 ***
 
-#### The Extension Pattern
+## The Extension Pattern
 
 ```mermaid
 flowchart TB
@@ -45,7 +45,7 @@ You create three things:
 
 ***
 
-### Step 1: Create the Container Source
+## Step 1: Create the Container Source
 
 The source struct identifies your container and tells the system how to create its `ViewModel`.
 
@@ -109,7 +109,7 @@ struct FVendorContainerSource : public FLyraContainerSourceBase
 
 ***
 
-### Step 2: Create the `ViewModel`
+## Step 2: Create the `ViewModel`
 
 Your View Model transforms vendor data into bindable properties.
 
@@ -316,7 +316,7 @@ public:
 
 ***
 
-### Step 3: Create Window Content
+## Step 3: Create Window Content
 
 Build a widget that displays your vendor UI.
 
@@ -339,7 +339,7 @@ Build a widget that displays your vendor UI.
 └─────────────────────────────────────┘
 ```
 
-#### Implement the Interface
+### Implement the Interface
 
 <details>
 
@@ -372,6 +372,10 @@ void UVendorWindowContent::SetContainerSource(const FInstancedStruct& Source)
 </details>
 
 #### Vendor Item Entry Widget
+
+<details>
+
+<summary>Item Entry Widget</summary>
 
 ```cpp
 void UVendorItemEntry::NativeOnListItemObjectSet(UObject* ListItemObject)
@@ -408,21 +412,25 @@ void HandleBuyClicked()
 }
 ```
 
+
+
+</details>
+
 ***
 
-### Step 4: Register the Window Type
+## Step 4: Register the Window Type
 
 ```cpp
 // Define window type tag
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Window_Vendor, "UI.Window.Vendor");
 
-// Register in UI configuration
+// Register in the ItemLayerContainer's GetContentWidgetClassForWindowType
 WindowTypeMap.Add(TAG_UI_Window_Vendor, UVendorWindowContent::StaticClass());
 ```
 
 ***
 
-### Step 5: Open the Vendor Window
+## Step 5: Open the Vendor Window
 
 ```cpp
 void UVendorInteractionComponent::OpenVendorUI()

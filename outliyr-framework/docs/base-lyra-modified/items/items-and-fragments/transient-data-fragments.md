@@ -119,7 +119,7 @@ if (auto* DurabilityData = ItemInstance->ResolveTransientFragment<UInventoryFrag
 {% tab title="Blueprint" %}
 **From Blueprint/C++:** Use `ResolveStructTransientFragment(FragmentClass)` on the `ULyraInventoryItemInstance`. This returns an `FInstancedStruct`. You'll need to use `GetInstancedStructValue` and specific the transient struct from the wildcard `value` pin.
 
-<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 {% hint style="danger" %}
 The wildcard pin must match the **transient struct type** that corresponds to the fragment class you specified. Selecting the wrong type will silently return nothing.

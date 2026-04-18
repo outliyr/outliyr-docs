@@ -9,7 +9,9 @@ It is designed to be **Composable**. A "Window" is not a single widget; it is a 
 
 This separation allows you to fix a bug in the "Drag" logic _once_ in the Shell, and it fixes it for every single window in your game.
 
-### Architecture
+***
+
+## Architecture
 
 ```mermaid
 flowchart TB
@@ -26,8 +28,7 @@ flowchart TB
 
     subgraph Shell ["Inside a Window Shell"]
         Chrome[Title Bar + Close Button]
-        Content[Content Widget]
-        Router[Navigation Router]
+        Content["Content Widget (with ILyraItemContainerWindowContentInterface)"]
     end
 
     Layer --> Canvas
@@ -59,9 +60,11 @@ This is the "Manager" widget. It sits on your HUD. It handles:
 
 To put _your_ widget inside a Shell, it needs to implement `ILyraItemContainerWindowContentInterface`. This interface acts as the initialization handshake, passing the Data Source and Navigation Router to your widget _after_ the window is constructed.
 
-### In This Section
+***
 
-* [The Window Lifecycle](window-lifecycle.md)
+## In This Section
+
+* [**The Window Lifecycle**](window-lifecycle.md)
   * Explores how windows are created, managed, and destroyed
 * [**The Window Shell**](the-window-shell.md)
   * How the shell manages ViewModel leasing.

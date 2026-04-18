@@ -4,7 +4,9 @@ This page explains how to implement Drag-and-Drop item movement in your widgets.
 
 Unlike standard UMG Drag-and-Drop (which creates a payload object), this system uses a centralized **Transaction State** on the `LyraInteractionViewModel`. This allows us to support Mouse, Gamepad ("Click to Pickup"), and Keyboard with a single code path.
 
-### The Drag Cycle
+***
+
+## The Drag Cycle
 
 ```mermaid
 sequenceDiagram
@@ -36,11 +38,11 @@ sequenceDiagram
 
 ***
 
-### Step 1: Starting the Drag (Source Widget)
+## Step 1: Starting the Drag (Source Widget)
 
 In your `W_InventorySlot` widget, you need to detect the input and notify the engine.
 
-#### Blueprint Logic
+### Blueprint Logic
 
 Override `OnMouseButtonDown` / `OnDragDetected`
 
@@ -49,9 +51,9 @@ Override `OnMouseButtonDown` / `OnDragDetected`
 3. **Get Offset:** Calculate `AbsoluteToLocal` to know where the user clicked inside the icon (so the drag visual doesn't "jump").
 4. **Call Begin:** `InteractionVM->BeginInteraction`.
 
-<figure><img src="../../../../../.gitbook/assets/image (6) (1) (1).png" alt=""><figcaption><p>Starting the drag process for an equipment system</p></figcaption></figure>
+<figure><img src="../../../../../.gitbook/assets/image (6) (1) (1) (1).png" alt=""><figcaption><p>Starting the drag process for an equipment system</p></figcaption></figure>
 
-#### Key Function: `BeginInteraction`
+### Key Function: `BeginInteraction`
 
 ```cpp
 bool BeginInteraction(
@@ -67,7 +69,7 @@ bool BeginInteraction(
 
 ***
 
-### Step 2: The Drag Visual (Layer Widget)
+## Step 2: The Drag Visual (Layer Widget)
 
 You do **NOT** need to create a `UDragDropOperation`. The `LyraItemContainerLayer` handles the visual representation globally.
 
@@ -81,11 +83,11 @@ Bind your **Drag Cursor Widget** to these ViewModel properties:
 
 ***
 
-### Step 3: Handling the Drop (Target Widget)
+## Step 3: Handling the Drop (Target Widget)
 
 In your `W_InventorySlot` widget, you need to detect when the mouse enters and releases.
 
-#### Hover Feedback (`OnMouseEnter`)
+### Hover Feedback (`OnMouseEnter`)
 
 The player needs to know if they can drop here.
 
@@ -93,9 +95,9 @@ The player needs to know if they can drop here.
 2. Call `InteractionVM->CanPlaceAt(MySlotDescriptor)`.
 3. If true, show a **Green Border**. If false, show a **Red Border**.
 
-<figure><img src="../../../../../.gitbook/assets/image (7) (1) (1).png" alt=""><figcaption><p>Checking if the dragged item can enter this equipment slot and updating the brush color</p></figcaption></figure>
+<figure><img src="../../../../../.gitbook/assets/image (7) (1) (1) (1).png" alt=""><figcaption><p>Checking if the dragged item can enter this equipment slot and updating the brush color</p></figcaption></figure>
 
-#### Completing the Move (`OnMouseButtonUp`)
+### Completing the Move (`OnMouseButtonUp`)
 
 This is the commit phase.
 
@@ -103,15 +105,15 @@ This is the commit phase.
 2. Call `InteractionVM->CanPlaceAt(MySlotDescriptor)` again (for safety).
 3. If valid, call `InteractionVM->CommitInteraction(MySlotDescriptor)`.
 
-#### Key Function: `CommitInteraction`
+### Key Function: `CommitInteraction`
 
 This function triggers the Transaction Pipeline. It builds the request and sends it to the server.
 
-<figure><img src="../../../../../.gitbook/assets/image (8) (1) (1).png" alt=""><figcaption><p>Placing the item in the equipment slot and clearing the brush highlight</p></figcaption></figure>
+<figure><img src="../../../../../.gitbook/assets/image (8) (1) (1) (1).png" alt=""><figcaption><p>Placing the item in the equipment slot and clearing the brush highlight</p></figcaption></figure>
 
 ***
 
-### Step 4: Canceling
+## Step 4: Canceling
 
 If the player releases the mouse **outside** any valid slot, we must cancel.
 
@@ -121,7 +123,7 @@ This resets the state and hides the drag visual.
 
 ***
 
-### Complete Drag Example
+## Complete Drag Example
 
 ```cpp
 // 1. User starts dragging item from inventory slot 5
@@ -146,7 +148,7 @@ InteractionVM->CommitInteraction(
 
 ***
 
-### Cheat Sheet: Input Mapping
+## Cheat Sheet: Input Mapping
 
 | Action                    | Function Call       | State Change                           |
 | ------------------------- | ------------------- | -------------------------------------- |

@@ -11,7 +11,9 @@ Interacting with items in a networked, flexible UI is arguably the most complex 
 
 This section delves into the intricate dance between your UI inputs, client-side prediction, and server-authoritative gameplay abilities.
 
-### The Interaction Pipeline: UI to Gameplay
+***
+
+## The Interaction Pipeline: UI to Gameplay
 
 At its core, any item interaction, whether it's dragging a sword to an equipment slot or right-clicking to split a stack of ammo, follows a predictable path:
 
@@ -37,7 +39,9 @@ graph TD
 You can read the [Item Container Prediction](../../../item-container/prediction/) in more detail.
 {% endhint %}
 
-### Core Components
+***
+
+## Core Components
 
 #### 1. The Interaction Engine (`LyraInteractionViewModel`)
 
@@ -52,7 +56,9 @@ The backbone of server-authoritative, predicted item manipulation. This GAS abil
 * **Action Menu (`LyraItemActionMenuViewModel`):** The "right-click" menu. It dynamically populates available actions for an item based on its type and context (e.g., "Use," "Drop," "Equip").
 * **Quantity Prompt (`LyraQuantityPromptViewModel`):** For operations that require user input (like splitting a stack). It provides a generic modal for quantity selection.
 
-### In This Section
+***
+
+## In This Section
 
 We will break down the intricate details of each part of this pipeline:
 
@@ -63,6 +69,6 @@ We will break down the intricate details of each part of this pipeline:
   * Deep dive into `ULyraItemTransactionAbility`.
   * The structure of `FItemTransactionRequest` and atomic operations.
   * The prediction recording and rollback mechanism.
-* [**Contextual UI (Actions & Prompts)**](/broken/pages/QaasAtGwBchjljlDZgpr)
+* [**Contextual UI (Actions & Prompts)**](context-menus-and-action-logic.md)
   * How `LyraItemActionMenuViewModel` discovers and filters actions.
   * The `LyraQuantityPromptViewModel` for user input.

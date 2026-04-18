@@ -1,6 +1,6 @@
 # Persistent Slot Pattern
 
-### The Key Insight: Slots Always Exist
+## Slots Always Exist
 
 In raw backend data, an empty slot is simply... nothing. No entry exists. But in UI, you often need to display empty slots:
 
@@ -17,7 +17,9 @@ In raw backend data, an empty slot is simply... nothing. No entry exists. But in
 
 We solve this with the **Persistent Slot Pattern**. Slot ViewModels always exist for defined slots, regardless of whether they contain an item.
 
-### The Architecture
+***
+
+## The Architecture
 
 Instead of binding your widget directly to an `Item`, you bind it to a `SlotViewModel`.
 
@@ -59,7 +61,7 @@ void ULyraSlotViewModelBase::SetItem(ULyraItemViewModel* InItemViewModel)
 }
 ```
 
-#### The Proxy Properties
+### The Proxy Properties
 
 The Slot ViewModel exposes these properties to Blueprint via FieldNotify.
 
@@ -70,7 +72,9 @@ The Slot ViewModel exposes these properties to Blueprint via FieldNotify.
 
 This allows your Widget Designer to bind `Image_Icon.Brush` directly to `Slot.ItemIcon`. If the slot is empty, the texture is null, and UMG handles that gracefully (drawing nothing), without crashing.
 
-### Blueprint Implementation Guide
+***
+
+## Blueprint Implementation Guide
 
 When creating your Slot Widget in UMG, follow this pattern:
 
@@ -86,6 +90,8 @@ When creating your Slot Widget in UMG, follow this pattern:
 | **Text (Count)**                                                                                                                                                                                                               | `Slot.StackCount`                                       |
 | Since the Slot ViewModel always exists, you can add "Hover" animations and "Focus" logic to empty slots. This is critical for Gamepad navigation, where the cursor needs to land on empty slots just as easily as filled ones. |                                                         |
 
+***
+
 ### Visualizing the Flow
 
 ```mermaid
@@ -94,8 +100,8 @@ graph TD
     
     subgraph Slot Logic
         B -->|Check| C{"Is Item Valid?"}
-        C -->|Yes| D["Copy Item Data to Proxy Props"]
-        C -->|No| E["Reset Proxy Props to Default"]
+        C -->|Yes| D["Copy Item Data to Proxy Properties"]
+        C -->|No| E["Reset Proxy Properties to Default"]
     end
     
     D -->|FieldNotify| F["UMG Widget"]

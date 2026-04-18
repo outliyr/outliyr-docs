@@ -14,7 +14,7 @@ Together they form a layered system: PawnData provides the foundation, Game Feat
 
 Every pawn's baseline input comes from its `ULyraPawnData` data asset, which carries two input-related properties:
 
-<figure><img src="../../.gitbook/assets/image (2) (1).png" alt=""><figcaption><p>Pawn data asset showcasing the input section</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (2) (1) (1).png" alt=""><figcaption><p>Pawn data asset showcasing the input section</p></figcaption></figure>
 
 * **`InputConfig`** (`ULyraInputConfig*`) — maps Input Actions to Gameplay Tags. During initialization, `ULyraHeroComponent` reads this config and passes it to `ULyraInputComponent`, which binds both native actions (move, look) and ability actions (tag-routed).
 
@@ -22,7 +22,7 @@ Every pawn's baseline input comes from its `ULyraPawnData` data asset, which car
 
 * **`InputMappings`** (`TArray<FPawnInputMappingContextAndPriority>`) — an array of Input Mapping Contexts defining hardware-to-action bindings. Each entry has a `Priority` (higher wins on conflicts) and a `bRegisterWithSettings` flag that controls whether the IMC appears in the player's key-rebinding UI.
 
-<figure><img src="../../.gitbook/assets/image (1) (1).png" alt=""><figcaption><p>Input Mapping asset</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (1) (1) (1).png" alt=""><figcaption><p>Input Mapping asset</p></figcaption></figure>
 
 ### HeroComponent's DefaultInputMappings
 
@@ -64,7 +64,7 @@ The configs are referenced through `TSoftObjectPtr<const ULyraInputConfig>`, so 
 
 **When to use:** A game feature introduces new abilities that need input bindings, a vehicle mode adding drive/brake, a gadget system adding gadget activation.
 
-<figure><img src="../../.gitbook/assets/image (3) (1).png" alt=""><figcaption><p>Input binding game feature action in experience data asset</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (3) (1) (1).png" alt=""><figcaption><p>Input binding game feature action in experience data asset</p></figcaption></figure>
 
 ### `GameFeatureAction_AddInputContextMapping`
 
@@ -74,7 +74,7 @@ This action hooks into two lifecycle stages: registration (`OnGameFeatureRegiste
 
 **When to use:** A game feature needs new hardware-to-action mappings, adding gamepad bindings for a keyboard-only feature, or a vehicle mode that remaps WASD to throttle/steer.
 
-<figure><img src="../../.gitbook/assets/image (4) (1).png" alt=""><figcaption><p>input mapping gamefeature action in experience data asset</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (4) (1) (1).png" alt=""><figcaption><p>input mapping gamefeature action in experience data asset</p></figcaption></figure>
 
 ### When to Use Which
 

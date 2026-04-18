@@ -15,7 +15,9 @@ The path to that data has changed.
 
 The Backpack hasn't been destroyed, but its "Parent" has changed from the Player to the Chest. This page explains how the UI system maintains a logical hierarchy during these transitions.
 
-### The Problem: Orphaned Windows
+***
+
+## The Problem: Orphaned Windows
 
 If we simply opened a window and left it there, the UI would lose its **Session Context**.
 
@@ -35,7 +37,7 @@ The UI Manager listens to the `Lyra.Item.Message.ItemMoved` message. This messag
 
 #### 2. The Search Phase
 
-The Manager checks its registry to see if any active **Session** is tracking that specific Item ID.
+The UI Manager checks its registry to see if any active **Session** is tracking that specific Item ID.
 
 #### 3. The Reparenting Phase (`HandleItemReparenting`)
 

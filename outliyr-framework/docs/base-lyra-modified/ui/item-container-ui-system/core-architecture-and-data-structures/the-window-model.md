@@ -4,7 +4,7 @@ Why does this system use multiple draggable windows instead of one big inventory
 
 ***
 
-### The Single Panel Problem
+## The Single Panel Problem
 
 Imagine a typical inventory scenario:
 
@@ -28,11 +28,11 @@ flowchart TB
     end
 ```
 
-**The result**: A 3,000-line widget class that's terrifying to modify.
+**The result**: A massive coupled widget class that's terrifying to modify.
 
 ***
 
-### The Window Solution
+## The Window Solution
 
 Instead, each container gets its own window. Windows can be:
 
@@ -56,7 +56,7 @@ flowchart TB
 
 ***
 
-### Window Architecture
+## Window Architecture
 
 ```mermaid
 flowchart TB
@@ -85,7 +85,7 @@ flowchart TB
     W1 --> Shell
 ```
 
-#### Key Components
+### Key Components
 
 | Component                                                                           | Role                                                                                                                     |
 | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
@@ -95,7 +95,7 @@ flowchart TB
 
 ***
 
-### The UI Manager: Conductor of the Orchestra
+## The UI Manager: Conductor of the Orchestra
 
 `ULyraItemContainerUIManager` orchestrates the data side of the system:
 
@@ -122,7 +122,7 @@ flowchart TB
     Sessions --> SessionMgmt
 ```
 
-#### What the UI Manager Does
+### What the UI Manager Does
 
 {% stepper %}
 {% step %}
@@ -152,7 +152,7 @@ Item destroyed? Close its attachment window.
 
 ***
 
-### Sessions: Grouping Related Windows
+## Sessions: Grouping Related Windows
 
 A **session** is a logical grouping of windows that belong together. When the session closes, all its windows close.
 
@@ -176,7 +176,7 @@ flowchart TB
     BaseSession --> ChildSession2
 ```
 
-**Use cases:**
+### **Use cases:**
 
 | Session Type                  | Contains                        | Closes When                                |
 | ----------------------------- | ------------------------------- | ------------------------------------------ |
@@ -186,9 +186,9 @@ flowchart TB
 
 ***
 
-### Window Lifecycle
+## Window Lifecycle
 
-#### Opening a Window
+### Opening a Window
 
 ```cpp
 // Request to open a window
@@ -223,7 +223,7 @@ Layer registers window and focuses it.
 {% endstep %}
 {% endstepper %}
 
-#### Closing a Window
+### Closing a Window
 
 Windows can close:
 
@@ -250,7 +250,7 @@ sequenceDiagram
 
 ***
 
-### Cross-Window Navigation
+## Cross-Window Navigation
 
 Players can navigate between windows using keyboard/gamepad. The Layer intercepts navigation that escapes from a window and transfers focus to a neighboring window.
 
@@ -311,7 +311,7 @@ FItemWindowHandle FindWindowInDirection(
 
 ***
 
-### Summary
+## Summary
 
 ```mermaid
 flowchart TB

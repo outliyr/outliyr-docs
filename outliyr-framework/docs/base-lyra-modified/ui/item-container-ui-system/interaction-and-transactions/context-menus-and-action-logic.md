@@ -26,7 +26,7 @@ The `ActionMenuViewModel` handles:
 
 The `LyraItemActionMenuViewModel` acts as the brain for your context menus. It is a **Shared Singleton** (one per player) that you access via the UI Manager.
 
-#### The Item Action Menu Flow
+### The Item Action Menu Flow
 
 1. **Trigger:** Player Right-Clicks an item (or presses Gamepad Face Button).
 2. **Request:** Your widget calls `ActionMenuVM->ShowForItem(...)`.
@@ -36,7 +36,7 @@ The `LyraItemActionMenuViewModel` acts as the brain for your context menus. It i
 
 ***
 
-### Step 1: Triggering the Menu
+## Step 1: Triggering the Menu
 
 You typically trigger the menu from your **Slot Widget** (the widget representing a single inventory square).
 
@@ -58,25 +58,25 @@ You typically trigger the menu from your **Slot Widget** (the widget representin
 
 <summary>Blueprint graph showing utilization of <code>ItemActionMenu</code> in equipment slot</summary>
 
-<figure><img src="../../../../.gitbook/assets/image (9) (1) (1).png" alt=""><figcaption><p>Blueprint Graph showing OnMouseButtonDown->CreateItemActionMenu on right click</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (9) (1) (1) (1).png" alt=""><figcaption><p>Blueprint Graph showing OnMouseButtonDown->CreateItemActionMenu on right click</p></figcaption></figure>
 
-<figure><img src="../../../../.gitbook/assets/image (10) (1) (1).png" alt=""><figcaption><p>Inform the ActionMenuViewModel that it should create should populate a menu for the item in the slot</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (10) (1) (1) (1).png" alt=""><figcaption><p>Inform the ActionMenuViewModel that it should create should populate a menu for the item in the slot</p></figcaption></figure>
 
 </details>
 
 ***
 
-### Step 2: The Menu Widget
+## Step 2: The Menu Widget
 
 You need to create a widget that _is_ the menu. This widget should exist in your `LyraItemContainerLayer` (or be spawned dynamically).
 
-#### Binding Setup
+### Binding Setup
 
 This widget should bind to the `ActionMenuViewModel`.
 
 <table><thead><tr><th width="194">Property</th><th width="176">Type</th><th>Usage</th></tr></thead><tbody><tr><td><code>bIsVisible</code></td><td>Boolean</td><td>Bind to <strong>Visibility</strong> (Visible/Collapsed).</td></tr><tr><td><code>MenuPosition</code></td><td>Vector2D</td><td>Bind to <strong>Slot</strong> (C<strong>anvasSlot) -> SetPosition</strong></td></tr><tr><td><code>Actions</code></td><td>Array</td><td>Bind to a <strong>ListView</strong> or generate child buttons manually.</td></tr></tbody></table>
 
-#### The Action Button
+### The Action Button
 
 Create a simple button widget for the list.
 
@@ -88,11 +88,11 @@ Create a simple button widget for the list.
 
 ***
 
-### Step 3: Defining Actions
+## Step 3: Defining Actions
 
 Actions are defined on the **Item Definition** itself, using Fragments. This keeps your data clean—an Apple "knows" it can be eaten; the UI doesn't need to check.
 
-#### C++ Interface (`IItemActionProvider`)
+### C++ Interface (`IItemActionProvider`)
 
 If you are creating a custom fragment (e.g., `UFragment_Readable`), implement this interface.
 
@@ -107,7 +107,7 @@ virtual void GetAvailableActions(const ULyraInventoryItemInstance* Item, TArray<
 }
 ```
 
-#### Filtering (Container Context)
+### Filtering (Container Context)
 
 Sometimes, an action is valid for the _Item_, but invalid for the _Container_ (e.g., you can't "Equip" an item while browsing a Shop).
 
@@ -125,7 +125,7 @@ This is the most important concept for developers to understand: **The UI does n
 When a player clicks "Use," the UI performs a handshake with the Gameplay Ability System:
 
 1. **Packaging:** The UI creates an FItemActionContext. This struct contains the ActionTag (e.g., Lyra.Item.Action.Use) and the SourceSlot (where the item is).
-2. **Dispatch:** It calls UItemContainerFunctionLibrary::CallItemActionAbility.
+2. **Dispatch:** It calls `UItemContainerFunctionLibrary::CallItemActionAbility`.
 3. **The Event:** This function sends a **Gameplay Event** to the player's Actor. The **Event Tag** is the ActionTag.
 
 {% hint style="danger" %}
@@ -141,13 +141,13 @@ Every item action ability receives the same payload in its EventData. You can us
 
 ***
 
-### Step 4: The Quantity Prompt
+## Step 4: The Quantity Prompt
 
 Some actions, like **Split Stack** or **Drop**, require a second step: asking the user _"How many?"_ The system handles this with a **Quantity Prompt ViewModel**.
 
 This logic is encapsulated in the `LyraQuantityPromptViewModel`. It acts as a shared service for the entire UI.
 
-#### The Item Quantity Flow
+### The Item Quantity Flow
 
 1. **Request:** An action (e.g., Split) flags `bRequiresQuantityInput = true`.
 2. **Redirect:** Instead of executing immediately, the Action Menu calls `RequestQuantityInput`.
@@ -155,14 +155,14 @@ This logic is encapsulated in the `LyraQuantityPromptViewModel`. It acts as a sh
 4. **Confirm:** When the user clicks "OK", the Prompt ViewModel fires `OnConfirmed`.
 5. **Execute:** The Action Menu catches the event and finally calls `ExecuteActionWithQuantity`, passing the user's chosen number to the server.
 
-#### How it Works
+### How it Works
 
 1. In your `GetAvailableActions`, set `bRequiresQuantity = true` on the action struct.
 2. When `ExecuteAction` is called, the system detects this flag.
 3. Instead of executing immediately, it **intercepts** the call.
 4. It opens the **Quantity Prompt ViewModel** (`LyraQuantityPromptViewModel`).
 
-#### The Prompt Widget
+### The Prompt Widget
 
 You need to create a widget for the prompt (Slider, Text Box, Confirm Button).
 
@@ -174,13 +174,3 @@ You need to create a widget for the prompt (Slider, Text Box, Confirm Button).
 The system handles the callback logic. When `Confirm()` is called, the original action (e.g., Split) is finally executed with the chosen quantity.
 
 ***
-
-### Summary of Responsibilities
-
-| Component            | Responsibility                                      |
-| -------------------- | --------------------------------------------------- |
-| **Item Fragment**    | Says "I _can_ be Used."                             |
-| **Container**        | Says "You _may_ Use things here."                   |
-| **ActionMenu VM**    | Collects the list and tracks Menu Visibility state. |
-| **Your Widget**      | Draws the buttons and handles clicks.               |
-| **Gameplay Ability** | Actually performs the logic (Healing, Equipping).   |

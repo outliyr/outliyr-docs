@@ -2,7 +2,9 @@
 
 When a user navigates to the edge of a window's content and tries to continue, the system must find the appropriate target window and transfer focus. This page explains how the **Layer** intercepts navigation events, finds the best neighbor using the [geometric scoring algorithm](geometric-algorithm.md), and bridges focus between windows using a **deferred focus pattern** that prevents double-processing.
 
-### The Navigation Flow
+***
+
+## The Navigation Flow
 
 The flow spans two frames. On the first frame, the Layer intercepts the escaped navigation event, finds the target, and schedules a deferred focus transfer. On the next frame, the timer fires, focus moves to the target, and the content positions its cursor.
 
@@ -38,7 +40,9 @@ sequenceDiagram
     end
 ```
 
-### Layer Interception
+***
+
+## Layer Interception
 
 The `LyraItemContainerLayer` overrides `NativeOnNavigation` to catch escaped navigation. Three mechanisms work together: a **focus hierarchy walk** to verify the event came from the right window, the **geometric scoring algorithm** to find the best target, and a **deferred focus transfer** to avoid double-processing.
 
@@ -202,13 +206,17 @@ The Layer always returns `FNavigationReply::Stop()`, whether or not a target was
 **Why not just call FocusWindow() directly?** When `SetFocus()` is called mid-navigation-event, Slate sees the new widget as "focused" and routes the same in-flight navigation event to it. The target widget's `NativeOnNavigation` fires with the same direction, and if it also escapes, navigation continues chain-hopping across windows in a single frame. The next-tick timer breaks this chain by letting the current event complete before focus transfers.
 {% endhint %}
 
-### The Pending Navigation Context
+***
+
+## The Pending Navigation Context
 
 When transferring focus between windows, we need to preserve information about where navigation came from so the target can align its cursor appropriately. The Layer stores three values as **pending navigation context**: the navigation direction, the cursor's screen position, and a flag indicating that context is available.
 
 Before scheduling the deferred focus, the Layer writes all three values. Then, when the target window's shell receives focus on the next frame, it consumes the pending context, reading the stored direction and cursor position, then clearing all three fields so the context is only used once. If no context was pending, consumption returns false and the shell falls back to default focus behavior.
 
-### Focus Transfer
+***
+
+## Focus Transfer
 
 When the deferred timer fires and `FocusWindow()` is called on the target, the shell's `RequestContentFocus` handles three distinct paths:
 
@@ -347,7 +355,9 @@ This fallback chain ensures that simple content widgets that do not implement cu
 **The `bool` return value matters.** `ReceiveNavigationEntry` returning `true` means the content widget has already called `SetFocus()` on the appropriate internal widget (e.g., a grid cell). Returning `false` triggers the fallback chain. If your content always handles navigation entry, always return `true`.
 {% endhint %}
 
-### Why This Design?
+***
+
+## Why This Design?
 
 #### Decoupling
 
@@ -372,7 +382,9 @@ The focus hierarchy walk prevents stale `FocusedWindowId` from causing misbehavi
 
 The pending context system ensures that cursor alignment is preserved across the focus transfer, even though an entire frame passes between setting and consuming the context.
 
-### Integration Checklist
+***
+
+## Integration Checklist
 
 {% stepper %}
 {% step %}

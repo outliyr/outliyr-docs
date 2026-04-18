@@ -4,14 +4,16 @@ In a high-latency environment, waiting for the server to confirm a drag-and-drop
 
 To solve this, the system implements a **Predictive "Ghost" Layer**. This allows the UI to lie to the player, showing them the result of an action before it actually happens.
 
-### The Concept
+***
+
+## The Concept
 
 When a player moves an item, two things happen simultaneously:
 
 1. **Network:** A transaction request (`ExecuteTransaction`) is sent to the server.
 2. **Local:** The UI applies the change immediately but marks the affected items as **"Ghosts."**
 
-#### What is a Ghost?
+### What is a Ghost?
 
 A "Ghost" item is a **Prediction Overlay**. It exists in the client's local View Model but has not been confirmed by the server's replication stream.
 
@@ -22,7 +24,9 @@ A "Ghost" item is a **Prediction Overlay**. It exists in the client's local View
 Never block user input on a Ghost item. Even though it is "pending," the player expects to be able to interact with it (e.g., drag it again) immediately. The transaction system queues these operations correctly.
 {% endhint %}
 
-### Visualizing Prediction
+***
+
+## Visualizing Prediction
 
 The `ULyraItemViewModel` exposes a boolean property: `bIsGhost`. This is your hook for visual feedback. You should use this to signal to the player that "This action is pending."
 
@@ -36,7 +40,9 @@ The `ULyraItemViewModel` exposes a boolean property: `bIsGhost`. This is your ho
 
 <figure><img src="../../../../.gitbook/assets/image (193).png" alt=""><figcaption><p>Example of binding bIsGhost to RenderOpacity</p></figcaption></figure>
 
-### The Prediction Lifecycle
+***
+
+## The Prediction Lifecycle
 
 It is important to understand the lifecycle of a Ghost item so you can debug visual glitches.
 

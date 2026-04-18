@@ -60,7 +60,7 @@ ItemInstance->RemoveStatTagStack(TAG_Weapon_Ammo_Magazine, 1); // Subtract from 
 {% endtab %}
 
 {% tab title="Blueprint" %}
-<figure><img src="../../../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (10).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 
@@ -94,7 +94,7 @@ void UMyWidget::HandleStatChanged(FGameplayTag Tag, int32 NewCount, int32 OldCou
 {% endtab %}
 
 {% tab title="Blueprint" %}
-<figure><img src="../../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 

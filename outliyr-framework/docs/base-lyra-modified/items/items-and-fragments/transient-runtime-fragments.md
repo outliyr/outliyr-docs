@@ -139,7 +139,7 @@ if (auto* AttachmentData = ItemInstance->ResolveTransientFragment<UInventoryFrag
 {% tab title="Blueprint" %}
 **From Blueprint/C++:** Use `ResolveRuntimeTransientFragment(FragmentClass)` on the `ULyraInventoryItemInstance`, passing the _static_ fragment class. This returns a pointer to the `UTransientRuntimeFragment` base. You'll need to cast this pointer to your specific derived class (e.g., `UTransientRuntimeFragment_Charge`) to access its unique members and functions.
 
-<figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 {% hint style="danger" %}
 Cast to the **specific runtime fragment class** that corresponds to the fragment you specified, not the base `UTransientRuntimeFragment`.

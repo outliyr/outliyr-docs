@@ -2,7 +2,9 @@
 
 The `LyraInteractionViewModel` acts as the single point of entry for all UI-driven inventory interactions. Whether a player is dragging an item with a mouse, selecting it with a gamepad cursor, or using a keyboard shortcut, this class normalizes the intent into a standardized request.
 
-### Why One Interaction ViewModel?
+***
+
+## Why One Interaction ViewModel?
 
 Without a unified system:
 
@@ -36,7 +38,9 @@ ULyraInteractionViewModel* InteractionVM = UIManager->GetInteractionViewModel();
 **Why shared?** Because drag operations cross window boundaries. Dragging from inventory window to equipment window needs a single source of truth about the current transaction.
 {% endhint %}
 
-### The Unified Input Model
+***
+
+## The Unified Input Model
 
 A key challenge in UI development is supporting multiple input devices. Mouse users expect Drag & Drop. Gamepad users expect "Click to Pickup, Click to Place."
 
@@ -92,7 +96,7 @@ graph TD
 
 ***
 
-### Modal Overlays
+## Modal Overlays
 
 The Interaction ViewModel manages modal states with regards to interacting with systems:
 
@@ -104,14 +108,14 @@ void ShowModalOverlay(UWidget* ModalWidget);
 void CloseModalOverlay();
 ```
 
-#### Modal State Properties
+### Modal State Properties
 
 | Property            | Type       | Description         |
 | ------------------- | ---------- | ------------------- |
 | `bIsModalActive`    | `bool`     | Is a modal showing? |
 | `ActiveModalWidget` | `UWidget*` | The current modal   |
 
-#### Common Modals
+### Common Modals
 
 * **Item Action Menu -** List of actions that can be performed on the item.
 * **Quantity prompt** — How many items to move/drop?
@@ -120,9 +124,9 @@ void CloseModalOverlay();
 
 ***
 
-### Drag & Drop Flow
+## Drag & Drop Flow
 
-#### 1. Begin Drag
+### 1. Begin Drag
 
 ```cpp
 void BeginInteraction(
@@ -132,14 +136,14 @@ void BeginInteraction(
 );
 ```
 
-**What happens:**
+#### **What happens:**
 
 * Transaction marked active
 * Item stored as `ActiveTransactionItem`
 * Source slot recorded
 * `OnTransactionStarted` fires
 
-#### 2. During Drag
+### 2. During Drag
 
 ```cpp
 // Update drag visual position
@@ -149,7 +153,7 @@ void UpdateDragPosition(FVector2D ScreenPosition);
 bool CanPlaceAt(const FInstancedStruct& DestinationDescriptor);
 ```
 
-**Drag visual properties:**
+#### **Drag visual properties:**
 
 | Property             | Type        | Description                |
 | -------------------- | ----------- | -------------------------- |
@@ -158,7 +162,7 @@ bool CanPlaceAt(const FInstancedStruct& DestinationDescriptor);
 | `DragVisualPivot`    | `FVector2D` | Rotation pivot point       |
 | `DragClickOffset`    | `FVector2D` | Where user clicked on item |
 
-#### 3. Commit or Cancel
+### 3. Commit or Cancel
 
 ```cpp
 // Drop the item
@@ -168,14 +172,14 @@ void CommitInteraction(const FInstancedStruct& DestinationDescriptor);
 void CancelInteraction();
 ```
 
-**On Commit:**
+#### **On Commit:**
 
 1. Validates destination via `CanPlaceAt()`
 2. Executes move ability (with prediction)
 3. Transaction ends
 4. `OnTransactionCompleted` fires
 
-**On Cancel:**
+#### **On Cancel:**
 
 1. Transaction ends
 2. No ability executed
@@ -183,7 +187,7 @@ void CancelInteraction();
 
 ***
 
-### Complete Drag Example
+## Complete Drag Example
 
 ```cpp
 // 1. User starts dragging item from inventory slot 5
@@ -208,7 +212,7 @@ InteractionVM->CommitInteraction(
 
 ***
 
-### Direct Moves (No Drag Visual)
+## Direct Moves (No Drag Visual)
 
 For keyboard-based operations, you can move items directly:
 
@@ -227,7 +231,7 @@ bool CanMoveBetween(
 );
 ```
 
-**Use cases:**
+### **Use cases:**
 
 * Keyboard shortcut "equip" (move focused item to equipment)
 * Quick transfer (Ctrl+Click to move to other container)
@@ -235,7 +239,7 @@ bool CanMoveBetween(
 
 ***
 
-### Pending Operations
+## Pending Operations
 
 After committing an interaction, the operation may be pending server confirmation:
 
@@ -248,7 +252,7 @@ int32 GetPendingOperationCount();
 FGuid GetCurrentTransactionId();
 ```
 
-#### Transaction Result Handling
+### Transaction Result Handling
 
 The system listens to `FItemTransactionResultMessage` from the server:
 
@@ -272,7 +276,7 @@ sequenceDiagram
 
 ***
 
-### Events Summary
+## Events Summary
 
 | Event                    | Signature                  | When               |
 | ------------------------ | -------------------------- | ------------------ |
@@ -285,7 +289,7 @@ sequenceDiagram
 
 ***
 
-### Polymorphic Slot Descriptors
+## Polymorphic Slot Descriptors
 
 The `FInstancedStruct` parameter for source/destination supports any slot type:
 

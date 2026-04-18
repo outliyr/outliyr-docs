@@ -8,7 +8,9 @@ Instead of "Creating" a ViewModel, a widget **"Acquires"** it. Instead of "Destr
 You do not have to understand the internal system to use the view model system you can use the `LyraItemContainerUIManager`  to acquire and release view models.&#x20;
 {% endhint %}
 
-### Integration Example
+***
+
+## Integration Example
 
 Here is how you use the lease system manually in a custom widget:
 
@@ -22,9 +24,9 @@ If you are using the `LyraItemContainerWindowShell`, it handles this automatical
 
 ***
 
-### The Mechanics
+## The Mechanics
 
-#### The Unified Cache Key (`FUnifiedVMCacheKey`)
+### The Unified Cache Key (`FUnifiedVMCacheKey`)
 
 To share ViewModels, we need to know if two requests are asking for the "same" thing. Since `FInstancedStruct` can hold any type of data, we cannot just compare pointers. We use a composite key:
 
@@ -41,7 +43,7 @@ struct FUnifiedVMCacheKey
 
 This allows us to cache any type of source in a single map: `TMap<FUnifiedVMCacheKey, TObjectPtr<ULyraContainerViewModel>>`.
 
-#### Acquiring a ViewModel
+### Acquiring a ViewModel
 
 When `AcquireViewModel(Source)` is called:
 
@@ -55,7 +57,7 @@ When `AcquireViewModel(Source)` is called:
      * Set RefCount to 1.
 3. **Owner Tracking:** The Manager registers a "Destruction Listener" on the source's Owner (e.g., the `AActor`). If the Actor dies unexpectedly, the Manager can force-release the ViewModel.
 
-#### Releasing a ViewModel
+### Releasing a ViewModel
 
 When `ReleaseViewModel(Source)` is called:
 
@@ -70,7 +72,7 @@ When `ReleaseViewModel(Source)` is called:
 
 ***
 
-### Stale Data Protection
+## Stale Data Protection
 
 What happens if a developer forgets to call `ReleaseViewModel`?
 

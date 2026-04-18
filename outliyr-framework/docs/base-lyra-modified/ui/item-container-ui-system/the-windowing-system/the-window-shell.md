@@ -4,19 +4,21 @@ The Shell (`ULyraItemContainerWindowShell`) is the standardized frame that wraps
 
 By centralizing this logic, we ensure consistent behavior: drag physics, focus rules, and cleanup logic are defined in one place.
 
-### Core Responsibilities
+***
+
+## Core Responsibilities
 
 #### 1. The Lease Handshake (Automatic Memory Management)
 
-The most critical job of the Shell is managing data lifecycle. You should not call `UIManager->ReleaseViewModel` manually in your content widgets. The Shell does it for you.
+The most critical job of the Shell is managing data lifecycle. You do not need to call `UIManager->ReleaseViewModel` manually in your content widgets. The Shell does it for you.
 
 * **Acquire:** When the window opens, the Shell calls `AcquireViewModelLease(Source)`. It stores this lease in an internal list.
 * **Release:** When the window closes (User clicks 'X', session ends, or game quits), `NativeDestruct` runs. The Shell iterates its list and calls `ReleaseViewModel`.
 
-This creates a safety net. Even if a developer writes a buggy inventory grid that crashes, the Shell ensures the underlying data connection is cleaned up cleanly.
+This creates a safety net. The Shell ensures the underlying data connection is cleaned up cleanly.
 
 {% hint style="warning" %}
-This is only for widgets that are inside shell windows. You should call `GetOwningWindowShell->AcquireView` . In widgets that are not windows call `UIManager->AcquireViewModel`
+This is only for widgets that are inside shell windows. You should call `GetOwningWindowShell->AcquireView` . In widgets that are not window shells call `UIManager->AcquireViewModel` and the `UIManager->ReleaseViewModel`
 {% endhint %}
 
 #### 2. Focus & Z-Order
@@ -31,7 +33,9 @@ The Shell implements the "Physical" movement.
 * **Update:** It calculates the delta mouse movement and tells the Layer to update the Canvas Slot.
 * **End:** Release mouse capture.
 
-### Blueprint Setup
+***
+
+## Blueprint Setup
 
 The C++ class `ULyraItemContainerWindowShell` is abstract logic. You must subclass it in Blueprint (`W_WindowShell`) to give it visuals.
 
@@ -44,7 +48,7 @@ The code looks for specific widgets by name (using `BindWidgetOptional`).
 | **DragHandle**  | `UserWidget` | The "Hit Box" for dragging. Usually the background image of the title bar. |
 | **ContentSlot** | `NamedSlot`  | **Crucial.** This is where your Widget will be injected at runtime.        |
 
-#### Visual Feedback Events
+### Visual Feedback Events
 
 The Shell exposes Blueprint events so you can add animations without touching C++.
 

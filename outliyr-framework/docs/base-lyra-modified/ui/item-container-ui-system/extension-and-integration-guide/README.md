@@ -4,7 +4,7 @@ This section covers how to extend the Item Container UI system for your specific
 
 ***
 
-### Extension Points
+## Extension Points
 
 The Item Container UI system is designed for extensibility at multiple levels:
 
@@ -18,7 +18,7 @@ The Item Container UI system is designed for extensibility at multiple levels:
 
 ***
 
-### Quick Links
+## Quick Links
 
 #### [Custom Container Types](custom-container-types.md)
 
@@ -41,7 +41,7 @@ Build specialized window layouts and chrome:
 
 ***
 
-### Common Extension Scenarios
+## Common Extension Scenarios
 
 | Scenario                    | Guide                  | Key Classes                               |
 | --------------------------- | ---------------------- | ----------------------------------------- |
@@ -54,7 +54,7 @@ Build specialized window layouts and chrome:
 
 ***
 
-### Architecture Overview
+## Architecture Overview
 
 When extending the system, keep these relationships in mind:
 
@@ -99,7 +99,7 @@ Key Principle: Sources create ViewModels, ViewModels provide data to Content wid
 
 ***
 
-### The Window Content Interface
+## The Window Content Interface
 
 All content widgets must implement `ILyraItemContainerWindowContentInterface`:
 
@@ -125,7 +125,7 @@ See [The Window Content Interface](../the-windowing-system/the-window-content-in
 
 ***
 
-### Best Practices
+## Best Practices
 
 {% hint style="success" %}
 Use ViewModel leasing. Call `Shell->AcquireViewModelLease(Source)` for automatic cleanup when windows close.

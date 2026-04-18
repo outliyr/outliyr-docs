@@ -4,7 +4,7 @@ In a multiplayer environment, the client's UI is not the authority. The server c
 
 This page explains how the **UI Manager** acts as the "Enforcer," ensuring windows close when items are destroyed, out of range, or when permissions are revoked.
 
-### The Observer Pattern
+## The Observer Pattern
 
 The UI Manager does not poll for changes every frame. Instead, it relies on the **Gameplay Message Subsystem**. Upon initialization, it registers listeners for critical item events.
 

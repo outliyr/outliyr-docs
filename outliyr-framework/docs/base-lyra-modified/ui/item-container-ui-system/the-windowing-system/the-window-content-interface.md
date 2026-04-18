@@ -6,11 +6,11 @@ To bridge the gap between the generic Shell and your specific Widget, we use a "
 
 ***
 
-### Why an Interface?
+## Why an Interface?
 
 If you simply spawned a widget and added it to the Shell, the widget wouldn't know which inventory to look at or how to handle gamepad navigation.
 
-We use an interface because:
+#### We use an interface because:
 
 1. **Decoupling:** The Shell doesn't need to know if it's holding an Inventory or a Talent Tree. It just knows it's holding "Content."
 2. **Order of Operations:** UMG's built-in Construct event happens too early. At construction time, widgets often don't have their data yet. The interface provides a specific **Initialization Callback**.
@@ -18,7 +18,7 @@ We use an interface because:
 
 ***
 
-### The Interface
+## The Interface
 
 ```cpp
 class ILyraItemContainerWindowContentInterface
@@ -38,20 +38,24 @@ public:
 
 ***
 
-### Method Details
+## Method Details
 
-#### 1. `SetContainerSource`
+### 1. `SetContainerSource`
 
-This is your "Construct" event. The source context passed into the `FItemWindowSpec`'s `SourceDesc` is delivered here.
+This is your "Construct" event. The source context passed into the `FItemWindowSpec`'s `SourceDesc` when creating a window is delivered here.
+
+<figure><img src="../../../../.gitbook/assets/image (9).png" alt=""><figcaption><p><code>FItemWindowSpec</code>'s <code>SourceDesc</code></p></figcaption></figure>
 
 ```cpp
 UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 void SetContainerSource(const FInstancedStruct& Source);
 ```
 
-**Purpose:** Receive your data source and acquire your ViewModel.
+#### **Purpose**&#x20;
 
-**Standard Implementation:**
+Receive your data source and acquire your ViewModel.
+
+#### **Standard Implementation:**
 
 {% stepper %}
 {% step %}
@@ -67,23 +71,25 @@ Take the returned ViewModel and bind your widget content to it
 **Why use the Lease API?** By using `AcquireViewModelLease` through the Shell instead of calling the UI Manager directly, your ViewModel is automatically cleaned up when the window closes. No manual cleanup code required.
 {% endhint %}
 
-#### 2. `GetFocusableContent`
+### 2. `GetFocusableContent`
 
-Returns the widget that should receive focus when this window becomes focused.
+Returns the default widget that should receive focus when this window becomes focused not from navigation.
 
 ```cpp
 UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 UWidget* GetFocusableContent() const;
 ```
 
-**Purpose:** Tell the Shell which widget should get keyboard/controller focus.
+#### **Purpose**&#x20;
 
-**Return Values:**
+Tell the Shell which widget should get keyboard/controller focus when focus is gained without navigation.
+
+#### **Return Values**
 
 * Return your primary interactive widget (ListView, Grid, etc.)
 * Return `nullptr` to use Unreal's default focus behavior (first focusable child)
 
-**Examples:**
+#### **Examples**
 
 | Content Type    | Return Value                       |
 | --------------- | ---------------------------------- |
@@ -91,7 +97,7 @@ UWidget* GetFocusableContent() const;
 | Tetris Grid     | The `GridClump` widget             |
 | Equipment Panel | The first slot widget or container |
 
-#### 3. `GetCursorScreenPosition`
+### 3. `GetCursorScreenPosition`
 
 Reports the current cursor/selection position in screen space.
 
@@ -100,14 +106,16 @@ UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 bool GetCursorScreenPosition(FVector2D& OutScreenPosition) const;
 ```
 
-**Purpose:** Enable cursor alignment during cross-window navigation. When the user navigates from Window A to Window B, the Layer uses this position to find a geometrically appropriate target.
+#### **Purpose**
 
-**Return Values:**
+Enable cursor alignment during cross-window navigation. When the user navigates from Window A to Window B, the Layer uses this position to find a geometrically appropriate target.
+
+#### **Return Values**
 
 * Return `true` and set `OutScreenPosition` to the absolute screen position of your current selection
 * Return `false` to use the window center as a fallback
 
-**Example Implementation:**
+#### **Example Implementation**
 
 ```cpp
 bool UMyContentWidget::GetCursorScreenPosition_Implementation(FVector2D& OutScreenPosition) const
@@ -122,7 +130,7 @@ bool UMyContentWidget::GetCursorScreenPosition_Implementation(FVector2D& OutScre
 }
 ```
 
-#### 4. `ReceiveNavigationEntry`
+### 4. `ReceiveNavigationEntry`
 
 Called when this content receives focus from cross-window navigation.
 
@@ -131,9 +139,11 @@ UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 void ReceiveNavigationEntry(EUINavigation Direction, float ScreenCoordinate);
 ```
 
-**Purpose:** Position your cursor/selection to align with where navigation came from. This creates a smooth "handoff" between windows, if the user was selecting an item at Y=300 in Window A and navigates right to Window B, Window B should select something near Y=300 on its left edge.
+#### **Purpose**&#x20;
 
-**Visual Example**
+Position your cursor/selection to align with where navigation came from. This creates a smooth "handoff" between windows, if the user was selecting an item at Y=300 in Window A and navigates right to Window B, Window B should select something near Y=300 on its left edge.
+
+#### **Visual Example**
 
 ```
                     User presses D-Pad RIGHT
@@ -154,7 +164,7 @@ Window B receives:
   ScreenCoordinate = 300             // The Y position to align with
 ```
 
-**Understanding the Parameters**
+#### **Understanding the Parameters**
 
 **Direction** tells you which direction the user pressed (using Unreal's `EUINavigation` enum):
 
@@ -165,7 +175,7 @@ Window B receives:
 * For horizontal navigation (Left/Right): This is a **Y screen coordinate**
 * For vertical navigation (Up/Down): This is an **X screen coordinate**
 
-**Practical Implementation**
+#### **Practical Implementation**
 
 The goal is to find the item in your content that best matches where the user was in the previous window. Using `EUINavigation` enables clean switch statements:
 
@@ -227,7 +237,7 @@ void UMyGridContent::SelectItemInColumn(int32 Column, float TargetY)
 }
 ```
 
-**When to Skip Implementation**
+#### **When to Skip Implementation**
 
 If your content doesn't have a grid or meaningful cursor positions, you can leave this as a no-op. The system will still focus your `GetFocusableContent()` widget, it just won't have the smooth spatial alignment.
 
@@ -240,9 +250,9 @@ void USimpleListContent::ReceiveNavigationEntry_Implementation(EUINavigation Dir
 
 ***
 
-### Implementation Examples
+## Implementation Examples
 
-#### C++ Content Widget
+### C++ Content Widget
 
 ```cpp
 UCLASS()
@@ -304,7 +314,7 @@ void UMyInventoryContent::ReceiveNavigationEntry_Implementation(EUINavigation Di
 }
 ```
 
-#### Blueprint Content Widget
+### Blueprint Content Widget
 
 For pure Blueprint widgets, add the interface to your Widget Blueprint:
 
@@ -318,7 +328,7 @@ Go to **Class Settings**
 {% endstep %}
 
 {% step %}
-Under **Interfaces**, click **Add** and select `LyraItem Container Window Content Interface`
+Under **Interfaces**, click **Add** and select `LyraItemContainerWindowContentInterface`
 {% endstep %}
 
 {% step %}
@@ -326,30 +336,32 @@ Implement the interface events in your Event Graph
 {% endstep %}
 {% endstepper %}
 
-Implement each interface event:
+#### `SetContainerSource` Event
 
-* `SetContainerSource` Event:
-  * Get Owning Window Shell
-  * Call `AcquireViewModelLease` with the Source
-  * Bind your UI to the returned `ViewModel`
+* Get Owning Window Shell
+* Call `AcquireViewModelLease` with the Source
+* Bind your UI to the returned `ViewModel`
 
 <figure><img src="../../../../.gitbook/assets/image (195).png" alt=""><figcaption><p>Example setting the content interface for the equipment widget</p></figcaption></figure>
 
-* `GetFocusableContent` Function:
-  * Return a reference to your main interactive widget (`ListView`, Grid, etc.)
+#### `GetFocusableContent` Function
 
-<figure><img src="../../../../.gitbook/assets/image (196).png" alt="" width="272"><figcaption></figcaption></figure>
+* Return a reference to your main interactive widget (`ListView`, Grid, etc.)
 
-* `GetCursorScreenPosition` Function:
-  * Get your currently selected widget's geometry
-  * Call `GetCachedGeometry->LocalToAbsolute(0.5, 0.5)`
-  * Return true if you have a selection, false otherwise
+<figure><img src="../../../../.gitbook/assets/image (196).png" alt="" width="272"><figcaption><p>Choose equipment slot feet as the default slot</p></figcaption></figure>
 
-<figure><img src="../../../../.gitbook/assets/image (198).png" alt=""><figcaption><p>Pass the last focused equipment slot for better cursor position</p></figcaption></figure>
+#### `GetCursorScreenPosition` Function
 
-* `ReceiveNavigationEntry` Event:
-  * Check the Direction to determine which edge navigation came from
-  * Select the appropriate slot/item based on `ScreenCoordinate`
+* Get your currently selected widget's geometry
+* Call `GetCachedGeometry->LocalToAbsolute(0.5, 0.5)`
+* Return true if you have a selection, false otherwise
+
+<figure><img src="../../../../.gitbook/assets/image (198).png" alt=""><figcaption><p>Pass the center of the last focused equipment slot for better cursor position</p></figcaption></figure>
+
+#### `ReceiveNavigationEntry` Event
+
+* Check the Direction to determine which edge navigation came from
+* Select the appropriate slot/item based on `ScreenCoordinate`
 
 <figure><img src="../../../../.gitbook/assets/image (200).png" alt="" width="375"><figcaption></figcaption></figure>
 
@@ -357,7 +369,7 @@ Implement each interface event:
 
 ***
 
-### Default Behaviors
+## Default Behaviors
 
 If you don't implement certain methods, the system provides sensible defaults:
 

@@ -6,11 +6,13 @@ In the Model-View-ViewModel (MVVM) pattern, the **ViewModel** is the most critic
 * **The View (UMG):** Purely visual. It knows how to draw a border and play an animation, but it has no idea what an "Inventory Item" is.
 * **The ViewModel (The Translator):** It sits in the middle. It listens to the Model, converts the raw data into human-readable text and textures, and exposes it to the View via `FieldNotify`.
 
-This architecture solves the biggest problem in Unreal UI development: **Spaghetti Code**. Your UMG widgets no longer contain cast nodes, server RPCs, or complex loop logic. They simply bind to properties like `ItemName` or `IsOccupied`.
+This architecture solves the biggest problem in Unreal UI development: **Spaghetti Code**. Your UMG widgets no longer contain cast nodes, player controller server RPCs, or complex loop logic. They simply bind to properties like `ItemName` or `IsOccupied`.
 
-### The Three Pillars of Data
+***
 
-We split our data representation into three distinct layers to handle the complexity of different container types (Inventory vs. Equipment vs. Attachments).
+## The Three Pillars of Data
+
+We split our data representation into three distinct layers to handle the complexity of different container types.
 
 #### 1. The Container (`ULyraContainerViewModel`)
 
@@ -35,7 +37,9 @@ This represents the **Data** itself.
 * **Updates:** It listens for tag changes (e.g., Ammo Count changing) and updates the UI instantly without rebuilding the entire list.
 * **Proxying:** The Slot "proxies" data from the Item. Your widget binds to `Slot->ItemIcon`. If the item exists, it shows the icon. If not, it shows a default transparent image.
 
-### In This Section
+***
+
+## In This Section
 
 We will explore how these three layers interact to create a seamless data flow:
 

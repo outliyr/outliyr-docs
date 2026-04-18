@@ -10,7 +10,7 @@ The Quick Bar sits on the **PlayerController**, not the Pawn. This is intentiona
 
 * **Input origin**: Player input comes through the controller
 * **Persistence across death**: When your pawn dies, the controller survives. Your weapon selection ("slot 0 was active") persists, ready for the next spawn
-* **Pawn can change**: Respawning, entering vehicles, possession - the controlled pawn changes, but your selection state stays
+* **Pawn can change**: Respawning, entering vehicles, possession, the controlled pawn changes, but your selection state stays
 
 The [Equipment Manager](equipment-manager-component.md) lives on the **Pawn** and handles actual behavior, spawning actors, granting abilities, managing held state. The Quick Bar handles **selection**, which weapon slot is active.
 
@@ -22,7 +22,7 @@ When the pawn dies, equipment is destroyed. When the player respawns with a new 
 
 Quick Bar slots don't own items, they **reference** items in the Equipment Manager. The Equipment Manager is the authoritative owner; the Quick Bar is a selection interface on top.
 
-### Equipment Slot Mapping
+### **Equipment Slot Mapping**
 
 For structured loadouts, you can map equipment slot tags to Quick Bar indices:
 
@@ -43,19 +43,20 @@ Equipment.Slot.Utility          → 3
 With this mapping:
 
 * When a primary weapon is equipped, it automatically appears in Quick Bar slot 0
-* Pressing "1" always selects your primary weapon
+* Pressing the key to select slot 0 always selects your primary weapon
 * The system enforces "one weapon per slot" naturally
 
-### Auto-Sync with Equipment
+### **Auto-Sync with Equipment**
 
-The Quick Bar subscribes to the Equipment Manager's `OnViewDirtied` delegate. Whenever equipment changes, i.e. through transactions, replication, or prediction reconciliation, the Quick Bar updates its slots to match.
+The Quick Bar subscribes to the Equipment Manager's `OnViewDirtiedWithChanges` delegate, which provides specific change info (item added, removed, or modified). Rather than rebuilding all slots on every change, the handler updates only the affected slot. This keeps slot switching correct during multi-operation transactions like pickup swaps.
 
 ```cpp
 void ULyraQuickBarComponent::TryBindToEquipmentManager()
 {
     if (ULyraEquipmentManagerComponent* EquipMgr = FindEquipmentManager())
     {
-        EquipMgr->OnViewDirtied.AddUObject(this, &ULyraQuickBarComponent::OnEquipmentViewDirtied);
+        EquipMgr->GetOnViewDirtiedWithChanges()->AddUObject(
+            this, &ULyraQuickBarComponent::OnEquipmentViewChanged);
     }
 }
 ```
@@ -66,21 +67,22 @@ When the controller's possessed pawn changes, the Quick Bar automatically rebind
 
 ## Slot Selection
 
-### Basic Selection
+### **Basic Selection**
 
-| Function                      | Purpose                                      |
-| ----------------------------- | -------------------------------------------- |
-| `SetActiveSlotIndex(int32)`   | Server RPC - switch to specific slot         |
-| `CycleActiveSlotForward()`    | Mouse wheel up - next valid slot             |
-| `CycleActiveSlotBackward()`   | Mouse wheel down - previous valid slot       |
-| `RevalidateActiveSelection()` | Find next valid slot when current disappears |
+| Function                       | Purpose                                                |
+| ------------------------------ | ------------------------------------------------------ |
+| `SelectActiveSlotIndex(int32)` | Switch to a specific slot with equipment transitions   |
+| `CycleActiveSlotForward()`     | Mouse wheel up — next valid slot                       |
+| `CycleActiveSlotBackward()`    | Mouse wheel down — previous valid slot                 |
+| `SetActiveSlotIndex(int32)`    | Server RPC — used internally by clients and by AI bots |
+| `RevalidateActiveSelection()`  | Find next valid slot when current disappears           |
 
-### Binding Input
+### **Binding Input**
 
 ```cpp
 void AMyPlayerController::HandleWeaponSlot1()
 {
-    QuickBar->SetActiveSlotIndex(0);
+    QuickBar->SelectActiveSlotIndex(0);
 }
 
 void AMyPlayerController::HandleNextWeapon()
@@ -99,24 +101,22 @@ When a player presses "2" to switch weapons, they expect instant feedback. The Q
 
 **The Flow**
 
-1. **Client calls `SetActiveSlotIndex(1)`** - This is a Server RPC, but prediction kicks in before it reaches the server
-2. **`ExecutePredictedSlotChange()` runs locally** - The client doesn't wait. It immediately:
-   * Builds a transaction via `BuildEquipTransaction()`
-   * Executes on the local prediction overlay
-   * The Equipment Manager spawns predicted weapon actors
-3. **Server RPC executes** - The server validates the request and applies the authoritative change
-4. **Reconciliation happens invisibly** - When the server's response arrives:
-   * Predicted actors are destroyed
-   * Replicated actors are revealed
-   * The visual transition is seamless
+1. **Player calls `SelectActiveSlotIndex(1)`** — this calls `ApplyActiveSlotIndexChange` which builds equip/unequip transactions via `BuildEquipTransaction`
+2. **Transactions execute locally** — the transaction ability runs with `LocalPredicted` policy, immediately applying the change on the local prediction overlay. The Equipment Manager spawns predicted weapon actors
+3. **Client sends `SetActiveSlotIndex` RPC** — the server receives the slot index and applies the same equipment transitions authoritatively
+4. **Reconciliation happens invisibly** — when the server's confirmation arrives, predicted actors are replaced by replicated actors seamlessly
 
 ```cpp
-void ULyraQuickBarComponent::SetActiveSlotIndex(int32 NewIndex)
+void ULyraQuickBarComponent::SelectActiveSlotIndex(int32 NewIndex)
 {
-    // Client prediction happens before RPC reaches server
-    ExecutePredictedSlotChange(NewIndex);
+    // Builds and executes equip/unequip transactions locally
+    ApplyActiveSlotIndexChange(NewIndex, true);
 
-    // Then server processes authoritatively...
+    // Client sends RPC so the server tracks the active index
+    if (!GetOwner()->HasAuthority())
+    {
+        SetActiveSlotIndex(NewIndex);
+    }
 }
 ```
 
@@ -125,6 +125,17 @@ From the player's perspective, the weapon was there the whole time.
 **Prerequisite**: See [The Overlay Model](../item-container/prediction/the-overlay-model/) for how prediction works across the container system.
 
 </details>
+
+### **AI Weapon Switching**
+
+AI bots use `AAIController` instead of `APlayerController`, so they can't go through the transaction system. When `SetActiveSlotIndex` is called from an AI controller, the Quick Bar falls back to direct `MoveItemBetweenSlots` calls on the Equipment Manager and force-commits deferred visibility so the weapon mesh swaps immediately.
+
+```cpp
+// In a State Tree task
+InstanceData.QuickBarComponent->SetActiveSlotIndex(BestWeaponSlotIndex);
+```
+
+No additional setup is needed. The Quick Bar detects the controller type and routes accordingly.
 
 ***
 
@@ -138,7 +149,7 @@ From the player's perspective, the weapon was there the whole time.
 
 For Instant weapon pickup with automatic swap, the Quick Bar provides specialized functions.
 
-### From World Pickups
+### **From World Pickups**
 
 ```cpp
 FQuickSwapResult Result = QuickBar->TryQuickSwapPickupFromPickup(
@@ -152,7 +163,7 @@ FQuickSwapResult Result = QuickBar->TryQuickSwapPickupFromPickup(
 
 This uses server validation, the client predicts the pickup, but the server validates that the pickup actor exists and the player can legitimately take it.
 
-### From Existing Items
+### **From Existing Items**
 
 ```cpp
 FQuickSwapResult Result = QuickBar->TryQuickSwapPickup(
@@ -165,7 +176,7 @@ FQuickSwapResult Result = QuickBar->TryQuickSwapPickup(
     OverrideEquipmentSlot);                     // Optional: target specific slot
 ```
 
-### Slot Policies
+### **Slot Policies**
 
 | Policy             | Behavior                                   | Best For                     |
 | ------------------ | ------------------------------------------ | ---------------------------- |
@@ -174,7 +185,7 @@ FQuickSwapResult Result = QuickBar->TryQuickSwapPickup(
 | `AnySlot`          | Use any available slot, swap if full       | Flexible loadouts            |
 | `AddOnly`          | Only add if empty slot exists, never swap  | Collecting without replacing |
 
-### The Result Struct
+### **The Result Struct**
 
 ```cpp
 struct FQuickSwapResult
@@ -202,7 +213,7 @@ The Quick Bar broadcasts gameplay messages when slots or selection changes.
 USTRUCT(BlueprintType)
 struct FLyraQuickBarSlotsChangedMessage
 {
-    TObjectPtr<AActor> Owner;                           // The controller
+    TObjectPtr<AActor> Owner;                              // The controller
     TArray<TObjectPtr<ULyraInventoryItemInstance>> Slots;  // Updated slots
 };
 ```
@@ -218,7 +229,7 @@ struct FLyraQuickBarActiveIndexChangedMessage
 };
 ```
 
-#### Subscribing in Widgets
+### **Subscribing in Widgets**
 
 ```cpp
 void UQuickBarWidget::NativeConstruct()
@@ -235,17 +246,7 @@ void UQuickBarWidget::NativeConstruct()
 
 ***
 
-## Configuration
-
-| Property               | Default | Purpose                                               |
-| ---------------------- | ------- | ----------------------------------------------------- |
-| `NumSlots`             | 2       | Number of Quick Bar slots                             |
-| `EquipmentSlotMapping` | Empty   | Maps equipment slot tags to indices                   |
-| `bAutoSelectFirstItem` | true    | Auto-select first valid slot when nothing is selected |
-
-***
-
-## Querying State
+## **Querying State**
 
 ```cpp
 // Get all slot contents
@@ -263,13 +264,13 @@ int32 FreeSlot = QuickBar->GetNextFreeItemSlot();
 
 ***
 
-## Troubleshooting
+## **Troubleshooting**
 
 {% hint style="info" %}
 **Weapon switch feels delayed?** Verify that:
 
 * The Equipment Manager supports prediction (it should by default)
-* You're calling `SetActiveSlotIndex()` which triggers prediction, not directly manipulating slots
+* You're calling `SelectActiveSlotIndex()` which triggers prediction, not directly manipulating slots
 {% endhint %}
 
 {% hint style="info" %}

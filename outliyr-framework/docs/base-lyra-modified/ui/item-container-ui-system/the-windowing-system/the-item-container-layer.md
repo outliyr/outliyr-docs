@@ -4,11 +4,13 @@ The Container Layer is the visual root of the entire windowing system. It is a `
 
 The Layer is the Orchestrator: it spawns windows, manages their z-order, handles dragging, and coordinates cross-window navigation.
 
-### Core Responsibilities
+***
+
+## Core Responsibilities
 
 {% stepper %}
 {% step %}
-#### The Spawning Registry (`GetContentWidgetClass`)
+### The Spawning Registry (`GetContentWidgetClass`)
 
 When an ability or another window requests a new window via a Gameplay Tag, the Layer acts as a lookup table. It needs to know which Blueprint widget matches that tag.
 
@@ -18,19 +20,23 @@ Implementation:
 * Input: A Gameplay Tag (e.g., `UI.Window.Inventory.Backpack`).
 * Output: A Widget Class (e.g., `W_BackpackContent`).
 
+<figure><img src="../../../../.gitbook/assets/image (7).png" alt=""><figcaption><p>Example binding the wiget classes to window gameplay tags</p></figcaption></figure>
+
 {% hint style="info" %}
 Design Tip: Using Gameplay Tags for routing allows you to swap your entire UI look-and-feel just by changing the return values in this function, without touching any C++ logic or Ability code.
 {% endhint %}
 {% endstep %}
 
 {% step %}
-#### Initializing the HUD (`SpawnMandatoryWindows`)
+### Initializing the HUD (`SpawnMandatoryWindows`)
 
 When the Inventory UI is first activated, the screen is empty. The Layer is responsible for the "Boot Sequence."
 
 Immediately after activation, the UI Manager triggers the `SpawnMandatoryWindows` event. Override this in Blueprint to define your "Home" UI layout.
 
-Standard sequence:
+<figure><img src="../../../../.gitbook/assets/image (8).png" alt=""><figcaption><p>Mandatory spawning of the equipment window and inventory grid</p></figcaption></figure>
+
+#### Standard sequence:
 
 {% stepper %}
 {% step %}
@@ -52,7 +58,7 @@ Call `OpenWindow(Spec)`.
 {% endstep %}
 
 {% step %}
-#### Auto-Placement Logic
+### Auto-Placement Logic
 
 When a window opens without a specific position, the Layer calls `CalculateAutoPosition`.
 
@@ -61,26 +67,28 @@ When a window opens without a specific position, the Layer calls `CalculateAutoP
 {% endstep %}
 
 {% step %}
-#### The Backdrop (Input Dismissal)
+### The Backdrop (Input Dismissal)
 
 Since the Layer is a root-level widget covering the screen, it acts as a "Catch-All" for mouse clicks.
 
-The system listens for clicks on the "empty space" behind windows. When you click the background, the Layer automatically dismisses active popups (Action Menus, Quantity Prompts), matching standard PC desktop behavior.
+The system listens for clicks on the "empty space" behind windows. When you click the background, the Layer automatically dismisses active popups (Action Menus, Quantity Prompts).
 {% endstep %}
 {% endstepper %}
 
-### Z-Order and Focus Management
+***
+
+## Z-Order and Focus Management
 
 The Layer tracks when each window was last focused and uses this to manage z-order.
 
-#### Focus Time Tracking
+### Focus Time Tracking
 
 ```cpp
 // Each window has a timestamp for when it was last focused
 TMap<FGuid, double> WindowFocusTimes;
 ```
 
-#### Z-Order Updates
+### Z-Order Updates
 
 When a window is focused (clicked, navigated to, or opened), the Layer:
 
@@ -105,7 +113,7 @@ void ULyraItemContainerLayer::FocusWindow(FItemWindowHandle WindowHandle)
 }
 ```
 
-#### Getting Focused Window
+### Getting Focused Window
 
 ```cpp
 FItemWindowHandle ULyraItemContainerLayer::GetFocusedWindow() const;
@@ -114,11 +122,11 @@ TArray<FItemWindowHandle> ULyraItemContainerLayer::GetWindowsByFocusOrder() cons
 
 ***
 
-### Cross-Window Navigation
+## Cross-Window Navigation
 
 The Layer intercepts navigation events and coordinates focus transfer between windows.
 
-#### Navigation Interception
+### Navigation Interception
 
 The Layer overrides `NativeOnNavigation` to catch escaped navigation:
 
@@ -150,7 +158,7 @@ FNavigationReply ULyraItemContainerLayer::NativeOnNavigation(
 }
 ```
 
-#### Geometric Window Search
+### Geometric Window Search
 
 `FindWindowInDirection` uses a scoring algorithm to find the best target window:
 
@@ -161,7 +169,7 @@ FItemWindowHandle ULyraItemContainerLayer::FindWindowInDirection(
     FVector2D CursorScreenPos) const;
 ```
 
-The algorithm:
+#### The algorithm:
 
 1. Filters to windows in the requested direction.
 2. Scores each window by distance + perpendicular offset.
@@ -169,7 +177,7 @@ The algorithm:
 
 See [Geometric Algorithm](../geometric-navigation/geometric-algorithm.md) for details.
 
-#### Pending Navigation Context
+### Pending Navigation Context
 
 When transferring focus, the Layer stores context for cursor alignment:
 
@@ -185,7 +193,7 @@ bool ULyraItemContainerLayer::ConsumePendingNavigationContext(
 
 This allows the target window to position its cursor appropriately based on where navigation came from.
 
-#### Getting Cursor Position
+### Getting Cursor Position
 
 ```cpp
 FVector2D ULyraItemContainerLayer::GetFocusedWindowCursorPosition() const
@@ -206,7 +214,7 @@ FVector2D ULyraItemContainerLayer::GetFocusedWindowCursorPosition() const
 
 ***
 
-### Window Cycling (Shoulder Buttons)
+## Window Cycling (Shoulder Buttons)
 
 The Layer handles LB/RB input for cycling between windows:
 
@@ -231,9 +239,9 @@ FReply ULyraItemContainerLayer::NativeOnKeyDown(
 void ULyraItemContainerLayer::CycleFocusedWindow(bool bForward);
 ```
 
-Windows are cycled in focus order (oldest to newest), with wrapping at the ends.
+Windows are cycled left/right depending on the button pressed, with wrapping at the ends.
 
-#### Window Dragging
+### Window Dragging
 
 The Layer handles window drag operations:
 
@@ -243,15 +251,19 @@ void ULyraItemContainerLayer::UpdateWindowDrag(FVector2D CurrentPosition);
 void ULyraItemContainerLayer::EndWindowDrag();
 ```
 
-During dragging:
+#### During dragging:
 
 * The dragged window is brought to front.
 * Position is clamped to canvas bounds.
 * Coordinates are translated between screen and canvas local space.
 
-### Public API Summary
+***
 
-#### Window Lifecycle
+## Public API Summary
+
+Most of these functions are used by the `ItemContainerUIManager` and the `ItemContainerWindowShell`
+
+### Window Lifecycle
 
 | Method                                | Description                       |
 | ------------------------------------- | --------------------------------- |
@@ -262,7 +274,7 @@ During dragging:
 | `GetOpenWindows()`                    | Get all open window handles       |
 | `IsWindowOpen(Handle)`                | Check if a window is open         |
 
-#### Focus and Navigation
+### Focus and Navigation
 
 | Method                         | Description                         |
 | ------------------------------ | ----------------------------------- |
@@ -272,7 +284,7 @@ During dragging:
 | `CycleFocusedWindow(bForward)` | Cycle to next/previous window       |
 | `FindWindowInDirection(...)`   | Find neighbor window for navigation |
 
-#### Drag Operations
+### Drag Operations
 
 | Method                  | Description             |
 | ----------------------- | ----------------------- |
@@ -282,7 +294,7 @@ During dragging:
 
 ***
 
-### Setup Checklist
+## Setup Checklist
 
 To get the windowing system running:
 

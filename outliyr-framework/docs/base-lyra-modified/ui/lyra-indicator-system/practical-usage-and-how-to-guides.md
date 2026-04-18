@@ -30,11 +30,11 @@ Select the `IndicatorLayer` and change its `ArrowBrush` property in the Details 
 
 {% tabs %}
 {% tab title="Adding indicator layer" %}
-<figure><img src="../../../.gitbook/assets/image (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (3) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 
 {% tab title="Customize the arrow property" %}
-<figure><img src="../../../.gitbook/assets/image (7).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (7) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 
@@ -68,11 +68,11 @@ Then implement the four interface events:
 {% endtab %}
 
 {% tab title="On Indicator Clamped" %}
-<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p>Example of changing widget apperance based on clamping</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p>Example of changing widget apperance based on clamping</p></figcaption></figure>
 {% endtab %}
 
 {% tab title="On Indicator Display Mode Changed" %}
-<figure><img src="../../../.gitbook/assets/image (3) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>Domination objective marker handling display mode changes</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (3) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p>Domination objective marker handling display mode changes</p></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 {% endstep %}
@@ -84,7 +84,7 @@ Wherever your game logic decides an indicator should appear (quest activation, e
 
 {% tabs %}
 {% tab title="Blueprint" %}
-<figure><img src="../../../.gitbook/assets/image (8).png" alt=""><figcaption><p>Example creating an indicator for a kill confirmed dog tag</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (8) (1).png" alt=""><figcaption><p>Example creating an indicator for a kill confirmed dog tag</p></figcaption></figure>
 {% endtab %}
 
 {% tab title="C++" %}

@@ -4,7 +4,9 @@ When navigating between windows, users expect the cursor to maintain spatial con
 
 This page explains how the **content interface methods** enable cursor alignment across windows.
 
-#### The Alignment Problem
+***
+
+## The Alignment Problem
 
 Without alignment, cross-window navigation feels jarring:
 
@@ -42,11 +44,13 @@ With alignment, navigation feels natural:
 └───────────────────────┘        └───────────────────────┘
 ```
 
-### The Interface Methods
+***
+
+## The Interface Methods
 
 Two methods in `ILyraItemContainerWindowContentInterface` enable cursor alignment:
 
-#### `GetCursorScreenPosition`
+### `GetCursorScreenPosition`
 
 Called on the **source** window to get the current cursor's screen position:
 
@@ -55,14 +59,14 @@ UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item Container Wi
 bool GetCursorScreenPosition(FVector2D& OutScreenPosition) const;
 ```
 
-Return value:
+#### Return value
 
 * `true` if the content has a meaningful cursor position
 * `false` to use the window center as fallback
 
 The position should be in absolute screen coordinates (not local widget space).
 
-#### **`ReceiveNavigationEntry`**
+### **`ReceiveNavigationEntry`**
 
 Called on the **target** window when receiving focus from cross-window navigation:
 
@@ -71,7 +75,7 @@ UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item Container Wi
 void ReceiveNavigationEntry(EUINavigation Direction, float ScreenCoordinate);
 ```
 
-**Parameters:**
+#### **Parameters**
 
 * `Direction`: The direction the user pressed (using Unreal's `EUINavigation` enum):
   * `EUINavigation::Right` = User pressed Right, entering from left edge
@@ -82,9 +86,11 @@ void ReceiveNavigationEntry(EUINavigation Direction, float ScreenCoordinate);
   * For horizontal navigation (Left/Right): Y screen coordinate
   * For vertical navigation (Up/Down): X screen coordinate
 
-### Implementation Examples
+***
 
-#### List/Tile View (Simple)
+## Implementation Examples
+
+### List/Tile View (Simple)
 
 For list and tile views, you might not need full cursor alignment, the first or last item is usually acceptable:
 
@@ -106,7 +112,7 @@ void ULyraInventoryListPanel::ReceiveNavigationEntry_Implementation(
 }
 ```
 
-#### Tetris Grid (Complex)
+### Tetris Grid (Complex)
 
 For grid-based UIs, full alignment creates a professional feel:
 
@@ -147,7 +153,9 @@ void ULyraTetrisGridClumpWidget::ReceiveNavigationEntry_Implementation(
 }
 ```
 
-### Coordinate Translation
+***
+
+## Coordinate Translation
 
 The screen coordinate passed to `ReceiveNavigationEntry` must be translated from absolute screen space to local widget coordinates.
 
@@ -167,7 +175,9 @@ float RelativeX = (ScreenCoordinate - WidgetAbsoluteX) / WidgetWidth;
 int32 TargetColumn = FMath::Clamp(FMath::FloorToInt(RelativeX * NumColumns), 0, NumColumns - 1);
 ```
 
-### Blueprint Implementation
+***
+
+## Blueprint Implementation
 
 Implement these interface methods in Blueprint.
 
@@ -201,7 +211,9 @@ Implement these interface methods in Blueprint.
 {% endstep %}
 {% endstepper %}
 
-### Default Behavior
+***
+
+## Default Behavior
 
 If a content widget doesn't implement these methods, the system provides sensible defaults:
 
@@ -210,7 +222,9 @@ If a content widget doesn't implement these methods, the system provides sensibl
 
 This means basic content widgets work automatically, you only need to implement these methods for precise cursor alignment.
 
-### Best Practices
+***
+
+## Best Practices
 
 {% hint style="info" %}
 * Always use absolute screen coordinates for `GetCursorScreenPosition`. The Layer works in screen space, not local widget space.

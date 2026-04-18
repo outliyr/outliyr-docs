@@ -2,7 +2,7 @@
 
 Beyond custom container types, you may need custom window layouts, comparison views, split panels, or windows without standard chrome. This guide covers window customization at every level.
 
-### Custom Window Scenarios
+## Custom Window Scenarios
 
 | Scenario                          | Solution                     |
 | --------------------------------- | ---------------------------- |
@@ -12,7 +12,9 @@ Beyond custom container types, you may need custom window layouts, comparison vi
 | Floating tooltip-style            | Lightweight overlay widget   |
 | Split view comparison             | Multi-panel content widget   |
 
-### The Window Content Interface
+***
+
+## The Window Content Interface
 
 All window content widgets must implement `ILyraItemContainerWindowContentInterface`. This interface has **four methods**:
 
@@ -34,7 +36,7 @@ public:
 };
 ```
 
-#### Method Call Order
+### Method Call Order
 
 ```mermaid
 sequenceDiagram
@@ -53,11 +55,13 @@ sequenceDiagram
     Note right of Content: Return focusable widget
 ```
 
-### Registering Window Types
+***
+
+## Registering Window Types
 
 The Layer maps `WindowType` tags to content widget classes via `GetContentWidgetClassForWindowType()`. This enables reusable windows that work with any compatible container source.
 
-#### Override in Your Layer Blueprint
+### Override in Your Layer Blueprint
 
 ```cpp
 // In your Layer subclass
@@ -89,7 +93,7 @@ TSubclassOf<UUserWidget> UMyItemContainerLayer::GetContentWidgetClassForWindowTy
 
 <figure><img src="../../../../.gitbook/assets/image (231).png" alt=""><figcaption></figcaption></figure>
 
-#### Reusable Window Content
+### Reusable Window Content
 
 The power of this system is that **the same content widget class works with different container sources**. For example:
 
@@ -101,7 +105,7 @@ The power of this system is that **the same content widget class works with diff
 
 The content widget doesn't care _which_ inventory it's showing, it just receives a source via `SetContainerSource()` and displays it.
 
-#### Example: One Grid Widget, Many Uses
+### Example: One Grid Widget, Many Uses
 
 ```cpp
 // Same widget class used for multiple window types
@@ -123,7 +127,7 @@ if (WindowType == TAG_UI_Window_Inventory ||
 }
 ```
 
-#### Defining Window Type Tags
+### Defining Window Type Tags
 
 ```cpp
 // In your GameplayTags file or using the blueprint gameplay tag manager
@@ -135,11 +139,13 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Window_Trade, "UI.Window.Trade");
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Window_Crafting, "UI.Window.Crafting");
 ```
 
-### Custom Window Content Widget
+***
+
+## Custom Window Content Widget
 
 The most common customization: a different layout for an existing container type.
 
-#### Recommended: ViewModel Leasing
+### Recommended: ViewModel Leasing
 
 The simplest approach uses the window shell's lease system for automatic cleanup:
 
@@ -199,7 +205,7 @@ private:
 };
 ```
 
-#### Alternative: Manual ViewModel Management
+### Alternative: Manual ViewModel Management
 
 For finer control over ViewModel lifetime:
 
@@ -232,7 +238,9 @@ void UMyContent::NativeDestruct()
 }
 ```
 
-#### Setting Window Title
+***
+
+## Setting Window Title
 
 The content interface doesn't have a title method. Set the title via the shell:
 
@@ -250,11 +258,13 @@ void UMyContent::SetContainerSource_Implementation(const FInstancedStruct& Sourc
 }
 ```
 
-### Multi-Container Windows
+***
+
+## Multi-Container Windows
 
 Show multiple containers in one window (e.g., player inventory + target inventory for trading).
 
-#### Layout
+### Layout
 
 ```
 +-----------------------------------------------------+
@@ -271,7 +281,7 @@ Show multiple containers in one window (e.g., player inventory + target inventor
 +-----------------------------------------------------+
 ```
 
-#### Approach 1: Custom Trade Source + ViewModel
+### Approach 1: Custom Trade Source + ViewModel
 
 If you need trade-specific logic (offer tracking, confirmation state, etc.), create a dedicated source and ViewModel:
 
@@ -322,7 +332,7 @@ virtual void SetContainerSource_Implementation(const FInstancedStruct& Source) o
 }
 ```
 
-#### Approach 2: Composite Source with Standard ViewModels
+### Approach 2: Composite Source with Standard ViewModels
 
 If you just need to display two inventories side-by-side without trade-specific logic, the source can carry both inventory references and the content widget builds standard `FInventoryContainerSource` structs:
 
@@ -426,14 +436,14 @@ private:
 };
 ```
 
-#### Which Approach to Use?
+### Which Approach to Use?
 
 | Approach                        | Use When                                                                   |
 | ------------------------------- | -------------------------------------------------------------------------- |
 | **Custom Trade ViewModel**      | You need trade-specific state (offers, confirmations, transaction history) |
 | **Composite with Standard VMs** | You just need to display two inventories side-by-side                      |
 
-#### Opening the Trade Window
+### Opening the Trade Window
 
 ```cpp
 void OpenTradeWindow(ULyraInventoryManagerComponent* TargetInventory)
@@ -458,11 +468,13 @@ void OpenTradeWindow(ULyraInventoryManagerComponent* TargetInventory)
 }
 ```
 
-### Custom Window Shell
+***
+
+## Custom Window Shell
 
 For windows that need different chrome (no title bar, custom close behavior, etc.), create a shell subclass.
 
-#### Widget Bindings
+### Widget Bindings
 
 The base `ULyraItemContainerWindowShell` has these optional widget bindings:
 
@@ -476,7 +488,7 @@ The base `ULyraItemContainerWindowShell` has these optional widget bindings:
 
 All are marked `BindWidgetOptional`, so you can omit any in your Blueprint.
 
-#### Minimal Shell Example
+### Minimal Shell Example
 
 ```cpp
 UCLASS()
@@ -508,7 +520,7 @@ protected:
 };
 ```
 
-#### Blueprint Events
+### Blueprint Events
 
 The shell provides these Blueprint-implementable events:
 
@@ -521,7 +533,7 @@ The shell provides these Blueprint-implementable events:
 | `OnWindowFocused`   | Window gains focus              |
 | `OnWindowUnfocused` | Window loses focus              |
 
-#### Registering Custom Shells
+### Registering Custom Shells
 
 Override `GetWindowShellClass()` in your Layer Blueprint to provide custom shells:
 
@@ -549,11 +561,13 @@ TSubclassOf<ULyraItemContainerWindowShell> UMyLayer::GetWindowShellClass_Impleme
 }
 ```
 
-### Item Tracking & Window Reparenting
+***
+
+## Item Tracking & Window Reparenting
 
 Windows can track items and automatically respond when items move between containers.
 
-#### Setting Up Tracking
+### Setting Up Tracking
 
 Include `TrackedItemId` in the window spec:
 
@@ -570,7 +584,7 @@ void OpenAttachmentWindow(ULyraInventoryItemInstance* Item)
 }
 ```
 
-#### What Happens When Tracked Item Moves
+### What Happens When Tracked Item Moves
 
 | Event                                   | System Response                               |
 | --------------------------------------- | --------------------------------------------- |
@@ -578,27 +592,28 @@ void OpenAttachmentWindow(ULyraInventoryItemInstance* Item)
 | Item moved to inaccessible location     | Window closes with `SourceBecameInaccessible` |
 | Item moved within accessible containers | `OnSourceReparented()` called on shell        |
 
-#### Handling Reparenting
+### Handling Reparenting
 
 The shell's `OnSourceReparented()` method notifies content when the tracked item's location changes:
 
-```cpp
-// In your shell subclass or by binding to the shell
-void UMyContent::HandleSourceReparented(const FInstancedStruct& NewSlotDesc)
+<pre class="language-cpp"><code class="lang-cpp">// In your shell subclass or by binding to the shell
+void UMyContent::HandleSourceReparented(const FInstancedStruct&#x26; NewSlotDesc)
 {
     // Item moved - update the source and refresh
     // The NewSlotDesc contains the item's new location
 
-    // Update any displayed slot information
-    RefreshSlotDisplay(NewSlotDesc);
+<strong>    // Update any displayed slot information
+</strong>    RefreshSlotDisplay(NewSlotDesc);
 }
-```
+</code></pre>
 
-### Navigation in Custom Windows
+***
+
+## Navigation in Custom Windows
 
 For keyboard/controller navigation support, implement the navigation methods of the interface.
 
-#### `GetFocusableContent`
+### `GetFocusableContent`
 
 Return the widget that should receive focus when this window is focused:
 
@@ -613,7 +628,7 @@ UWidget* UMyContent::GetFocusableContent_Implementation() const
 }
 ```
 
-#### `GetCursorScreenPosition`
+### `GetCursorScreenPosition`
 
 Return the current selection/cursor position for cross-window alignment:
 
@@ -630,7 +645,7 @@ bool UMyContent::GetCursorScreenPosition_Implementation(FVector2D& OutScreenPosi
 }
 ```
 
-#### `ReceiveNavigationEntry`
+### `ReceiveNavigationEntry`
 
 Position your cursor when focus comes from another window:
 
@@ -661,9 +676,11 @@ void UMyContent::ReceiveNavigationEntry_Implementation(EUINavigation Direction, 
 }
 ```
 
-### Opening Custom Windows
+***
 
-#### The `FItemWindowSpec` Struct
+## Opening Custom Windows
+
+### The `FItemWindowSpec` Struct
 
 All window creation goes through `FItemWindowSpec`:
 
@@ -706,7 +723,7 @@ struct FItemWindowSpec
 };
 ```
 
-#### Placement Options
+### Placement Options
 
 | Placement          | Behavior                     |
 | ------------------ | ---------------------------- |
@@ -715,7 +732,7 @@ struct FItemWindowSpec
 | `CenterScreen`     | Center in viewport           |
 | `RelativeToSource` | Position near `SourceWindow` |
 
-#### Complete Example
+### Complete Example
 
 ```cpp
 void OpenCustomWindow()
@@ -742,11 +759,13 @@ void OpenCustomWindow()
 }
 ```
 
-### Comparison View Example
+***
+
+## Comparison View Example
 
 A split window showing two items side-by-side:
 
-#### Layout
+### Layout
 
 ```
 +-----------------------------------------------------+
@@ -765,7 +784,7 @@ A split window showing two items side-by-side:
 +------------------------+----------------------------+
 ```
 
-#### Implementation
+### Implementation
 
 ```cpp
 UCLASS()
@@ -851,7 +870,9 @@ private:
 };
 ```
 
-### Best Practices
+***
+
+## Best Practices
 
 {% hint style="success" %}
 Use ViewModel leasing. Call `Shell->AcquireViewModelLease(Source)` instead of manual acquire/release. The shell handles cleanup automatically.
@@ -873,7 +894,9 @@ Don't bypass sessions. Even custom windows should belong to sessions for proper 
 Don't hardcode window positions. Use placement options and let the system handle positioning for a consistent user experience.
 {% endhint %}
 
-### Summary
+***
+
+## Summary
 
 | Customization       | Approach                                              |
 | ------------------- | ----------------------------------------------------- |
@@ -883,7 +906,7 @@ Don't hardcode window positions. Use placement options and let the system handle
 | No chrome           | Overlay widget on `PopupOverlay`                      |
 | Item comparison     | Specialized content with multi-item display           |
 
-#### Key Interface Methods
+### Key Interface Methods
 
 | Method                      | Purpose                                |
 | --------------------------- | -------------------------------------- |
@@ -892,7 +915,7 @@ Don't hardcode window positions. Use placement options and let the system handle
 | `GetCursorScreenPosition()` | Report cursor for cross-window nav     |
 | `ReceiveNavigationEntry()`  | Position cursor on incoming navigation |
 
-#### Key Shell Methods
+### Key Shell Methods
 
 | Method                    | Purpose                        |
 | ------------------------- | ------------------------------ |

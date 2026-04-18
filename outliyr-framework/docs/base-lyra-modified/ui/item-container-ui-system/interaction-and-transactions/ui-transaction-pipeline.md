@@ -8,7 +8,9 @@ This page explains how the UI sends this request to the gameplay layer and how i
 This section focuses on the **UI Integration**. For a deep dive into how the server validates moves, handles rollbacks, and manages replication, please refer to the[ **Item Container Prediction**](../../../item-container/prediction/) documentation.
 {% endhint %}
 
-### The Bridge: `ExecuteMove`
+***
+
+## The Bridge: `ExecuteMove`
 
 When `CommitInteraction` calls `ExecuteMove`, it performs a critical translation:
 

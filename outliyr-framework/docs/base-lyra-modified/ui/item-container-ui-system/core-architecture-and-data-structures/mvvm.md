@@ -204,7 +204,3 @@ UMG View Binding works directly with ViewModel properties. Designers can iterate
 | `ULyraItemContainerUIManager`     | Creates and caches ViewModels                           |
 
 ***
-
-## Next Steps
-
-Now that you understand the pattern, let's see how data actually flows through these layers in [Data Flow & Reactivity](dataflow-and-reactivity.md).

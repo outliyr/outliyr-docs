@@ -6,7 +6,7 @@ This allows a single system, the UI Manager, to handle caching, lifecycle, and c
 
 ***
 
-### The Core Struct: `FLyraContainerSourceBase`
+## The Core Struct: `FLyraContainerSourceBase`
 
 At the bottom of the hierarchy is `FLyraContainerSourceBase`. This is the "contract" that any container system must fulfill to participate in the UI.
 
@@ -34,7 +34,7 @@ This struct is never used directly. It is intended to be inherited by specific i
 
 ***
 
-### Why FInstancedStruct?
+## Why FInstancedStruct?
 
 In C++, we can pass pointers to base classes easily (`Base*`). But in Blueprints, passing generic structs is impossible without casting.
 
@@ -65,7 +65,7 @@ flowchart TB
 
 ***
 
-### Implementing a Source
+## Implementing a Source
 
 Let's look at how the standard Inventory implements this contract.
 
@@ -123,7 +123,7 @@ ULyraContainerViewModel* FInventoryContainerSource::CreateViewModel(
 
 ***
 
-### Cache Identity (GetContentHash)
+## Cache Identity (`GetContentHash`)
 
 The UI Manager aggressively caches ViewModels. If two different windows (e.g., "Main Inventory" and "Crafting Source") request the same inventory, they should get the **same ViewModel instance**.
 
@@ -143,7 +143,7 @@ The UI Manager combines this hash with the Struct Type to form a composite key:
 Key = HashCombine(StructType, ContentHash)
 ```
 
-#### Why Hashing Matters
+### Why Hashing Matters
 
 Consider Attachments. An item can have multiple attachment slots. If we just hashed the Item Pointer, all attachment slots would return the same ViewModel.
 
@@ -171,7 +171,7 @@ In the provided code, `FAttachmentContainerSource` currently hashes `ItemInstanc
 
 ***
 
-### Built-In Sources
+## Built-In Sources
 
 The system provides these sources out of the box:
 
@@ -183,7 +183,7 @@ The system provides these sources out of the box:
 
 ***
 
-### Extensibility Example
+## Extensibility Example
 
 Imagine you want to add a **Vendor System** to your game. You don't need to modify the UI Manager or the Windowing system.
 
@@ -267,7 +267,7 @@ The system will automatically cache it, track its lifecycle, and serve it to any
 
 ***
 
-### The Complete Flow
+## The Complete Flow
 
 ```mermaid
 sequenceDiagram
@@ -293,21 +293,3 @@ sequenceDiagram
 ```
 
 ***
-
-## Summary
-
-| Concept                    | Purpose                                           |
-| -------------------------- | ------------------------------------------------- |
-| `FLyraContainerSourceBase` | Abstract contract for all container sources       |
-| `FInstancedStruct`         | Wrapper enabling Blueprint polymorphism           |
-| `GetContentHash()`         | Unique identifier for caching                     |
-| `CreateViewModel()`        | Factory method for creating the correct ViewModel |
-| `GetOwner()`               | Object to watch for automatic cleanup             |
-
-The polymorphic source pattern is what makes this system truly extensible. Any container type, present or future, can participate in the UI system by implementing this simple interface.
-
-***
-
-## Next Steps
-
-Now that you understand how sources create ViewModels, learn about the MVVM architecture that ties it all together in [The MVVM Pattern](mvvm.md).
