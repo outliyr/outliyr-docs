@@ -300,6 +300,10 @@
     * [Shape Library Reference](core-modules/gameplay-maps/compound-blockout-system/shape-library-reference.md)
     * [The Baking Pipeline: Finalizing Assets](core-modules/gameplay-maps/compound-blockout-system/the-baking-pipeline-finalizing-assets.md)
     * [Best Practices & Tips](core-modules/gameplay-maps/compound-blockout-system/best-practices-and-tips.md)
+* [PSO Warmup](core-modules/pso-warmup/README.md)
+  * [Configuration](core-modules/pso-warmup/configuration.md)
+  * [Spawn Preheat](core-modules/pso-warmup/spawn-preheat.md)
+  * [Signature Caching](core-modules/pso-warmup/signature-caching.md)
 
 ## Game Modes
 
