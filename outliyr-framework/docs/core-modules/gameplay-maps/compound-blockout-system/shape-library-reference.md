@@ -2,11 +2,13 @@
 
 The Compound Blockout tool comes with a library of procedural shapes designed for rapid level creation. They are categorized into **Primitives**, for basic massing, and **Architectural** shapes, which are specialized for creating common gameplay elements like stairs and ramps.
 
-### Primitives
+***
+
+## Primitives
 
 These are the fundamental building blocks for most of your work. They are simple, efficient, and versatile.
 
-#### **Box** (`UBlockoutShape_Box`)
+### **Box** (`UBlockoutShape_Box`)
 
 * **Use Case:** The workhorse for creating walls, floors, pillars, and any rectangular form.
 * **Key Properties:**
@@ -14,7 +16,7 @@ These are the fundamental building blocks for most of your work. They are simple
   * **Handle Mode:** Drag the `SizeHandle` to define the opposite corner of the box from its pivot.
   * **Numeric Mode:** Directly set the `Dimensions` (Width, Depth, Height).
 
-#### **Cylinder** (`UBlockoutShape_Cylinder`)
+### **Cylinder** (`UBlockoutShape_Cylinder`)
 
 * **Use Case:** Perfect for pillars, pipes, towers, and circular platforms.
 * **Key Properties:**
@@ -22,7 +24,7 @@ These are the fundamental building blocks for most of your work. They are simple
   * `RadialSteps`: Controls the roundness of the cylinder. Lower values create polygonal shapes (e.g., a hexagon or octagon).
   * `bCapped`: If false, the cylinder will be an open tube. The tool automatically generates double-sided geometry for uncapped shapes so they look solid in-editor without needing a special material.
 
-#### **Cone** (`UBlockoutShape_Cone`)
+### **Cone** (`UBlockoutShape_Cone`)
 
 * **Use Case:** Creating rooftops, spires, or tapered columns. Can also be used to create funnels when used as a subtractive shape.
 * **Key Properties:**
@@ -30,14 +32,14 @@ These are the fundamental building blocks for most of your work. They are simple
   * `Height`: The vertical size of the shape.
   * `bCapped`: Determines if the ends are sealed.
 
-#### **Sphere** (`UBlockoutShape_Sphere`)
+### **Sphere** (`UBlockoutShape_Sphere`)
 
 * **Use Case:** Blocking out domes, spherical landmarks, or for creating rounded indentations when used as a subtractive shape.
 * **Key Properties:**
   * `Radius`: The size of the sphere.
   * `LongitudeSteps` & `LatitudeSteps`: Control the smoothness of the sphere.
 
-#### **Torus** (`UBlockoutShape_Torus`)
+### **Torus** (`UBlockoutShape_Torus`)
 
 * **Use Case:** Creating ring-shaped platforms, pipes, or arches.
 * **Key Properties:**
@@ -46,18 +48,18 @@ These are the fundamental building blocks for most of your work. They are simple
 
 ***
 
-### Architectural & Parametric Shapes
+## Architectural & Parametric Shapes
 
 These are more advanced shapes designed to solve common level design challenges and maintain proper gameplay metrics.
 
-#### **Ramp** (`UBlockoutShape_Ramp`)
+### **Ramp** (`UBlockoutShape_Ramp`)
 
 * **Use Case:** Creating slopes and ramps with precise alignment. This shape is designed to remove the hassle of rotating and aligning simple boxes.
 * **Key Properties:**
   * `FloorPoint` Handle: Defines the length and direction of the ramp's base on the ground plane.
   * `TopPoint` Handle: Defines the width and height at the top of the ramp. The tool automatically connects the points to form a solid, navigable ramp.
 
-#### **Linear Stairs** (`UBlockoutShape_LinearStairs`)
+### **Linear Stairs** (`UBlockoutShape_LinearStairs`)
 
 * **Use Case:** Quickly creating a straight run of stairs that conforms to standard gameplay dimensions.
 * **Key Properties:**
@@ -66,7 +68,7 @@ These are more advanced shapes designed to solve common level design challenges 
     * **Adaptive:** The tool automatically calculates the optimal number of steps to best match your `DesiredStepHeight`. This is the recommended mode for ensuring player navigation feels consistent.
   * `bFloating`: Toggles between solid-mass stairs (cheaper geometry) and floating treads (a more detailed look).
 
-#### **Curved Stairs** (`UBlockoutShape_CurvedStairs`)
+### **Curved Stairs** (`UBlockoutShape_CurvedStairs`)
 
 * **Use Case:** Creating spiral or curved staircases that wrap around a central point.
 * **Key Properties:**
@@ -74,7 +76,7 @@ These are more advanced shapes designed to solve common level design challenges 
   * `TotalHeight` & `CurveAngle`: Control the overall rise and sweep of the staircase.
   * **Mode (`Adaptive` / `Fixed`):** Works just like Linear Stairs, but the "Adaptive" mode also considers the `DesiredGoing` (the arc length of a step) to ensure comfortable traversal.
 
-#### **Prism** (`UBlockoutShape_Prism`)
+### **Prism** (`UBlockoutShape_Prism`)
 
 * **Use Case:** Creating custom floor plans, non-rectangular walls, or complex polygonal holes. This is the go-to shape for anything that isn't a simple primitive.
 * **Key Properties:**
@@ -82,7 +84,7 @@ These are more advanced shapes designed to solve common level design challenges 
   * `Depth`: Extrudes the 2D polygon outline into a 3D solid.
   * `bAutoSort`: When enabled, the tool will automatically connect the polygon points in a sensible counter-clockwise order, preventing twisted or invalid geometry as you edit. It is highly recommended to keep this enabled.
 
-#### **Room** (`UBlockoutShape_Room`)
+### **Room** (`UBlockoutShape_Room`)
 
 * **Use Case:** The fastest way to block out an interior space. Instead of placing six separate boxes for a floor, ceiling, and four walls, the Room shape does it in one step.
 * **Key Properties:**
