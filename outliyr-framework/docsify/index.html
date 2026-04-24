@@ -2,328 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Document</title>
+    <title>Outliyr Framework</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <meta name="description" content="Description">
+    <meta name="description" content="Outliyr Framework documentation">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/dark.css">
     <link rel="stylesheet" href="https://unpkg.com/docsify-plugin-toc@1.3.1/dist/light.css">
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.css">
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/sidebar.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-breadcrumb@latest/dist/breadcrumb.min.css">
-<style>
-    /* Target only divs that wrap images */
-    div:has(> img) {
-      display: block !important;
-      text-align: center !important;
-      margin: 1em auto;
-    }
-</style>
-<style>
-    .alert.flat a {
-      text-decoration: underline;
-      font-weight: 600;
-    }
-
-    .alert.flat.note a {
-      color: #0078d4; /* brighter blue */
-    }
-
-    .alert.flat.tip a {
-      color: #2e8b57; /* medium-sea green */
-    }
-
-    .alert.flat.warning a {
-      color: #d35400; /* strong orange */
-    }
-
-    .alert.flat.attention a {
-      color: #c0392b; /* vivid red */
-    }
-
-    /* Optional hover effect */
-    .alert.flat a:hover {
-      text-decoration: none;
-      opacity: 0.85;
-    }
-
-    /* Optional slight glow (can be removed if too much) */
-    .alert.flat a {
-      text-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
-    }
-</style>
-<style>
-    /* Better spacing for the sidebar */
-    .sidebar {
-      padding: 1rem;
-      font-size: 15px;
-    }
-
-    /* Space out each item */
-    .sidebar ul li a {
-      padding: 0.5rem 0.75rem;
-      display: block;
-      border-radius: 4px;
-      transition: background 0.2s ease;
-    }
-
-    /* Add hover background */
-    .sidebar ul li a:hover {
-      background-color: rgba(0, 0, 0, 0.05);
-    }
-
-    /* Increase font size and weight for collapsible section titles */
-    .sidebar ul li > p {
-      font-size: 16px;
-      font-weight: 600;
-      padding: 0.75rem 0.75rem;
-      margin: 0.25rem 0;
-      color: var(--theme-color, #42b983);
-    }
-
-    /* Optional: make current page link more distinct */
-    .sidebar ul li.active > a {
-      font-weight: bold;
-      background-color: rgba(0, 0, 0, 0.07);
-    }
-
-    .sidebar-nav ul:not(.app-sub-sidebar) > li:not(.file)::before
-    {
-      top: 19px;
-    }
-
-    .sidebar-nav ul:not(.app-sub-sidebar) > li.open::before
-    {
-      top: 17px;
-    }
-</style>
-<style>
-    :root {
-        --gb-border: rgba(0,0,0,.12);
-        --gb-open-bg: #fff;
-        /* Use Docsify theme color if present, fallback to green */
-        --gb-accent: var(--theme-color, #42b983);
-        --gb-radius: 12px;
-        --gb-hiw: 1px; /* highlight border thickness */
-    }
-    html.dark, body.dark, :root.dark {
-        --gb-border: rgba(255,255,255,.18);
-        --gb-open-bg: #141414;
-    }
-
-    /* shell */
-    .gb-stack {
-        border: 1px solid var(--gb-border);
-        border-radius: var(--gb-radius);
-        overflow: hidden;
-        background: var(--gb-open-bg);
-        margin: 1rem 0;
-    }
-
-    .gb-stack > .gb-toggle:first-child {
-        border-top-left-radius: var(--gb-radius);
-        border-top-right-radius: var(--gb-radius);
-    }
-    .gb-stack > .gb-toggle:last-child {
-        border-bottom-left-radius: var(--gb-radius);
-        border-bottom-right-radius: var(--gb-radius);
-    }
-
-    /* divider */
-    .gb-stack > .gb-toggle + .gb-toggle { border-top: 1px solid var(--gb-border); }
-
-    /* rows */
-    .gb-stack > .gb-toggle {
-        margin: 0; border: 0; background: transparent; border-radius: 0;
-        transition: background .15s ease, box-shadow .15s ease;
-        display: flow-root;
-    }
-
-    /* Subtle background when open inside stack */
-    .gb-stack > .gb-toggle[open] {
-        background: rgba(0,0,0,.015);
-    }
-    html.dark .gb-stack > .gb-toggle[open],
-    body.dark .gb-stack > .gb-toggle[open] {
-        background: rgba(255,255,255,.03);
-    }
-
-    /* Standalone toggle (not inside stack) */
-    .gb-toggle:not(.gb-stack > .gb-toggle) {
-        border: 1px solid var(--gb-border);
-        border-radius: var(--gb-radius);
-        margin: 1rem 0;
-        overflow: hidden;
-    }
-    .gb-toggle :last-child { margin-bottom: 0; }
-    .gb-toggle > :not(summary):last-child { padding-bottom: 1rem; }
-
-    /* highlight: row-only, orange/green/etc via --gb-accent */
-    .gb-stack > .gb-toggle:hover,
-    .gb-stack > .gb-toggle:focus-within {
-        box-shadow: inset 0 0 0 var(--gb-hiw) var(--gb-accent) !important;
-    }
-
-    /* summary + caret */
-    .gb-toggle > summary {
-        list-style: none; cursor: pointer; outline: none;
-        padding: 0.85rem 1rem; min-height: 2.75rem;
-        font-weight: 600; display: flex; align-items: center; gap: .55rem;
-        border-radius: inherit;
-        transition: background .15s ease;
-    }
-    .gb-toggle > summary:hover {
-        background: rgba(0,0,0,.03);
-    }
-    html.dark .gb-toggle > summary:hover,
-    body.dark .gb-toggle > summary:hover {
-        background: rgba(255,255,255,.04);
-    }
-    .gb-toggle > summary::-webkit-details-marker { display: none; }
-    .gb-toggle > summary::before {
-        content: ""; width: .5rem; height: .5rem;
-        border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
-        transform: rotate(-45deg); transition: transform .25s cubic-bezier(.4,0,.2,1); opacity: .55;
-        flex-shrink: 0;
-    }
-    .gb-toggle[open] > summary::before { transform: rotate(45deg); opacity: .85; }
-
-    /* content spacing */
-    .gb-toggle > *:not(summary) {
-        padding: 0 1rem 1rem 2rem;
-        animation: gb-slide-down .2s ease;
-    }
-    .gb-toggle > summary + * { margin-top: .6rem; }
-
-    @keyframes gb-slide-down {
-        from { opacity: 0; transform: translateY(-4px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* optional variant title colors */
-    .gb-toggle > summary[data-variant="example"] { color: #2e8b57; }
-    .gb-toggle > summary[data-variant="warning"] { color: #d35400; }
-    .gb-toggle > summary[data-variant="info"]    { color: #0078d4; }
-</style>
-<style>
-    /* ── Stepper (GitBook-style) ──────────────────────── */
-    :root {
-        --gb-step-circle:    32px;
-        --gb-step-line-w:    2px;
-        --gb-step-color:     var(--theme-color, #42b983);
-        --gb-step-line-color: rgba(0,0,0,.12);
-        --gb-step-gap:       16px;
-    }
-    html.dark, body.dark, :root.dark {
-        --gb-step-line-color: rgba(255,255,255,.18);
-    }
-
-    .gb-stepper {
-        margin: 1.5rem 0;
-        padding: 0;
-    }
-
-    .gb-step {
-        display: flex;
-        gap: var(--gb-step-gap);
-        position: relative;
-    }
-
-    /* Left column: number circle + vertical line */
-    .gb-step-indicator {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        flex-shrink: 0;
-        width: var(--gb-step-circle);
-    }
-
-    .gb-step-number {
-        width: var(--gb-step-circle);
-        height: var(--gb-step-circle);
-        border-radius: 50%;
-        background: var(--gb-step-color);
-        color: #fff;
-        font-size: 14px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        line-height: 1;
-        z-index: 1;
-    }
-
-    .gb-step-line {
-        width: var(--gb-step-line-w);
-        flex: 1;
-        background: var(--gb-step-line-color);
-        min-height: 16px;
-        margin: 4px 0;
-    }
-
-    /* Right column: title + body */
-    .gb-step-content {
-        flex: 1;
-        min-width: 0;
-        padding-bottom: 1.5rem;
-    }
-
-    .gb-step:last-child .gb-step-content {
-        padding-bottom: 0;
-    }
-
-    .gb-step-title {
-        font-size: 1rem;
-        font-weight: 600;
-        line-height: var(--gb-step-circle);
-        margin: 0 0 0.5rem 0;
-        color: inherit;
-    }
-
-    .gb-step-body {
-        font-size: 0.95rem;
-        line-height: 1.6;
-    }
-
-    .gb-step-body > :first-child { margin-top: 0; }
-    .gb-step-body > :last-child  { margin-bottom: 0; }
-
-    .gb-step-body pre {
-        max-width: 100%;
-        overflow-x: auto;
-    }
-
-    /* ── Code Title Bar ──────────────────────────────── */
-    .gb-code-title {
-        background: #f0f0f0;
-        border: 1px solid #e0e0e0;
-        border-bottom: none;
-        border-radius: 6px 6px 0 0;
-        padding: 0.4rem 0.9rem;
-        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-        font-size: 0.82rem;
-        font-weight: 600;
-        color: #555;
-        margin-bottom: 0;
-        margin-top: 1rem;
-    }
-
-    .gb-code-title + pre,
-    .gb-code-title + p > code,
-    .gb-code-title + div > pre {
-        border-top-left-radius: 0 !important;
-        border-top-right-radius: 0 !important;
-        margin-top: 0 !important;
-    }
-
-    html.dark .gb-code-title,
-    body.dark .gb-code-title {
-        background: #1e1e1e;
-        border-color: #333;
-        color: #aaa;
-    }
-</style>
+    <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
     <div id="app"></div>
@@ -334,6 +23,9 @@
             repo: '',
             relativePath: true,
             loadSidebar: true,
+            tabs: {
+                sync: false
+            },
             alias: {
                 '/_sidebar.md': '/SUMMARY.md',
                 '/.*/_sidebar.md': '/SUMMARY.md',
@@ -381,11 +73,60 @@
             'flexible-alerts': {
                 style: 'flat',
                 note: { label: 'info' },
+                info: { label: 'info', icon: 'icon-note', className: 'note' },
                 warning: { label: 'warning' },
                 attention: { label: 'attention' },
-                success: { label: 'tip', icon: 'icon-tip', className: 'tip'},
+                danger: { label: 'danger', icon: 'icon-attention', className: 'attention' },
+                success: { label: 'tip', icon: 'icon-tip', className: 'tip' },
+                tip: { label: 'tip', icon: 'icon-tip', className: 'tip' },
+                important: { label: 'important', icon: 'icon-important', className: 'important' },
             },
             plugins: [
+                function mermaidReRenderPlugin(hook, vm) {
+                    function reRenderMermaid(container) {
+                        var nodes = container.querySelectorAll('.mermaid[data-mermaid-source]');
+                        var toRender = [];
+                        nodes.forEach(function(node) {
+                            var svg = node.querySelector('svg');
+                            var needsRender = !svg || svg.getBoundingClientRect().width === 0;
+                            if (needsRender) {
+                                node.textContent = node.getAttribute('data-mermaid-source');
+                                node.removeAttribute('data-processed');
+                                toRender.push(node);
+                            }
+                        });
+                        if (toRender.length > 0 && window.mermaid) {
+                            var config = Object.assign({}, window.$docsify.mermaidConfig || {});
+                            delete config.querySelector;
+                            config.nodes = toRender;
+                            window.mermaid.run(config);
+                        }
+                    }
+
+                    hook.doneEach(function() {
+                        // Listen for tab switches
+                        var content = document.querySelector('.content');
+                        if (content && !content._mermaidTabListener) {
+                            content._mermaidTabListener = true;
+                            content.addEventListener('click', function(e) {
+                                var tab = e.target.closest('.docsify-tabs__tab');
+                                if (!tab) return;
+                                setTimeout(function() { reRenderMermaid(content); }, 50);
+                            });
+                        }
+
+                        // Listen for details/expandable toggles
+                        document.querySelectorAll('details').forEach(function(el) {
+                            if (el._mermaidToggleListener) return;
+                            el._mermaidToggleListener = true;
+                            el.addEventListener('toggle', function() {
+                                if (el.open) {
+                                    setTimeout(function() { reRenderMermaid(el); }, 50);
+                                }
+                            });
+                        });
+                    });
+                },
                 function gbStepperPlugin(hook, vm) {
                     hook.afterEach(function (html) {
                         return html.replace(
@@ -440,7 +181,79 @@
     <script src="//cdn.jsdelivr.net/npm/d3@7"></script>
     <script type="module">
         import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
-        mermaid.initialize({ startOnLoad: true });
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                // Base palette (matches site dark theme)
+                background:        '#0f1115',
+                primaryColor:      '#1b2130',  // node fill
+                primaryTextColor:  '#e6e6e6',  // node text
+                primaryBorderColor:'#7c5cff',  // node border (accent)
+                secondaryColor:    '#222a3c',
+                tertiaryColor:     '#151923',
+
+                // Lines / arrows — must be light to read on dark bg
+                lineColor:         '#cbd5e1',
+                textColor:         '#e6e6e6',
+
+                // Flowchart nodes + subgraphs (graph TD / LR / TB)
+                mainBkg:           '#1b2130',  // node fill
+                nodeBorder:        '#7c5cff',
+                nodeTextColor:     '#e6e6e6',
+                clusterBkg:        '#151923',  // subgraph background (was yellow)
+                clusterBorder:     'rgba(124, 92, 255, 0.4)',
+                titleColor:        '#e6e6e6',  // subgraph title
+                defaultLinkColor:  '#cbd5e1',
+
+                // Sequence diagrams
+                actorBkg:           '#1b2130',
+                actorBorder:        '#7c5cff',
+                actorTextColor:     '#ffffff',
+                actorLineColor:     '#cbd5e1',  // vertical lifelines
+                signalColor:        '#cbd5e1',  // message arrows
+                signalTextColor:    '#ffffff',
+                labelBoxBkgColor:   '#222a3c',
+                labelBoxBorderColor:'#7c5cff',
+                labelTextColor:     '#ffffff',
+                loopTextColor:      '#ffffff',
+                noteBkgColor:       '#3a2e10',
+                noteBorderColor:    '#f59e0b',
+                noteTextColor:      '#ffffff',
+                activationBkgColor: '#2b3245',
+                activationBorderColor:'#7c5cff',
+
+                // State / class diagrams
+                edgeLabelBackground:    '#1b2130',
+                classText:              '#e6e6e6',
+                stateBkg:               '#1b2130',
+                stateLabelColor:        '#e6e6e6',
+                compositeBackground:    '#151923',
+                compositeBorder:        'rgba(124, 92, 255, 0.4)',
+                compositeTitleBackground:'#222a3c',
+                altBackground:          '#222a3c',
+                transitionColor:        '#cbd5e1',
+                transitionLabelColor:   '#e6e6e6',
+                specialStateColor:      '#7c5cff'
+            }
+        });
+
+        // Wrap mermaid.run to preserve source text before rendering.
+        // Mermaid replaces div content with SVG and marks data-processed,
+        // so we save the original code to enable re-rendering in hidden containers.
+        const originalRun = mermaid.run.bind(mermaid);
+        mermaid.run = async function(config) {
+            const nodes = config && config.nodes
+                ? config.nodes
+                : document.querySelectorAll((config && config.querySelector) || '.mermaid');
+            nodes.forEach(function(node) {
+                if (!node.getAttribute('data-mermaid-source') && node.textContent.trim()) {
+                    node.setAttribute('data-mermaid-source', node.textContent.trim());
+                }
+            });
+            return originalRun(config);
+        };
+
         window.mermaid = mermaid;
     </script>
     <script src="//unpkg.com/docsify-mermaid@2.0.1/dist/docsify-mermaid.js"></script>

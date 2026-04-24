@@ -1,0 +1,851 @@
+/* =========================================================
+   Outliyr Framework — Docsify theme
+   Dark-first, with light-mode fallback.
+   ========================================================= */
+
+:root {
+    --surface-0:    #0f1115;
+    --surface-1:    #151923;
+    --surface-2:    #1b2130;
+    --surface-3:    #222a3c;
+    --text-0:       #e6e6e6;
+    --text-muted:   #9aa3b2;
+    --text-dim:     #6b7280;
+    --accent:       #7c5cff;
+    --accent-hover: #9479ff;
+    --accent-weak:  rgba(124, 92, 255, 0.14);
+    --accent-rail:  rgba(124, 92, 255, 0.55);
+    --border:       rgba(255, 255, 255, 0.08);
+    --border-strong:rgba(255, 255, 255, 0.16);
+    --code-bg:      #151923;
+    --code-fg:      #f2f2f2;
+    --code-inline-bg: rgba(124, 92, 255, 0.12);
+    --code-inline-fg: #d9d2ff;
+    --radius-sm:    6px;
+    --radius-md:    10px;
+    --radius-lg:    14px;
+    --shadow-soft:  0 1px 2px rgba(0, 0, 0, 0.25), 0 4px 16px rgba(0, 0, 0, 0.18);
+    --font-sans:    "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --font-mono:    "JetBrains Mono", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+
+    /* Docsify variable overrides (vue/dark themes read these) */
+    --theme-color:       var(--accent);
+    --theme-color-dark:  var(--accent-hover);
+}
+
+/* Dark-first, always. We intentionally do NOT flip to light via
+   prefers-color-scheme — the project is designed as dark-first and a
+   light flip here caused body/sidebar rules using these tokens to
+   render the whole site as white on light-OS users. */
+
+/* =========================================================
+   Base surfaces + typography
+   ========================================================= */
+
+html, body {
+    background: var(--surface-0);
+    color: var(--text-0);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body, .markdown-section {
+    color: var(--text-0);
+}
+
+.markdown-section {
+    max-width: 860px;
+    line-height: 1.7;
+}
+
+.markdown-section h1,
+.markdown-section h2,
+.markdown-section h3,
+.markdown-section h4,
+.markdown-section h5,
+.markdown-section h6 {
+    color: var(--text-0);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.markdown-section h1 { font-size: 2.1rem; margin-top: 1.5rem; }
+.markdown-section h2 {
+    font-size: 1.55rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--border);
+    margin-top: 2.4rem;
+}
+.markdown-section h3 { font-size: 1.2rem; margin-top: 2rem; }
+
+.markdown-section p,
+.markdown-section li {
+    color: var(--text-0);
+}
+
+.markdown-section a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color .15s ease, color .15s ease;
+}
+.markdown-section a:hover {
+    color: var(--accent-hover);
+    border-bottom-color: var(--accent-hover);
+}
+
+.markdown-section blockquote {
+    background: var(--surface-1);
+    border-left: 3px solid var(--accent);
+    color: var(--text-muted);
+    padding: 0.8rem 1rem;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.markdown-section hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+}
+
+/* <mark> — GitBook authors use <mark style="color:red"> for emphasis.
+   Browser default is yellow background; on dark theme we want a subtle
+   tinted background that matches the inline text color. */
+.markdown-section mark {
+    background: rgba(255, 255, 255, 0.06);
+    color: inherit;
+    padding: 0.05em 0.3em;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.markdown-section mark[style*="color:red"],
+.markdown-section mark[style*="color: red"] {
+    background: rgba(248, 113, 113, 0.12);
+    border-color: rgba(248, 113, 113, 0.35);
+    color: #f87171 !important;
+}
+.markdown-section mark[style*="color:green"],
+.markdown-section mark[style*="color: green"] {
+    background: rgba(74, 222, 128, 0.12);
+    border-color: rgba(74, 222, 128, 0.35);
+    color: #4ade80 !important;
+}
+.markdown-section mark[style*="color:blue"],
+.markdown-section mark[style*="color: blue"] {
+    background: rgba(78, 168, 255, 0.12);
+    border-color: rgba(78, 168, 255, 0.35);
+    color: #4ea8ff !important;
+}
+.markdown-section mark[style*="color:orange"],
+.markdown-section mark[style*="color: orange"],
+.markdown-section mark[style*="color:yellow"],
+.markdown-section mark[style*="color: yellow"] {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.35);
+    color: #f59e0b !important;
+}
+.markdown-section mark h1, .markdown-section mark h2,
+.markdown-section mark h3, .markdown-section mark h4,
+.markdown-section mark h5, .markdown-section mark h6,
+.markdown-section h1 mark, .markdown-section h2 mark,
+.markdown-section h3 mark, .markdown-section h4 mark,
+.markdown-section h5 mark, .markdown-section h6 mark {
+    /* When used in headings, drop the pill styling so it reads as a heading */
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.markdown-section table {
+    border-collapse: collapse;
+    width: 100%;
+}
+.markdown-section table th,
+.markdown-section table td {
+    border: 1px solid var(--border);
+    padding: 0.6rem 0.8rem;
+}
+.markdown-section table th {
+    background: var(--surface-2);
+    color: var(--text-0);
+    font-weight: 600;
+}
+.markdown-section table tr:nth-child(2n) {
+    background: var(--surface-1);
+}
+
+/* =========================================================
+   Images: center divs that wrap a single image
+   ========================================================= */
+
+div:has(> img) {
+    display: block !important;
+    text-align: center !important;
+    margin: 1em auto;
+}
+
+.markdown-section img {
+    border-radius: var(--radius-md);
+    max-width: 100%;
+}
+
+/* =========================================================
+   Sidebar
+   ========================================================= */
+
+.sidebar {
+    background: var(--surface-1);
+    border-right: 1px solid var(--border);
+    padding: 1rem 0.75rem;
+    font-size: 14.5px;
+}
+
+.sidebar-toggle {
+    background: transparent;
+}
+.sidebar-toggle span {
+    background-color: var(--text-muted);
+}
+
+/* Wordmark — fixes "OutliyrFramework looks funny" */
+.sidebar .app-name {
+    margin: 0.25rem 0 1.25rem;
+    padding: 0 0.5rem;
+}
+.sidebar .app-name-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-sans);
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text-0) !important;
+    text-decoration: none;
+    line-height: 1.1;
+}
+.sidebar .app-name-link::before {
+    content: "";
+    display: inline-block;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: url("logo.png") center / cover no-repeat #000;
+    flex-shrink: 0;
+}
+
+/* Nav items */
+.sidebar ul li a {
+    padding: 0.45rem 0.7rem;
+    display: block;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    transition: background .15s ease, color .15s ease;
+}
+.sidebar ul li a:hover {
+    background: var(--surface-2);
+    color: var(--text-0);
+    text-decoration: none;
+}
+
+/* Section headers (collapsible group titles) */
+.sidebar ul li > p {
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.75rem 0.7rem 0.35rem;
+    margin: 0.75rem 0 0.25rem;
+    color: var(--text-dim);
+}
+
+/* Active page — accent pill with left rail */
+.sidebar ul li.active > a {
+    background: var(--accent-weak);
+    color: var(--text-0);
+    font-weight: 600;
+    box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* Tree caret alignment (carried over from original) */
+.sidebar-nav ul:not(.app-sub-sidebar) > li:not(.file)::before {
+    top: 19px;
+}
+.sidebar-nav ul:not(.app-sub-sidebar) > li.open::before {
+    top: 17px;
+}
+
+/* Search box */
+.sidebar .search {
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.75rem;
+}
+.sidebar .search input {
+    background: var(--surface-2);
+    color: var(--text-0);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.7rem;
+}
+.sidebar .search input::placeholder {
+    color: var(--text-dim);
+}
+.sidebar .search .results-panel {
+    color: var(--text-0);
+}
+.sidebar .search .matching-post {
+    border-bottom: 1px solid var(--border);
+}
+.sidebar .search .matching-post em {
+    color: var(--accent-hover);
+    font-style: normal;
+}
+
+/* Scrollbars inside sidebar */
+.sidebar::-webkit-scrollbar { width: 8px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb {
+    background: var(--surface-3);
+    border-radius: 8px;
+}
+
+/* =========================================================
+   Right-side Table of Contents (docsify-plugin-toc)
+   ---------------------------------------------------------
+   The plugin wraps the TOC in <aside class="toc-nav"> with its
+   own fixed positioning (right: 3%, width: 250px) and handles
+   responsive collapse below 1300px viewport. Do NOT override
+   position/width here — only restyle colors/typography using
+   the plugin's actual selectors (div.lv2…lv6, div.active, p.title).
+   ========================================================= */
+
+aside.toc-nav {
+    background: transparent;
+}
+
+.page_toc {
+    font-size: 0.85rem;
+    border-left: 1px solid var(--border);
+    padding-left: 0.9rem;
+}
+
+.page_toc p.title {
+    margin: 0 0 0.6rem;
+    padding: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+
+.page_toc div[class^="lv"] {
+    display: block;
+    padding: 0.25rem 0.5rem;
+    margin: 0.1rem 0;
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    line-height: 1.4;
+    border-left: 2px solid transparent;
+    transition: color .15s ease, border-color .15s ease, background .15s ease;
+    cursor: pointer;
+}
+.page_toc div[class^="lv"] a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: none;
+}
+.page_toc div[class^="lv"]:hover {
+    color: var(--text-0);
+    background: var(--surface-2);
+}
+.page_toc div.active {
+    color: var(--accent-hover);
+    border-left-color: var(--accent);
+    background: var(--accent-weak);
+}
+.page_toc div.active a {
+    color: var(--accent-hover);
+}
+
+.page_toc div.lv3 { padding-left: 1.25rem; font-size: 0.8rem; }
+.page_toc div.lv4 { padding-left: 2rem; font-size: 0.78rem; }
+.page_toc div.lv5,
+.page_toc div.lv6 { padding-left: 2.75rem; font-size: 0.76rem; }
+
+/* =========================================================
+   Code blocks + inline code
+   ========================================================= */
+
+.markdown-section pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.1rem;
+    box-shadow: var(--shadow-soft);
+    overflow-x: auto;
+}
+.markdown-section pre > code {
+    background: transparent;
+    color: var(--code-fg);
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    line-height: 1.6;
+    padding: 0;
+    text-shadow: none;
+}
+
+.markdown-section code {
+    background: var(--code-inline-bg);
+    color: var(--code-inline-fg);
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    font-weight: 500;
+    padding: 0.12em 0.4em;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+}
+.markdown-section a code {
+    color: var(--accent);
+}
+
+/* Prism token tweaks for readability */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata { color: #6b7280; font-style: italic; }
+.token.punctuation { color: #c5c8ce; }
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol { color: #f0a868; }
+.token.string,
+.token.char,
+.token.attr-value,
+.token.inserted { color: #a5e1ad; }
+.token.operator,
+.token.entity,
+.token.url { color: #9cdcfe; }
+.token.atrule,
+.token.keyword { color: #c792ea; }
+.token.function { color: #82aaff; }
+.token.regex,
+.token.important,
+.token.variable { color: #ffcb6b; }
+.token.selector,
+.token.attr-name { color: #f07178; }
+
+/* =========================================================
+   Flexible alerts (note / tip / warning / attention)
+   ========================================================= */
+
+/* =========================================================
+   Mermaid diagram overrides
+   Theme variables in index.html cover most cases, but subgraph
+   (cluster) rects and their labels sometimes need direct SVG
+   targeting to stay readable on dark backgrounds.
+   ========================================================= */
+
+.mermaid .cluster rect,
+.mermaid g.cluster > rect {
+    fill: #151923 !important;
+    stroke: rgba(124, 92, 255, 0.4) !important;
+    stroke-width: 1px !important;
+}
+
+.mermaid .cluster text,
+.mermaid .cluster .nodeLabel,
+.mermaid .cluster-label text,
+.mermaid .cluster-label .nodeLabel,
+.mermaid .cluster-label foreignObject span,
+.mermaid .cluster-label foreignObject div,
+.mermaid .cluster-label foreignObject p {
+    fill: #e6e6e6 !important;
+    color: #e6e6e6 !important;
+}
+
+/* Edge labels — readable chip over arrows */
+.mermaid .edgeLabel,
+.mermaid .edgeLabel rect,
+.mermaid .edgeLabel foreignObject div,
+.mermaid .edgeLabel foreignObject span {
+    background-color: #1b2130 !important;
+    color: #e6e6e6 !important;
+    fill: #e6e6e6 !important;
+}
+
+/* =========================================================
+   Flexible alerts overrides
+   The plugin injects its CSS via JS after this file loads,
+   so !important is required on rules that compete with variant
+   selectors (.alert.flat.note, .alert.flat.warning, etc.).
+   ========================================================= */
+
+.alert.flat {
+    border-radius: var(--radius-md) !important;
+    border: 1px solid var(--border) !important;
+    border-left-width: 4px !important;
+    padding: 0.85rem 1rem !important;
+    color: var(--text-0) !important;
+    background-color: var(--surface-1) !important;
+}
+
+/* Force readable body text inside alerts — covers all descendants
+   except the colored title (styled separately below) */
+.alert.flat,
+.alert.flat p,
+.alert.flat li,
+.alert.flat strong,
+.alert.flat em,
+.alert.flat blockquote,
+.alert.flat span:not(.icon) {
+    color: var(--text-0) !important;
+}
+
+/* Per-variant: bright left-border + subtly tinted dark background.
+   Using rgba over surface-1 avoids reliance on color-mix() support. */
+.alert.flat.note {
+    border-left-color: #4ea8ff !important;
+    background-color: #15202f !important;
+}
+.alert.flat.tip {
+    border-left-color: #4ade80 !important;
+    background-color: #142620 !important;
+}
+.alert.flat.warning {
+    border-left-color: #f59e0b !important;
+    background-color: #2a1f12 !important;
+}
+.alert.flat.attention {
+    border-left-color: #f87171 !important;
+    background-color: #2a1818 !important;
+}
+.alert.flat.important {
+    border-left-color: #a78bfa !important;
+    background-color: #1e1a33 !important;
+}
+
+/* Title row (the "Info"/"Warning" label) — keep the accent color
+   but bright enough to read on the dark tinted background */
+.alert.flat .title {
+    color: var(--text-0) !important;
+    font-weight: 700 !important;
+}
+.alert.flat.note    .title { color: #7cc1ff !important; }
+.alert.flat.tip     .title { color: #6ee7a3 !important; }
+.alert.flat.warning .title { color: #fbbf4f !important; }
+.alert.flat.attention .title { color: #fca5a5 !important; }
+.alert.flat.important .title { color: #c4b5fd !important; }
+
+/* Links inside alerts */
+.alert.flat a {
+    text-decoration: underline;
+    font-weight: 600;
+    border-bottom: none;
+}
+.alert.flat.note a      { color: #7cc1ff !important; }
+.alert.flat.tip a       { color: #6ee7a3 !important; }
+.alert.flat.warning a   { color: #fbbf4f !important; }
+.alert.flat.attention a { color: #fca5a5 !important; }
+.alert.flat.important a { color: #c4b5fd !important; }
+
+.alert.flat a:hover {
+    text-decoration: none;
+    opacity: 0.85;
+}
+
+/* Inline code inside alerts */
+.alert.flat code {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: var(--code-fg) !important;
+}
+
+/* =========================================================
+   GitBook-style expandables (.gb-stack, .gb-toggle)
+   ========================================================= */
+
+:root {
+    --gb-border:     var(--border);
+    --gb-open-bg:    var(--surface-1);
+    --gb-accent:     var(--accent);
+    --gb-radius:     12px;
+    --gb-hiw:        1px;
+}
+
+.gb-stack {
+    border: 1px solid var(--gb-border);
+    border-radius: var(--gb-radius);
+    overflow: hidden;
+    background: var(--gb-open-bg);
+    margin: 1rem 0;
+}
+
+.gb-stack > .gb-toggle:first-child {
+    border-top-left-radius: var(--gb-radius);
+    border-top-right-radius: var(--gb-radius);
+}
+.gb-stack > .gb-toggle:last-child {
+    border-bottom-left-radius: var(--gb-radius);
+    border-bottom-right-radius: var(--gb-radius);
+}
+
+.gb-stack > .gb-toggle + .gb-toggle {
+    border-top: 1px solid var(--gb-border);
+}
+
+.gb-stack > .gb-toggle {
+    margin: 0;
+    border: 0;
+    background: transparent;
+    border-radius: 0;
+    transition: background .15s ease, box-shadow .15s ease;
+    display: flow-root;
+}
+
+.gb-stack > .gb-toggle[open] {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.gb-toggle:not(.gb-stack > .gb-toggle) {
+    border: 1px solid var(--gb-border);
+    border-radius: var(--gb-radius);
+    margin: 1rem 0;
+    overflow: hidden;
+    background: var(--surface-1);
+}
+.gb-toggle :last-child { margin-bottom: 0; }
+.gb-toggle > :not(summary):last-child { padding-bottom: 1rem; }
+
+.gb-stack > .gb-toggle:hover,
+.gb-stack > .gb-toggle:focus-within {
+    box-shadow: inset 0 0 0 var(--gb-hiw) var(--gb-accent) !important;
+}
+
+.gb-toggle > summary {
+    list-style: none;
+    cursor: pointer;
+    outline: none;
+    padding: 0.85rem 1rem;
+    min-height: 2.75rem;
+    font-weight: 700;
+    font-size: 0.98rem;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    border-radius: inherit;
+    transition: background .15s ease, color .15s ease;
+    color: var(--text-0);
+    background: rgba(255, 255, 255, 0.02);
+}
+.gb-toggle[open] > summary {
+    color: var(--accent-hover);
+    background: rgba(124, 92, 255, 0.06);
+}
+.gb-toggle > summary:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+.gb-toggle > summary::-webkit-details-marker { display: none; }
+.gb-toggle > summary::before {
+    content: "";
+    width: .5rem;
+    height: .5rem;
+    border-right: 2px solid var(--accent);
+    border-bottom: 2px solid var(--accent);
+    transform: rotate(-45deg);
+    transition: transform .25s cubic-bezier(.4, 0, .2, 1);
+    opacity: .9;
+    flex-shrink: 0;
+}
+.gb-toggle[open] > summary::before {
+    transform: rotate(45deg);
+    border-right-color: var(--accent-hover);
+    border-bottom-color: var(--accent-hover);
+    opacity: 1;
+}
+
+.gb-toggle > *:not(summary) {
+    padding: 0 1rem 1rem 2rem;
+    animation: gb-slide-down .2s ease;
+}
+.gb-toggle > summary + * { margin-top: .6rem; }
+
+@keyframes gb-slide-down {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.gb-toggle > summary[data-variant="example"] { color: #4ade80; }
+.gb-toggle > summary[data-variant="warning"] { color: #f59e0b; }
+.gb-toggle > summary[data-variant="info"]    { color: #4ea8ff; }
+
+@media (prefers-reduced-motion: reduce) {
+    .gb-toggle > *:not(summary) { animation: none; }
+    .gb-toggle > summary::before { transition: none; }
+}
+
+/* =========================================================
+   Stepper (gb-stepper)
+   ========================================================= */
+
+:root {
+    --gb-step-circle:     32px;
+    --gb-step-line-w:     2px;
+    --gb-step-color:      var(--accent);
+    --gb-step-line-color: var(--border-strong);
+    --gb-step-gap:        16px;
+}
+
+.gb-stepper {
+    margin: 1.5rem 0;
+    padding: 0;
+}
+
+.gb-step {
+    display: flex;
+    gap: var(--gb-step-gap);
+    position: relative;
+}
+
+.gb-step-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: var(--gb-step-circle);
+}
+
+.gb-step-number {
+    width: var(--gb-step-circle);
+    height: var(--gb-step-circle);
+    border-radius: 50%;
+    background: var(--gb-step-color);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+    z-index: 1;
+}
+
+.gb-step-line {
+    width: var(--gb-step-line-w);
+    flex: 1;
+    background: var(--gb-step-line-color);
+    min-height: 16px;
+    margin: 4px 0;
+}
+
+.gb-step-content {
+    flex: 1;
+    min-width: 0;
+    padding-bottom: 1.5rem;
+}
+
+.gb-step:last-child .gb-step-content {
+    padding-bottom: 0;
+}
+
+.gb-step-title {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: var(--gb-step-circle);
+    margin: 0 0 0.5rem 0;
+    color: var(--text-0);
+}
+
+.gb-step-body {
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.gb-step-body > :first-child { margin-top: 0; }
+.gb-step-body > :last-child  { margin-bottom: 0; }
+
+.gb-step-body pre {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+/* =========================================================
+   Code title bar (.gb-code-title)
+   ========================================================= */
+
+.gb-code-title {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    padding: 0.45rem 0.95rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0;
+    margin-top: 1rem;
+}
+
+.gb-code-title + pre,
+.gb-code-title + p > code,
+.gb-code-title + div > pre {
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* =========================================================
+   Breadcrumb + pagination
+   ========================================================= */
+
+.docsify-breadcrumb,
+.docsify-breadcrumb a {
+    color: var(--text-muted);
+}
+.docsify-breadcrumb a:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+}
+
+.docsify-pagination-container {
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+    padding-top: 1rem;
+}
+.pagination-item a {
+    color: var(--text-0) !important;
+    border-bottom: none !important;
+}
+.pagination-item-title {
+    color: var(--text-muted) !important;
+}
+.pagination-item:hover .pagination-item-title {
+    color: var(--accent-hover) !important;
+}
+
+/* =========================================================
+   Tabs (docsify-tabs)
+   ========================================================= */
+
+.docsify-tabs__tab {
+    background: transparent;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+}
+.docsify-tabs__tab:hover {
+    color: var(--text-0);
+}
+.docsify-tabs__tab--active {
+    color: var(--accent-hover) !important;
+    border-bottom-color: var(--accent) !important;
+    background: transparent !important;
+}
+.docsify-tabs__content {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
+}
