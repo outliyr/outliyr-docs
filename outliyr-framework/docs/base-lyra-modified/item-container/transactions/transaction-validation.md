@@ -459,6 +459,118 @@ If `QuantityToRemove` is specified, it must not exceed the stack count. Partial 
 
 ***
 
+## Rejection Feedback
+
+When validation or apply fails, the transaction carries back both a human-readable message and a structured `FGameplayTag` that the UI can branch on. This avoids parsing localised strings at the UI layer and lets plugins extend the rejection vocabulary without touching core.
+
+### `FItemRejectionReason`
+
+Every validator takes an `FItemRejectionReason& OutRejection` parameter. The struct holds two fields:
+
+```cpp
+USTRUCT(BlueprintType)
+struct FItemRejectionReason
+{
+    FGameplayTag Reason;   // Lyra.Item.Reject.* — used for UI branching
+    FText Message;         // Player-facing display text
+};
+```
+
+Two setter conventions cover the player-facing and developer-facing cases:
+
+* `Set(Tag, Message)` — for rejections the player can understand and react to, such as missing permission, slot occupied, or container full. The message is purpose-written for display.
+* `SetDev(Tag)` — for rejections the player should never see, such as null world, stale handle, or malformed op payload. `Message` is set to the generic `"Action couldn't complete"`, and the technical detail is emitted via `UE_LOG(LogItemContainerPrediction, Warning, ...)` at the call site.
+
+### Flow from validator to UI
+
+A rejection propagates through four layers:
+
+{% stepper %}
+{% step %}
+**Validator sets the rejection**
+
+Each `Validate`, `ValidateTyped`, `Apply`, `ApplyTyped`, `CanAcceptItem`, `CanRemoveItem`, `CanAddItemToContainer`, and `CombineItems` method populates `OutRejection` before returning false.
+{% endstep %}
+
+{% step %}
+**Handler returns up the stack**
+
+The transaction op handler returns false with the populated rejection; the transaction ability's `ExecuteTransaction` catches it and holds both fields on the stack.
+{% endstep %}
+
+{% step %}
+**Ability broadcasts the gameplay message**
+
+`BroadcastTransactionResult` forwards both `RejectReason` and `ErrorMessage` into `FItemTransactionResultMessage` and sends it on the `Lyra.Item.Message.TransactionResult` gameplay message channel.
+{% endstep %}
+
+{% step %}
+**UI receives and branches**
+
+Widgets subscribe to the gameplay message directly for the categories they care about. A crafting widget watches `Lyra.Item.Reject.Craft.*`; a tetris grid watches `Lyra.Item.Reject.Layout.*`. See [Interaction & Transactions](../../ui/item-container-ui-system/interaction-and-transactions/) for subscription snippets.
+{% endstep %}
+{% endstepper %}
+
+#### Tag hierarchy
+
+Tags live under `Lyra.Item.Reject.*` and are grouped by category. Leaf tags identify specific reasons; parent tags are used by UI listeners for broad category matching.
+
+<details>
+
+<summary>Base categories, declared in <code>LyraItemRejectionTags.h</code></summary>
+
+| Category       | Examples                                                                                                                         | When it fires                                             |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `Op.*`         | `InvalidStruct`, `UnknownType`, `InvalidMode`, `InvalidDelta`, `InvalidAmount`                                                   | Malformed operation payload. Dev-camp.                    |
+| `Slot.*`       | `Invalid`, `Empty`, `Occupied`, `OutOfBounds`, `Inaccessible`                                                                    | Slot descriptor malformed or target slot in wrong state.  |
+| `Container.*`  | `NotFound`, `Full`, `CannotAccept`, `AddFailed`, `RemoveFailed`, `SwapFailed`                                                    | Container could not be resolved or refused the operation. |
+| `Item.*`       | `Invalid`, `NotFound`, `MissingDefinition`, `RemovalBlocked`, `CreationFailed`, `DuplicationFailed`, `CombineFailed`, `Mismatch` | Item instance state or identity problem.                  |
+| `Stack.*`      | `Insufficient`, `Full`, `InvalidAmount`, `TooLarge`                                                                              | Stack count constraints.                                  |
+| `Permission.*` | `PutIn`, `TakeOut`, `Move`, `ModifyStack`, `Hold`, `ReadOnly`                                                                    | Caller lacks a permission flag.                           |
+| `Capacity.*`   | `WeightExceeded`, `ItemCountExceeded`, `NoSpaceForCombineResult`                                                                 | Container weight or count limit.                          |
+| `Pickup.*`     | `NotFound`, `NoTemplate`, `NotPickupable`                                                                                        | World-pickup source errors.                               |
+| `System.*`     | `NoWorld`, `NoSubsystem`                                                                                                         | Engine preconditions. Dev-camp.                           |
+| `Prediction.*` | `MissingGUID`, `ReconciliationFailed`                                                                                            | Client-prediction reconciliation. Dev-camp.               |
+| `Validation.*` | `InvalidSlotData`, `WrongContainer`                                                                                              | Internal routing. Dev-camp.                               |
+
+</details>
+
+<details>
+
+<summary>Tetris plugin categories, declared in <code>TetrisInventoryRejectionTags.h</code></summary>
+
+| Category    | Examples                                                        | When it fires                            |
+| ----------- | --------------------------------------------------------------- | ---------------------------------------- |
+| `Layout.*`  | `CellOccupied`, `OutOfBounds`, `InvalidSlot`, `InvalidRotation` | Grid-geometry rejections.                |
+| `Shape.*`   | `InvalidFit`, `Empty`, `NoFit`                                  | Item shape does not fit.                 |
+| `Nesting.*` | `Cycle`, `TooDeep`                                              | Parent-child container hierarchy guards. |
+| `Craft.*`   | `InvalidItem`, `InsufficientQuantity`                           | Recipe combine constraints.              |
+
+</details>
+
+### Extending the hierarchy
+
+Plugins declare additional tags under the same `Lyra.Item.Reject.*` namespace in their own native tag headers. No core change is required, UI listeners that match on a category parent tag automatically pick up plugin leaves.
+
+```cpp
+// In your plugin's native tag header
+YOURMODULE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Reject_MyFeature_CustomRule);
+
+// And in the accompanying cpp
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Reject_MyFeature_CustomRule,
+    "Lyra.Item.Reject.MyFeature.CustomRule", "Description for the editor.");
+```
+
+Emit the tag from any validator:
+
+```cpp
+OutRejection.Set(Reject_MyFeature_CustomRule,
+    LOCTEXT("MyRuleFailed", "Short player message"));
+return false;
+```
+
+***
+
 ## Containers Without Permissions
 
 Not all containers use permissions. The slot descriptor's `HasPermission` defaults to allowing operations:

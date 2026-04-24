@@ -58,6 +58,67 @@ The backbone of server-authoritative, predicted item manipulation. This GAS abil
 
 ***
 
+## Rejection Feedback
+
+Transactions report back via the `Lyra.Item.Message.TransactionResult` gameplay message. The payload is an `FItemTransactionResultMessage` carrying a player-facing `FText ErrorMessage` and a structured `FGameplayTag RejectReason` drawn from the `Lyra.Item.Reject.*` hierarchy. Widgets listen directly for the scope they care about; no shared listener class is needed.
+
+The tag hierarchy and emission flow are documented in the backend [Transaction Validation](../../../item-container/transactions/transaction-validation.md) page.
+
+### Default pattern: show the message
+
+The simplest response is to display the player-facing text whenever a rejection arrives. `ErrorMessage` is already written for the player, and dev-camp rejections fall back to a generic "Action couldn't complete" string, safe to show in every case.
+
+```cpp
+void UMyInventoryWidget::NativeConstruct()
+{
+    Super::NativeConstruct();
+
+    UGameplayMessageSubsystem::Get(this).RegisterListener<FItemTransactionResultMessage>(
+        TAG_Lyra_Item_Message_TransactionResult,
+        [WeakSelf = TWeakObjectPtr<UMyInventoryWidget>(this)]
+        (FGameplayTag, const FItemTransactionResultMessage& Msg)
+        {
+            if (UMyInventoryWidget* Self = WeakSelf.Get();
+                Self && Msg.Result != EItemTransactionResult::Success && !Msg.ErrorMessage.IsEmpty())
+            {
+                Self->ShowToast(Msg.ErrorMessage);
+            }
+        });
+}
+```
+
+### Branching on RejectReason
+
+For richer UX, match on parent tags from the hierarchy. This keeps per-widget logic scoped to the categories the widget is responsible for, a crafting widget watches `Lyra.Item.Reject.Craft.*`; a tetris grid watches `Lyra.Item.Reject.Layout.*`; a permissions toast watches `Lyra.Item.Reject.Permission.*`. Widgets ignore tags outside their concern.
+
+```cpp
+static const FGameplayTag TAG_RejectLayout =
+    FGameplayTag::RequestGameplayTag(TEXT("Lyra.Item.Reject.Layout"));
+static const FGameplayTag TAG_RejectPermission =
+    FGameplayTag::RequestGameplayTag(TEXT("Lyra.Item.Reject.Permission"));
+
+if (Msg.RejectReason.MatchesTag(TAG_RejectLayout))
+{
+    ShakeTargetCell();
+}
+else if (Msg.RejectReason.MatchesTag(TAG_RejectPermission))
+{
+    PlayDeniedSound();
+}
+```
+
+`MatchesTag` returns true for any leaf under the parent, so matching on `Lyra.Item.Reject.Layout` catches `Layout.CellOccupied`, `Layout.OutOfBounds`, `Layout.InvalidSlot`, and any future additions.
+
+### Scope per widget, not a shared dispatcher
+
+Each widget subscribes for the categories it owns. There is deliberately no central dispatcher class, because rejection categories live in different modules: `Layout`, `Shape`, `Nesting`, and `Craft` are declared by the Tetris plugin, while `Permission`, `Container`, `Stack`, and `Capacity` live in base. A plugin introducing a new category declares its tags under `Lyra.Item.Reject.*` and any widget interested in that scope subscribes directly, base UI stays unaware.
+
+### Blueprint listeners
+
+`FItemTransactionResultMessage` is a `BlueprintType`, so Blueprints register for the same channel via the **Listen For Gameplay Messages** node. The struct exposes `Result`, `ErrorMessage`, `RejectReason`, `ClientRequestId`, and `Instigator` as `BlueprintReadOnly`, and `RejectReason` is a regular `FGameplayTag`
+
+***
+
 ## In This Section
 
 We will break down the intricate details of each part of this pipeline:
