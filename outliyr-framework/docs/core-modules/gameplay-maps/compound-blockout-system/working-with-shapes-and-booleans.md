@@ -41,14 +41,14 @@ Here is a conceptual diagram of that process:
 ```mermaid
 graph TD
     subgraph "Step 1: Combine Solids"
-        style Solid fill:#272,stroke:#fff,color:#fff
+        style Solid fill:#0e2e1c,stroke:#4ade80,color:#e6e6e6
         A1["Shape A (Add)"]
         A2["Shape B (Add)"]
         A1 & A2 --> Solid(Combined Solid Volume)
     end
 
     subgraph "Step 2: Combine Cutters"
-        style Cutter fill:#722,stroke:#fff,color:#fff
+        style Cutter fill:#3a1717,stroke:#f87171,color:#e6e6e6
         S1["Shape C (Subtract)"]
         S2["Shape D (Subtract)"]
         S1 & S2 --> Cutter(Combined Cutting Tool)

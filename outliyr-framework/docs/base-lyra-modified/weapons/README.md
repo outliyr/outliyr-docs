@@ -110,11 +110,11 @@ graph LR
     WeaponInstance -- Tick --> RangedLogic["Spread/Heat Update"]
 
     %% Styling
-    style WeaponInstance fill:#ddf,stroke:#333,stroke-width:2px
-    style WeaponStateComp fill:#ccf,stroke:#333,stroke-width:2px
-    style Ability fill:#f9d,stroke:#333,stroke-width:2px
-    style ItemDef fill:#dfd,stroke:#333,stroke-width:2px
-    style EquipDef fill:#dfd,stroke:#333,stroke-width:1px
+    style WeaponInstance fill:#0e2439,stroke:#4ea8ff,stroke-width:2px,color:#e6e6e6
+    style WeaponStateComp fill:#0e2439,stroke:#4ea8ff,stroke-width:2px,color:#e6e6e6
+    style Ability fill:#221a3d,stroke:#7c5cff,stroke-width:2px,color:#e6e6e6
+    style ItemDef fill:#0e2e1c,stroke:#4ade80,stroke-width:2px,color:#e6e6e6
+    style EquipDef fill:#0e2e1c,stroke:#4ade80,stroke-width:1px,color:#e6e6e6
 ```
 
 ## Structure of this Section

@@ -75,7 +75,7 @@ graph TB
     PouchInv -.->|"OwningContainerItem"| PouchItem
 
     %% Styling to make it readable
-    classDef container fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef container fill:#221a3d,stroke:#7c5cff,stroke-width:2px,color:#e6e6e6;
     class PlayerInv,BackpackInv,PouchInv container;
 ```
 

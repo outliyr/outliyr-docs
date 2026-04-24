@@ -55,13 +55,12 @@ graph TD
     %% FinalView is outside subgraphs so it can be used globally
     FinalView -->|Applied by| CamComp
 
-    style Pawn fill:#f9f,stroke:#333,stroke-width:2px
-    style CamComp fill:#9cf,stroke:#333,stroke-width:2px
-    style CamStack fill:#ccf,stroke:#333,stroke-width:2px
-    style ModeA fill:#ff9,stroke:#333,stroke-width:1px
-    style ModeB fill:#ff9,stroke:#333,stroke-width:1px
-    style ModeC fill:#ff9,stroke:#333,stroke-width:1px
-
+    style Pawn fill:#221a3d,stroke:#7c5cff,stroke-width:2px,color:#e6e6e6
+    style CamComp fill:#0e2439,stroke:#4ea8ff,stroke-width:2px,color:#e6e6e6
+    style CamStack fill:#0e2439,stroke:#4ea8ff,stroke-width:2px,color:#e6e6e6
+    style ModeA fill:#3a2810,stroke:#f59e0b,stroke-width:1px,color:#e6e6e6
+    style ModeB fill:#3a2810,stroke:#f59e0b,stroke-width:1px,color:#e6e6e6
+    style ModeC fill:#3a2810,stroke:#f59e0b,stroke-width:1px,color:#e6e6e6
 ```
 
 

@@ -50,9 +50,9 @@ graph TD
          E -- Gathers Tags & Updates --> I(Pawn's Base Mesh / AnimBP);
     end
 
-    style C fill:#ccf,stroke:#333,stroke-width:1px
-    style E fill:#f9f,stroke:#333,stroke-width:1px
-    style F fill:#9cf,stroke:#333,stroke-width:1px,stroke-dasharray: 5 5
+    style C fill:#0e2439,stroke:#4ea8ff,stroke-width:1px,color:#e6e6e6
+    style E fill:#221a3d,stroke:#7c5cff,stroke-width:1px,color:#e6e6e6
+    style F fill:#0e2439,stroke:#4ea8ff,stroke-width:1px,color:#e6e6e6,stroke-dasharray: 5 5
 ```
 
 **Flow Explanation:**

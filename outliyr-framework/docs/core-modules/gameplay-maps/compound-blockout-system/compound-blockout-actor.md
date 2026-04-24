@@ -42,9 +42,9 @@ graph TD
     C -- "contains a link to" --> B;
     C -- "<b>3. REVISE</b><br>(Right-click the Static Mesh,<br><i>'Convert to Blockout Actor'</i>)" --> A;
 
-    style A fill:#445,stroke:#fff,stroke-width:2px,color:#fff
-    style B fill:#264,stroke:#fff,stroke-width:2px,color:#fff
-    style C fill:#046,stroke:#fff,stroke-width:2px,color:#fff
+    style A fill:#221a3d,stroke:#7c5cff,stroke-width:2px,color:#e6e6e6
+    style B fill:#0e2e1c,stroke:#4ade80,stroke-width:2px,color:#e6e6e6
+    style C fill:#0e2439,stroke:#4ea8ff,stroke-width:2px,color:#e6e6e6
 ```
 
 **Step 1: Design**

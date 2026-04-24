@@ -64,9 +64,9 @@ graph TD
 
     TeamDisplayAsset -- Applies Visuals To --> MaterialsVFX["Materials / VFX"]
 
-    style TeamSubsystem fill:#ccf,stroke:#333,stroke-width:2px
-    style TeamInfo fill:#ddf,stroke:#333,stroke-width:2px
-    style TeamDisplayAsset fill:#dfd,stroke:#333,stroke-width:2px
+    style TeamSubsystem fill:#221a3d,stroke:#7c5cff,stroke-width:2px,color:#e6e6e6
+    style TeamInfo fill:#0e2439,stroke:#4ea8ff,stroke-width:2px,color:#e6e6e6
+    style TeamDisplayAsset fill:#0e2e1c,stroke:#4ade80,stroke-width:2px,color:#e6e6e6
 ```
 
 **Explanation:**

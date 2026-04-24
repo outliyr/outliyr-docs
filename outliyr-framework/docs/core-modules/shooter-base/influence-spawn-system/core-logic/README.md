@@ -80,17 +80,17 @@ graph TD
     end
 
     subgraph "Spawn Point A (Score: -250)"
-        style Spawn_A fill:#f99,stroke:#333,stroke-width:2px
+        style Spawn_A fill:#3a1717,stroke:#f87171,stroke-width:2px,color:#e6e6e6
         Spawn_A("Spawn Point A")
     end
 
     subgraph "Spawn Point B (Score: +80)"
-        style Spawn_B fill:#9f9,stroke:#333,stroke-width:2px
+        style Spawn_B fill:#0e2e1c,stroke:#4ade80,stroke-width:2px,color:#e6e6e6
         Spawn_B("Spawn Point B")
     end
 
     subgraph "Spawn Point C (Score: -40)"
-        style Spawn_C fill:#f99,stroke:#333,stroke-width:2px
+        style Spawn_C fill:#3a1717,stroke:#f87171,stroke-width:2px,color:#e6e6e6
         Spawn_C("Spawn Point C")
     end
 
@@ -109,7 +109,7 @@ graph TD
     FinalChoice{Select Highest Score}
     Spawn_B --> FinalChoice
     FinalChoice --"SELECTED"--> Final_B(Spawn at B)
-    style Final_B fill:#9f9,stroke:#333,stroke-width:4px
+    style Final_B fill:#0e2e1c,stroke:#4ade80,stroke-width:4px,color:#e6e6e6
 
     classDef default fill:#fff,stroke:#333,stroke-width:2px;
 ```

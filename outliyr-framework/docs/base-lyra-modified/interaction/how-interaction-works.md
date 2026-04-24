@@ -172,8 +172,8 @@ flowchart TD
     H1 --> I["Gameplay Logic Executes"]
     H2 --> I
 
-    style A fill:#f9f,stroke:#333,stroke-width:1px
-    style Detection fill:#eee,stroke:#aaa,stroke-width:1px
+    style A fill:#221a3d,stroke:#7c5cff,stroke-width:1px,color:#e6e6e6
+    style Detection fill:#1b2130,stroke:#6b7280,stroke-width:1px,color:#9aa3b2
 
 ```
 

@@ -75,7 +75,7 @@ graph TD
     E --> F[Window: Detailed Tooltip]
     D --> G[Window: Backpack Inventory Grid]
     
-    style B fill:#f96,stroke:#333,stroke-width:2px
+    style B fill:#3a2810,stroke:#f59e0b,stroke-width:2px,color:#e6e6e6
     Note[If Chest Session closes, everything below it vanishes]
 ```
 

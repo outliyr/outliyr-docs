@@ -102,17 +102,17 @@ graph TD
     K --> F
 
     %% Styling to emphasize layers and standalone nature
-    style A fill:#A9CCE3,stroke:#1A5276,stroke-width:3px,color:#1A5276
-    style B fill:#A9CCE3,stroke:#1A5276,stroke-width:3px,color:#1A5276
-    style C fill:#D6EAF8,stroke:#2471A3,stroke-width:2px
-    style D fill:#D6EAF8,stroke:#2471A3,stroke-width:2px
-    style E fill:#D6EAF8,stroke:#2471A3,stroke-width:2px
-    style F fill:#D6EAF8,stroke:#2471A3,stroke-width:2px
-    style G fill:#E8F6F3,stroke:#1D8348,stroke-width:2px
-    style H fill:#E8F6F3,stroke:#1D8348,stroke-width:2px
-    style I fill:#E8F6F3,stroke:#1D8348,stroke-width:2px
-    style J fill:#E8F6F3,stroke:#1D8348,stroke-width:2px
-    style K fill:#E8F6F3,stroke:#1D8348,stroke-width:2px
+    style A fill:#221a3d,stroke:#7c5cff,stroke-width:3px,color:#e6e6e6
+    style B fill:#221a3d,stroke:#7c5cff,stroke-width:3px,color:#e6e6e6
+    style C fill:#0e2439,stroke:#4ea8ff,stroke-width:2px,color:#e6e6e6
+    style D fill:#0e2439,stroke:#4ea8ff,stroke-width:2px,color:#e6e6e6
+    style E fill:#0e2439,stroke:#4ea8ff,stroke-width:2px,color:#e6e6e6
+    style F fill:#0e2439,stroke:#4ea8ff,stroke-width:2px,color:#e6e6e6
+    style G fill:#0e2e1c,stroke:#4ade80,stroke-width:2px,color:#e6e6e6
+    style H fill:#0e2e1c,stroke:#4ade80,stroke-width:2px,color:#e6e6e6
+    style I fill:#0e2e1c,stroke:#4ade80,stroke-width:2px,color:#e6e6e6
+    style J fill:#0e2e1c,stroke:#4ade80,stroke-width:2px,color:#e6e6e6
+    style K fill:#0e2e1c,stroke:#4ade80,stroke-width:2px,color:#e6e6e6
 
 ```
 

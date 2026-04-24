@@ -57,10 +57,10 @@ graph TD
     Manager -- "Applies Effects Based on" --> EquipDef;
     EquipInstance -- "Receives Lifecycle Events" --> Manager;
 
-    style ASC fill:#f9d,stroke:#333,stroke-width:2px
-    style Manager fill:#ccf,stroke:#333,stroke-width:2px
-    style EquipDef fill:#dfd,stroke:#333,stroke-width:2px
-    style EquipInstance fill:#ddf,stroke:#333,stroke-width:2px
+    style ASC fill:#221a3d,stroke:#7c5cff,stroke-width:2px,color:#e6e6e6
+    style Manager fill:#0e2439,stroke:#4ea8ff,stroke-width:2px,color:#e6e6e6
+    style EquipDef fill:#0e2e1c,stroke:#4ade80,stroke-width:2px,color:#e6e6e6
+    style EquipInstance fill:#0e2439,stroke:#4ea8ff,stroke-width:2px,color:#e6e6e6
 ```
 
 ### Dependencies
