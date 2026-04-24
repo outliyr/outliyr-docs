@@ -15,6 +15,9 @@
     --accent-hover: #9479ff;
     --accent-weak:  rgba(124, 92, 255, 0.14);
     --accent-rail:  rgba(124, 92, 255, 0.55);
+    --link:         #b3a0ff;
+    --link-hover:   #d4c8ff;
+    --link-underline: rgba(179, 160, 255, 0.45);
     --border:       rgba(255, 255, 255, 0.08);
     --border-strong:rgba(255, 255, 255, 0.16);
     --code-bg:      #151923;
@@ -85,14 +88,14 @@ body, .markdown-section {
 }
 
 .markdown-section a {
-    color: var(--accent);
+    color: var(--link);
     text-decoration: none;
-    border-bottom: 1px solid transparent;
+    border-bottom: 1px solid var(--link-underline);
     transition: border-color .15s ease, color .15s ease;
 }
 .markdown-section a:hover {
-    color: var(--accent-hover);
-    border-bottom-color: var(--accent-hover);
+    color: var(--link-hover);
+    border-bottom-color: var(--link-hover);
 }
 
 .markdown-section blockquote {
@@ -188,6 +191,12 @@ div:has(> img) {
 .markdown-section img {
     border-radius: var(--radius-md);
     max-width: 100%;
+}
+
+/* medium-zoom overlay (used by docsify zoom-image plugin) — dark theme
+   instead of the default white flash. */
+.medium-zoom-overlay {
+    background: rgba(15, 17, 21, 0.92) !important;
 }
 
 /* =========================================================
@@ -475,6 +484,22 @@ aside.toc-nav {
     background-color: #1b2130 !important;
     color: #e6e6e6 !important;
     fill: #e6e6e6 !important;
+}
+
+/* docsify-mermaid-zoom injects anonymous <button>s with
+   stroke="currentColor" SVGs next to each diagram. Without a color
+   rule they render black and camouflage on the dark surface. */
+.mermaid button {
+    color: var(--text-muted);
+    opacity: 0.7;
+    padding: 2px 4px;
+    border-radius: var(--radius-sm) !important;
+    transition: color .15s ease, opacity .15s ease, background-color .15s ease;
+}
+.mermaid button:hover {
+    color: var(--accent-hover);
+    opacity: 1;
+    background-color: var(--accent-weak) !important;
 }
 
 /* =========================================================
