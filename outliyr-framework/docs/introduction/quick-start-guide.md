@@ -27,7 +27,7 @@ Let's jump into a pre-built game mode to see the framework in action. We'll use 
 1.  **Locate the TDM Map:**
 
     * In the Content Browser, make sure "Show Plugin Content" is enabled (Settings cogwheel in the Content Browser).
-    * Navigate to the TDM plugin's content folder: `Plugins/GameFeatures/TeamDeathmatch/Content/Maps/`
+    * Navigate to the TDM plugin's content folder: `Plugins/TeamDeathmatch/Content/Maps/`
     * Open either TDM map
 
     <figure><img src="../.gitbook/assets/image (244).png" alt=""><figcaption><p>Team Death match map file and file path</p></figcaption></figure>
@@ -58,9 +58,9 @@ Observe:
 
 Now that you've played it, let's briefly see where the TDM setup lives:
 
-1.  **Game Feature Plugin:** The TDM mode resides in its plugin folder (e.g., `Plugins/GameFeatures/TeamDeathmatch/`).
+1.  **Game Feature Plugin:** The TDM mode resides in its plugin folder (e.g., `Plugins/TeamDeathmatch/`).
 
-    * The `TeamDeathmatch.uplugin` file defines its dependencies (e.g., on `ShooterBase`, `LyraGame`). _This cannot be seen in the editor only in the file structure_. You can still set dependencies for the plugin in the editor through the game feature asset.
+    * The `TeamDeathmatch.uplugin` file defines its dependencies (e.g., on `ShooterBase`, `LyraGame`). You can still set dependencies for the plugin in the editor through the game feature asset.
 
     <figure><img src="../.gitbook/assets/image (245).png" alt=""><figcaption></figcaption></figure>
 
@@ -70,7 +70,7 @@ Now that you've played it, let's briefly see where the TDM setup lives:
 2. **Experience Definition:** Inside the plugin's content (e.g., `Content/TeamDeathmatch/Experiences/`), find `B_TeamDeathmatch` .
    *   Open it to see:
 
-       * **Game Features To Enable:** Likely `"TeamDeathmatch"` (itself, to ensure its actions and content are processed) and other dependencies like `"ShooterBase"`.
+       * **Game Features To Enable:**  `"TeamDeathmatch"` (itself, to ensure its actions and content are processed) and other dependencies like `"ShooterBase"`.
        * **Default Pawn Data:** The `ULyraPawnData` asset used for TDM players.
        * **Action Sets / Actions:** Any `ULyraExperienceActionSet`s it references or direct `UGameFeatureAction`s it uses (e.g., to add TDM scoring components or UI).
 
