@@ -68,7 +68,7 @@ Then implement the four interface events:
 {% endtab %}
 
 {% tab title="On Indicator Clamped" %}
-<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p>Example of changing widget apperance based on clamping</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p>Example of changing widget apperance based on clamping</p></figcaption></figure>
 {% endtab %}
 
 {% tab title="On Indicator Display Mode Changed" %}

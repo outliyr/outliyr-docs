@@ -91,7 +91,7 @@ You typically create a session when opening a new root window (like a Chest).
 
 {% tabs %}
 {% tab title="Blueprints" %}
-<figure><img src="../../../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 
 {% tab title="C++" %}

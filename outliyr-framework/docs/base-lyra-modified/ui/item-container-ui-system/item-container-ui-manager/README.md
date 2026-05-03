@@ -62,7 +62,7 @@ The Manager listens to the Gameplay Message Subsystem (`Lyra.Item.Message.*`) an
 
 {% tabs %}
 {% tab title="Blueprint" %}
-<figure><img src="../../../../.gitbook/assets/image.png" alt=""><figcaption><p>Example of using the Item Container UI manager to get the interaction view model</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (1).png" alt=""><figcaption><p>Example of using the Item Container UI manager to get the interaction view model</p></figcaption></figure>
 {% endtab %}
 
 {% tab title="C++" %}

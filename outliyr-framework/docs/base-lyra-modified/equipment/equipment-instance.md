@@ -234,9 +234,9 @@ In your **unequip montage**, add `AnimNotify_CommitEquipVisibility` at the frame
 
 * Set `ActionToCommit = PendingHide`
 
-That's it, no Blueprint graph wiring or C++ code needed.
+<figure><img src="../../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
 
-### Blueprint Alternative
+#### Event Based Alternative
 
 Instead of using the AnimNotify, you can call `CommitDeferredVisibility()` directly on the Equipment Instance from any Blueprint event, after a delay, after a custom event, or from your own AnimNotify subclass.
 

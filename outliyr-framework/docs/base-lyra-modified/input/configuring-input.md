@@ -22,7 +22,7 @@ Every pawn's baseline input comes from its `ULyraPawnData` data asset, which car
 
 * **`InputMappings`** (`TArray<FPawnInputMappingContextAndPriority>`) — an array of Input Mapping Contexts defining hardware-to-action bindings. Each entry has a `Priority` (higher wins on conflicts) and a `bRegisterWithSettings` flag that controls whether the IMC appears in the player's key-rebinding UI.
 
-<figure><img src="../../.gitbook/assets/image (1) (1) (1).png" alt=""><figcaption><p>Input Mapping asset</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (1) (1) (1) (1).png" alt=""><figcaption><p>Input Mapping asset</p></figcaption></figure>
 
 ### HeroComponent's DefaultInputMappings
 

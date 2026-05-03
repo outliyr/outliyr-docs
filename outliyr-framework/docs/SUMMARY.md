@@ -6,6 +6,12 @@
 * [Project Architecture](introduction/project-architecture.md)
 * [Installing & Setup](introduction/installing-and-setup.md)
 * [Quick Start Guide](introduction/quick-start-guide.md)
+* [Recipes](introduction/recipes/README.md)
+  * [Custom Equipment](introduction/recipes/custom-equipment.md)
+  * [Custom Weapon](introduction/recipes/custom-weapon.md)
+  * [Custom Ability](introduction/recipes/custom-ability.md)
+  * [Custom Item](introduction/recipes/custom-item.md)
+  * [Custom Hud Widget](introduction/recipes/custom-hud-widget.md)
 
 ## Base Lyra (Modified)
 
@@ -107,6 +113,7 @@
   * [Transactions](base-lyra-modified/item-container/transactions/README.md)
     * [How Transactions Work](base-lyra-modified/item-container/transactions/how-transactions-work/README.md)
       * [Execution Deep Dive](base-lyra-modified/item-container/transactions/how-transactions-work/execution-deep-dive.md)
+    * [Execution Modes](base-lyra-modified/item-container/transactions/execution-modes.md)
     * [Operation Types](base-lyra-modified/item-container/transactions/operation-types.md)
     * [Transaction Validation](base-lyra-modified/item-container/transactions/transaction-validation.md)
   * [Access Rights & Permissions](base-lyra-modified/items/access-rights-and-permissions/README.md)

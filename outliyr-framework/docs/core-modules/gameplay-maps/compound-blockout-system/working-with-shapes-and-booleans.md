@@ -67,7 +67,7 @@ You can control materials at two levels:
 1. **Actor Level:** The `Compound Blockout Actor` has a main `Material` property. This is the default material applied to any shape that doesn't have its own override.
 2. **Shape Level:** Each individual shape has a `Material Override` property. If you set this, that specific shape will be assigned its own material, creating a new material slot on the final Static Mesh.
 
-<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 {% hint style="success" %}
 `Material Overrides` only have a visible effect on shapes with the **Add** operation. Subtractive shapes are "invisible", they only remove geometry and do not contribute any surface or material slots to the final mesh.

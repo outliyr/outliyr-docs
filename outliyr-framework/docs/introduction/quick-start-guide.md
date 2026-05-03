@@ -36,7 +36,7 @@ Let's jump into a pre-built game mode to see the framework in action. We'll use 
     * With the map open, go to **Window > World Settings**.
     * You'll see **Default Gameplay Experience** it should be set to an asset like `B_TeamDeathmatch` which defines what systems and features are loaded for this map.
 
-    <figure><img src="../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p><em>World Settings panel showing the TDM Experience selected for the map</em></p></figcaption></figure>
+    <figure><img src="../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption><p><em>World Settings panel showing the TDM Experience selected for the map</em></p></figcaption></figure>
 3. **Play In Editor (PIE):**
    * Click the **Play** button in the main editor toolbar.
    * If prompted for the number of players, choose **1 or 2**.&#x20;
@@ -106,52 +106,18 @@ See the [Installing & Setup](installing-and-setup.md) guide for how to create on
 
 ***
 
-## **Next Steps: Diving Deeper**
+## **Next Steps**
 
-You've now launched a game mode! This framework is extensive. Here’s where to go to learn more and start building your vision:
+You've launched a game mode. Three places to go from here:
 
-* #### **Understand the Foundation - Experiences & Game Features:**
-  * This is how all game modes and modular content are structured. Mastering this is key.
-  * **➡️** [**See Full Documentation: Game Framework & Experiences**](../base-lyra-modified/gameframework-and-experience/).
-* #### **Explore Core Gameplay Plugins:**
-  * **ShooterBase:** For all things combat.
-    * **Key Features:** Compositional weapon system, predictive recoil, diverse projectile types (hitscan, simulated bullet drop), lag compensation, aim assist, intelligent spawning, flexible scoring, spectator system, killcam, accolades.
-    * **Dive In:** Learn how to define new weapons, tweak firing mechanics, or customize the spawn system.
-    * **➡️** [**See ShooterBase Documentation**](../core-modules/shooter-base/)
-  * **Tetris Inventory:** For advanced, spatial inventory management.
-    * **Key Features:** Grid-based layouts, items with defined shapes, item rotation, container items with nested Tetris inventories, 3D item inspection.
-    * **Dive In:** Learn how to define item shapes, create grid containers, and manage items spatially.
-    * **➡️** [**See Tetris Inventory Documentation**](../core-modules/tetris-inventory/)
-  * **True First Person:** For an immersive first-person perspective.
-    * **Key Features:** Full-body awareness, seamless first/third-person transitions, weapon animations synced with the first-person view.
-    * **Dive In:** Understand how to set up character meshes and animations for true FPS.
-    * **➡️** [**See True First Person Documentation**](../core-modules/true-first-person.md)
-* #### **Leverage Base Lyra (Modified) Systems:**
-  * This asset extends and utilizes many core Lyra concepts. Understanding these is beneficial:
-    * [**Character System**](../base-lyra-modified/character/)**:** How pawns are built with components, GAS integration, movement.&#x20;
-    * [**Items**](../base-lyra-modified/items/)**:** Item definitions, instances, fragments, permissions, and the pickup system.
-    * [**Inventory**](../base-lyra-modified/inventory/)**:** The inventory manager component, item queries, and inventory viewmodels/UI.
-    * [**Item Container**](../base-lyra-modified/item-container/)**:** The core container interface, transactions, prediction, and access rights that all container types (inventory, equipment, tetris, etc.) build on.
-    * [**Equipment System**](../base-lyra-modified/equipment/)**:** How items (especially weapons) are equipped, grant abilities, and manage their runtime instances.
-    * [**Weapons**](../base-lyra-modified/weapons/)**:** Weapon instances, range weapon configuration, weapon state, and reticle fragments.
-    * [**Save System**](../base-lyra-modified/save-system/)**:** How the player based save system works, and how to extend it.
-    * [**UI**](../base-lyra-modified/ui/)**:** The Lyra Indicator System for HUD markers and the Item Container UI System for container management interfaces.
-    * [**Team System**](../base-lyra-modified/team/)**:** Defining teams, assigning players, and managing team visuals.
-    * [**Interaction System**](../base-lyra-modified/interaction/)**:** How players interact with objects in the world using GAS.
-    * [**Cosmetic System**](../base-lyra-modified/cosmetics/)**:** Dynamically changing pawn appearance with character parts.
-    * [**Game Phase System**](../base-lyra-modified/game-phase-system/)**:** Managing the stages of a game session (e.g., warmup, playing, round end) using GAS and tags.
-    * [**Camera System**](../base-lyra-modified/camera/)**:** Flexible camera modes and stack-based blending.
-    * [**Input System**](../base-lyra-modified/input/)**:** How Enhanced Input and Lyra Input Configs drive actions and abilities.
-    * [**Settings System**](../base-lyra-modified/settings/)**:** Player and machine-specific settings management.
-* #### **Creating Your Own Game Mode:**
-  * Once you're familiar with the concepts, follow the detailed guide: [**Creating a New Game Mode (Practical Guide)**](../game-modes/extending-and-customization.md).
-* #### **Analyze Example Game Modes:**
-  * Each included game mode plugin (Arena, Battle Royale, Capture The Flag, Domination, Extraction, Free For All, Gun Game, Hardpoint, Headquarters, Infection, Kill Confirmed, Payload, Prop Hunt, Search & Destroy, Team Deathmatch) in `Plugins/GameFeatures/` showcases different ways to combine these systems.
-  * **For example:**
-    * **Extraction & Battle Royale:** Demonstrate different scales of inventory usage (BR is simpler, Extraction uses the full Tetris system).
-    * **Arena:** Shows character selection and a buy menu.
-    * **Prop Hunt & Infection:** Illustrate asymmetric team setups.
-    * **Gun Game:** Highlights using Gameplay Events to drive game progression.
-    * **Headquarters:** Demonstrates advanced respawn logic.
-  * Inspect their Experience Definitions, Action Sets, and specific components to learn advanced setup patterns.
-* **Experiment & Iterate:** The best way to master the framework is to create your own Game Feature Plugin, duplicate assets into it, and start tweaking.
+#### **Pick what you want to build →** [**Recipes**](recipes/).&#x20;
+
+A goal-driven router for new equipment, weapons, abilities, items, HUD widgets, and game modes, each with a recipe that takes you from blank asset to working in-game. The fastest path to building.
+
+#### **Understand the architecture →** [**Project Architecture**](project-architecture.md).&#x20;
+
+The big picture, how plugins, Experiences, Game Features, and Pawn Data fit together. Read this when you want the _why_ behind the structure.
+
+#### **Read existing modes for inspiration**&#x20;
+
+Each plugin under `Plugins/GameFeatures/` is a complete worked example. **Battle Royale** and **Extraction** show different scales of inventory usage; **Arena** shows character selection and a buy menu; **Prop Hunt** and **Infection** illustrate asymmetric team setups; **Gun Game** uses Gameplay Events to drive progression; **Headquarters** demonstrates advanced respawn logic and so on. Inspect their Experience Definitions and Action Sets to see how the pieces compose in practice.
