@@ -147,13 +147,13 @@ Move tag deltas, pending changes, and similar item-level state.
 {% step %}
 #### Transfer container-specific state
 
-Transfer spawned actors, bindings, and other container-specific state.
+Transfer transient data such as, spawned actors, bindings, and other container-specific state.
 {% endstep %}
 {% endstepper %}
 
 ### Container-Specific State
 
-Different containers have different state to transfer:
+The hook is opt-in. Different containers have different state to transfer:
 
 **Equipment:**
 
@@ -165,6 +165,8 @@ Different containers have different state to transfer:
 
 * Nested fragment references
 * Attachment point bindings
+
+The `InventoryManagerComponent` carries only data, so there is nothing on the overlay that needs to survive the clear.
 
 Each container's Traits define what state needs transferring via `TransferPredictionState`.
 

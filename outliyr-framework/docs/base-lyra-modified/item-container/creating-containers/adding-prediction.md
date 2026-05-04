@@ -237,9 +237,9 @@ Traits are the bridge between your container-specific types and the generic pred
 At first glance this looks like a lot, but most trait methods are simple adapters around your existing storage and entry types.
 {% endhint %}
 
-#### Required Trait Methods
+#### **Required Trait Methods**
 
-<table><thead><tr><th width="176.27276611328125">Category</th><th width="279.5455322265625">Methods</th><th>Purpose</th></tr></thead><tbody><tr><td><strong>Types</strong></td><td>Type aliases for Owner, <code>Payload</code>, <code>ServerEntry</code>, <code>ViewEntry</code></td><td>Let runtime know your types</td></tr><tr><td><strong>GUID</strong></td><td><code>GetGuid</code>, <code>GetGuidFromServerEntry</code></td><td>Extract stable identifier</td></tr><tr><td><strong>Server Access</strong></td><td><code>GetServerEntries</code>, <code>FindServerEntryByGuidMutable</code></td><td>Read/write server array</td></tr><tr><td><strong>View Conversion</strong></td><td><code>PayloadToViewEntry</code>, <code>ServerEntryToViewEntry</code></td><td>Build unified view</td></tr><tr><td><strong>Item Access</strong></td><td><code>GetInventoryItemFromPayload</code>, <code>GetInventoryItemFromServerEntry</code></td><td>Get item instances</td></tr><tr><td><strong>Authority</strong></td><td><code>IsAuthority</code></td><td>Route operations correctly</td></tr><tr><td><strong>Direct Operations</strong></td><td><code>DirectAddEntry</code>, <code>DirectRemoveEntry</code>, <code>DirectChangeEntry</code></td><td>Server-side array mutations</td></tr><tr><td><strong>Replication</strong></td><td><code>TearOffItemReplication</code></td><td>Clear item's NetGUID association on removal</td></tr><tr><td><strong>State Transfer</strong></td><td><code>TransferPredictionState</code></td><td>Move state from overlay to server entry on confirmation</td></tr><tr><td><strong>Stamping</strong></td><td><code>GetPredictionStampMutable</code>, <code>MarkEntryDirty</code></td><td>Access prediction stamp</td></tr></tbody></table>
+<table><thead><tr><th width="176.27276611328125">Category</th><th width="279.5455322265625">Methods</th><th>Purpose</th></tr></thead><tbody><tr><td><strong>Types</strong></td><td>Type aliases for <code>TOwner</code>, <code>FPayload</code>, <code>FServerEntry</code>, <code>FViewEntry</code></td><td>Let runtime know your types</td></tr><tr><td><strong>GUID</strong></td><td><code>GetGuid</code>, <code>GetGuidFromServerEntry</code></td><td>Extract stable identifier</td></tr><tr><td><strong>Server Access</strong></td><td><code>GetServerEntries</code></td><td>Read the server array (the runtime owns mutable lookups itself)</td></tr><tr><td><strong>View Conversion</strong></td><td><code>PayloadToViewEntry</code>, <code>ServerEntryToViewEntry</code>, <code>ServerEntryToPayload</code></td><td>Build unified view</td></tr><tr><td><strong>Item Access</strong></td><td><code>GetInventoryItemFromPayload</code>, <code>GetInventoryItemFromServerEntry</code></td><td>Get item instances</td></tr><tr><td><strong>Authority</strong></td><td><code>IsAuthority</code></td><td>Route operations correctly</td></tr><tr><td><strong>Direct Operations</strong></td><td><code>DirectAddEntry</code>, <code>DirectRemoveEntry</code>, <code>DirectChangeEntry</code></td><td>Server-side array mutations</td></tr><tr><td><strong>Replication</strong></td><td><code>TearOffReplicatedSubObject</code></td><td>Clear a single sub-object's NetGUID on removal; the runtime calls this for each runtime fragment and the item itself</td></tr><tr><td><strong>Slot</strong></td><td><code>PayloadToSlotStruct</code></td><td>Build the slot descriptor the runtime writes onto the item's CurrentSlot</td></tr><tr><td><strong>Stamping</strong></td><td><code>GetPredictionStampMutable</code>, <code>MarkEntryDirty</code></td><td>Access prediction stamp</td></tr><tr><td><strong>Optional</strong></td><td><code>TransferPredictionState</code>, <code>PreparePredictedPayload</code></td><td>Hooks for containers that spawn actors, hold ability handles, or otherwise need to move state from the predicted overlay onto the confirmed server entry. Omit when there is nothing to transfer.</td></tr></tbody></table>
 
 #### Traits Implementation
 
@@ -273,19 +273,12 @@ struct FMyContainerTraits
         return Owner->ItemList.Entries;
     }
 
-    static FServerEntry* FindServerEntryByGuidMutable(TOwner* Owner, const FGuid& Guid)
-    {
-        for (FServerEntry& Entry : Owner->ItemList.Entries)
-        {
-            if (GetGuidFromServerEntry(Entry) == Guid)
-            {
-                return &Entry;
-            }
-        }
-        return nullptr;
-    }
-
     // ===== View Composition =====
+
+    static FPayload ServerEntryToPayload(const FServerEntry& Entry)
+    {
+        return FPayload(Entry);  // Uses your payload's "from-server-entry" constructor
+    }
 
     static FViewEntry PayloadToViewEntry(const FPayload& Payload, const FPredictedOpMeta& Meta)
     {
@@ -348,39 +341,36 @@ struct FMyContainerTraits
 
     static FServerEntry* DirectChangeEntry(TOwner* Owner, const FGuid& Guid, const FPayload& Payload)
     {
-        if (FServerEntry* Entry = FindServerEntryByGuidMutable(Owner, Guid))
+        for (FServerEntry& Entry : Owner->ItemList.Entries)
         {
-            Entry->SlotIndex = Payload.SlotIndex;
-            Owner->ItemList.MarkItemDirty(*Entry);
-            return Entry;
+            if (GetGuidFromServerEntry(Entry) == Guid)
+            {
+                Entry.SlotIndex = Payload.SlotIndex;
+                // MarkItemDirty is left to the runtime so it can run after stamping.
+                return &Entry;
+            }
         }
         return nullptr;
     }
-    
-    // ===== Replication TearOff =====
 
-    static void TearOffItemReplication(TOwner* Owner, ULyraInventoryItemInstance* Item)
+    // ===== Slot Descriptor =====
+
+    static FInstancedStruct PayloadToSlotStruct(TOwner* Owner, const FPayload& Payload)
     {
-        if (!Owner || !Item) return;
-
-        // TearOff runtime fragments first
-        for (UTransientRuntimeFragment* Fragment : Item->RuntimeFragments)
-        {
-            if (Fragment)
-            {
-                Owner->TearOffReplicatedSubObjectOnRemotePeers(Fragment);
-            }
-        }
-        // TearOff the item itself
-        Owner->TearOffReplicatedSubObjectOnRemotePeers(Item);
+        FMyContainerSlotInfo SlotData;
+        SlotData.Container = Owner;
+        SlotData.SlotIndex = Payload.SlotIndex;
+        return FInstancedStruct::Make(SlotData);
     }
 
-    // ===== Prediction State Transfer =====
+    // ===== Replication TearOff =====
 
-    static void TransferPredictionState(FPayload& Payload, FServerEntry& Entry)
+    static void TearOffReplicatedSubObject(TOwner* Owner, UObject* SubObject)
     {
-        // Transfer container-specific state from overlay to server entry
-        // Most containers: nothing to transfer (empty implementation)
+        if (Owner && SubObject)
+        {
+            Owner->TearOffReplicatedSubObjectOnRemotePeers(SubObject);
+        }
     }
 
     // ===== Prediction Stamp Access =====
@@ -401,11 +391,22 @@ struct FMyContainerTraits
 **Static asserts guide you.** The runtime has compile-time checks that produce clear error messages if you're missing required trait methods. Follow the error messages to implement the complete interface.
 {% endhint %}
 
-#### State Transfer
+#### **Optional: State Transfer on Confirmation**
 
-The `TransferPredictionState` method handles edge cases where the overlay holds state that needs to persist after confirmation. When the server confirms a prediction, the overlay is cleared, but sometimes it contains data the server entry needs.
+When the server confirms a prediction, the overlay is cleared. Most containers have nothing on the overlay that needs to survive that clearing because the predicted payload only carries data, and the server's authoritative entry already replicates that data. Containers that spawn actors, hold ability handles, or otherwise carry transient state during prediction need somewhere to move that state onto the confirmed server entry before the overlay is dropped.
 
-For most containers, this is empty. `LyraEquipmentManagerComponent` and `InventotyFragment_Attachment` use this to transfer spawned actor references from the predicted overlay to the confirmed server entry. If your container spawns actors or holds other transient state during prediction, you'd transfer it here.
+That is what the optional `TransferPredictionState` hook does. Define it on your traits when your container has state to move; omit it entirely otherwise.
+
+```cpp
+static void TransferPredictionState(FPayload& Payload, FServerEntry& Entry)
+{
+    // Move spawned actors, ability handles, input bindings, etc.
+    Entry.SpawnedActor = Payload.PredictedActor;
+    Payload.PredictedActor = nullptr;
+}
+```
+
+The equipment manager and the attachment runtime fragment both implement this hook to transfer the predicted equipment instance and its ability handles onto the confirmed entry. Inventory and tetris containers carry only data, so they omit it.
 {% endstep %}
 
 {% step %}

@@ -217,17 +217,18 @@ Clear mapping between container types and prediction types.
 
 ### Required Trait Methods
 
-| Category            | Methods                                                                | Purpose                         |
-| ------------------- | ---------------------------------------------------------------------- | ------------------------------- |
-| **Types**           | `TOwner`, `FPayload`, `FServerEntry`, `FViewEntry`                     | Type aliases for templates      |
-| **GUID**            | `GetGuid`, `GetGuidFromServerEntry`                                    | Extract stable identifier       |
-| **Server Access**   | `GetServerEntries`, `FindServerEntryByGuidMutable`                     | Read/write server array         |
-| **View Conversion** | `PayloadToViewEntry`, `ServerEntryToViewEntry`, `ServerEntryToPayload` | Build unified view entries      |
-| **Authority**       | `IsAuthority`                                                          | Route operations correctly      |
-| **Direct Ops**      | `DirectAddEntry`, `DirectRemoveEntry`, `DirectChangeEntry`             | Server-side array mutations     |
-| **Replication**     | `TearOffItemReplication`                                               | Clear item's NetGUID on removal |
-| **State Transfer**  | `TransferPredictionState`                                              | Move state on confirmation      |
-| **Stamping**        | `GetPredictionStampMutable`, `MarkEntryDirty`                          | Access prediction stamp         |
+| Category            | Methods                                                                | Purpose                                                                         |
+| ------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **Types**           | `TOwner`, `FPayload`, `FServerEntry`, `FViewEntry`                     | Type aliases for templates                                                      |
+| **GUID**            | `GetGuid`, `GetGuidFromServerEntry`                                    | Extract stable identifier                                                       |
+| **Server Access**   | `GetServerEntries`                                                     | Read the server array; the runtime owns mutable lookups itself                  |
+| **View Conversion** | `PayloadToViewEntry`, `ServerEntryToViewEntry`, `ServerEntryToPayload` | Build unified view entries                                                      |
+| **Authority**       | `IsAuthority`                                                          | Route operations correctly                                                      |
+| **Direct Ops**      | `DirectAddEntry`, `DirectRemoveEntry`, `DirectChangeEntry`             | Server-side array mutations                                                     |
+| **Slot**            | `PayloadToSlotStruct`                                                  | Build the slot descriptor written onto the item's CurrentSlot                   |
+| **Replication**     | `TearOffReplicatedSubObject`                                           | Tear off a single sub-object; the runtime calls this for fragments and the item |
+| **Stamping**        | `GetPredictionStampMutable`, `MarkEntryDirty`                          | Access prediction stamp                                                         |
+| **Optional**        | `TransferPredictionState`, `PreparePredictedPayload`                   | Hooks for containers that move state from the overlay onto the confirmed entry  |
 
 {% hint style="info" %}
 Don't be intimidated by the list. While the table above looks like a lot, traits follow a simple, repetitive pattern. Most methods are one-liners that just access your container's data structures, `GetGuid` returns a field, `GetServerEntries` returns an array reference, `IsAuthority` checks `HasAuthority()`. Once you've seen one traits file, you've seen them all.

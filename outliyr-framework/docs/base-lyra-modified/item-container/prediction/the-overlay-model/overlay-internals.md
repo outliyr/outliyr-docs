@@ -371,7 +371,9 @@ OnConfirmation(guid):
         if predictedItem and authItem:
             authItem.ReconcileWithPredicted(predictedItem)
 
-        // Container-specific state transfer
+        // Container-specific state transfer; only invoked when the
+        // traits opt in by defining TransferPredictionState.
+        if traits.HasTransferPredictionState:
         TransferPredictionState(predictedPayload, serverEntry)
 ```
 
