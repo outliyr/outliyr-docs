@@ -8,13 +8,7 @@ Before diving into overlays and reconciliation, it helps to understand the predi
 
 The prediction system is built from layered components, each with a specific responsibility:
 
-| Component                       | Purpose                                    | Key File                             |
-| ------------------------------- | ------------------------------------------ | ------------------------------------ |
-| **TGuidKeyedPredictionRuntime** | Main interface for containers              | `LyraGuidKeyedPredictionRuntime.h`   |
-| **TGuidKeyedPredictionEngine**  | Replication processing, event broadcasting | `LyraGuidKeyedPredictionEngine.h`    |
-| **TGuidKeyedOverlay**           | Storage for predicted operations           | `LyraGuidKeyedPredictionStore.h`     |
-| **Traits**                      | Container-specific adapter methods         | Per-container `*Traits.h` files      |
-| **FContainerPredictionStamp**   | Embedded in replicated entries             | `LyraItemContainerPredictionTypes.h` |
+<table><thead><tr><th width="262.3333740234375">Component</th><th>Purpose</th><th width="248.6666259765625">Key File</th></tr></thead><tbody><tr><td><strong><code>FPredictableContainerHelper</code></strong></td><td>Composition helper containers hold; type-erased owner of the runtime</td><td><code>PredictableContainerHelper.h</code></td></tr><tr><td><strong><code>FPredictableFastArrayItem</code></strong></td><td>Base USTRUCT entry structs derive from; carries the inherited prediction stamp</td><td><code>PredictableFastArrayItem.h</code></td></tr><tr><td><strong><code>TGuidKeyedPredictionRuntime</code></strong></td><td>Templated runtime instantiated per container traits; held by the helper</td><td><code>LyraGuidKeyedPredictionRuntime.h</code></td></tr><tr><td><strong><code>FGuidKeyedPredictionRuntimeBase</code></strong></td><td>Non-templated polymorphic base of the runtime; lets the helper hold it</td><td><code>GuidKeyedPredictionRuntimeBase.h</code></td></tr><tr><td><strong><code>TGuidKeyedPredictionEngine</code></strong></td><td>Replication processing, event broadcasting</td><td><code>LyraGuidKeyedPredictionEngine.h</code></td></tr><tr><td><strong><code>TGuidKeyedOverlay</code></strong></td><td>Storage for predicted operations</td><td><code>LyraGuidKeyedPredictionStore.h</code></td></tr><tr><td><strong>Traits</strong></td><td>Container-specific adapter methods</td><td>Per-container <code>*Traits.h</code> files</td></tr><tr><td><strong><code>FContainerPredictionStamp</code></strong></td><td>Inherited by FPredictableFastArrayItem; carried on every replicated entry</td><td><code>PredictableFastArrayItem.h</code></td></tr></tbody></table>
 
 ***
 
@@ -27,10 +21,17 @@ flowchart TB
     subgraph Container["Your Container Code"]
         direction TB
         C1["Interface methods, public API"]
-        C2["Calls: RecordAdd, RecordRemoval,<br/>RecordChange, GetEffectiveView"]
+        C2["Calls through FPredictableContainerHelper:<br/>OnEntryReplicated, OnPredictionKeyRejected,<br/>GetEffectiveView, GetTypedRuntime"]
     end
 
-    subgraph Runtime["TGuidKeyedPredictionRuntime"]
+    subgraph Helper["FPredictableContainerHelper"]
+        direction TB
+        H1["Holds TUniquePtr to runtime base"]
+        H2["Type-erased forwarders for non-templated callsites"]
+        H3["Templated accessors for typed access"]
+    end
+
+    subgraph Runtime["TGuidKeyedPredictionRuntime &lt;Traits&gt;"]
         direction TB
         R1["View composition (GetEffectiveView)"]
         R2["Authority routing (server vs client)"]
@@ -54,16 +55,24 @@ flowchart TB
         S4["DirtyGuids for lazy rebuild"]
     end
 
-    Container --> Runtime
+    Container --> Helper
+    Helper --> Runtime
     Runtime --> Engine
     Engine --> Store
 ```
 
-### Layer Responsibilities
+### **Layer Responsibilities**
 
-**Runtime (Top Layer)**
+**Helper (Composition Layer)**
 
-* The interface your container code uses
+* The handle your container holds as a member field
+* Owns the typed runtime through a non-templated polymorphic base so non-templated callsites can reach it through a single uniform pointer
+* Forwards entry-replication callbacks, prediction-key handlers, and view-dirtied delegates straight to the runtime base
+* Templated accessors (`GetTypedRuntime<Traits>`, `GetEffectiveView<Traits>`) return the typed runtime for callsites that need the recording API or the typed view
+
+**Runtime (Templated Core)**
+
+* The actual prediction algorithm, parameterised on the container's traits
 * Routes operations based on authority (server modifies arrays directly, client records overlays)
 * Composes the effective view by merging server state with overlay caches
 * Maintains GUID index for O(1) base lookup
@@ -322,79 +331,77 @@ enum class EReplicatedDeltaKind : uint8
 Here's how a typical predicted container wires everything together:
 
 ```cpp
-// Container can be any UObject type: UActorComponent, URuntimeTransientFragment, etc.
+// Container can be any UObject type: UActorComponent, UTransientRuntimeFragment, etc.
+// The entry struct derives from FPredictableFastArrayItem so the prediction stamp is inherited.
 UCLASS()
-class UMyContainer : public UObject, public ILyraItemContainerInterface
+class UMyContainer : public UActorComponent, public ILyraItemContainerInterface
 {
-    // Replicated storage (FFastArraySerializer for callbacks)
-    // NOTE: Your entry struct must include FContainerPredictionStamp!
+    // Replicated storage (FFastArraySerializer for callbacks).
     UPROPERTY(Replicated)
     FMyContainerList ItemList;
 
-    // The prediction runtime (manages overlays, view composition)
-    TGuidKeyedPredictionRuntime<FMyContainerTraits> PredictionRuntime;
-
 public:
-    // Initialize during construction or activation
-    void Initialize()
+    virtual void InitializeComponent() override
     {
-        ItemList.OwnerContainer = this;
-        PredictionRuntime.Initialize(this);
+        Super::InitializeComponent();
+        PredictionHelper.InitRuntimeAs<FMyContainerTraits>(this);
+        ItemList.OwnerComponent = this;
     }
 
-    // Interface methods delegate to runtime
+    // Interface methods delegate to the typed runtime through the helper.
     virtual bool AddItemToSlot(...) override
     {
-        PredictionRuntime.RecordAdd(Guid, Payload, PredictionKey);
+        PredictionHelper.GetTypedRuntime<FMyContainerTraits>()->RecordAdd(Guid, Payload, PredictionKey);
         return true;
     }
 
-    // Query methods use effective view
+    // Query methods use the composed effective view.
     virtual ULyraInventoryItemInstance* GetItemInSlot(...) const override
     {
-        for (const auto& Entry : PredictionRuntime.GetEffectiveView())
+        for (const auto& Entry : PredictionHelper.GetEffectiveView<FMyContainerTraits>())
         {
             if (MatchesSlot(Entry, SlotInfo))
                 return Entry.Item;
         }
         return nullptr;
     }
-    
-    // Prediction Key delegate handlers
-    virtual void OnPredictionKeyRejected(int32 PredictionKeyCurrent)
-    {
-    	PredictionRuntime->Runtime.OnPredictionKeyRejected(PredictionKeyCurrent);
-    }
 
-    virtual void OnPredictionKeyCaughtUp(int32 PredictionKeyCurrent)
-    {
-    	PredictionRuntime->Runtime.OnPredictionKeyCaughtUp(PredictionKeyCurrent);
-    }
+    // Prediction-key handlers route through the helper.
+    virtual void OnPredictionKeyRejected(int32 KeyId) override { PredictionHelper.OnPredictionKeyRejected(KeyId); }
+    virtual void OnPredictionKeyCaughtUp(int32 KeyId) override { PredictionHelper.OnPredictionKeyCaughtUp(KeyId); }
+
+    FPredictableContainerHelper* GetPredictionHelper() { return &PredictionHelper; }
+
+private:
+    FPredictableContainerHelper PredictionHelper;
 };
 
-// In your FastArray entry struct, FFastArray callbacks call the runtime:
-void FMyContainerEntry::PostReplicatedAdd(const FMyContainerList& List)
+// FFastArray callbacks on the list route through the helper.
+void FMyContainerList::PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize)
 {
-    if (List.OwnerContainer)
+    UMyContainer* Comp = Cast<UMyContainer>(OwnerComponent);
+    FPredictableContainerHelper* Helper = Comp ? Comp->GetPredictionHelper() : nullptr;
+
+    for (int32 Index : AddedIndices)
     {
-        List.OwnerContainer->PredictionRuntime.OnEntryReplicated(
-            GetGuid(), Prediction, EReplicatedDeltaKind::Added);
+        if (Entries.IsValidIndex(Index))
+        {
+            FMyContainerEntry& Entry = Entries[Index];
+            const FGuid EntryGuid = Entry.Item ? Entry.Item->GetItemInstanceId() : FGuid();
+            if (Helper && EntryGuid.IsValid())
+            {
+                Helper->OnEntryReplicated(EntryGuid, Entry.Prediction, EReplicatedDeltaKind::Added);
+            }
+        }
     }
 }
 
-void FMyContainerEntry::PostReplicatedChange(const FMyContainerList& List)
-{
-    // Similar pattern for changes...
-}
-
-void FMyContainerEntry::PreReplicatedRemove(const FMyContainerList& List)
-{
-    // Similar pattern for removals...
-}
+// PostReplicatedChange and PreReplicatedRemove follow the same shape with the matching delta kind.
+// PostReplicatedReceive marks the helper's view dirty so consumers rebuild against the new state.
 ```
 
 {% hint style="info" %}
-This is a brevity example showing the key wiring points. For the complete implementation including `FContainerPredictionStamp` setup, all interface methods (`RemoveItemFromSlot`, `MoveItemBetweenSlots`, etc.), and the full `FFastArray` callback implementation, see [Adding Prediction](../creating-containers/adding-prediction.md).
+This is a very simple example showing the key wiring points. For the complete implementation, see [Adding Prediction](../creating-containers/adding-prediction.md).
 {% endhint %}
 
 ***

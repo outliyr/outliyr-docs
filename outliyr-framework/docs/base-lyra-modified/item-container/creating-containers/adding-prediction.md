@@ -89,13 +89,13 @@ Adding prediction requires these components working together:
 
 Unlike the vendor's simple `TArray<FVendorCatalogEntry>`, predicted containers need `FFastArraySerializer` for replication callbacks.
 
-#### The Entry Struct
+#### **The Entry Struct**
 
-Your replicated entry inherits from `FFastArraySerializerItem` and includes a prediction stamp:
+Your replicated entry inherits from `FPredictableFastArrayItem`. The base carries the prediction stamp the runtime needs for confirmation phase classification, so the entry struct itself only declares its data fields:
 
 ```cpp
 USTRUCT()
-struct FMyContainerEntry : public FFastArraySerializerItem
+struct FMyContainerEntry : public FPredictableFastArrayItem
 {
     GENERATED_BODY()
 
@@ -104,21 +104,14 @@ struct FMyContainerEntry : public FFastArraySerializerItem
 
     UPROPERTY()
     int32 SlotIndex = INDEX_NONE;
-
-    // Required for prediction confirmation
-    UPROPERTY()
-    FContainerPredictionStamp Prediction;
-
-    // Replication callbacks - implementations shown later
-    void PostReplicatedAdd(const FMyContainerList& Owner);
-    void PostReplicatedChange(const FMyContainerList& Owner);
-    void PreReplicatedRemove(const FMyContainerList& Owner);
 };
 ```
 
-#### The List Struct
+The inherited `Prediction` field replicates as part of the derived entry's delta-serialised data. The validator's compile-time check enforces this base class so a missing inheritance produces a focused error.
 
-A wrapper struct holds the entries and provides a back-pointer to the component:
+#### **The List Struct**
+
+The list struct holds the entries, a back-pointer to the owning component, and the four FFastArray callbacks that route replication deltas through the prediction helper:
 
 ```cpp
 USTRUCT()
@@ -129,56 +122,101 @@ struct FMyContainerList : public FFastArraySerializer
     UPROPERTY()
     TArray<FMyContainerEntry> Entries;
 
-    // Back-pointer for callbacks to access component
+    // Back-pointer so the callbacks can reach the prediction helper.
     UPROPERTY(NotReplicated)
     TObjectPtr<UMyContainerComponent> OwnerComponent;
 
-    // Required for FFastArraySerializer
+    void PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize);
+    void PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize);
+    void PostReplicatedChange(const TArrayView<int32> ChangedIndices, int32 FinalSize);
+    void PostReplicatedReceive(const FFastArraySerializer::FPostReplicatedReceiveParameters& Parameters);
+
     bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
     {
         return FFastArraySerializer::FastArrayDeltaSerialize<FMyContainerEntry, FMyContainerList>(
             Entries, DeltaParms, *this);
     }
 };
+
+template<>
+struct TStructOpsTypeTraits<FMyContainerList> : public TStructOpsTypeTraitsBase2<FMyContainerList>
+{
+    enum { WithNetDeltaSerializer = true };
+};
 ```
 
-#### Callback Implementation
+#### **Callback Implementation**
 
-Each callback notifies the prediction engine with the item's GUID and stamp:
+Each delta callback iterates the affected indices and routes the replicated delta through the owner's prediction helper. `PostReplicatedReceive` marks the composed view dirty after the batch completes:
 
 ```cpp
-void FMyContainerEntry::PostReplicatedAdd(const FMyContainerList& Owner)
+void FMyContainerList::PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize)
 {
-    if (Owner.OwnerComponent)
+    UMyContainerComponent* Comp = Cast<UMyContainerComponent>(OwnerComponent);
+    FPredictableContainerHelper* Helper = Comp ? Comp->GetPredictionHelper() : nullptr;
+
+    for (int32 Index : RemovedIndices)
     {
-        FGuid Guid = Item ? Item->GetItemInstanceId() : FGuid();
-        Owner.OwnerComponent->GetPredictionRuntime().OnEntryReplicated(
-            Guid, Prediction, EReplicatedDeltaKind::Added);
+        if (Entries.IsValidIndex(Index))
+        {
+            FMyContainerEntry& Entry = Entries[Index];
+            const FGuid EntryGuid = Entry.Item ? Entry.Item->GetItemInstanceId() : FGuid();
+            if (Helper && EntryGuid.IsValid())
+            {
+                Helper->OnEntryReplicated(EntryGuid, Entry.Prediction, EReplicatedDeltaKind::Removed);
+            }
+        }
     }
 }
 
-void FMyContainerEntry::PostReplicatedChange(const FMyContainerList& Owner)
+void FMyContainerList::PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize)
 {
-    if (Owner.OwnerComponent)
+    UMyContainerComponent* Comp = Cast<UMyContainerComponent>(OwnerComponent);
+    FPredictableContainerHelper* Helper = Comp ? Comp->GetPredictionHelper() : nullptr;
+
+    for (int32 Index : AddedIndices)
     {
-        FGuid Guid = Item ? Item->GetItemInstanceId() : FGuid();
-        Owner.OwnerComponent->GetPredictionRuntime().OnEntryReplicated(
-            Guid, Prediction, EReplicatedDeltaKind::Changed);
+        if (Entries.IsValidIndex(Index))
+        {
+            FMyContainerEntry& Entry = Entries[Index];
+            const FGuid EntryGuid = Entry.Item ? Entry.Item->GetItemInstanceId() : FGuid();
+            if (Helper && EntryGuid.IsValid())
+            {
+                Helper->OnEntryReplicated(EntryGuid, Entry.Prediction, EReplicatedDeltaKind::Added);
+            }
+        }
     }
 }
 
-void FMyContainerEntry::PreReplicatedRemove(const FMyContainerList& Owner)
+void FMyContainerList::PostReplicatedChange(const TArrayView<int32> ChangedIndices, int32 FinalSize)
 {
-    if (Owner.OwnerComponent)
+    UMyContainerComponent* Comp = Cast<UMyContainerComponent>(OwnerComponent);
+    FPredictableContainerHelper* Helper = Comp ? Comp->GetPredictionHelper() : nullptr;
+
+    for (int32 Index : ChangedIndices)
     {
-        FGuid Guid = Item ? Item->GetItemInstanceId() : FGuid();
-        Owner.OwnerComponent->GetPredictionRuntime().OnEntryReplicated(
-            Guid, Prediction, EReplicatedDeltaKind::Removed);
+        if (Entries.IsValidIndex(Index))
+        {
+            FMyContainerEntry& Entry = Entries[Index];
+            const FGuid EntryGuid = Entry.Item ? Entry.Item->GetItemInstanceId() : FGuid();
+            if (Helper && EntryGuid.IsValid())
+            {
+                Helper->OnEntryReplicated(EntryGuid, Entry.Prediction, EReplicatedDeltaKind::Changed);
+            }
+        }
+    }
+}
+
+void FMyContainerList::PostReplicatedReceive(const FFastArraySerializer::FPostReplicatedReceiveParameters& Parameters)
+{
+    if (UMyContainerComponent* Comp = Cast<UMyContainerComponent>(OwnerComponent))
+    {
+        Comp->GetPredictionHelper()->MarkViewDirty();
     }
 }
 ```
 
-The engine uses the stamp to classify the phase (confirmation vs authoritative) and clears matching overlays.
+The helper hands the delta to the runtime, which uses the stamp to classify the phase (confirmation vs authoritative) and clears matching overlays.
 {% endstep %}
 
 {% step %}
@@ -412,7 +450,7 @@ The equipment manager and the attachment runtime fragment both implement this ho
 {% step %}
 ### Step 4: The Component with Runtime
 
-Add `TGuidKeyedPredictionRuntime<YourTraits>` to your container class. This example uses a component, but the pattern works for any class that implements the interface (fragments, subsystems, etc. See `InventoryFragment_Attachment` for a fragment example).
+Compose `FPredictableContainerHelper` as a member of your container. The helper owns the prediction runtime and exposes it through a small set of templated and non-templated accessors. Containers compose one helper per traits class they predict against and route their interface methods through it. The shape works for any host class that implements `ILyraItemContainerInterface`, components, runtime fragments, subsystems. See `InventoryFragment_Attachment` for a fragment example.
 
 ```cpp
 UCLASS()
@@ -425,36 +463,34 @@ public:
     UPROPERTY(Replicated)
     FMyContainerList ItemList;
 
-private:
-    // The prediction runtime
-    TGuidKeyedPredictionRuntime<FMyContainerTraits> PredictionRuntime;
-
-public:
-    virtual void BeginPlay() override
+    virtual void InitializeComponent() override
     {
-        Super::BeginPlay();
+        Super::InitializeComponent();
+        PredictionHelper.InitRuntimeAs<FMyContainerTraits>(this);
         ItemList.OwnerComponent = this;
-        PredictionRuntime.Initialize(this);
     }
 
-    // Expose for FFastArray callbacks
-    TGuidKeyedPredictionRuntime<FMyContainerTraits>& GetPredictionRuntime()
-    {
-        return PredictionRuntime;
-    }
+    // Forward the prediction-key handlers from ILyraItemContainerInterface.
+    virtual void OnPredictionKeyRejected(int32 KeyId) override { PredictionHelper.OnPredictionKeyRejected(KeyId); }
+    virtual void OnPredictionKeyCaughtUp(int32 KeyId) override { PredictionHelper.OnPredictionKeyCaughtUp(KeyId); }
 
-    // Expose for UI
+    // The list callbacks reach the helper through this accessor.
+    FPredictableContainerHelper* GetPredictionHelper() { return &PredictionHelper; }
+
+    // Typed view accessor for UI consumers.
     const TArray<FMyContainerEntry>& GetEffectiveView() const
     {
-        return PredictionRuntime.GetEffectiveView();
+        return PredictionHelper.GetEffectiveView<FMyContainerTraits>();
     }
 
-    FOnViewDirtied& OnViewDirtied()
-    {
-        return PredictionRuntime.OnViewDirtied();
-    }
+    FOnViewDirtied* GetOnViewDirtied() const { return PredictionHelper.OnViewDirtied(); }
+
+private:
+    FPredictableContainerHelper PredictionHelper;
 };
 ```
+
+`InitRuntimeAs<FMyContainerTraits>(this)` instantiates `TGuidKeyedPredictionRuntime<FMyContainerTraits>` and stores it on the helper. Subsequent typed access goes through `PredictionHelper.GetTypedRuntime<FMyContainerTraits>()` or the convenience templated accessors.
 {% endstep %}
 
 {% step %}
@@ -482,7 +518,7 @@ bool UVendorComponent::AddItemToSlot(const FInstancedStruct& SlotInfo,
 }
 ```
 
-#### Predicted Pattern (Thin Wrapper)
+#### **Predicted Pattern (Thin Wrapper)**
 
 ```cpp
 bool UMyContainerComponent::AddItemToSlot(const FInstancedStruct& SlotInfo,
@@ -497,10 +533,10 @@ bool UMyContainerComponent::AddItemToSlot(const FInstancedStruct& SlotInfo,
         return false;
     }
 
-    // Build payload and delegate to runtime
+    // Build payload and delegate to the typed runtime through the helper.
     FMyContainerPayload Payload(Item, Slot->SlotIndex);
 
-    PredictionRuntime.RecordAdd(
+    PredictionHelper.GetTypedRuntime<FMyContainerTraits>()->RecordAdd(
         Item->GetItemInstanceId(),
         Payload,
         PredictionKey
@@ -518,8 +554,8 @@ ULyraInventoryItemInstance* UMyContainerComponent::RemoveItemFromSlot(
     ULyraInventoryItemInstance* Item = GetItemInSlot(SlotInfo);
     if (!Item) return nullptr;
 
-    // Delegate to runtime
-    PredictionRuntime.RecordRemoval(
+    // Delegate to the typed runtime through the helper.
+    PredictionHelper.GetTypedRuntime<FMyContainerTraits>()->RecordRemoval(
         Item->GetItemInstanceId(),
         PredictionKey
     );
@@ -527,6 +563,17 @@ ULyraInventoryItemInstance* UMyContainerComponent::RemoveItemFromSlot(
     return Item;
 }
 ```
+
+If you have many recording call sites, give your component a private accessor that wraps the typed downcast once:
+
+```cpp
+TGuidKeyedPredictionRuntime<FMyContainerTraits>* GetTypedRuntime() const
+{
+    return PredictionHelper.GetTypedRuntime<FMyContainerTraits>();
+}
+```
+
+Then call sites read `GetTypedRuntime()->RecordAdd(...)`.
 
 The runtime handles:
 
@@ -585,23 +632,16 @@ int32 UMyContainerComponent::ForEachItem(
 {% step %}
 ### Step 6: Prediction Callbacks
 
-Your component needs to handle both rejection and caught-up events:
+The interface methods that handle prediction-key rejection and catch-up are already shown in [Step 4](adding-prediction.md#step-4-the-component-with-runtime), the helper handles the routing:
 
 ```cpp
-void UMyContainerComponent::OnPredictionKeyRejected(int32 PredictionKeyCurrent)
-{
-    // Immediate rollback - clear overlays for this key
-    PredictionRuntime.GetEngine().OnPredictionKeyRejected(PredictionKeyCurrent);
-    PredictionRuntime.MarkViewDirty();
-}
+virtual void OnPredictionKeyRejected(int32 KeyId) override { PredictionHelper.OnPredictionKeyRejected(KeyId); }
+virtual void OnPredictionKeyCaughtUp(int32 KeyId) override { PredictionHelper.OnPredictionKeyCaughtUp(KeyId); }
+```
 
-void UMyContainerComponent::OnPredictionKeyCaughtUp(int32 PredictionKeyCurrent)
-{
-    // Server caught up - clear overlays for this key
-    PredictionRuntime.GetEngine().OnPredictionKeyCaughtUp(PredictionKeyCurrent);
-    PredictionRuntime.MarkViewDirty();
-}
+The helper clears the matching overlays and marks the view dirty internally; you do not have to reach into the engine. The remaining piece is opting into prediction at all:
 
+```cpp
 bool UMyContainerComponent::CanParticipateInClientPrediction(
     const AController* PredictingController) const
 {
