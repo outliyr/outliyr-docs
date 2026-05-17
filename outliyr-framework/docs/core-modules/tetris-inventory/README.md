@@ -1,6 +1,6 @@
 # Tetris Inventory
 
-Welcome to the documentation for the **Tetris Inventory System Plugin**, a powerful extension to the modified base Lyra asset. This plugin transforms the foundational inventory management capabilities into a fully spatial, grid-based system, introducing visually engaging organization and deeper gameplay mechanics often seen in popular extraction shooters and survival games.
+Welcome to the documentation for the **Tetris Inventory System Plugin**, a powerful extension to the asset. This plugin transforms the foundational inventory management capabilities into a fully spatial, grid-based system, introducing visually engaging organization and deeper gameplay mechanics often seen in popular extraction shooters and survival games.
 
 You want your players to _feel_ their inventory, not just scroll through a list, but physically rotate a rifle to wedge it next to a medical kit, open a backpack to find ammo buried inside, and combine berries with an empty bottle to brew a health potion. Grid-based inventories turn storage into a spatial puzzle, and this plugin gives you the complete toolkit to build one.
 
@@ -42,7 +42,7 @@ The plugin is an **extension**, not a replacement. It inherits from and integrat
 | [Container UI System](../../base-lyra-modified/ui/item-container-ui-system/)                                              | `ULyraTetrisGridClumpWidget` implements the Window Content Interface for grid rendering                                                                               |
 
 {% hint style="info" %}
-You should be familiar with the [Modified Base Lyra Item System](../../base-lyra-modified/items/) and the [Item Container Architecture](../../base-lyra-modified/item-container/) before diving into the tetris-specific features. This documentation focuses on what the plugin adds, referencing the base docs for shared concepts.
+You should be familiar with the [Item System](../../base-lyra-modified/items/) and the [Item Container Architecture](../../base-lyra-modified/item-container/) before diving into the tetris-specific features. This documentation focuses on what the plugin adds, referencing the base docs for shared concepts.
 {% endhint %}
 
 ***
