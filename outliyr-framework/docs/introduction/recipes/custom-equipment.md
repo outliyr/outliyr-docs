@@ -31,11 +31,17 @@ Before the steps, the mental model. Equipment is built from a small graph of ass
 
 Other fragments exist for consumables, attachments, category sorting, and custom data, see the [Custom Item Recipe](custom-item.md) for the full menu. Rocket shoes use just these three.
 
-**When the player equips it.** The _Equipment Definition_ (e.g. `WID_RocketShoes`) drives what happens on equip: it spawns the equipment's visual actors on the appropriate sockets, grants the abilities listed in its Ability Set, and configures the slot the equipment occupies (and how it behaves there, held vs. holstered). The Equipment Definition also points at an _Equipment Instance_ class, the runtime representation of the equipment while it's on the player. **The default `Equipment Instance` class is fine for most equipment.** You only subclass it when you have logic that runs continuosly and wouldn't fit in abilities.
+#### **When the player equips it.**&#x20;
 
-**What the equipment grants.** The Equipment Definition references one or more _Ability Sets_, bundles of abilities granted to the player while the equipment is equipped. Each entry in an Ability Set pairs an input tag (e.g. `InputTag.Jump`) with an ability. If your equipment is a pure stat buff with no input-driven behaviour, the Ability Set can grant Gameplay Effects directly without any abilities at all.
+The _Equipment Definition_ (e.g. `WID_RocketShoes`) drives what happens on equip: it spawns the equipment's visual actors on the appropriate sockets, grants the abilities listed in its Ability Set, and configures the slot the equipment occupies (and how it behaves there, held vs. holstered). The Equipment Definition also points at an _Equipment Instance_ class, the runtime representation of the equipment while it's on the player. **The default `Equipment Instance` class is fine for most equipment.** Rocket shoes use the default; guns subclass it.
 
-**What the player sees.** Optional. Equipment doesn't _require_ a visual representation on the player. If yours has one, it's a Blueprint actor (e.g. `B_RocketShoe`) with the mesh and any cosmetic components. The Equipment Definition spawns it on the appropriate socket. Buff items, internal modifiers, and pure-effect items skip this entirely.
+#### **What the equipment grants.**&#x20;
+
+The Equipment Definition references one or more _Ability Sets_, bundles of abilities granted to the player while the equipment is equipped. Each entry in an Ability Set pairs an input tag (e.g. `InputTag.Jump`) with an ability. If your equipment is a pure stat buff with no input-driven behaviour, the Ability Set can grant Gameplay Effects directly without any abilities at all.
+
+#### **What the player sees.**&#x20;
+
+Optional. Equipment doesn't _require_ a visual representation on the player. If yours has one, it's a Blueprint actor (e.g. `B_RocketShoe`) with the mesh and any cosmetic components. The Equipment Definition spawns it on the appropriate socket. Buff items, internal modifiers, and pure-effect items skip this entirely.
 
 The rocket shoes asset graph:
 
@@ -52,6 +58,61 @@ WID_RocketShoes (Equipment Definition)
  ├─ Slot configuration ............ feet slot, holster-only behaviour
  └─ Actors To Spawn ............... → B_RocketShoe (spawned twice — left foot + right foot socket)
 ```
+
+***
+
+## **Where equipment state lives**
+
+One more piece of mental model before the recipe. Equipment carries three kinds of value, and each kind lives in a different place.
+
+#### **On the Equipment Instance subclass: settings authored on this type of equipment**
+
+The Equipment Instance subclass is where you put values and asset references the designer fills in once on the equipment itself, that don't change at runtime. `UPROPERTY` fields on a subclass of `Equipment Instance`.
+
+Rocket shoes don't have any. There's nothing about a pair of rocket shoes that needs configuring beyond "they grant the rocket-jump ability when worn." This recipe uses the default `Equipment Instance` class straight off.
+
+Guns are the framework's main example of equipment that does need a subclass. A gun subclass typically carries things like:
+
+* **An animation layer for the character** — the body pose and grip the character uses while holding the gun, so the gun looks like it's being held correctly.
+* **Behaviour curves** — assets that describe how a number changes against an input. For a gun: how the recoil pattern builds over a burst (the muzzle climbs as more shots fire); how damage drops off as the target gets farther away.
+* **Equip and unequip montages** — short animations the framework plays when the player swaps the rifle in and out of their hands.
+* **Starting values for live stats** — the gun's base spread before any attachments, base heat parameters, and so on. These get written into the tag attribute list at equip time.
+
+If your equipment needs settings like these, subclass `Equipment Instance` (or, for guns, subclass `B_GunWeaponInstanceBase` so you inherit the gun-specific configuration the framework already wires up). Otherwise, like rocket shoes, use the default.
+
+#### **In tag attributes: live values, recomputable from current state**
+
+Numbers that change while the equipment is held and can be modified by other items/attachments. These live on the Equipment Instance in a small list called **tag attributes**, pairs of name → number, where the name is a Gameplay Tag like `Lyra.RangeWeapon.Stat.SpreadExponent`.
+
+The mechanism: at equip time, the firing ability seeds its stats into the list (it adds `SpreadExponent` with the subclass's default value, for example). An attachment can modify the value by tag, a stability mod narrows `SpreadExponent` when bolted on, and reverses the modification when removed. The firing ability reads `SpreadExponent` on every shot. Everyone sees the same value.
+
+What this buys: **abilities encapsulate their own stats.** Each ability owns the values it needs and writes them into the equipment's tag-attribute list when it activates. The rifle's firing ability adds `SpreadExponent`. A flamethrower ability would add `FlameWidth`. A grenade ability adds `GrenadeRadius`. A charge-shot ability adds `ChargeTime`. The base Equipment Instance class never has to know which abilities will be granted or what stats they'll bring, they show up on activation and vanish on cleanup.
+
+So one Equipment Instance class can carry any mix of abilities. A single gun instance can grant a flamethrower ability, a grenade ability, and a charge-shot ability without inflating the gun's class with twelve unrelated UPROPERTYs or growing an inheritance tree for every combination. Abilities become drop-in pieces of functionality, self-contained, portable, addable to any equipment. And because stats are addressed by tag name, anything else can modify them.
+
+**Tag attributes exist only while the equipment is held. They reset on unequip.**
+
+#### **In item stat tags: persistent, history-dependent**
+
+Numbers that depend on history and have to survive the equipment going back in the inventory: magazine ammo, charges remaining, durability, kill counters. These don't live on the Equipment Instance at all, they live on the inventory item itself, as **item stat tags**.
+
+Why the split: a half-loaded magazine still has 12 bullets in it after the player swaps to a knife and back. If ammo lived on the Equipment Instance (which is destroyed and recreated each time the weapon is equipped), the count would reset to full every time. Stat tags persist because the inventory item persists.
+
+Lifetime: stat tags exist as long as the inventory item does, across equip / unequip, across pickup and drop, across save / load.
+
+**Which to use**
+
+A useful test for each value you want the equipment to carry:
+
+> Can it always be _recomputed_ from current state and current attachments, or does it depend on history?
+
+* **Recomputable** (current spread, ADS multiplier, current flame width) → tag attribute. Reset on unequip is fine because the framework rebuilds it.
+* **History-dependent** (ammo, durability, charges) → item stat tag. Must persist on the item.
+* **Same for every copy of this equipment** (recoil curve, anim layer, montages) → UPROPERTY on the Equipment Instance subclass.
+
+Rocket shoes need none of these, no static curves to share, no live stats to track, no persistent counters. Most equipment uses one or two. Guns use all three.
+
+See [Equipment Instance](../../base-lyra-modified/equipment/equipment-instance.md#tag-attributes-flexible-parameters-without-subclassing) for the full API and the comparison.
 
 ***
 
@@ -99,7 +160,7 @@ Create a new **Lyra Equipment Definition**. This is the composition panel, what 
 
 Set:
 
-* **Equipment Instance Class** — the default `Equipment Instance`. **No subclass needed.** Rocket shoes have no per-instance runtime state to override; all the behaviour is in the ability.
+* **Equipment Instance Class** — the default `Equipment Instance`. **No subclass needed.** Rocket shoes have no settings to author on a subclass, all the behaviour is in the ability.&#x20;
 * **Ability Sets To Grant** — `AbilitySet_RocketShoes` from Step 2.
 * **Slot configuration** — feet slot. This equipment can't be held, so there is no need to populate held behvaiours
 * **Actors To Spawn** — leave empty for now; you'll wire `B_RocketShoe` in Step 4.
@@ -166,8 +227,8 @@ If the shoes equip but the jump isn't replaced, the input tag binding in the Abi
 This is the smallest equipment graph. Real-world equipment often skips even more:
 
 * **No visual actor.** A buff item, internal modifier, or pure stat tweak doesn't need a `B_*` actor at all. Skip Step 4 entirely.
-* **No abilities — just Gameplay Effects.** The Ability Set doesn't require abilities. If your equipment is a pure stat buff (10% damage resistance while worn, +20 max health, etc.), grant a Gameplay Effect through the Ability Set instead of an ability. The GE applies on equip, removes on unequip.
-* **No subclassed Equipment Instance.** Default `Equipment Instance` is the right choice for most equipment. Subclass only when you have runtime stats to own (this is what weapons do as their logic involves continous ticking which isn't suitable for abilities).
+* **No abilities, just Gameplay Effects.** The Ability Set doesn't require abilities. If your equipment is a pure stat buff (10% damage resistance while worn, +20 max health, etc.), grant a Gameplay Effect through the Ability Set instead of an ability. The GE applies on equip, removes on unequip.
+* **No subclassed Equipment Instance.** Default `Equipment Instance` is the right choice for most equipment. Subclass only when your equipment needs designer-authored settings the default class doesn't have somewhere to hold, see [Where equipment state lives](custom-equipment.md#where-equipment-state-lives) for the kinds of thing that qualify.
 * **For temporary buffs, use a Consume Item instead.** If the buff should be one-time-use rather than worn, the consume-item pattern fits better. See the [Custom Item Recipe](custom-item.md).
 
 ***
@@ -177,7 +238,7 @@ This is the smallest equipment graph. Real-world equipment often skips even more
 * **Equipment Definition not referenced from the Item Definition.** A common silent failure: everything is built correctly, but Step 5's Equipment Fragment never points at `WID_RocketShoes`. The item appears in the inventory but pressing equip does nothing. Open the Item Definition and confirm the Equipment Fragment's reference is set.
 * **Forgetting to call `EndAbility` in the granted ability.** Abilities don't auto-end. If `GA_RocketJump` activates but never calls `EndAbility`, the ability stays running, the player launches once and can't trigger jump again, because the ability blocks re-activation. Rocketshoes uses `WaitForMovementModeChange` to fire `EndAbility` on landing; any custom ability you grant through equipment needs an equivalent end condition.
 * **Wiring ability and equipment together before either works in isolation.** If you build `GA_RocketJump`, the Ability Set, and the Equipment Definition all at once and nothing fires, the bug could be in any of three layers and you can't tell which. Grant the ability through a Pawn Data's `AbilitySets` first to confirm it activates on jump, then move it into the equipment Ability Set once it works on its own.
-* **Subclassing the Equipment Instance with nothing to override.** A pointless subclass adds maintenance burden for no benefit. If your equipment has no runtime stats to vary (no recoil, no spread, no continuous tick logic), use the default `Equipment Instance` directly.
+* **Subclassing the Equipment Instance with nothing to override.** A pointless subclass adds maintenance burden for no benefit. Use the default `Equipment Instance` unless your equipment has settings only a subclass can hold, [Where equipment state lives](custom-equipment.md#where-equipment-state-lives) lists what those look like.
 * **Inventory Icon Fragment missing.** The item won't display in the inventory UI without it. This is required, not cosmetic.
 
 ***
@@ -194,8 +255,6 @@ like **vortex armour** (`Plugins/GameFeatures/TetrisInventory/Content/Demo/Items
 
 Like the **Kinetic Shield** in the same demo folder, which exposes an attachment slot (via the Attachment Fragment) for items like **Power Crystal**. The crystal itself is a normal item; attaching it grants extra abilities to the shield while the slot is occupied.
 
-#### **Equipment with runtime stats**
+#### Equipment with stats that change while held
 
-anything where the per-instance stats vary at runtime (charges remaining, durability, heat level). This is when subclassing the Equipment Instance becomes worthwhile. Guns are the canonical example: see the [Custom Weapon Recipe](custom-weapon.md) for the full pattern.
-
-When you're ready for a different system, head back to [Recipes](./).
+Current spread, heat level, ADS multiplier, anything an attachment modifies. These go in the Equipment Instance's **tag attribute** list: abilities add stats by tag, attachments modify them by tag, neither side hard-codes the equipment class. (Persistent counts like ammo, charges, or durability go elsewhere, on the inventory item as stat tags, since they need to survive being unequipped.) Guns are the canonical example. See [Equipment Instance](../../base-lyra-modified/equipment/equipment-instance.md#tag-attributes-vs-item-stat-tags) for the comparison and the [Custom Weapon Recipe](custom-weapon.md) for the pattern.

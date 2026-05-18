@@ -49,13 +49,21 @@ Before the steps, the mental model. A weapon in this framework is built from a s
 * _ReticleConfig_ — reticle widget + ammo counter widget. Optional but strongly recommended.
 * _Pickup_ — world drop / pickup. Optional.
 
-**When the player equips it.** The _Equipment Definition_ (e.g. `WID_Rifle`) drives what happens on equip: it spawns the visible weapon actor in the player's hand, grants the abilities listed in its Ability Set, and activates the input bindings tied to those abilities. The Equipment Definition also points at an _Equipment Instance_ class, the runtime representation of the weapon in hand. The Equipment Instance is where recoil curves, spread parameters, damage falloff, animation layer, and equip / unequip montages live.
+#### **When the player equips it.**&#x20;
 
-**What the player sees and hears.** The visible weapon is a _BP Gun Actor_ (e.g. `B_Rifle`), a Blueprint actor with the weapon mesh and the cosmetic components: muzzle flash, shell ejection, tracers, firing audio. It has no gameplay logic. The shooting ability gameplay cues call into this actor when the weapon fires, so every per-weapon cosmetic, visual or audio, lives in one place.
+The _Equipment Definition_ (e.g. `WID_Rifle`) drives what happens on equip: it spawns the visible weapon actor in the player's hand, grants the abilities listed in its Ability Set, and activates the input bindings tied to those abilities. The Equipment Definition also points at an _Equipment Instance_ class, the runtime representation of the weapon in hand. Guns subclass it through the framework's `Gun Weapon Instance` chain.
 
-**Pulling the trigger.** The Equipment Definition grants an _Ability Set_, a bundle of abilities active while the weapon is held. For most guns it's two: a _firing ability_ and a _reload ability_. Both are subclasses of existing abilities that come with this framework (hitscan, bullet-drop, or predictive-projectile firing; magazine or shell-by-shell reload), tuned by their properties rather than rewritten in code. The firing ability applies a _Damage Gameplay Effect_ on hit, that's where the weapon's actual damage values live.
+#### **What the player sees and hears.**&#x20;
 
-**On screen.** The reticle widgets, a crosshair and an ammo counter, are referenced from the ReticleConfig fragment on the Item Definition. They're standard UMG widgets that are shown while the weapon is equipped and hides when it isn't.
+The visible weapon is a _BP Gun Actor_ (e.g. `B_Rifle`), a Blueprint actor with the weapon mesh and the cosmetic components: muzzle flash, shell ejection, tracers, firing audio. It has no gameplay logic. The shooting ability gameplay cues call into this actor when the weapon fires, so every per-weapon cosmetic, visual or audio, lives in one place.
+
+#### **Pulling the trigger.**&#x20;
+
+The Equipment Definition grants an _Ability Set_, a bundle of abilities active while the weapon is held. For most guns it's two: a _firing ability_ and a _reload ability_. Both are subclasses of existing abilities that come with this framework (hitscan, bullet-drop, or predictive-projectile firing; magazine or shell-by-shell reload), tuned by their properties rather than rewritten in code. The firing ability applies a _Damage Gameplay Effect_ on hit, that's where the weapon's actual damage values live.
+
+#### **On screen.**&#x20;
+
+The reticle widgets, a crosshair and an ammo counter, are referenced from the ReticleConfig fragment on the Item Definition. They're standard UMG widgets that are shown while the weapon is equipped and hides when it isn't.
 
 The assets wire roughly like this:
 
@@ -77,10 +85,44 @@ WID_Rifle (Equipment Definition)
  ├─ Input Mappings ................ fire / reload / aim bindings
  └─ Equipment Instance Class ...... → B_GunWeaponInstance_Rifle
                                           (subclass of B_GunWeaponInstanceBase —
-                                           recoil, spread, damage falloff, animation layer)
+                                           recoil curves, spread, falloff curve, animation layer)
 ```
 
-Every step below creates one of those nodes.
+Every step in [Build the rifle from scratch](custom-weapon.md#build-the-rifle-from-scratch) creates one of those nodes.
+
+***
+
+## **Live stats on a weapon**
+
+The Custom Equipment Recipe explains the framework's three-place split for equipment state, static configuration on the Equipment Instance subclass, live values in tag attributes, persistent counts in item stat tags. A weapon uses all three. This section is the concrete walk-through on a rifle.
+
+#### **Settings authored on the subclass.**&#x20;
+
+A weapon's Equipment Instance class sits on top of an inheritance chain: `Gun Weapon Instance` → `Ranged Weapon Instance` → `Weapon Instance` → `Equipment Instance`. Each layer already implements something so your rifle doesn't have to:
+
+* `Weapon Instance` — anim-layer selection (which third-person body pose the character uses while holding the weapon), gamepad haptic device properties, equip and fire timing.
+* `Ranged Weapon Instance` — the heat-based spread system, per-state spread multipliers (aiming, crouching, jumping), distance damage falloff, per-surface damage modifiers, bullet trace config.
+* `Gun Weapon Instance` — recoil (vertical and horizontal recoil curves, recoil recovery).
+
+Your rifle subclass (`B_GunWeaponInstance_Rifle`, authored in Step 2) plugs values into the curves and asset references those layers read, the hold animation, recoil curves, damage falloff curve, equip/unequip montages, and starting values for live stats like base spread. You don't reimplement spread, falloff, or recoil from scratch.
+
+#### **Live values in tag attributes.**&#x20;
+
+Walk through what happens to the rifle's spread as the player picks it up, snaps on a stability attachment, fires, removes the attachment, and unequips:
+
+1. The rifle is equipped → the firing ability writes the starting `SpreadExponent` value (from the subclass default) into the Equipment Instance's tag-attribute list.
+2. A stability attachment is added → it modifies `SpreadExponent` by tag (narrows it).
+3. The player fires → the firing ability reads the current `SpreadExponent` from the list and computes the shot.
+4. The attachment is removed → the modification is reversed; `SpreadExponent` returns to the rifle's base value.
+5. The player unequips the rifle → `SpreadExponent` is gone from the list. Next equip starts fresh from the subclass default.
+
+Every system in the scenario reads and writes by tag name. The firing ability doesn't know which attachments are on the rifle; the attachment doesn't know which weapon it's bolted onto. They just touch `SpreadExponent`.
+
+#### **Persistent counts as item stat tags.**&#x20;
+
+Magazine ammo isn't a tag attribute. The Gun Fragment on the Item Definition (Step 1) configures the magazine _size_; the current ammo _count_ is stored as a stat tag on the inventory item, so a half-loaded magazine survives the player swapping to a knife and back. Same for kill counters and any durability counter your game tracks.
+
+You'll meet tag attributes again in Step 2 (the spread starting value you tune) and in Step 4 of the sniper variant.
 
 ***
 
@@ -119,6 +161,8 @@ In the Class Defaults you can set:
 * **Distance damage falloff curve**
 * **Material damage multipliers** (per-surface modifiers). You can add headshot/body multipliers here
 * **Recoil and spread parameters** — _or_ author these visually with the [Recoil Editor](../../core-modules/shooter-base/weapons/gun-weapon-instance/recoil-editor-guide.md)
+
+What you're setting in this panel are the static asset references and the designer-authored _defaults_ for the live stats. At runtime, the live values (e.g. `SpreadExponent`, current heat) are pushed into the Equipment Instance's **tag attribute** container, where the firing ability reads them and attachments modify them. So the value you tune here is the starting point; attachments compose on top of it without changes to this class. See [Equipment Instance: Tag Attributes](../../base-lyra-modified/equipment/equipment-instance.md#tag-attributes-flexible-parameters-without-subclassing) for the tag-attribute container API.
 
 Reference: [Range Weapon Instance](../../base-lyra-modified/weapons/range-weapon-instance.md), [Gun Weapon Instance](../../core-modules/shooter-base/weapons/gun-weapon-instance/).
 
@@ -344,7 +388,7 @@ This step is the bulk of the variant work and it's all property panels. Three as
 
 **`B_GunWeaponInstance_Sniper`** (equipment instance):
 
-* **Spread** tightened, snipers should be near-pinpoint accurate
+* **Spread** tightened, snipers should be near-pinpoint accurate. The value you set here seeds the live `SpreadExponent` tag attribute the firing ability reads at fire time, so any stability attachment (e.g. a heavy barrel) composes on top of the sniper's tighter base
 * **Recoil profile** more vertical, larger single kick (use the [Recoil Editor](../../core-modules/shooter-base/weapons/gun-weapon-instance/recoil-editor-guide.md))
 * **Distance damage falloff** flattened,snipers shouldn't lose damage at range
 * **Linked Animation Layer**,swap to a sniper anim BP if you have one
