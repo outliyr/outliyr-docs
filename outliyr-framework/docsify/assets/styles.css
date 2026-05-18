@@ -394,6 +394,7 @@ aside.toc-nav {
     padding: 1rem 1.1rem;
     box-shadow: var(--shadow-soft);
     overflow-x: auto;
+    white-space: pre;
 }
 .markdown-section pre > code {
     background: transparent;
@@ -403,6 +404,9 @@ aside.toc-nav {
     line-height: 1.6;
     padding: 0;
     text-shadow: none;
+    white-space: pre;
+    word-break: normal;
+    overflow-wrap: normal;
 }
 
 .markdown-section code {
