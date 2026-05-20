@@ -17,14 +17,14 @@ Right-click on item:
 └─────────────────────┘
 ```
 
-The `ActionMenuViewModel` handles:
+The `LyraItemActionMenuViewModel` handles:
 
 * Gathering available actions for an item
 * Displaying the menu
 * Executing selected actions
 * Handling quantity input for partial actions
 
-The `LyraItemActionMenuViewModel` acts as the brain for your context menus. It is a **Shared Singleton** (one per player) that you access via the UI Manager.
+The `LyraItemActionMenuViewModel` acts as the brain for your context menus. It is a **Shared Singleton** (one per player) that you access via the UI Manager, `LyraItemContainerUIManager`.
 
 ### The Item Action Menu Flow
 
