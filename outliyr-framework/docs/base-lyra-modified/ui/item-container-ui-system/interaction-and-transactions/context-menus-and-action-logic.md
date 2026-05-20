@@ -58,9 +58,9 @@ You typically trigger the menu from your **Slot Widget** (the widget representin
 
 <summary>Blueprint graph showing utilization of <code>ItemActionMenu</code> in equipment slot</summary>
 
-<figure><img src="../../../../.gitbook/assets/image (9) (1) (1) (1).png" alt=""><figcaption><p>Blueprint Graph showing OnMouseButtonDown->CreateItemActionMenu on right click</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (9) (1) (1) (1).png" alt=""><figcaption><p>Blueprint Graph showing <code>OnMouseButtonDown->CreateItemActionMenu</code> on right click</p></figcaption></figure>
 
-<figure><img src="../../../../.gitbook/assets/image (10) (1) (1) (1).png" alt=""><figcaption><p>Inform the ActionMenuViewModel that it should create should populate a menu for the item in the slot</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (10) (1) (1) (1).png" alt=""><figcaption><p>Inform the <code>ActionMenuViewModel</code> that it should create should populate a menu for the item in the slot</p></figcaption></figure>
 
 </details>
 
@@ -90,7 +90,7 @@ Create a simple button widget for the list.
 
 ## Step 3: Defining Actions
 
-Actions are defined on the **Item Definition** itself, using Fragments. This keeps your data clean—an Apple "knows" it can be eaten; the UI doesn't need to check.
+Actions are defined on the **Item Definition** itself, using Fragments. This keeps your data clean, an Apple "knows" it can be eaten; the UI doesn't need to check.
 
 ### C++ Interface (`IItemActionProvider`)
 
@@ -124,7 +124,7 @@ This is the most important concept for developers to understand: **The UI does n
 
 When a player clicks "Use," the UI performs a handshake with the Gameplay Ability System:
 
-1. **Packaging:** The UI creates an FItemActionContext. This struct contains the ActionTag (e.g., Lyra.Item.Action.Use) and the SourceSlot (where the item is).
+1. **Packaging:** The UI creates an FItemActionContext. This struct contains the ActionTag (e.g., `Lyra.Item.Action.Use`) and the SourceSlot (where the item is).
 2. **Dispatch:** It calls `UItemContainerFunctionLibrary::CallItemActionAbility`.
 3. **The Event:** This function sends a **Gameplay Event** to the player's Actor. The **Event Tag** is the ActionTag.
 
