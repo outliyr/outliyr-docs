@@ -102,7 +102,9 @@ These methods read container state without modifying it.
 virtual int32 CanAcceptItem(
     const FInstancedStruct& SlotInfo,
     const ULyraInventoryItemInstance* Item,
-    const AController* Instigator) const = 0;
+    const AController* Instigator,
+    bool bIgnoreCurrentOccupant = false,
+    FItemRejectionReason* OutRejection = nullptr) const = 0;
 ```
 
 Checks if a slot can accept an item. Returns:
@@ -110,12 +112,7 @@ Checks if a slot can accept an item. Returns:
 * `0` if rejected
 * `>0` for quantity that can be accepted (for stackable items, returns available stack space)
 
-**Common rejection reasons:**
-
-* Slot is occupied with an incompatible item
-* Item type not allowed in this slot
-* Container weight/capacity limits exceeded
-* Slot doesn't exist
+This is a read-only validation check that does not mutate state. Unlike permission checks (which validate _who_ can access the container), this method validates container-specific business logic.
 
 ### **`CanRemoveItem`**
 
@@ -123,7 +120,8 @@ Checks if a slot can accept an item. Returns:
 virtual int32 CanRemoveItem(
     const FInstancedStruct& SlotInfo,
     const ULyraInventoryItemInstance* Item,
-    const AController* Instigator) const;
+    const AController* Instigator,
+    FItemRejectionReason* OutRejection = nullptr) const;
 ```
 
 Checks if a slot can remove an item. Returns:
@@ -133,9 +131,23 @@ Checks if a slot can remove an item. Returns:
 
 This is a read-only validation check that does not mutate state. Unlike permission checks (which validate _who_ can access the container), this method validates container-specific business logic.
 
-**Common rejection reasons:**
+#### **Returning rejection reasons**
 
-* Item is bound (quest items that cannot leave a quest container)
+Both `CanAcceptItem` and `CanRemoveItem` take an optional `FItemRejectionReason* OutRejection`. When a validator returns 0, filling this struct lets callers branch on the specific reason instead of treating every failure as a generic rejection. UI uses the tag to choose what to display and the message to show the player.
+
+`FItemRejectionReason` carries two fields:
+
+* **`Reason`** — gameplay tag from the `Lyra.Item.Reject.*` hierarchy that identifies the rejection category
+* **`Message`** — `FText` shown to the player
+
+Two helpers cover the common cases:
+
+* **`Set(tag, text)`** — for player-visible rejections such as "Out of stock" or "Slot is locked"
+* **`SetDev(tag)`** — for internal rejections whose technical detail should not leak to the player, such as null world or stale handle races. The tag still describes the cause for developers reading logs
+
+Framework-defined tags live in `LyraItemRejectionTags` under categories such as `Container`, `Capacity`, `Slot`, `Item`, `Stack`, and `Permission`. Custom containers add their own tags under the same hierarchy for game-specific rules.
+
+***
 
 ### **`GetItemInSlot`**
 

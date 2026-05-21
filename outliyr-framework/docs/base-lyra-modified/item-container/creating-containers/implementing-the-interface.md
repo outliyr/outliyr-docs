@@ -43,7 +43,7 @@ struct FVendorSlotInfo : public FAbilityData_SourceItem
 
     // Required: Find the container from this slot
     virtual ILyraItemContainerInterface* ResolveContainer(
-        const APlayerController* PC) const override
+        APlayerController* PC) const override
     {
         return Vendor.Get();
     }
@@ -130,11 +130,14 @@ public:
 
     virtual int32 CanAcceptItem(const FInstancedStruct& SlotInfo,
         const ULyraInventoryItemInstance* Item,
-        const AController* Instigator) const override;
+        const AController* Instigator,
+        bool bIgnoreCurrentOccupant = false,
+        FItemRejectionReason* OutRejection = nullptr) const override;
 
     virtual int32 CanRemoveItem(const FInstancedStruct& SlotInfo,
         const ULyraInventoryItemInstance* Item,
-        const AController* Instigator) const override;
+        const AController* Instigator,
+        FItemRejectionReason* OutRejection = nullptr) const override;
 
     virtual bool AddItemToSlot(const FInstancedStruct& SlotInfo,
         ULyraInventoryItemInstance* Item, FPredictionKey PredictionKey,
@@ -180,7 +183,9 @@ This checks if the vendor will buy an item the player wants to sell:
 ```cpp
 int32 UVendorComponent::CanAcceptItem(const FInstancedStruct& SlotInfo,
     const ULyraInventoryItemInstance* Item,
-    const AController* Instigator) const
+    const AController* Instigator,
+    bool bIgnoreCurrentOccupant,
+    FItemRejectionReason* OutRejection) const
 {
     if (!Item) return 0;
 
@@ -211,7 +216,8 @@ Purchase validation (stock + affordability):
 ```cpp
 int32 UVendorComponent::CanRemoveItem(const FInstancedStruct& SlotInfo,
     const ULyraInventoryItemInstance* Item,
-    const AController* Instigator) const
+    const AController* Instigator,
+    FItemRejectionReason* OutRejection) const
 {
     const FVendorSlotInfo* VendorSlot = SlotInfo.GetPtr<FVendorSlotInfo>();
     if (!VendorSlot) return 0;
@@ -225,16 +231,25 @@ int32 UVendorComponent::CanRemoveItem(const FInstancedStruct& SlotInfo,
     const FVendorCatalogEntry& Entry = Catalog[VendorSlot->CatalogIndex];
 
     // Check stock
-    if (Entry.Stock == 0)
+    if (OutRejection)
     {
-        return 0; // Out of stock
+        OutRejection->Set(
+            LyraVendorRejectionTags::Reject_Vendor_OutOfStock,
+            NSLOCTEXT("Vendor", "OutOfStock", "Out of stock"));
     }
+    return 0;
 
     // Check affordability
     int32 PlayerCurrency = GetPlayerCurrency(Instigator);
     if (PlayerCurrency < Entry.BuyPrice)
     {
-        return 0; // Can't afford
+        if (OutRejection)
+        {
+            OutRejection->Set(
+                LyraVendorRejectionTags::Reject_Vendor_CannotAfford,
+                NSLOCTEXT("Vendor", "CannotAfford", "Not enough currency"));
+        }
+        return 0;
     }
 
     // Return how many the player can purchase (limited by stock and affordability)
@@ -244,6 +259,8 @@ int32 UVendorComponent::CanRemoveItem(const FInstancedStruct& SlotInfo,
 ```
 
 `CanRemoveItem` is the purchase validation. It's read-only, no state changes. Returning a quantity enables partial purchases for stackable items. This is because this function checks what can leave the vendor i.e buying.
+
+Filling `OutRejection` lets vendor UI display granular feedback such as a greyed-out "Out of stock" badge or a red "Not enough currency" message. Define your own vendor-specific tags under the `Lyra.Item.Reject.*` hierarchy alongside the framework's defaults in `LyraItemRejectionTags`.
 
 ***
 
@@ -258,7 +275,7 @@ bool UVendorComponent::AddItemToSlot(const FInstancedStruct& SlotInfo,
     if (!Item) return false;
 
     // Validate (unless forcing during correction)
-    if (!bForceAdd && CanAcceptItem(SlotInfo, Item) == 0)
+    if (!bForceAdd && CanAcceptItem(SlotInfo, Item, nullptr) == 0)
     {
         return false;
     }

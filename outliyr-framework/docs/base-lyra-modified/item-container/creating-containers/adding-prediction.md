@@ -507,7 +507,7 @@ bool UVendorComponent::AddItemToSlot(const FInstancedStruct& SlotInfo,
     if (!Item) return false;
 
     // Full validation
-    if (!bForceAdd && CanAcceptItem(SlotInfo, Item) == 0)
+    if (!bForceAdd && CanAcceptItem(SlotInfo, Item, nullptr) == 0)
     {
         return false;
     }
@@ -528,7 +528,7 @@ bool UMyContainerComponent::AddItemToSlot(const FInstancedStruct& SlotInfo,
     if (!Slot || !Item) return false;
 
     // Light validation
-    if (!bForceAdd && CanAcceptItem(SlotInfo, Item) == 0)
+    if (!bForceAdd && CanAcceptItem(SlotInfo, Item, nullptr) == 0)
     {
         return false;
     }
