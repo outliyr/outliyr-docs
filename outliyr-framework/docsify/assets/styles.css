@@ -3,6 +3,28 @@
    Dark-first, with light-mode fallback.
    ========================================================= */
 
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@master/fonts/webfonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@master/fonts/webfonts/JetBrainsMono-Medium.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@master/fonts/webfonts/JetBrainsMono-Bold.woff2') format('woff2');
+}
+
 :root {
     --surface-0:    #0f1115;
     --surface-1:    #151923;
@@ -395,6 +417,8 @@ aside.toc-nav {
     box-shadow: var(--shadow-soft);
     overflow-x: auto;
     white-space: pre;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 .markdown-section pre > code {
     background: transparent;
@@ -407,6 +431,8 @@ aside.toc-nav {
     white-space: pre;
     word-break: normal;
     overflow-wrap: normal;
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "calt" 0;
 }
 
 .markdown-section code {
