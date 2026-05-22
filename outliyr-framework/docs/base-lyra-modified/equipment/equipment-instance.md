@@ -474,6 +474,8 @@ void UMyWeaponInstance::ReconcileWithPredictedInstance(ULyraEquipmentInstance* P
 }
 ```
 
+The reconciliation hook above runs at the instance level. Each individual actor spawned by the instance, configured through `FLyraEquipmentActorToSpawn`, can also carry its own local-only cosmetic state across the swap by implementing `ILyraReconcilablePredictedActor`. The framework hides the authoritative actor on arrival, dispatches the hook on each pair, and reveals the authoritative copy already wearing the carried-across state. See [Reconciling Spawned Actors](../item-container/prediction/reconciliation/reconciling-spawned-actors.md) for the contract and an example.
+
 ***
 
 ## The Instigator Link

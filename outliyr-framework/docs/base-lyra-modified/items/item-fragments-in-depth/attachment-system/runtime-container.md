@@ -358,6 +358,8 @@ When server item replaces predicted item, this transfers:
 * Prediction runtime overlays
 * Per-entry cosmetic state
 
+Fragment-level reconciliation transfers state across the predicted and authoritative containers. The individual cosmetic actor for each attachment, the `ReplicatedActor` on the entry, can also carry local-only state of its own by implementing `ILyraReconcilablePredictedActor`. See [Reconciling Spawned Actors](../../../item-container/prediction/reconciliation/reconciling-spawned-actors.md) for the contract and an example.
+
 ***
 
 ### Nested Attachments

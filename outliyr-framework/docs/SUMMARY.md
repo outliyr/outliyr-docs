@@ -130,6 +130,7 @@
       * [Overlay Internals](base-lyra-modified/item-container/prediction/the-overlay-model/overlay-internals.md)
     * [Reconciliation](base-lyra-modified/item-container/prediction/reconciliation/README.md)
       * [Phase Classification](base-lyra-modified/item-container/prediction/reconciliation/phase-classification.md)
+      * [Reconciling Spawned Actors](base-lyra-modified/item-container/prediction/reconciliation/reconciling-spawned-actors.md)
   * [Creating Containers](base-lyra-modified/item-container/creating-containers/README.md)
     * [Implementing The Interface](base-lyra-modified/item-container/creating-containers/implementing-the-interface.md)
     * [Adding Prediction](base-lyra-modified/item-container/creating-containers/adding-prediction.md)
