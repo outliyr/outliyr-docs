@@ -131,7 +131,7 @@ Each demonstrates a different combination of the systems above:
 
 Each plugin under `Plugins/GameFeatures/` is a complete worked example. Inspect Experience Definitions and Action Sets to see how the pieces compose.
 
-[**See Game Modes**](/broken/pages/KkQgXv3Bdg9vvN7ChRdv)
+[**See Game Modes**](game-modes/game-mode-details/)
 
 ***
 
