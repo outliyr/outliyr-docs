@@ -631,13 +631,13 @@ Slot-based ops carry an expected item identity that the apply path compares agai
 
 The pattern is the same across every op that addresses a source slot: pass the expected item or its GUID when constructing the op, and the apply path rejects with `Reject_Item_Mismatch` if the slot is empty or now contains a different item.
 
-| Op                                       | Expected-identity field  | How to populate                                       |
-| ---------------------------------------- | ------------------------ | ----------------------------------------------------- |
-| `FItemTxOp_Move`                         | `ItemInstance`           | Pass the item observed when the player gave the input |
-| `FItemTxOp_RemoveItem`                   | `ExpectedSourceItemGuid` | Pass `ExpectedSourceItem` to `AddRemoveItemOp`        |
-| `FItemTxOp_SplitStack`                   | `ExpectedSourceItemGuid` | Pass `ExpectedSourceItem` to `AddSplitStackOp`        |
-| `FItemTxOp_ModifyTagStack`               | `ExpectedSourceItemGuid` | Construct the op directly and set the field           |
-| `FItemTxOp_AddItem` (For existing items) | `ExistingItem`           | Pass the item the player is adding                    |
+| Op                                       | Field on the op          | Field type        | C++ helper                                                                 | Blueprint or manual C++                                          |
+| ---------------------------------------- | ------------------------ | ----------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `FItemTxOp_Move`                         | `ItemInstance`           | Weak item pointer | `AddMoveOp` assigns the item to the field                                  | Set `ItemInstance` to the item                                   |
+| `FItemTxOp_RemoveItem`                   | `ExpectedSourceItemGuid` | `FGuid`           | `AddRemoveItemOp` extracts the item's GUID and assigns it to the field     | Set `ExpectedSourceItemGuid` to the item's `GetItemInstanceId()` |
+| `FItemTxOp_SplitStack`                   | `ExpectedSourceItemGuid` | `FGuid`           | `AddSplitStackOp` extracts the item's GUID and assigns it to the field     | Set `ExpectedSourceItemGuid` to the item's `GetItemInstanceId()` |
+| `FItemTxOp_ModifyTagStack`               | `ExpectedSourceItemGuid` | `FGuid`           | `AddModifyTagStackOp` extracts the item's GUID and assigns it to the field | Set `ExpectedSourceItemGuid` to the item's `GetItemInstanceId()` |
+| `FItemTxOp_AddItem` (For existing items) | `ExistingItem`           | Weak item pointer | `AddExistingItemOp` assigns the item to the field                          | Set `ExistingItem` to the item                                   |
 
 When the field is left unset, the op falls back to operating on whatever currently occupies the slot. That is appropriate for system-authored cleanup or scripted flows where "current occupant" is the intended target.
 
