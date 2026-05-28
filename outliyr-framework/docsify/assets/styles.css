@@ -904,3 +904,316 @@ aside.toc-nav {
     border: 1px solid var(--border);
     border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
 }
+
+/* =========================================================
+   Top navbar (header)
+   ========================================================= */
+
+/* =========================================================
+   Header layout (desktop)
+   - Full-width fixed bar with contained content (max 1100px)
+   - Left: static brand (logo + name)
+   - Center: sidebar's search projected via position:fixed (DOM stays in sidebar)
+   - Right: .app-nav links
+   ========================================================= */
+@media (min-width: 769px) {
+    /* The header bar itself — a fixed strip with a blurred dark bg */
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        background: rgba(15, 17, 21, 0.92);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--border);
+        z-index: 19;
+        pointer-events: none;
+    }
+
+    /* Left: brand */
+    .site-header-brand {
+        position: fixed;
+        top: 0;
+        left: max(20px, calc((100% - 1100px) / 2));
+        height: 56px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 0.01em;
+        text-decoration: none;
+        z-index: 21;
+    }
+    .site-header-brand:hover { color: var(--accent-hover); }
+    .site-header-logo {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        object-fit: contain;
+    }
+
+    /* Center: project the sidebar's existing search element into the header.
+       DOM stays in .sidebar so docsify's search/sidebar-collapse plugins keep working. */
+    .sidebar .search {
+        position: fixed;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(420px, 36vw);
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        z-index: 22;
+    }
+    .sidebar .search .input-wrap { margin: 0; }
+    .sidebar .search input[type="search"] {
+        width: 100%;
+        height: 36px;
+        padding: 0 12px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        color: var(--text-0);
+        font-size: 0.9rem;
+        line-height: 36px;
+    }
+    .sidebar .search input[type="search"]:focus {
+        border-color: var(--accent-rail);
+        outline: none;
+    }
+    .sidebar .search .clear-button { right: 8px; }
+    .sidebar .search .results-panel {
+        position: fixed;
+        top: 56px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(640px, 90vw);
+        max-height: 70vh;
+        overflow: auto;
+        background: var(--surface-1);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        z-index: 30;
+    }
+
+    /* Hide the sidebar's app-name since we now have a brand in the header */
+    .sidebar .app-name { display: none; }
+
+    /* Right: .app-nav links */
+    .app-nav {
+        position: fixed;
+        top: 0;
+        right: max(20px, calc((100% - 1100px) / 2));
+        margin: 0;
+        padding: 0;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        background: transparent;
+        z-index: 21;
+    }
+    .app-nav ul {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        list-style: none;
+    }
+    .app-nav li { margin: 0; }
+    .app-nav a {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        border-radius: var(--radius-sm);
+        font-size: 0.92rem;
+        font-weight: 500;
+        color: var(--text-0);
+        background: transparent;
+        border: 1px solid transparent;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+    .app-nav a:hover {
+        color: var(--link-hover);
+        background: var(--accent-weak);
+        border-color: var(--accent-rail);
+    }
+    /* Primary CTA: first link (Buy) */
+    .app-nav li:first-child a {
+        background: var(--accent);
+        color: #ffffff;
+        border-color: var(--accent);
+    }
+    .app-nav li:first-child a:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+        color: #ffffff;
+    }
+
+    /* Push page chrome below the fixed header */
+    .sidebar,
+    .content { top: 56px; }
+
+    /* Sidebar toggle — circular chevron on the sidebar's right edge.
+       Docsify defaults this to a 284px-wide bar at bottom:0 that steals all
+       clicks on the sidebar bottom. We replace it with a small floating
+       button that slides + rotates as the sidebar opens/closes. */
+    .sidebar-toggle {
+        position: fixed;
+        top: calc(50% + 28px); /* offset by half the header height */
+        left: 300px;            /* sidebar width */
+        bottom: auto;
+        width: 26px;
+        height: 26px;
+        padding: 0;
+        border: 1px solid var(--border-strong);
+        border-radius: 50%;
+        background: var(--surface-2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+        transform: translate(-50%, -50%);
+        transition:
+            left 0.25s ease,
+            background 0.15s ease,
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+        z-index: 25;
+        cursor: pointer;
+    }
+    .sidebar-toggle:hover {
+        background: var(--accent);
+        border-color: var(--accent);
+        box-shadow: 0 4px 14px rgba(124, 92, 255, 0.45);
+    }
+    /* Hide docsify's default hamburger bars */
+    .sidebar-toggle span { display: none; }
+    /* Chevron drawn with borders — points left when sidebar open ("close me") */
+    .sidebar-toggle::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 7px;
+        height: 7px;
+        border-left: 2px solid var(--text-0);
+        border-bottom: 2px solid var(--text-0);
+        transform: translate(-30%, -50%) rotate(45deg);
+        transition: transform 0.25s ease, border-color 0.15s ease;
+    }
+    .sidebar-toggle:hover::before {
+        border-color: #ffffff;
+    }
+    /* Sidebar closed: slide toggle to viewport edge, flip chevron */
+    body.close .sidebar-toggle {
+        left: 0;
+        width: 26px;
+    }
+    body.close .sidebar-toggle::before {
+        transform: translate(-70%, -50%) rotate(-135deg);
+    }
+}
+
+/* Mobile: no header strip — keep everything as docsify default */
+@media (max-width: 768px) {
+    /* Hide desktop header chrome */
+    .site-header-brand { display: none; }
+
+    /* Search stays inside the sidebar (no header to project into) */
+    .sidebar .search {
+        position: static;
+        transform: none;
+        width: auto;
+        background: transparent;
+        margin: 0 0 1rem;
+        padding: 6px 8px;
+        z-index: auto;
+    }
+    .sidebar .search input[type="search"] {
+        width: 100%;
+        height: 36px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        color: var(--text-0);
+        padding: 0 12px;
+    }
+    .sidebar .search .results-panel {
+        position: static;
+        transform: none;
+        width: auto;
+        max-height: none;
+        box-shadow: none;
+        border: 0;
+        background: transparent;
+    }
+    .sidebar .app-name { display: block; }
+
+    .app-nav {
+        padding: 8px 12px;
+        text-align: right;
+    }
+    .app-nav a { color: var(--text-0); font-weight: 500; }
+    .app-nav a:hover { color: var(--link-hover); }
+
+    /* Same chevron toggle on mobile, repositioned for the no-header layout.
+       When sidebar is closed (default on mobile), button sits at top-left of
+       viewport. When open, it slides to the sidebar's right edge. */
+    .sidebar-toggle {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        bottom: auto;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border: 1px solid var(--border-strong);
+        border-radius: 50%;
+        background: var(--surface-2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        transition:
+            left 0.25s ease,
+            top 0.25s ease,
+            background 0.15s ease,
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+        z-index: 30;
+        cursor: pointer;
+    }
+    .sidebar-toggle:hover,
+    .sidebar-toggle:active {
+        background: var(--accent);
+        border-color: var(--accent);
+        box-shadow: 0 4px 14px rgba(124, 92, 255, 0.45);
+    }
+    .sidebar-toggle span { display: none; }
+    .sidebar-toggle::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 8px;
+        height: 8px;
+        border-left: 2px solid var(--text-0);
+        border-bottom: 2px solid var(--text-0);
+        /* Mobile default: sidebar is CLOSED, so chevron points right ("open me") */
+        transform: translate(-70%, -50%) rotate(-135deg);
+        transition: transform 0.25s ease, border-color 0.15s ease;
+    }
+    .sidebar-toggle:hover::before { border-color: #ffffff; }
+
+    /* When sidebar is OPEN on mobile, slide button to sidebar's right edge
+       and flip chevron to point left ("close me") */
+    body.close .sidebar-toggle {
+        left: 300px;
+        top: 16px;
+    }
+    body.close .sidebar-toggle::before {
+        transform: translate(-30%, -50%) rotate(45deg);
+    }
+}
