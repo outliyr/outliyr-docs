@@ -155,8 +155,9 @@ public:
 
     virtual FString GetContainerDebugName() const override;
 
-    virtual bool CanParticipateInClientPrediction(
-        const AController* PredictingController) const override;
+    virtual void CollectPredictableContainerHelpers(
+        const AController* PredictingController,
+        TArray<FPredictableContainerHelper*>& OutHelpers) const override;
 
     // === Query Methods (for UI) ===
 
@@ -414,10 +415,11 @@ FString UVendorComponent::GetContainerDebugName() const
     return FString::Printf(TEXT("Vendor[%s]"), *GetOwner()->GetName());
 }
 
-bool UVendorComponent::CanParticipateInClientPrediction(
-    const AController* PredictingController) const
+void UVendorComponent::CollectPredictableContainerHelpers(
+    const AController* PredictingController,
+    TArray<FPredictableContainerHelper*>& OutHelpers) const
 {
-    return false; // Server authority - no prediction
+    // Server authority - leave OutHelpers empty so predicted transactions downgrade to server-only.
 }
 ```
 {% endstep %}
@@ -618,7 +620,7 @@ Use this checklist when implementing any custom container.
 * [ ] `MoveItemBetweenSlots` - Override if you support internal repositioning
 * [ ] `FindAvailableSlot` - Override if you support auto-placement
 * [ ] `GetOccupiedSlotBehavior` - Override if you support swap/stack combining
-* [ ] `CanParticipateInClientPrediction` - Override to return true for prediction support
+* [ ] `CollectPredictableContainerHelpers` - Override to append your container's helper for prediction support
 * [ ] `GetContainerDebugName` - Override for better debug output
 
 #### Testing

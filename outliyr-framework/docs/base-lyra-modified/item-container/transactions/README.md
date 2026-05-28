@@ -8,12 +8,13 @@ The transaction system handles all of this. It provides atomic operations that e
 
 ## What You'll Learn
 
-| Page                                                | Description                                                                                                                                  |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| [How Transactions Work](how-transactions-work/)     | The atomic execution model, how operations are validated, applied, and recorded for rollback. The mental model for understanding the system. |
-| [Execution Modes](execution-modes.md)               | The two entry points: predicted-player flows via `ExecuteTransactionRequest` and server-only flows via `ExecuteTransactionAuthoritative`.    |
-| [Operation Types](operation-types.md)               | The five operation types: Move, ModifyTagStack, SplitStack, RemoveItem, and AddItem. When to use each, how to construct them.                |
-| [Transaction Validation](transaction-validation.md) | Two-stage validation (pre-filter vs full) and per-operation validation requirements.                                                         |
+| Page                                                | Description                                                                                                                                                                       |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [How Transactions Work](how-transactions-work/)     | The atomic execution model, how operations are validated, applied, and recorded for rollback. The mental model for understanding the system.                                      |
+| [Execution Modes](execution-modes.md)               | The two entry points: predicted-player flows via `ExecuteTransactionRequest` and server-only flows via `ExecuteTransactionAuthoritative`.                                         |
+| [Operation Types](operation-types.md)               | The five operation types: Move, ModifyTagStack, SplitStack, RemoveItem, and AddItem. When to use each, how to construct them.                                                     |
+| [Transaction Validation](transaction-validation.md) | Two-stage validation (pre-filter vs full) and per-operation validation requirements.                                                                                              |
+| [Rollback and Replay](rollback-and-replay.md)       | How later predictions are classified as disjoint or overlapping when an earlier one is rejected or superseded, and the contracts custom ops and containers honour to participate. |
 
 ***
 

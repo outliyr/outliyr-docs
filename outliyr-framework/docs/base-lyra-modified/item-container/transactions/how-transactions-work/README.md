@@ -180,7 +180,7 @@ The `bForceAdd` flag bypasses validation during rollback, we're restoring known-
 
 When running on a predicting client:
 
-1. **Check prediction support**: Query each involved container via `CanParticipateInClientPrediction()`
+1. **Check prediction support**: Query each involved container via `CollectPredictableContainerHelpers()`. A container that appends helpers supports prediction; one that leaves the array empty does not.
 2. **If all support prediction**: Execute locally, record deltas, wait for server
 3. **If any don't support**: Skip local execution, wait for server replication
 

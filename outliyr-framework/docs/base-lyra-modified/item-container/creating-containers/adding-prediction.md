@@ -470,10 +470,18 @@ public:
         ItemList.OwnerComponent = this;
     }
 
-    // Forward the prediction-key handlers from ILyraItemContainerInterface.
-    virtual void OnPredictionKeyRejected(int32 KeyId) override { PredictionHelper.OnPredictionKeyRejected(KeyId); }
-    virtual void OnPredictionKeyCaughtUp(int32 KeyId) override { PredictionHelper.OnPredictionKeyCaughtUp(KeyId); }
+    // Exposes the container's prediction helper to predicted transaction requests.
+    virtual void CollectPredictableContainerHelpers(
+        const AController* PredictingController,
+        TArray<FPredictableContainerHelper*>& OutHelpers) const override
+    {
+        if (PredictionHelper.IsInitialized())
+        {
+            OutHelpers.Add(const_cast<FPredictableContainerHelper*>(&PredictionHelper));
+        }
+    }
 
+    
     // The list callbacks reach the helper through this accessor.
     FPredictableContainerHelper* GetPredictionHelper() { return &PredictionHelper; }
 
@@ -491,6 +499,8 @@ private:
 ```
 
 `InitRuntimeAs<FMyContainerTraits>(this)` instantiates `TGuidKeyedPredictionRuntime<FMyContainerTraits>` and stores it on the helper. Subsequent typed access goes through `PredictionHelper.GetTypedRuntime<FMyContainerTraits>()` or the convenience templated accessors.
+
+`CollectPredictableContainerHelpers` is the one prediction-related interface override your container needs. Appending an initialized helper opts the container into client prediction; leaving `OutHelpers` empty means the container runs server-authoritatively for predicted transaction requests. Containers with multiple prediction surfaces append multiple helpers from one call.
 {% endstep %}
 
 {% step %}
@@ -630,29 +640,45 @@ int32 UMyContainerComponent::ForEachItem(
 {% endstep %}
 
 {% step %}
-### Step 6: Prediction Callbacks
+### Step 6: Smoother Recovery from Conflicts
 
-The interface methods that handle prediction-key rejection and catch-up are already shown in [Step 4](adding-prediction.md#step-4-the-component-with-runtime), the helper handles the routing:
+Your container is already correct after the previous steps. Predictions show immediately, the server rejects when it disagrees, and replication takes over on confirmation. This step covers an optional refinement that lets the framework handle conflicts more gracefully.
+
+Two situations can cause more visual churn than the player needs. The first is when the player has done several things in quick succession and one earlier action is rejected by the server; without help, every later action gets rolled back and re-tried, even ones that touched a different slot or a different item. The second is when another player or the server itself modifies the same container while the local player still has predicted actions waiting on a response; without help, the local player has to wait for the explicit failure response before anything settles.
+
+The framework can handle both situations more gracefully when each slot descriptor produces a stable identity string. With that in place, the framework can tell which queued actions actually depended on the rejected one and leave the rest alone. See Rollback and Replay for the full picture; this step shows how to honour the contract on your slot descriptor.
+
+#### **Implement stable slot identity**
+
+The framework compares slots by a stable identifier the slot descriptor produces. Override `GetStableSlotIdentity` on every slot descriptor type your container uses:
 
 ```cpp
-virtual void OnPredictionKeyRejected(int32 KeyId) override { PredictionHelper.OnPredictionKeyRejected(KeyId); }
-virtual void OnPredictionKeyCaughtUp(int32 KeyId) override { PredictionHelper.OnPredictionKeyCaughtUp(KeyId); }
-```
-
-The helper clears the matching overlays and marks the view dirty internally; you do not have to reach into the engine. The remaining piece is opting into prediction at all:
-
-```cpp
-bool UMyContainerComponent::CanParticipateInClientPrediction(
-    const AController* PredictingController) const
+bool FMyContainerSlotInfo::GetStableSlotIdentity(FString& OutIdentity) const override
 {
-    return true; // Enable prediction
+    if (SlotIndex == INDEX_NONE)
+    {
+        OutIdentity.Reset();
+        return false;
+    }
+
+    OutIdentity = FString::Printf(TEXT("MyContainerSlot:%d"), SlotIndex);
+    return true;
 }
 ```
 
-The two callbacks serve different purposes:
+The identifier must be:
 
-* **`OnPredictionKeyRejected`**: Server rejected the ability, immediate rollback
-* **`OnPredictionKeyCaughtUp`**: Server finished processing, clear confirmed overlays
+* **Canonical** — same slot always produces the same string.
+* **Free of mutable state** — no display text, item names, localised strings, timestamps, or anything that changes when the slot's contents change.
+* **Derived from the addressable location**, not from what currently occupies it.
+
+Returning false marks the slot as not having a stable identity. Any action touching that slot is rolled back rather than kept intact when an earlier action is rejected. That is the safe path when the slot type cannot describe itself stably.
+
+Composite slot types, such as attachment slots that are addressed through a parent slot, recurse: produce the parent's stable identity first, then append your local discriminator. The framework's attachment descriptor follows this pattern.
+
+#### **What about custom ops?**
+
+If you write your own transaction ops, each op handler implements `CollectFootprint` to describe what the op touches. The framework uses that description to decide which queued actions depend on a rejected one. See the [Rollback and Replay](../transactions/rollback-and-replay.md) page for the per-op responsibilities.
 {% endstep %}
 {% endstepper %}
 
@@ -735,6 +761,7 @@ Adding prediction transforms your container architecture:
 4. **The runtime routes** operations based on authority
 5. **Replication callbacks** feed the engine for phase classification
 6. **Overlays compose** with server state for the effective view
+7. **Stable slot identity** unlocks smoother recovery when actions overlap with server changes
 
 The vendor example shows Pattern 1 in its purest form, logic in interface methods, simple storage, no prediction. When you need instant feedback, Pattern 2 inverts the architecture: the runtime becomes the brain, interface methods become the messenger.
 

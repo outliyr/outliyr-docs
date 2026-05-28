@@ -148,13 +148,14 @@ Before executing, resolve all containers and check if they support prediction:
 ```
 for each op in Request.Operations:
     Container = ResolveContainer(op.SlotInfo)
-    if not Container.CanParticipateInClientPrediction():
+    Container.CollectPredictableContainerHelpers(PC, Helpers)
+    if Helpers is empty:
         bAllContainersSupportPrediction = false
         break
 
 if not bAllContainersSupportPrediction:
     // Downgrade to server-only execution
-    // Client waits for server, no local prediction
+    // Client skips local mutation entirely, waits for server replication
 ```
 
 This prevents "limbo" states where some changes are predicted and others aren't.

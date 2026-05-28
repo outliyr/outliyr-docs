@@ -302,15 +302,15 @@ The full `ILyraItemContainerInterface` implementation:
 #### Behavior Configuration
 
 * `GetOccupiedSlotBehavior()` → `Reject` - attachments don't auto-swap
-* `CanParticipateInClientPrediction()` → `true` - full prediction support
+* `CollectPredictableContainerHelpers()` → appends the attachment prediction helper for full prediction support
 
 ***
 
 ## Replication
 
-#### Why the Fragment Overrides ReplicateSubobjects
+#### Why the Fragment Overrides `ReplicateSubobjects`
 
-The attachment runtime fragment owns UObjects (the attached item instances) that need to replicate. Unlike Actor properties, UObjects don't replicate automatically.
+The attachment runtime fragment owns `UObjects` (the attached item instances) that need to replicate. Unlike Actor properties, `UObjects` don't replicate automatically.
 
 The fragment overrides `ReplicateSubobjects` to handle this:
 

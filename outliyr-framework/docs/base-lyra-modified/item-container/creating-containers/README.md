@@ -68,7 +68,7 @@ Characteristics:
 * Interface methods contain the actual logic
 * Simple `UPROPERTY(Replicated)` for storage
 * No `FFastArraySerializer` required
-* `CanParticipateInClientPrediction` returns `false`
+* `CollectPredictableContainerHelpers` appends nothing
 
 #### Pattern 2: Client-Predicted
 
@@ -83,7 +83,7 @@ Characteristics:
 * Interface methods become thin wrappers
 * Logic moves to traits + prediction runtime
 * Requires `FFastArraySerializer` for replication callbacks
-* `CanParticipateInClientPrediction` returns `true`
+* `CollectPredictableContainerHelpers` appends the container's helper
 
 {% hint style="info" %}
 Start without prediction. Get your container working with Pattern 1 first. Add prediction later if the latency bothers players. Many containers (vendors, loot, crafting) work perfectly fine without it.
@@ -125,18 +125,18 @@ Ability deducts currency after successful transaction.
 VendorComponent implements ILyraItemContainerInterface
 │
 │  // Query methods (for UI display)
-├── GetBuyPrice(CatalogIndex)         → Price to buy
-├── GetSellPrice(ItemDef)             → What vendor pays
-├── CanPlayerAfford(PC, CatalogIndex) → Affordability check
+├── GetBuyPrice(CatalogIndex)          → Price to buy
+├── GetSellPrice(ItemDef)              → What vendor pays
+├── CanPlayerAfford(PC, CatalogIndex)  → Affordability check
 │
 │  // Interface methods (called by transaction system)
-├── CanAcceptItem        → Does vendor buy this item type?
-├── CanRemoveItem        → Can player afford? Stock available?
-├── AddItemToSlot        → Vendor receives item (sell)
-├── RemoveItemFromSlot   → Vendor gives item (buy)
-├── GetItemInSlot        → Item for catalog entry
-├── ForEachItem          → Iterate catalog for UI
-├── CanParticipateInClientPrediction → false (server authority)
+├── CanAcceptItem                      → Does vendor buy this item type?
+├── CanRemoveItem                      → Can player afford? Stock available?
+├── AddItemToSlot                      → Vendor receives item (sell)
+├── RemoveItemFromSlot                 → Vendor gives item (buy)
+├── GetItemInSlot                      → Item for catalog entry
+├── ForEachItem                        → Iterate catalog for UI
+├── CollectPredictableContainerHelpers → appends nothing (server authority)
 │
 │  // Data
 └── Catalog: Array of (ItemDef, Stock, BuyPrice, SellPrice)

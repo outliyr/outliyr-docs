@@ -76,6 +76,9 @@ struct FAbilityData_SourceItem
 
     // Debug logging
     virtual FString GetDebugString() const;
+    
+    // Stable identity used by transaction prediction for slot comparisons
+    virtual bool GetStableSlotIdentity(FString& OutIdentity) const;
 };
 ```
 
@@ -89,7 +92,7 @@ ULyraInventoryItemInstance* Item = Container->GetItemInSlot(SourceSlot);
 
 No switch statements. No container-specific code. New containers just define their slot descriptor.
 
-### How FInstancedStruct Enables This
+### How `FInstancedStruct` Enables This
 
 `FInstancedStruct` is Unreal's mechanism for storing polymorphic structs by value. Unlike pointers:
 
@@ -330,6 +333,26 @@ static bool AreSlotsInSameRootContainer(
 
 ***
 
+## Stable Slot Identity
+
+`IsEqual` answers "are these two slot descriptors describing the same observed state?", which is the right question for most game logic but the wrong question for transaction prediction. Prediction needs to compare two slots as _addresses_, not as state, so the framework asks the descriptor for a stable identity string instead:
+
+```cpp
+virtual bool GetStableSlotIdentity(FString& OutIdentity) const;
+```
+
+The string must be:
+
+* **Canonical** — the same slot always produces the same string.
+* **Derived from the addressable location** — the inventory index, the equipment slot tag, the attachment path, whatever uniquely identifies _where_ the slot is.
+* **Free of mutable state** — no display text, no item names, no localised strings, no timestamps, nothing that changes when the slot's contents change.
+
+When the descriptor cannot produce a stable identity, it returns `false`. Transactions that touch that slot then fall back to the conservative rollback path during prediction reconciliation rather than being preserved untouched. See Rollback and Replay for the full picture of how identity strings are used.
+
+A common subtlety: equipment slots and similar descriptors include held state in their `IsEqual` because callbacks fire on hold/holster transitions. Held state does _not_ belong in `GetStableSlotIdentity`, because the storage slot is the address and the held state is something that lives at it. Distinguishing the two cleanly is what lets `IsEqual` keep its existing semantics without breaking prediction's dependency model.
+
+***
+
 ## The Null Slot
 
 A special descriptor represents "no slot":
@@ -383,6 +406,10 @@ Implement `IsEqual()` for slot comparison
 
 {% step %}
 Implement `GetDebugString()` for logging
+{% endstep %}
+
+{% step %}
+Optionally, implement `GetStableSlotIdentity()` so transactions touching this slot can be preserved during prediction reconciliation instead of rolled back. Returning false is the safe default for slot types that cannot describe a stable identity.
 {% endstep %}
 {% endstepper %}
 

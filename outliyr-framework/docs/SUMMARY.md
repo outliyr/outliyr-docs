@@ -116,6 +116,7 @@
     * [Execution Modes](base-lyra-modified/item-container/transactions/execution-modes.md)
     * [Operation Types](base-lyra-modified/item-container/transactions/operation-types.md)
     * [Transaction Validation](base-lyra-modified/item-container/transactions/transaction-validation.md)
+    * [Rollback and Replay](base-lyra-modified/item-container/transactions/rollback-and-replay.md)
   * [Access Rights & Permissions](base-lyra-modified/items/access-rights-and-permissions/README.md)
     * [Access rights](base-lyra-modified/items/access-rights-and-permissions/access-rights.md)
     * [Permissions](base-lyra-modified/items/access-rights-and-permissions/permissions.md)

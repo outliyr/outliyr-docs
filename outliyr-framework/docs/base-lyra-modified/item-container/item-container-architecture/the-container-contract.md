@@ -221,36 +221,23 @@ The transaction system queries this to determine how to handle the move.
 
 ## Prediction Support
 
-Containers can opt into client-side prediction for responsive multiplayer:
+Containers opt into client-side prediction by exposing one or more initialized `FPredictableContainerHelper` instances through a single interface method:
 
 ```cpp
-virtual bool CanParticipateInClientPrediction(
-    const AController* PredictingController) const;
+virtual void CollectPredictableContainerHelpers(
+    const AController* PredictingController,
+    TArray<FPredictableContainerHelper*>& OutHelpers) const;
 ```
 
-**Default returns `false`**, containers work safely without prediction but feel less responsive in multiplayer.
+**Default appends nothing**, which means the container runs server-authoritatively for predicted transaction requests. Containers work safely without prediction but feel less responsive in multiplayer.
 
 {% hint style="info" %}
-**Prediction is optional.** Most containers work perfectly fine without it. Prediction adds complexity and is primarily valuable for containers that players interact with frequently during gameplay (inventory, equipment). Static containers (vendors, quest rewards) typically don't need it.
+**Prediction is optional.** Containers can work perfectly fine without it. Prediction adds complexity and is primarily valuable for containers that players interact with frequently during gameplay (inventory, equipment). Static containers (vendors, quest rewards) typically don't need it.
 {% endhint %}
 
-When you want prediction support, you override this method to return `true`. The prediction engine then handles the heavy lifting, tracking operations, managing overlays, and coordinating with the server. You don't implement prediction logic yourself; you integrate with the prediction runtime.
+When you want prediction support, override this method to append the helper member your container composes. The prediction engine handles the heavy lifting, tracking operations, managing overlays, and coordinating with the server. You don't implement prediction logic yourself; you integrate with the prediction runtime.
 
-***
-
-## Prediction Key Delegate Handlers
-
-```cpp
-virtual void OnPredictionKeyRejected(int32 PredictionKeyCurrent);
-```
-
-This callback notifies your container when the server rejects a predicted operation, allowing immediate UI correction rather than waiting for replication.
-
-```cpp
-virtual void OnPredictionKeyCaughtUp(int32 PredictionKeyCurrent);
-```
-
-This callback notifies your container when the a prediction key has been fully processed by the server. This is the signal to clear all overlays for this prediction key.
+The controller parameter lets containers gate prediction per-controller when relevant. Containers with multiple prediction surfaces, such as a Tetris inventory that inherits inventory prediction and adds Tetris-specific placement prediction, append multiple helpers from one call.
 
 See [Adding Prediction](../creating-containers/adding-prediction.md) for a step-by-step guide to enabling prediction in your container.
 
