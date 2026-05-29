@@ -595,6 +595,13 @@ aside.toc-nav {
 .alert.flat.attention .title { color: #fca5a5 !important; }
 .alert.flat.important .title { color: #c4b5fd !important; }
 
+/* Icon glyph color per variant. The body-text rule above excludes .icon
+   (span:not(.icon)), so the plugin's default colors otherwise leak through —
+   most notably the warning triangle rendering red and looking like danger.
+   Force it to the orange accent so warning reads distinct from the red
+   danger/attention callout. */
+.alert.flat.warning   .icon { color: #f59e0b !important; }
+
 /* Links inside alerts */
 .alert.flat a {
     text-decoration: underline;
