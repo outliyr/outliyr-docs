@@ -185,7 +185,7 @@ When running on a predicting client:
 3. **If any don't support**: Skip local execution, wait for server replication
 
 {% hint style="info" %}
-**Mixed prediction scenarios:** If a transaction involves both predicting and non-predicting containers, the entire transaction runs without prediction. This ensures consistency, you don't want half the operation to predict and half to wait.
+**Mixed prediction scenarios:** If a transaction involves any non-predicting container, the predicting client skips local execution entirely and waits for server replication. The server still runs the transaction authoritatively. This avoids the half-state where some changes are predicted and others aren't.
 {% endhint %}
 
 The execution context tracks this:
@@ -223,9 +223,14 @@ After client prediction, the server runs the same transaction:
 
 **On rejection:**
 
-* Client rolls back using recorded deltas
-* UI auto-corrects to match server state
-* Error feedback sent via `FItemTransactionResultMessage`
+The client runs a three-phase reconciliation against every pending prediction it still has in flight:
+
+* **Classify** later pending transactions as disjoint or overlapping with the rejected state by intersecting their footprints
+* **Roll back** the overlapping transactions newest-first, then the rejected transaction itself; the disjoint ones stay untouched
+* **Replay** the surviving overlapping transactions oldest-first through the same validation path that originally accepted them; failures broadcast `Failed_ReplayInvalidated`
+* Error feedback for the rejected transaction broadcasts via `FItemTransactionResultMessage`
+
+The classification, rollback ordering, and replay rules are documented on Rollback and Replay. The same three-phase pipeline also handles foreign authoritative updates that arrive before the explicit rejection RPC.
 
 ***
 
@@ -310,6 +315,10 @@ enum class EItemTransactionResult : uint8
     Success,
     Failed_Validation,
     Failed_ServerRejected,
+    // Transaction was invalidated by an earlier transaction's rejection.
+    Failed_CascadeRollback,
+    // Transaction was rolled back after an earlier rejection and failed deterministic replay.
+    Failed_ReplayInvalidated,
     Failed_ActivationRejected,
     Failed_Timeout
 };
@@ -325,8 +334,8 @@ The [interaction view mode](../../../ui/item-container-ui-system/interaction-and
 
 1. **Validate first**: All operations validated before any execute
 2. **Record everything**: Every mutation becomes a delta
-3. **Reverse to rollback**: Undo in reverse chronological order
+3. **Reverse to rollback**: Within a single transaction, deltas are undone in reverse chronological order
 4. **Force during rollback**: Skip validation when restoring state
-5. **All or nothing**: Partial success is not an option
+5. **All or nothing within a transaction**: Partial success across ops in one transaction is not an option. Across transactions, the partial replay system preserves disjoint pending transactions when one is rejected and replays the overlapping ones, see [Rollback and Replay](../rollback-and-replay.md).
 
 ***

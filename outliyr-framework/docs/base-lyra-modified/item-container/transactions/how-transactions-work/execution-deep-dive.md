@@ -44,7 +44,7 @@ This means each player must be granted this ability for client prediction to tak
 
 ### Key Data Structures
 
-The ability maintains several maps to track prediction state:
+Prediction bookkeeping lives on a `FItemTransactionPredictionState` member the ability composes by value. The ability owns the GAS lifecycle entry points; the state struct owns the pending-transaction maps and the three-phase rollback/replay machinery.
 
 | Structure                  | Purpose                                                                   |
 | -------------------------- | ------------------------------------------------------------------------- |
@@ -300,31 +300,61 @@ Both deltas reference the same item instance, enabling proper rollback.
 
 ## Rollback Mechanics
 
-When the server rejects a prediction, the ability triggers rollback.
+Rejection rollback runs as a three-phase pipeline against every pending prediction the client still has in flight. The reverse-order intra-transaction delta inversion is the inner loop inside Phase 2; the outer loops decide which transactions to undo and in what order.
 
 ### The Rollback Process
 
 ```
-function OnPredictionKeyRejected(KeyId):
-    TransactionId = LookupTransactionId(KeyId)
-    Record = PendingTransactions.Find(TransactionId)
+function OnPredictionKeyRejected(RejectedKeyId):
+    // Phase 1: classify ascending
+    Walk pending keys oldest-to-newest:
+        Look up the transaction record
+        If the key is the rejected key:
+            Seed the invalidated set with the rejected transaction's footprint
+            Capture the rejected transaction for Phase 2
+            continue
+        If the transaction's footprint overlaps the invalidated set:
+            Append to AffectedTransactions in arrival order
+            Merge its footprint into the invalidated set
+        Else:
+            Leave it pending and untouched
 
-    // Notify containers to clear overlays
-    for each Container in Record.AffectedContainers:
-        Container.OnPredictionKeyRejected(KeyId)
+    // Phase 2: roll back newest-first
+    For Affected in AffectedTransactions reversed:
+        InvertDeltas(Affected.Record)         // reverse-order intra-transaction undo
+        Remove pending mappings for Affected.Key
+    InvertDeltas(RejectedTransaction.Record)
+    Remove pending mappings for RejectedKeyId
+    BroadcastTransactionResult(Failed_ServerRejected, RejectedKeyId, ...)
 
-    // Reverse deltas in REVERSE order
-    for i = Record.Deltas.Length - 1 down to 0:
-        InvertDelta(Record.Deltas[i])
-
-    // Cleanup
-    PendingTransactions.Remove(TransactionId)
-    BroadcastTransactionFailed(TransactionId)
+    // Phase 3: replay oldest-first
+    For Affected in AffectedTransactions in original order:
+        If Affected.Record is replay-unsafe:
+            BroadcastTransactionResult(Failed_ReplayInvalidated, Affected.Key, ...)
+            continue
+        Re-run Affected.Request through ExecuteTransaction:
+            On success: re-record as pending under the original key
+            On failure: BroadcastTransactionResult(Failed_ReplayInvalidated, Affected.Key, ...)
 ```
 
-### Why Reverse Order?
+The same three-phase pipeline runs for foreign-update-driven invalidation. The only difference is the trigger: see Authoritative Supersession below.
 
-Consider a swap operation with these deltas:
+### Why Newest-First Rollback Across Transactions
+
+Consider two pending predictions on the client:
+
+```
+K1: Move ItemA from Slot1 to Slot2 → State: Slot2 has ItemA
+K2: Modify ItemA stack count at Slot2 → State: ItemA stack changed at Slot2
+```
+
+K1 is rejected. K2's footprint overlaps K1 (both touch ItemA), so K2 is affected.
+
+Rolling back K1 first would invert K1's deltas while Slot2's stack count still reflects K2's modification, the post-undo state would be inconsistent with what K1 originally wrote. Rolling back K2 first puts the slot back into the state K1 created, then K1 is undone against the state K1 saw. Each transaction's undo runs against the state that transaction created. Phase 3 then replays the surviving transactions oldest-first against the post-rollback baseline, the same order the player originally requested them.
+
+### Why Reverse-Order Within a Transaction
+
+Within a single transaction's deltas, inversion still walks the deltas array from `Num()-1` down to `0`. For a swap:
 
 ```
 Delta[0]: Remove ItemA from Slot1
@@ -333,12 +363,14 @@ Delta[2]: Add ItemA to Slot2
 Delta[3]: Add ItemB to Slot1
 ```
 
-Forward rollback would fail because undoing early removals/additions can encounter occupied slots. Reverse-order rollback restores state in the proper sequence:
+Reverse-order inversion restores state in the proper sequence:
 
 * Undo Delta\[3]: Remove ItemB from Slot1
 * Undo Delta\[2]: Remove ItemA from Slot2
 * Undo Delta\[1]: Add ItemB back to Slot2
 * Undo Delta\[0]: Add ItemA back to Slot1
+
+Forward rollback would fail because undoing early removals before late additions can encounter occupied slots.
 
 ### Inversion Rules
 
@@ -351,6 +383,17 @@ Forward rollback would fail because undoing early removals/additions can encount
 | Internal move      | Move back to original slot      |
 
 The force flag on rollback additions bypasses occupancy checks, since the slot state may have changed during prediction.
+
+### Authoritative Supersession
+
+Foreign replication, another player or the server changing a slot a predicting client has in flight, runs the same three-phase pipeline as rejection, with two differences:
+
+* The trigger is `OnEntryReplicated` in the prediction runtime, not a GAS rejection RPC. The runtime detects that a replicated entry diverges from the predicted overlay and broadcasts an invalidation footprint to the transaction ability.
+* Phase 2 has no separate "rejected transaction" to undo at the end. There are only affected later transactions; the foreign state is already authoritative.
+
+The classification, rollback ordering, and replay phases are otherwise identical. Both code paths share the same dependency engine and the same replay-safety semantics.
+
+For the algorithm in plain language, the dependency engine details, and the contracts custom op handlers and slot descriptors honour to participate, see [Rollback and Replay](../rollback-and-replay.md).
 
 ***
 
@@ -376,12 +419,11 @@ function BindDelegatesForKey(Key):
 
 ```
 function OnRejected(KeyId):
-    TransactionId = PredictionKeyToTxId.Find(KeyId)
-    if TransactionId.IsValid():
-        NotifyContainersOfRejection(KeyId)
-        ExecuteRollback(TransactionId)
-        BroadcastFailure(TransactionId)
+    // Enters the three-phase rejection algorithm documented above.
+    PredictionState.HandlePredictionKeyRejected(KeyId)
 ```
+
+The handler classifies later pending transactions against the rejected key's footprint, rolls back affected transactions newest-first along with the rejected one, and replays survivors oldest-first.
 
 ***
 
@@ -408,9 +450,11 @@ function NotifyClientTransactionFailed(ClientId, TransactionId, Reason):
 function OnServerNotifyFailed(TransactionId, Reason):
     KeyId = TxToPredictionKeyCurrent.Find(TransactionId)
     if KeyId.IsValid():
-        ExecuteRollback(TransactionId)
-        BroadcastFailure(TransactionId, Reason)
+        // Enters the same three-phase rejection algorithm as the GAS delegate path.
+        PredictionState.HandlePredictionKeyRejected(KeyId)
 ```
+
+Both paths converge on the same three-phase pipeline, so a rejection received through the explicit RPC produces the same classification, rollback ordering, and replay behaviour as a rejection received through the GAS delegate.
 
 ***
 

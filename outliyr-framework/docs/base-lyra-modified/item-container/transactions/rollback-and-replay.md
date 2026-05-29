@@ -40,16 +40,22 @@ Supersession is not a substitute for server validation. The server's own rejecti
 flowchart TD
     A[Predicting client has pending transactions K1, K2, K3, K4] --> B{Trigger}
     B -->|Server rejects K1| C[HandlePredictionKeyRejected]
-    B -->|Foreign replication for slot K1 touched| D[HandleAuthoritativeInvalidation]
-    C --> E[Build invalidated set from K1's footprint]
-    D --> E
-    E --> F[Walk K2, K3, K4 in ascending order]
-    F --> G{Footprint overlap?}
-    G -->|Disjoint| H[Preserve untouched]
-    G -->|Overlap| I[Rollback + replay through validation]
-    I --> J{Still valid?}
-    J -->|Yes| K[Reapplied, stays pending]
-    J -->|No| L[Failed_ReplayInvalidated, broadcast to UI]
+    B -->|Foreign replication overlaps K1's footprint| D[HandleAuthoritativeInvalidation]
+    C --> E1
+    D --> E1
+    subgraph Phase1[Phase 1: Classify ascending]
+        E1[Walk K1, K2, K3, K4 in order, propagate footprints into invalidated set] --> E2[Collect overlapping transactions and the rejected transaction]
+    end
+    E2 --> F1
+    subgraph Phase2[Phase 2: Roll back newest-first]
+        F1[Undo overlapping transactions newest-first] --> F2[Undo the rejected transaction]
+    end
+    F2 --> G1
+    subgraph Phase3[Phase 3: Replay oldest-first]
+        G1[Re-run each overlapping transaction through ExecuteTransaction] --> G2{Validates?}
+        G2 -->|Yes| G3[Stays applied as pending]
+        G2 -->|No| G4[Failed_ReplayInvalidated, broadcast to UI]
+    end
 ```
 
 ***
@@ -131,9 +137,13 @@ For per-op opt-in details and construction examples, see [Operation Types](opera
 
 ***
 
-## The Classification Walk
+## The Three-Phase Algorithm
 
-The rollback handler processes pending prediction keys in ascending order. For each one:
+Both the rejection cascade and the authoritative supersession trigger run the same three-phase pipeline. The phases are strictly ordered: classification finishes before any rollback runs, and rollback finishes before any replay runs.
+
+### Phase 1: Classify ascending
+
+Walk pending prediction keys oldest-to-newest. For each one:
 
 {% stepper %}
 {% step %}
@@ -145,29 +155,73 @@ Each prediction key maps to a pending `FPendingItemTransaction` carrying the ori
 {% step %}
 **Check overlap against the invalidated set.**
 
-`FItemTransactionDependencySet::DoesTransactionDependOnInvalidatedState` returns true on any overlap and on any unstable or replay-unsafe footprint.
+`FItemTransactionDependencySet::DoesTransactionDependOnInvalidatedState` returns true on any overlap and on any unstable or replay-unsafe footprint. The rejected transaction itself seeds the invalidated set (rejection trigger), or the foreign-update footprint does (supersession trigger).
 {% endstep %}
 
 {% step %}
 **Disjoint: preserve untouched.**
 
-The transaction remains in the pending map with its overlay intact. Its eventual server response flows through the normal confirm or reject path.
+The transaction remains in the pending map with its overlay intact. Its eventual server response flows through the normal confirm or reject path. This phase performs no rollback for disjoint transactions.
 {% endstep %}
 
 {% step %}
-**Overlap: merge, rollback, replay.**
+**Overlap: collect and propagate.**
 
-Merge this transaction's footprint into the invalidated set so subsequent transactions see the cumulative dependency picture. Reverse its recorded deltas. Re-execute it through `ExecuteTransaction` with a re-entrancy guard.
-{% endstep %}
-
-{% step %}
-**Replay outcome.**
-
-If the replay validates and succeeds, the transaction is re-recorded as pending. If it fails validation (for example, because of an item identity mismatch, or because the new state no longer permits the op), it broadcasts `Failed_ReplayInvalidated` and is removed from the pending map.
+Append the transaction to the affected-list in arrival order. Merge its footprint into the invalidated set so subsequent classifications see the cumulative dependency picture. This is the only side effect; the transaction is not rolled back yet.
 {% endstep %}
 {% endstepper %}
 
-Forward merging of overlapping footprints is conservative-correct: once a transaction has been classified as affected, its own writes are added to the invalidated set, so any later transaction depending on its predicted output is also flagged. This propagates the invalidation through transitive dependencies without needing an explicit dependency graph.
+Forward propagation of overlapping footprints is what drives classification, not rollback ordering. Once a transaction is classified as affected, its writes are added to the invalidated set so any later transaction depending on its predicted output is also flagged. This propagates the invalidation through transitive dependencies without needing an explicit dependency graph.
+
+### Phase 2: Roll back newest-first
+
+Phase 1 produces an ordered list of affected transactions. Phase 2 walks that list in reverse:
+
+{% stepper %}
+{% step %}
+**Undo the newest affected transaction first.**
+
+Reverse its recorded deltas through the same intra-transaction rollback path that already handles single-transaction rejection. Each delta inversion runs against the state that transaction created, which is the reason this order matters: undoing the oldest transaction's writes first would unwind state that later transactions built on top of.
+{% endstep %}
+
+{% step %}
+**Walk back to the rejected transaction.**
+
+Repeat for each affected transaction in reverse arrival order.
+{% endstep %}
+
+{% step %}
+**Undo the rejected transaction (rejection trigger only).**
+
+The supersession trigger has no separate "rejected transaction" — only the affected ones. The rejection trigger ends Phase 2 by reversing the originally rejected transaction's deltas.
+{% endstep %}
+{% endstepper %}
+
+The intra-transaction delta reverse order (Run Execution Deep Dive for that detail) is unchanged. Phase 2 simply applies it across multiple transactions in the right outer order.
+
+### Phase 3: Replay oldest-first
+
+Walk the affected list in its original ascending order and re-run each transaction through `ExecuteTransaction`. A re-entrancy guard ensures any foreign-update events that arrive synchronously during replay are queued and drained after the cascade completes.
+
+{% stepper %}
+{% step %}
+**Replay-safe check.**
+
+If the transaction's footprint is flagged replay-unsafe (custom handler didn't implement `CollectFootprint`, or slot identity was unstable), skip replay and broadcast `Failed_ReplayInvalidated` immediately.
+{% endstep %}
+
+{% step %}
+**Re-execute through validation.**
+
+The same validation path that originally accepted the transaction runs again against the post-rollback state. Successful validation re-records the transaction as pending; failed validation broadcasts `Failed_ReplayInvalidated` and removes the pending mapping.
+{% endstep %}
+
+{% step %}
+**Identity verification doubles as a safety net.**
+
+If a replayed transaction's expected item GUID no longer matches the slot's current contents, the apply path rejects with `Reject_Item_Mismatch` and the replay fails cleanly. The dependency engine identifies which transactions need re-validation; identity verification ensures the re-validation actually catches when the target has changed.
+{% endstep %}
+{% endstepper %}
 
 ***
 
@@ -184,11 +238,17 @@ The required body of a custom `CollectFootprint`:
 
 The most common mistake is recording item GUIDs without touching the container set. The transaction ability subscribes to authoritative supersession on the containers the footprint touched, so an op that records only item GUIDs cannot be proactively invalidated when its container's state changes.
 
+For the container-side contract (`CollectPredictableContainerHelpers` and the supersession delegate exposed through the helper) see [Adding Prediction](../creating-containers/adding-prediction.md).
+
 ***
 
 ## Edge Cases
 
 A few honest constraints worth knowing.
+
+#### Foreign updates during an in-flight replay
+
+The supersession handler does not run while a transaction is being replayed in Phase 3. Re-entry would loop the replay's own overlay activity back through the handler. Rather than drop the foreign event, the handler queues its invalidation footprint and drains the queue once the replay window closes, processing each queued footprint through the same three-phase pipeline. The behaviour is deferred, not lost. Under aggressive network emulation or unusual tick interleaving, the deferral introduces at most a one-frame delay in reacting to the foreign update.
 
 ### Replay-unsafe handlers
 
