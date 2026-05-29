@@ -81,11 +81,28 @@ Adding prediction requires these components working together:
 | **Prediction runtime**     | View composition, authority routing, state transfer     |
 | **Prediction stamp**       | Embedded in each entry for confirmation tracking        |
 
+## File Layout
+
+The code in this guide splits across three files. You already have the component header and `cpp` from the prior guide, so the only new file you are adding is a dedicated prediction traits header that holds the payload and the traits struct together. Keeping the payload and traits out of the component header means the runtime instantiation only pulls in prediction-relevant declarations, and the traits avoid dragging in unrelated component dependencies.
+
+| Piece                                             | File                                                         |
+| ------------------------------------------------- | ------------------------------------------------------------ |
+| Entry struct (`FMyContainerEntry`)                | `MyContainerComponent.h`                                     |
+| List struct declaration (`FMyContainerList`)      | `MyContainerComponent.h`                                     |
+| List callback bodies (`PreReplicatedRemove` etc.) | `MyContainerComponent.cpp`                                   |
+| Payload struct (`FMyContainerPayload`)            | `MyContainerPredictionTraits.h`                              |
+| Traits struct (`FMyContainerTraits`)              | `MyContainerPredictionTraits.h`                              |
+| Component class and `PredictionHelper` member     | `MyContainerComponent.h`                                     |
+| Thin interface methods and query methods          | `MyContainerComponent.cpp`                                   |
+| Slot descriptor `GetStableSlotIdentity` override  | declared on the slot struct in its header, body in its `cpp` |
+
 ***
 
 {% stepper %}
 {% step %}
 ### Step 1: `FFastArraySerializer` Storage
+
+Both the entry and list structs are declared in your component header, `MyContainerComponent.h`. The callback bodies live in `MyContainerComponent.cpp`.
 
 Unlike the vendor's simple `TArray<FVendorCatalogEntry>`, predicted containers need `FFastArraySerializer` for replication callbacks.
 
@@ -222,6 +239,8 @@ The helper hands the delta to the runtime, which uses the stamp to classify the 
 {% step %}
 ### Step 2: The Payload Struct
 
+The payload lives in a new header dedicated to prediction wiring, `MyContainerPredictionTraits.h`. Keeping it separate from the component header means the runtime instantiation only includes prediction-relevant declarations.
+
 Overlays store predicted state as "payloads", lightweight structs containing everything needed to reconstruct a view entry:
 
 ```cpp
@@ -268,6 +287,8 @@ The payload is simpler than your server entry, it only needs what the client pre
 
 {% step %}
 ### Step 3: Traits
+
+The traits struct sits in the same header as the payload, `MyContainerPredictionTraits.h`. The two types are always used together by the runtime, so colocating them keeps the includes simple.
 
 Traits are the bridge between your container-specific types and the generic prediction system. They're a struct of static methods that the runtime calls.
 
@@ -450,6 +471,8 @@ The equipment manager and the attachment runtime fragment both implement this ho
 {% step %}
 ### Step 4: The Component with Runtime
 
+This step edits your component header, `MyContainerComponent.h`, which now needs to include `MyContainerPredictionTraits.h` so `InitRuntimeAs<FMyContainerTraits>` can see the traits at the point of instantiation.
+
 Compose `FPredictableContainerHelper` as a member of your container. The helper owns the prediction runtime and exposes it through a small set of templated and non-templated accessors. Containers compose one helper per traits class they predict against and route their interface methods through it. The shape works for any host class that implements `ILyraItemContainerInterface`, components, runtime fragments, subsystems. See `InventoryFragment_Attachment` for a fragment example.
 
 ```cpp
@@ -505,6 +528,8 @@ private:
 
 {% step %}
 ### Step 5: Interface Methods Become Thin
+
+The method bodies below go in `MyContainerComponent.cpp`. The declarations are already on the component class in the header from the prior guide.
 
 Compare the vendor's `AddItemToSlot` (full validation, stock management, return value) to a predicted container:
 
@@ -649,6 +674,8 @@ Two situations can cause more visual churn than the player needs. The first is w
 The framework can handle both situations more gracefully when each slot descriptor produces a stable identity string. With that in place, the framework can tell which queued actions actually depended on the rejected one and leave the rest alone. See Rollback and Replay for the full picture; this step shows how to honour the contract on your slot descriptor.
 
 #### **Implement stable slot identity**
+
+This override sits on the slot descriptor you defined back in [implementing-the-interface - step 1](implementing-the-interface.md#step-1-define-your-slot-descriptor). Declare the override on the slot struct in its header and put the body in its `cpp`.
 
 The framework compares slots by a stable identifier the slot descriptor produces. Override `GetStableSlotIdentity` on every slot descriptor type your container uses:
 

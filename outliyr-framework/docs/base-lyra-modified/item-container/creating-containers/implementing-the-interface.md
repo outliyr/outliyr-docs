@@ -8,7 +8,7 @@ This guide walks you through implementing `ILyraItemContainerInterface` using a 
 
 ***
 
-### The Vendor Example
+## The Vendor Example
 
 We'll build a vendor component that:
 
@@ -17,11 +17,25 @@ We'll build a vendor component that:
 * Uses standard item moves for buying/selling (no special `Buy()`/`Sell()` methods)
 * Uses server authority (no client prediction)
 
+## File Layout
+
+Everything in this guide lives in a single component header / `cpp` pair, `VendorComponent.h` and `VendorComponent.cpp`. The slot descriptor sits in the header alongside the catalog entry and component class, and all method bodies go in the `cpp`.
+
+| Piece                                 | File                  |
+| ------------------------------------- | --------------------- |
+| Slot descriptor (`FVendorSlotInfo`)   | `VendorComponent.h`   |
+| Catalog entry (`FVendorCatalogEntry`) | `VendorComponent.h`   |
+| `UVendorComponent` class declaration  | `VendorComponent.h`   |
+| Interface method bodies               | `VendorComponent.cpp` |
+| Currency helper method bodies         | `VendorComponent.cpp` |
+
 ***
 
 {% stepper %}
 {% step %}
 ### Step 1: Define Your Slot Descriptor
+
+Declared in `VendorComponent.h` alongside the component class.
 
 Every container needs a slot descriptor that inherits from `FAbilityData_SourceItem`.
 
@@ -79,6 +93,8 @@ Key Points:
 {% step %}
 ### Step 2: Define Your Data Structures
 
+These structs sit in `VendorComponent.h`.
+
 The vendor needs a catalog of what's for sale:
 
 ```cpp
@@ -108,6 +124,8 @@ struct FVendorCatalogEntry
 
 {% step %}
 ### Step 3: Implement the Interface
+
+The `UVendorComponent` class declaration goes in `VendorComponent.h`.
 
 Now the component itself:
 
@@ -176,6 +194,8 @@ private:
 
 {% step %}
 ### Step 4: Implement Each Method
+
+All method bodies in this step are defined in `VendorComponent.cpp`.
 
 #### `CanAcceptItem` (Player Selling)
 
@@ -426,6 +446,8 @@ void UVendorComponent::CollectPredictableContainerHelpers(
 
 {% step %}
 ### Step 5: Currency Handling
+
+Currency helpers are declared on the component class in `VendorComponent.h` and defined in `VendorComponent.cpp`.
 
 The vendor validates affordability in `CanRemoveItem`, but where does the actual currency deduction happen?
 

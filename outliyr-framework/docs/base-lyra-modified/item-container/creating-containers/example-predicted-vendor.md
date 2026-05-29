@@ -28,11 +28,29 @@ This requires currency to be a container that the transaction system can operate
 
 ***
 
+## File Layout
+
+The currency container follows the same two-file split as any predicted container: a component header / `cpp` pair plus a dedicated traits header. The slot descriptor sits in the component header alongside the entry struct, and payload + traits share the prediction header. The filenames below are suggestions for your own implementation; the framework does not ship a stock currency container, so substitute whichever names fit your project.
+
+| Piece                                                             | File                                                                                                |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Currency entry struct (`FCurrencyEntry`)                          | `CurrencyContainerComponent.h`                                                                      |
+| Currency list struct and callback bodies                          | `CurrencyContainerComponent.h` for the declaration, `CurrencyContainerComponent.cpp` for the bodies |
+| Slot descriptor (`FCurrencySlotInfo`)                             | `CurrencyContainerComponent.h`                                                                      |
+| `ULyraCurrencyContainerComponent` class declaration               | `CurrencyContainerComponent.h`                                                                      |
+| Payload (`FCurrencyPayload`)                                      | `CurrencyContainerPredictionTraits.h`                                                               |
+| Traits (`FCurrencyTraits`) including the deterministic-GUID logic | `CurrencyContainerPredictionTraits.h`                                                               |
+| `GetItemInSlot`, `ModifyTagStack`, buy ability glue               | `CurrencyContainerComponent.cpp`                                                                    |
+
+***
+
 ## Currency Container
 
 A currency container is a lightweight container that stores numeric amounts rather than item instances.
 
 ### Storage: Numeric, Not Item Instances
+
+The entry struct sits in `CurrencyContainerComponent.h`; the list struct that wraps it follows the same `FFastArraySerializer` pattern from [Adding Prediction](adding-prediction.md), with its callback bodies in `CurrencyContainerComponent.cpp`.
 
 Unlike inventory, the currency container stores amounts directly:
 
@@ -59,6 +77,8 @@ This is more efficient for currency, no `UObject` overhead for what's essentiall
 
 ### Slot Descriptor
 
+Declared in `CurrencyContainerComponent.h` next to the entry struct.
+
 Currency slots use `FGameplayTag` identifiers:
 
 ```cpp
@@ -81,6 +101,8 @@ struct FCurrencySlotInfo : public FAbilityData_SourceItem
 ```
 
 ### `GetItemInSlot`: Cached Instances
+
+Implemented in `CurrencyContainerComponent.cpp`.
 
 For interface compliance, `GetItemInSlot` must return a `ULyraInventoryItemInstance*`. The currency container creates and caches instances on demand:
 
@@ -112,6 +134,8 @@ The prediction runtime is GUID-keyed. It tracks overlays by item GUID. But curre
 
 #### **Solution: Deterministic GUIDs from tags.**
 
+The payload lives in `CurrencyContainerPredictionTraits.h`. The deterministic GUID logic sits on the traits in the same header, with a matching helper on the slot descriptor back in `CurrencyContainerComponent.h`.
+
 The slot descriptor generates a stable GUID from the currency tag:
 
 ```cpp
@@ -141,6 +165,8 @@ This means:
 The currency container uses the same prediction infrastructure from [Adding Prediction](adding-prediction.md), runtime, traits, callbacks, just with tag-based GUIDs instead of item instance GUIDs.
 
 ### `ModifyTagStack` for Currency Changes
+
+Defined in `CurrencyContainerComponent.cpp`, with the declaration on the component class in `CurrencyContainerComponent.h`.
 
 Currency changes use `FItemTxOp_ModifyTagStack` operations:
 
