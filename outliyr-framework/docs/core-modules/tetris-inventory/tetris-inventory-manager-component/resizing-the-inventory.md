@@ -32,7 +32,7 @@ bool ResizeInventory(
 {% endtab %}
 
 {% tab title="Blueprints" %}
-<figure><img src="../../../.gitbook/assets/image (240).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (240).png" alt=""><figcaption><p>Consumable item that resizes the inventory it is inside</p></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 
