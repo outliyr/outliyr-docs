@@ -887,7 +887,7 @@ aside.toc-nav {
    ========================================================= */
 
 .docsify-tabs__tab {
-    background: transparent;
+    background: var(--surface-2) !important;
     color: var(--text-muted);
     border-bottom: 2px solid transparent;
 }
