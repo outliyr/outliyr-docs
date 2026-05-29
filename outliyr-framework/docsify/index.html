@@ -87,6 +87,24 @@
                 important: { label: 'important', icon: 'icon-important', className: 'important' },
             },
             plugins: [
+                function keepSidebarOpenOnMobile(hook, vm) {
+                    // Docsify auto-closes the mobile sidebar on any link click,
+                    // which makes expanding nested sections impossible. Re-open
+                    // it after such clicks so only the chevron toggle closes it.
+                    hook.ready(function () {
+                        document.addEventListener('click', function (e) {
+                            if (!window.matchMedia('(max-width: 768px)').matches) return;
+                            var inSidebar = e.target.closest('.sidebar');
+                            var onToggle = e.target.closest('.sidebar-toggle');
+                            if (!inSidebar || onToggle) return;
+                            // On mobile, body.close === sidebar OPEN. Re-add it
+                            // after docsify's handler removes it.
+                            setTimeout(function () {
+                                document.body.classList.add('close');
+                            }, 0);
+                        }, true);
+                    });
+                },
                 function mermaidReRenderPlugin(hook, vm) {
                     function reRenderMermaid(container) {
                         var nodes = container.querySelectorAll('.mermaid[data-mermaid-source]');
