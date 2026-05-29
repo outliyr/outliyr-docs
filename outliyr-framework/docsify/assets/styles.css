@@ -1212,6 +1212,10 @@ aside.toc-nav {
     body.close .sidebar-toggle {
         left: 300px;
         top: 16px;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        background: var(--surface-2);
     }
     body.close .sidebar-toggle::before {
         transform: translate(-30%, -50%) rotate(45deg);
