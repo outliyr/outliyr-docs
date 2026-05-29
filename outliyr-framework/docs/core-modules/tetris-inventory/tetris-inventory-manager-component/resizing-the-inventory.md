@@ -52,7 +52,7 @@ bool ResizeInventory(
 * **`bForce = false` ("Safe Mode"):** If _any_ existing item cannot be placed into the new layout, the **entire operation is cancelled**. The inventory reverts to its original layout and item positions. Returns `false`. `OutUnplacedItems` will be empty.
 * **`bForce = true` ("Forced Mode"):** The resize proceeds regardless. Any items that cannot fit are added to `OutUnplacedItems` and **permanently removed** from the inventory (via `RemoveItemInstance`). Returns `true` even if items were ejected.
 
-Choose carefully. Safe mode is ideal for upgrades where items should always fit. Forced mode is useful for debuffs or shrink effects where you want the resize to happen no matter what, but you'll need to handle the ejected items (drop them on the ground, send to mail, etc.).
+Choose carefully. Safe mode is ideal for upgrades where items should always fit. Forced mode is useful for debuffs or shrink effects where you want the resize to happen no matter what, but you'll need to handle the ejected items (drop them on the ground, etc.).
 {% endhint %}
 
 {% hint style="info" %}
