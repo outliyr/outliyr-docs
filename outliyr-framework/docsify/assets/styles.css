@@ -1220,4 +1220,12 @@ aside.toc-nav {
     body.close .sidebar-toggle::before {
         transform: translate(-30%, -50%) rotate(45deg);
     }
+
+    /* Hide the floating right-hand "On this page" TOC on phones.
+       The plugin collapses it into an awkward tap-to-expand sliver below
+       1300px; on touch screens that's unusable, so remove it entirely here. */
+    aside.toc-nav,
+    #toc {
+        display: none !important;
+    }
 }
