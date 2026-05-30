@@ -234,7 +234,7 @@ In your **unequip montage**, add `AnimNotify_CommitEquipVisibility` at the frame
 
 * Set `ActionToCommit = PendingHide`
 
-<figure><img src="../../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (14).png" alt=""><figcaption></figcaption></figure>
 
 #### Event Based Alternative
 

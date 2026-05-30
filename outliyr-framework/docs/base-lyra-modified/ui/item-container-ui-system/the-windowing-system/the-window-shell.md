@@ -8,24 +8,21 @@ By centralizing this logic, we ensure consistent behavior: drag physics, focus r
 
 ## Core Responsibilities
 
-#### 1. The Lease Handshake (Automatic Memory Management)
+### **1. V**iewModel Lifetime
 
-The most critical job of the Shell is managing data lifecycle. You do not need to call `UIManager->ReleaseViewModel` manually in your content widgets. The Shell does it for you.
+The shell owns the window's session. Content widgets call `Shell->GetOrCreateViewModel(Source)` and the shell forwards the call to the UI manager under its session. When the window closes, the session closes and the ViewModels the window was using are released on its behalf.
 
-* **Acquire:** When the window opens, the Shell calls `AcquireViewModelLease(Source)`. It stores this lease in an internal list.
-* **Release:** When the window closes (User clicks 'X', session ends, or game quits), `NativeDestruct` runs. The Shell iterates its list and calls `ReleaseViewModel`.
-
-This creates a safety net. The Shell ensures the underlying data connection is cleaned up cleanly.
+Content widgets never call release. The window owns the lifetime end to end.
 
 {% hint style="warning" %}
-This is only for widgets that are inside shell windows. You should call `GetOwningWindowShell->AcquireView` . In widgets that are not window shells call `UIManager->AcquireViewModel` and the `UIManager->ReleaseViewModel`
+This routing applies to widgets hosted inside a window shell. An item-container widget that lives outside a shell, for example a static inventory screen the player opens with one button, calls `UIManager->GetOrCreateViewModelForSession(Source, UIManager->GetBaseSession())` directly. See [ViewModels Without a Window Shell](../extension-and-integration/viewmodels-without-a-window-shell.md).
 {% endhint %}
 
-#### 2. Focus & Z-Order
+### 2. Focus & Z-Order
 
 When a user clicks on the Shell (or any part of your content), the Shell catches the `OnMouseButtonDown` event. It calls `BringToFront()`, which notifies the Layer and Window Manager. This ensures the window pops to the top of the stack visually.
 
-#### 3. Dragging Logic
+### 3. Dragging Logic
 
 The Shell implements the "Physical" movement.
 

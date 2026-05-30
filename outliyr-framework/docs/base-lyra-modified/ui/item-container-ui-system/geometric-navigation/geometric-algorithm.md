@@ -23,7 +23,7 @@ There is no arbitrary threshold, the comparison is purely geometric, rect-to-rec
 {% step %}
 #### **Spatial Scoring**
 
-After filtering to valid candidates, each window is scored with four components. The window with the **lowest** score wins:
+After filtering to valid candidates, each window is scored with four components that balance proximity against alignment. Three distance terms add to the score (closer is better), one overlap term subtracts from it (more alignment is better). The window with the **lowest** total score wins:
 
 ```
 Score = A + B + C - D
@@ -314,7 +314,7 @@ This is distinct from the D component's perpendicular alignment, which measures 
         └──────────────┘
 ```
 
-Overlapping windows should be accessed via [shoulder button cycling](/broken/pages/85c8ebba6454b12bd44d40137826b95f11b38860), not directional navigation.
+Overlapping windows should be accessed via [shoulder button cycling](window-cycling.md), not directional navigation.
 {% endhint %}
 
 ### Score Calculation

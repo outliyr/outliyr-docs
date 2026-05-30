@@ -58,9 +58,9 @@ You typically trigger the menu from your **Slot Widget** (the widget representin
 
 <summary>Blueprint graph showing utilization of <code>ItemActionMenu</code> in equipment slot</summary>
 
-<figure><img src="../../../../.gitbook/assets/image (9) (1) (1) (1).png" alt=""><figcaption><p>Blueprint Graph showing <code>OnMouseButtonDown->CreateItemActionMenu</code> on right click</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (9) (1) (1) (1) (1).png" alt=""><figcaption><p>Blueprint Graph showing <code>OnMouseButtonDown->CreateItemActionMenu</code> on right click</p></figcaption></figure>
 
-<figure><img src="../../../../.gitbook/assets/image (10) (1) (1) (1).png" alt=""><figcaption><p>Inform the <code>ActionMenuViewModel</code> that it should create should populate a menu for the item in the slot</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (10) (1) (1) (1) (1).png" alt=""><figcaption><p>Inform the <code>ActionMenuViewModel</code> that it should create should populate a menu for the item in the slot</p></figcaption></figure>
 
 </details>
 
@@ -84,7 +84,7 @@ Create a simple button widget for the list.
 * **Text:** Bind to `ActionData.DisplayName`.
 * **On Clicked:** Call `ActionMenuVM->ExecuteAction(ActionData.ActionTag)`.
 
-<figure><img src="../../../../.gitbook/assets/image (12) (1) (1).png" alt=""><figcaption><p>ItemActionButton OnClicked Implementation</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (12) (1) (1) (1).png" alt=""><figcaption><p>ItemActionButton OnClicked Implementation</p></figcaption></figure>
 
 ***
 
@@ -161,6 +161,8 @@ This logic is encapsulated in the `LyraQuantityPromptViewModel`. It acts as a sh
 2. When `ExecuteAction` is called, the system detects this flag.
 3. Instead of executing immediately, it **intercepts** the call.
 4. It opens the **Quantity Prompt ViewModel** (`LyraQuantityPromptViewModel`).
+
+Stack splitting follows the same path. `RequestStackSplit` on the interaction ViewModel resolves the shared prompt through `UIManager->GetQuantityPromptViewModel()`, binds its `OnConfirmed` and `OnCancelled` delegates, and shows the prompt. The user's confirmation drives `ConfirmStackSplit`, which executes the move with the chosen amount. Custom split entry points hook into the same accessor.
 
 ### The Prompt Widget
 

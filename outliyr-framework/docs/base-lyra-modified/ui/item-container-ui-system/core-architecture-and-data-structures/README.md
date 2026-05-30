@@ -27,7 +27,7 @@ Each Item Containers has a Slot Source Description using `FAbilityData_SourceIte
 
 ### The Abstraction Flow
 
-The UI Manager exposes a single function: `AcquireViewModel(Source)`. It doesn't care if the source is a backpack or a weapon attachment point. It simply asks the Source to generate the correct ViewModel.
+The UI Manager exposes a single function: `GetOrCreateViewModelForSession(Source, Session)`. It doesn't care if the source is a backpack or a weapon attachment point. It simply asks the Source to generate the correct ViewModel.
 
 ```mermaid
 graph LR
@@ -42,7 +42,7 @@ graph LR
     end
 
     subgraph UIManager ["UI Manager"]
-        D -->|AcquireViewModel| E[Factory Logic]
+        D -->|GetOrCreateViewModel| E[Factory Logic]
     end
 
     subgraph Output ["Resulting ViewModel"]
@@ -129,10 +129,10 @@ We will now break down these concepts into their specific implementations:
 
 * [**Polymorphic Container Sources**](polymorphic-container-sources.md)
   * A deep dive into `FLyraContainerSourceBase`, hashing for cache lookups, and how `FInstancedStruct` handles type safety.
-* [The MVVM Pattern](mvvm.md)
+* [**The MVVM Pattern**](mvvm.md)
   * Why we use Model-View-ViewModel architecture, how it differs from direct component binding, and the benefits for both Blueprint and C++ developers.
-* [Data Flow & Reactivity](dataflow-and-reactivity.md)
+* [**Data Flow & Reactivity**](dataflow-and-reactivity.md)
   * How `FieldNotify` propagates data changes to the UI efficiently, the reactive loop from backend to widget, and stable identity for preserving selection state.
-* [The Window Model](the-window-model.md)
+* [**The Window Model**](the-window-model.md)
   *   Why the system uses multiple draggable windows instead of a single panel, how sessions organize window lifecycles, and cross-window navigation.
 

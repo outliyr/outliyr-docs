@@ -119,7 +119,7 @@ if (auto* DurabilityData = ItemInstance->ResolveTransientFragment<UInventoryFrag
 {% tab title="Blueprint" %}
 **From Blueprint/C++:** Use `ResolveStructTransientFragment(FragmentClass)` on the `ULyraInventoryItemInstance`. This returns an `FInstancedStruct`. You'll need to use `GetInstancedStructValue` and specific the transient struct from the wildcard `value` pin.
 
-<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 {% hint style="danger" %}
 The wildcard pin must match the **transient struct type** that corresponds to the fragment class you specified. Selecting the wrong type will silently return nothing.
@@ -131,7 +131,7 @@ The wildcard pin must match the **transient struct type** that corresponds to th
 **Updating:** To update the struct, you can create a new instance of your data struct, modify it, and then call `ULyraInventoryItemInstance::SetTransientFragmentData()` with the new struct wrapped in an `FInstancedStruct`. This replaces the existing entry in the `TransientFragments` array.
 {% endhint %}
 
-<figure><img src="../../../.gitbook/assets/image (14).png" alt=""><figcaption><p>Example of setting values for the gun transient fragment to record staged reload</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (14) (1).png" alt=""><figcaption><p>Example of setting values for the gun transient fragment to record staged reload</p></figcaption></figure>
 
 ***
 

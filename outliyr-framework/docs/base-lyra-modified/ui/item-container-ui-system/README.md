@@ -14,9 +14,9 @@ Instead of your UMG widgets talking directly to the server or casting to specifi
 
 ### 1. The Disconnected UI
 
-The UI does not "own" the data; it leases it. When a player opens an inventory window, the system creates a ViewModel that acts as a live proxy for the underlying component. When the window closes, the ViewModel is released and cleaned up.
+Widgets never touch the underlying components directly. They bind to a ViewModel that the manager keeps in sync with whatever container they care about, and the ViewModel goes away on its own once nothing needs it.
 
-This means your UI logic is **container-agnostic**. The same generic code handles a 1D Inventory list, a Tetris grid, an Equipment slot, or an Attachment hierarchy. The system uses **Polymorphic Descriptors** to bridge the gap, allowing the UI to interact with any container type without knowing its specific implementation.
+This keeps your UI logic **container-agnostic**. The same generic code handles a 1D inventory list, a Tetris grid, an equipment slot, or an attachment hierarchy. **Polymorphic descriptors** bridge the gap, letting the UI work with any container type without knowing its specific implementation.
 
 ### 2. The "Ghost World" (Prediction)
 
@@ -125,6 +125,6 @@ This documentation is split into several detailed sections to help you navigate 
 {% endtab %}
 
 {% tab title="I want to extend the system" %}
-[**Extension Guide**](extension-and-integration-guide/) Practical guides on how to create new container types, custom windows, and debug the system using built-in logging tools.
+[**Extension Guide**](extension-and-integration/) Practical guides on how to create new container types, custom windows, and debug the system using built-in logging tools.
 {% endtab %}
 {% endtabs %}

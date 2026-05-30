@@ -30,7 +30,7 @@ AccessChangedListenerHandle = Subsystem->RegisterListener(
 4. It calls `CloseSessionsForItem(ItemId, EItemWindowCloseReason::SourceLost)`.
 5. Any session (and its windows) tracking that Item ID is immediately closed.
 
-This prevents the UI from showing "ghost" windows pointing to deleted objects, which would likely crash the game if the player tried to interact with them.
+This prevents the UI from showing "ghost" windows pointing to deleted objects, which would likely crash the game if the player tried to interact with them. Because the cache is session-owned, closing the affected sessions evicts their ViewModels automatically.
 
 ### Handling Access Revocation (`HandleContainerAccessChanged`)
 
@@ -42,20 +42,23 @@ The server updates the `LyraItemPermissionComponent` on the container. This comp
 2. **Broadcast:** The component broadcasts `TAG_ItemPermission_Message_AccessChanged`.
 3. **UI Manager:** Receives `HandleContainerAccessChanged`.
 4. **Check:** It verifies if the access level is insufficient (anything less than `ReadWrite`).
-5. **Enforcement:** It calls `CloseWindowsForContainer`. It iterates _all_ active sessions, checks if their source matches the revoked container, and force-closes them with `Reason::PermissionRevoked`.
+5. **Enforcement:** It calls `CloseWindowsForContainer`. It iterates _all_ active sessions, checks if their source matches the revoked container, and force-closes them with `Reason::PermissionRevoked`. Closing those sessions evicts the associated ViewModels through the cache's normal ownership path.
 
 This provides a secure way to manage UI from the server. You don't need to RPC "ClientCloseWindow", you just change the permission, and the UI system cleans itself up.
 
-### Garbage Collection Safety
+### Failsafe Cleanup
 
-Beyond explicit events, the UI Manager runs a periodic cleanup task (`OnCleanupTimerFired`).
+Most eviction happens through session lifecycle, closing a session removes it from every cache entry it owned, and entries with no remaining owners are uninitialized and removed in the same step. Item destruction and access revocation close the affected sessions, so cache eviction follows by construction.
 
-Unreal Engine's Garbage Collector can be aggressive. If a developer forgets to release a ViewModel lease, or if an Actor is destroyed without broadcasting an event (e.g., `DestroyActor` called directly), we could end up with "Stale" ViewModels.
+A separate path handles the cases where a backing object disappears without the matching session ever closing.
 
-The cleanup loop iterates the `UnifiedViewModelCache`:
+`CleanupStaleViewModels` runs at the start of every `GetOrCreateViewModel` call. It walks the cache and drops two kinds of stale entries:
 
-1. It checks the `TWeakObjectPtr` to the Owner (the Component/Actor).
-2. If the pointer is stale (null or pending kill), it acts as a failsafe.
-3. It forcibly calls `Uninitialize()` on the ViewModel and removes it from the cache.
+1. **Object-keyed entries** whose `TWeakObjectPtr<UObject> ContainerObject` has gone invalid. This catches actors and components destroyed through code paths that bypass the observer messages.
+2. **GUID-keyed entries** whose `ItemGuid` can no longer be resolved through `ULyraItemSubsystem::FindItemByGuid`. This catches items that have been destroyed but whose owning session has not yet closed for some reason.
 
-This ensures that even in the worst-case scenario (bugs, crashes, network lag), the UI system eventually self-heals and frees memory.
+`ClearAllViewModels` runs during subsystem teardown and on map transition. It uninitializes every cached ViewModel and empties the cache. The base session is recreated immediately after the map transition, so widgets in the next map find the cache fresh but the entry point still available.
+
+{% hint style="success" %}
+You never invoke either path by hand. They exist so the system stays consistent when components, items, or maps disappear outside the normal session-driven flow.
+{% endhint %}

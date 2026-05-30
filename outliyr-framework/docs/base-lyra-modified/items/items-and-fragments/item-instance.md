@@ -261,7 +261,7 @@ When an item moves between containers, its `CurrentSlot` changes. All fragments 
 
 {% tabs %}
 {% tab title="Blueprints" %}
-<figure><img src="../../../.gitbook/assets/image (11).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (11) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 
 {% tab title="C++" %}
@@ -290,7 +290,7 @@ The instance links to its definition via `ItemDef`:
 
 {% tabs %}
 {% tab title="Blueprint" %}
-<figure><img src="../../../.gitbook/assets/image (10) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (10) (1) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 
 {% tab title="C++" %}

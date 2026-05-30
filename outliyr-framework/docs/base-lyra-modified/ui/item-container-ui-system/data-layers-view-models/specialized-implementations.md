@@ -39,10 +39,24 @@ classDiagram
         +BuildSlotDescriptor()
     }
 
+    class ULyraTetrisInventoryViewModel {
+        +ClumpLayouts[]
+        +GridDimensions
+    }
+
+    class ULyraWorldPickupViewModel {
+        +PrimaryDisplayName
+        +PrimaryIcon
+        +TotalPickupItemCount
+        +bIsVisible
+    }
+
     ULyraItemContainerViewModelBase <|-- ULyraContainerViewModel
     ULyraContainerViewModel <|-- ULyraInventoryViewModel
     ULyraContainerViewModel <|-- ULyraEquipmentViewModel
     ULyraContainerViewModel <|-- ULyraAttachmentViewModel
+   ULyraContainerViewModel <|-- ULyraTetrisInventoryViewModel
+    ULyraContainerViewModel <|-- ULyraWorldPickupViewModel
 ```
 
 ***
@@ -52,92 +66,100 @@ classDiagram
 The system uses `FInstancedStruct` to work with any container type polymorphically:
 
 ```cpp
-// All containers use the same API
-ULyraContainerViewModel* AcquireViewModel(const FInstancedStruct& Source);
+// All containers use the same API on the UI manager
+ULyraContainerViewModel* GetOrCreateViewModelForSession(
+    const FInstancedStruct& Source,
+    FItemWindowSessionHandle SessionHandle);
 ```
 
 ### Built-in Sources
 
-| Source Struct                | Creates                    | For                  |
-| ---------------------------- | -------------------------- | -------------------- |
-| `FInventoryContainerSource`  | `ULyraInventoryViewModel`  | Inventory components |
-| `FEquipmentContainerSource`  | `ULyraEquipmentViewModel`  | Equipment components |
-| `FAttachmentContainerSource` | `ULyraAttachmentViewModel` | Item attachments     |
+| Source Struct                 | Creates                         | For                                       |
+| ----------------------------- | ------------------------------- | ----------------------------------------- |
+| `FInventoryContainerSource`   | `ULyraInventoryViewModel`       | Inventory components                      |
+| `FEquipmentContainerSource`   | `ULyraEquipmentViewModel`       | Equipment components                      |
+| `FWorldPickupContainerSource` | `ULyraWorldPickupViewModel`     | World pickups and dropped loot            |
+| `FTetrisContainerSource`      | `ULyraTetrisInventoryViewModel` | Grid-shaped tetris inventories            |
+| `FAttachmentContainerSource`  | `ULyraAttachmentViewModel`      | Item attachments                          |
+| `FTetrisChildContainerSource` | `ULyraTetrisInventoryViewModel` | Tetris inventories carried inside an item |
 
 ### Adding Custom Sources
 
-See [Custom Container Types](../extension-and-integration-guide/custom-container-types.md) for creating new container types (vendors, crafting, etc.).
-
-### Initialization
-
-A simple way to initialize a container view model is by passing the ContainerSoure struct as an InstancedStruct to `AcquireViewModel`  or to `AcquireViewModelLeased` if you are inside a [window shell](../the-windowing-system/).
-
-<details>
-
-<summary>C++</summary>
-
-```cpp
-// Create via UI Manager
-FInventoryContainerSource Source;
-Source.InventoryComponent = PlayerInventoryComponent;
-
-ULyraInventoryViewModel* VM = Cast<ULyraInventoryViewModel>(
-    UIManager->AcquireViewModel(FInstancedStruct::Make(Source))
-);
-```
-
-</details>
-
-<details>
-
-<summary>Blueprints</summary>
-
-<figure><img src="../../../../.gitbook/assets/image (3) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
-
-</details>
+See Custom Container Types for creating new container types (vendors, crafting, etc.). Custom sources participate in the cache by overriding `BuildContainerViewModelKey`; the polymorphic container sources page covers the key contract.
 
 ***
 
 ## The Inventory (`ULyraInventoryViewModel`)
 
-This is the standard, index-based container. It represents a 1D list of items (Backpack, Chest, Stash).
+The standard slot-indexed container. Items are tracked by a flat `SlotIndex` (0, 1, 2...), but the visual layout is a widget concern, the same VM drives `LyraInventoryListPanel` (a vertical list) and `LyraInventoryTilePanel` (a grid). Use this VM for any inventory whose slot identity is one-dimensional, regardless of how you choose to draw it. Backpacks, chests, stashes, and the standard grid-laid-out inventory all live here.
 
-### Key Features
+### What Makes It Unique
 
-* **Index Mapping:** Items are identified by their `SlotIndex` (0, 1, 2...).
-* **Capacity Handling:** It binds to `LyraInventoryManagerComponent` to track `MaxSlots` and `MaxWeight`.
-* **Rebuild Logic:** It iterates over the items notifying changes.
-
-### Usage
-
-This is the default for most storage. It works out-of-the-box with `LyraInventoryListPanel` and `LyraInventoryTilePanel`.
+* **Index identity.** Items are tracked by their `SlotIndex` (0, 1, 2...). Empty slots have no items but still report `MaxSlots` so a tile panel can draw the empty squares.
+* **Capacity.** Binds to `ULyraInventoryManagerComponent` and forwards `MaxSlots`, `MaxWeight`, and `ItemCountLimit` as bindable properties.
+* **Aggregate stats.** Recomputes `TotalWeight` and `ItemCount` each time the list rebuilds so HUDs and capacity bars stay in sync without polling.
 
 {% hint style="success" %}
-The `LyraInventoryTilePanel` handles empty slot visualization by:
-
-1. Getting `MaxSlots` from ViewModel
-2. Creating `SlotViewModel` for each position
-3. Mapping items to slots via `FindItemForSlot()`
-4. Empty slots get `bIsOccupied = false`
-
-The `InventoryListPanel` does not do this as it just lists the items. There is no concept of an empty item.
+The `LyraInventoryTilePanel` handles empty slot visualization by reading `MaxSlots`, creating a `SlotViewModel` for each position, mapping items to slots via `FindItemForSlot()`, and marking empty slots with `bIsOccupied = false`. The `InventoryListPanel` does not, it just lists what exists.
 {% endhint %}
+
+### Initialization
+
+<details>
+
+<summary>C++</summary>
+
+```cpp
+FInventoryContainerSource Source;
+Source.InventoryComponent = PlayerInventoryComponent;
+
+// Inside a window shell
+ULyraInventoryViewModel* VM = Cast<ULyraInventoryViewModel>(
+    Shell->GetOrCreateViewModel(FInstancedStruct::Make(Source))
+);
+
+// From an item-container widget without a window shell
+ULyraInventoryViewModel* VM = Cast<ULyraInventoryViewModel>(
+    UIManager->GetOrCreateViewModelForSession(
+        FInstancedStruct::Make(Source),
+        UIManager->GetBaseSession())
+);
+```
+
+</details>
+
+<details>
+
+<summary>Blueprints</summary>
+
+<figure><img src="../../../../.gitbook/assets/image (330).png" alt=""><figcaption></figcaption></figure>
+
+</details>
 
 ***
 
 ## Equipment (`ULyraEquipmentViewModel`)
 
-Equipment is unique because slots are not numbered; they are **Tagged**. You don't have "Slot 0"; you have "Head," "Chest," and "Weapon."
+Equipment slots are tagged, not numbered, "Head", "Chest", "Primary Weapon" instead of "Slot 0". Which slots a widget displays is a widget decision, not a ViewModel or character-config decision. The widget asks the ViewModel for whatever tags it wants to draw, and the VM creates the matching slot ViewModel on demand (`GetOrCreateSlotViewModel(Tag)`).&#x20;
 
-### Key Features
+Adding a new equipment slot to the UI is just adding a widget that requests its tag then requesting it in the widget graph. Slots persist whether or not an item is equipped; the "Head" slot exists even when the player is bareheaded.
 
-* **Tag Mapping:** Instead of an array, it maintains a `TMap<FGameplayTag, ULyraEquipmentSlotViewModel>`.
-* **Permanent Slots:** The slots are defined by the Character's configuration, not by the items present. The "Head" slot exists even if the player is naked.
-* **Held State:** It tracks `ActiveHeldSlot` to visualize which item is currently in the character's hands (e.g., highlighting the active weapon).
+### What Makes It Unique
 
-### On-Demand Creation
+* **Tagged slots.** Instead of an array indexed by position, the VM holds a `TMap<FGameplayTag, ULyraEquipmentSlotViewModel*>`. Every UI binds to its slot of interest by gameplay tag.
+* **Permanent slot identity.** Slots exist whether or not they hold an item. Empty slots still produce a valid `SlotViewModel` so widgets can show a placeholder icon and accept drops.
+* **Held state.** Tracks `ActiveHeldSlot` (the tag of the slot currently active in the character's hands) and updates the matching slot VM's highlight state so the HUD can show which weapon is drawn.
 
-Unlike Inventory which rebuilds everything, Equipment slots are often created **On-Demand**. When your UI asks for `GetOrCreateSlotViewModel(Tag_Head)`, the system checks if it exists. If not, it creates it. This allows different UI layouts (e.g., a simple HUD vs. a detailed Character Sheet) to request only the slots they care about.
+### On-Demand Slot Creation
+
+Equipment slot ViewModels are created lazily. `GetOrCreateSlotViewModel(FGameplayTag SlotTag)` is the entry point: it returns the existing slot VM for the tag, or creates one if it does not exist yet. This lets a HUD widget ask only for the two slots it cares about while a full Character Sheet asks for every slot it draws, both share the same underlying instances.
+
+```cpp
+UFUNCTION(BlueprintCallable, Category = "Equipment")
+ULyraEquipmentSlotViewModel* GetOrCreateSlotViewModel(FGameplayTag SlotTag);
+```
+
+UMG widgets should bind through this accessor rather than caching a slot VM pointer, because the slot VM may not exist until the widget first asks for it.
 
 ### Initialization
 
@@ -146,12 +168,11 @@ Unlike Inventory which rebuilds everything, Equipment slots are often created **
 <summary>C++</summary>
 
 ```cpp
-// Create via UI Manager
-FInventoryContainerSource Source;
-Source.InventoryComponent = PlayerInventoryComponent;
+FEquipmentContainerSource Source;
+Source.EquipmentComponent = PlayerEquipmentComponent;
 
-ULyraInventoryViewModel* VM = Cast<ULyraInventoryViewModel>(
-    UIManager->AcquireViewModel(FInstancedStruct::Make(Source))
+ULyraEquipmentViewModel* VM = Cast<ULyraEquipmentViewModel>(
+    Shell->GetOrCreateViewModel(FInstancedStruct::Make(Source))
 );
 ```
 
@@ -161,41 +182,22 @@ ULyraInventoryViewModel* VM = Cast<ULyraInventoryViewModel>(
 
 <summary>Blueprints</summary>
 
-<figure><img src="../../../../.gitbook/assets/image (3) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
 
 </details>
 
 ***
 
-## Attachments (`ULyraAttachmentViewModel`)
+### Attachments (`ULyraAttachmentViewModel`)
 
-This is the most complex container. It represents the "Item-on-Item" hierarchy (e.g., a Scope attached to a Rifle).
+Attachments are the "item inside another item" case, a scope on a rifle, a mag on a weapon, a charm on a backpack. The container is not a component on the world; it is an **item**, which can move between inventories at any time. This is what makes attachments the trickiest of the built-in containers.
 
-### The "Nested Container" Problem
+### What Makes It Unique
 
-In a standard inventory, the container is an Actor Component. It doesn't move. In an attachment system, the container (Rifle) is an **Item**. It moves constantly.
-
-If you move the Rifle from your Hands to your Backpack, the "Path" to the Scope changes.
-
-* _Before:_ `Hands -> Rifle -> Scope`
-* _After:_ `Backpack -> Slot 3 -> Rifle -> Scope`
-
-### Dynamic Context Updates
-
-The `LyraAttachmentViewModel` solves this by listening to the `ItemMoved` message.
-
-1. **Detection:** When the parent item (Rifle) moves, the ViewModel detects the event.
-2. **Recalculation:** It calls `UAttachmentFunctionLibrary::GetAttachmentContainerInfo` to rebuild the `RootSlot` and `ContainerPath`.
-3. **Propagation:** It updates the `SlotDescriptor` of every attachment slot.
-
-This ensures that drag-and-drop operations continue to work seamlessly even if the parent item is moved while the attachment window is open.
-
-### The Attachment Fragment
-
-Instead of a manager component, this ViewModel reads from the `UInventoryFragment_Attachment`.
-
-* It reads the `CompatibleAttachments` map to know which slots exist (Muzzle, Optic, Mag).
-* It creates a permanent `SlotViewModel` for each compatible point, even if empty.
+* **Item-owned container.** The container is the parent item itself. The VM reads slot definitions from the `UInventoryFragment_Attachment` on that item, not from a manager component.
+* **GUID-keyed identity.** The cache keys the attachment VM by the parent item's GUID rather than by a pointer, so the VM survives the predicted-to-authoritative item replacement that happens during reconciliation. See the polymorphic container sources page for the identity contract.
+* **Permanent slots from the fragment.** The `CompatibleAttachments` map on the fragment defines every slot the parent item can hold (Muzzle, Optic, Mag). The VM creates a `SlotViewModel` for each one, occupied or not, so the UI can draw empty slots and accept drops.
+* **Dynamic container path.** The "path" to an attachment changes whenever the parent item moves. The VM listens to `Lyra.Item.Message.ItemMoved`, recomputes the root slot and container path via `UAttachmentFunctionLibrary::GetAttachmentContainerInfo`, and propagates the new `SlotDescriptor` to every slot VM so drag-and-drop keeps working without the player having to close and reopen the window.
 
 ### Initialization
 
@@ -204,12 +206,14 @@ Instead of a manager component, this ViewModel reads from the `UInventoryFragmen
 <summary>C++</summary>
 
 ```cpp
-// Create via UI Manager
-FInventoryContainerSource Source;
-Source.InventoryComponent = PlayerInventoryComponent;
+// Attachments key on the owner item's GUID so the ViewModel survives prediction
+// reconciliation that swaps the underlying item pointer.
+FAttachmentContainerSource Source;
+Source.ItemGuid = OwningItem->GetGuid();
+Source.OwningPlayer = OwningPlayerController;
 
-ULyraInventoryViewModel* VM = Cast<ULyraInventoryViewModel>(
-    UIManager->AcquireViewModel(FInstancedStruct::Make(Source))
+ULyraAttachmentViewModel* VM = Cast<ULyraAttachmentViewModel>(
+    Shell->GetOrCreateViewModel(FInstancedStruct::Make(Source))
 );
 ```
 
@@ -219,6 +223,110 @@ ULyraInventoryViewModel* VM = Cast<ULyraInventoryViewModel>(
 
 <summary>Blueprints</summary>
 
-<figure><img src="../../../../.gitbook/assets/image (3) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+
+</details>
+
+***
+
+### Tetris (`ULyraTetrisInventoryViewModel`)
+
+Tetris inventories are 2D grids where each item occupies a shape made up of several cells, in the style of Resident Evil 4 or Escape from Tarkov. The VM lives in the `TetrisInventory` game-feature plugin and binds to a `ULyraTetrisInventoryManagerComponent`.
+
+### What Makes It Unique
+
+* **Spatial awareness.** Items carry a `(ClumpId, GridPosition, Rotation)` triple instead of a single slot index, and each item occupies a multi-cell shape. The VM knows where shapes fit, what blocks what, and how items rotate. This is the load-bearing difference from a flat `ULyraInventoryViewModel` drawn in a grid layout — that VM is one-dimensional with a grid widget on top; this VM is two-dimensional through and through.
+* **Per-item visual state.** Each item VM in the tetris grid is a `ULyraTetrisItemViewModel` (a subclass of the standard item VM) carrying spatial propertie, grid position, rotation, the precomputed masked icon material, so a tile widget binds directly to one item's bindable state instead of looking up positions externally.
+* **Prediction-resilient rebinds.** When prediction reconciliation swaps the underlying component, the VM's `EnsureValidSubscription` re-binds to the new `OnViewDirtied` source automatically. Buyers do not need to do anything to make this work; it is handled by the `Initialize`/`Uninitialize` pair on the base class.
+* **GUID-keyed child grids.** A tetris inventory that is itself an item inside another inventory (a backpack carried in a chest, for example) uses `FTetrisChildContainerSource` and is keyed by the carrier item's GUID rather than the component pointer. The cache returns the same VM whether you reach it through the parent inventory or through inspection of the carrier item.
+
+### Initialization
+
+<details>
+
+<summary>c++</summary>
+
+For a tetris inventory backed by a component:
+
+```cpp
+// The VM resolves the grid layout (clumps, cell counts, container path) automatically.
+FTetrisContainerSource Source;
+Source.TetrisComponent = PlayerTetrisInventoryComponent;
+
+// Inside a window shell
+ULyraTetrisInventoryViewModel* VM = Cast<ULyraTetrisInventoryViewModel>(
+    Shell->GetOrCreateViewModel(FInstancedStruct::Make(Source))
+);
+
+// From an item-container widget without a window shell
+ULyraTetrisInventoryViewModel* VM = Cast<ULyraTetrisInventoryViewModel>(
+    UIManager->GetOrCreateViewModelForSession(
+        FInstancedStruct::Make(Source),
+        UIManager->GetBaseSession())
+);
+```
+
+For a tetris inventory carried inside an item (GUID-keyed so the VM survives prediction reconciliation):
+
+```cpp
+FTetrisChildContainerSource Source;
+Source.ItemGuid = CarrierItem->GetGuid();
+Source.OwningPlayer = OwningPlayerController;
+
+ULyraTetrisInventoryViewModel* VM = Cast<ULyraTetrisInventoryViewModel>(
+    Shell->GetOrCreateViewModel(FInstancedStruct::Make(Source))
+);
+```
+
+</details>
+
+<details>
+
+<summary>Blueprints</summary>
+
+<figure><img src="../../../../.gitbook/assets/image (4).png" alt=""><figcaption><p>Initializing a view model for the tetris component (e.g external storage)</p></figcaption></figure>
+
+<figure><img src="../../../../.gitbook/assets/image (6).png" alt=""><figcaption><p>Initializing a view model for an item container (e.g backpack)</p></figcaption></figure>
+
+</details>
+
+***
+
+### World Pickup (`ULyraWorldPickupViewModel`)
+
+World pickup VMs are used for loot containers or quick swap widgets similar to apex. They represent the contents of a `AWorldCollectableBase` actor.
+
+### What Makes It Unique
+
+* **Primary display fields.** Exposes `PrimaryDisplayName`, `PrimaryIcon`, and `TotalPickupItemCount` as the single-glance summary for the pickup. If the pickup holds one item, these reflect that item directly; if it holds several, they reflect a combined summary so a single nameplate can stand in for the whole pile.
+* **Visibility tracking.** `bIsVisible` is a bindable bool that flips false while a predicted pickup is hidden mid-reconciliation. Widgets bind to this to fade out instead of showing stale loot.
+* **Actor lifetime.** Initializes from the pickup actor through `InitializeForPickup(AWorldCollectableBase*)` and tears down cleanly when the actor is destroyed. `GetPickup()` returns nullptr once the underlying actor is gone.
+
+### Initialization
+
+<details>
+
+<summary>C++</summary>
+
+```cpp
+FWorldPickupContainerSource Source;
+Source.Pickup = NearbyPickupActor;
+
+ULyraWorldPickupViewModel* VM = Cast<ULyraWorldPickupViewModel>(
+    UIManager->GetOrCreateViewModelForSession(
+        FInstancedStruct::Make(Source),
+        UIManager->GetBaseSession())
+);
+
+// Bind the floating widget's name and icon to PrimaryDisplayName / PrimaryIcon.
+```
+
+</details>
+
+<details>
+
+<summary>Blueprints</summary>
+
+<figure><img src="../../../../.gitbook/assets/image (7).png" alt=""><figcaption></figcaption></figure>
 
 </details>

@@ -20,7 +20,7 @@ Implementation:
 * Input: A Gameplay Tag (e.g., `UI.Window.Inventory.Backpack`).
 * Output: A Widget Class (e.g., `W_BackpackContent`).
 
-<figure><img src="../../../../.gitbook/assets/image (7).png" alt=""><figcaption><p>Example binding the wiget classes to window gameplay tags</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (7) (1).png" alt=""><figcaption><p>Example binding the wiget classes to window gameplay tags</p></figcaption></figure>
 
 {% hint style="info" %}
 Design Tip: Using Gameplay Tags for routing allows you to swap your entire UI look-and-feel just by changing the return values in this function, without touching any C++ logic or Ability code.
@@ -34,7 +34,7 @@ When the Inventory UI is first activated, the screen is empty. The Layer is resp
 
 Immediately after activation, the UI Manager triggers the `SpawnMandatoryWindows` event. Override this in Blueprint to define your "Home" UI layout.
 
-<figure><img src="../../../../.gitbook/assets/image (8).png" alt=""><figcaption><p>Mandatory spawning of the equipment window and inventory grid</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (8) (1).png" alt=""><figcaption><p>Mandatory spawning of the equipment window and inventory grid</p></figcaption></figure>
 
 #### Standard sequence:
 

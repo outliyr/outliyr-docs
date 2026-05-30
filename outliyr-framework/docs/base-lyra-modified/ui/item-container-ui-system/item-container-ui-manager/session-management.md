@@ -1,12 +1,10 @@
 # Session Management
 
-Windows in an inventory system are rarely independent. They exist in logical groups.
+When a player is actively interacting with a chest, additional windows can open. The chest's contents open, the player might right-click an item to inspect it, that inspection might in turn open an attachment view of a gun inside the item. These windows are related: they were spawned by the same player action, and when that action ends, the player walks too far away, the chest is destroyed, the player closes the inventory, all of them should close together.
 
-* When you open your Inventory, you often want to see your Equipment too.
-* When you open a Chest, you want it to close if you walk too far away.
-* When you inspect an Item, that inspection window is logically "child" to the container the item is in.
+A **session** is the manager's way of grouping related windows so they share a single lifetime. Closing a session closes every window that belongs to it. Sessions can nest: a chest session can contain a child session for an inspected item, and closing the parent closes the child too.
 
-The **Session System** models these relationships as a tree structure.
+The rest of this page covers what a session looks like in code, how the cascade close works, how to open and close sessions explicitly, and how the system reparents sessions when the underlying items move between containers.
 
 ## The Session Structure
 
@@ -34,7 +32,7 @@ The primary benefit of the session system is **Cascading Logic**. When a session
 2. **Recursive Search:** The manager identifies all `ChildSessions` belonging to that session.
 3. **Recursive Closure:** Every child session is closed first.
 4. **Window Disposal:** Every `FItemWindowHandle` registered to these sessions is sent a close request to the UI Layer.
-5. **Data Cleanup:** Once all windows are removed, the UIManager releases the associated ViewModel leases.
+5. **ViewModel Release:** Any ViewModels the closing session was holding are released. If no other open session is using a given ViewModel, it is torn down at the same time.
 
 ### The Hierarchy
 
@@ -44,9 +42,9 @@ Every window belongs to a **Session** (`FItemWindowSession`).
 
 This represents the player's persistent UI state.
 
-* **Created:** When the inventory layer (`LyraItemContainerLayer`) is activated.
-* **Content:** Player Inventory, Equipment, Currency.
-* **Lifetime:** Exists as long as the inventory screen is open.
+* **Created:** When the UI manager initializes for the local player. Available immediately and independently of the windowing layer.
+* **Content:** The persistent UI state for the player. Holds the mandatory windows the Layer spawns on activation, plus ViewModels for any item-container widgets the game shows outside a window shell, a static inventory screen, an equipment panel, or any other item-container UI for a game that doesn't use windowed UI.
+* **Lifetime:** Survives across map transitions. Closed only when the local player is destroyed.
 
 #### 2. Child Sessions
 
@@ -91,7 +89,7 @@ You typically create a session when opening a new root window (like a Chest).
 
 {% tabs %}
 {% tab title="Blueprints" %}
-<figure><img src="../../../../.gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 
 {% tab title="C++" %}
@@ -119,7 +117,8 @@ When a session is closed, the Manager performs a **Cascade Closure**:
 
 1. **Recursion:** It finds all `ChildSessions` of the target session and calls `CloseSession` on them first.
 2. **Window Cleanup:** It iterates all `Windows` registered to the session and broadcasts `OnWindowCloseRequested`.
-3. **Data Cleanup:** It removes the session from the registry.
+3. **ViewModel Release:** Every ViewModel the session was holding is released. Anything still wanted by another open session stays; anything orphaned is torn down.
+4. **Registry Cleanup:** It removes the session from the registry.
 
 This ensures that closing a parent "cleanly" removes the entire branch of the UI tree.
 

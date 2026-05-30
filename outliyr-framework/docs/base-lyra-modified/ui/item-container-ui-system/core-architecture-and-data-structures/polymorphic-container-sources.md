@@ -19,13 +19,13 @@ struct LYRAGAME_API FLyraContainerSourceBase
     /** 1. What kind of ViewModel does this source need? */
     virtual UClass* GetViewModelClass() const;
 
-    /** 2. How do we uniquely identify this specific container? */
-    virtual uint32 GetContentHash() const;
-
-    /** 3. Who owns this data? (Used for auto-cleanup) */
+    /** 2. The object used for object-keyed identity. */
     virtual UObject* GetOwner() const;
 
-    /** 4. The Factory Method: Create the data proxy. */
+    /** 3. Populate the stable cache key for this source. */
+    virtual bool BuildContainerViewModelKey(FLyraContainerViewModelKey& OutKey) const;
+
+    /** 4. The factory method: create the data proxy. */
     virtual ULyraContainerViewModel* CreateViewModel(ULyraItemContainerUIManager* Manager) const;
 };
 ```
@@ -123,51 +123,47 @@ ULyraContainerViewModel* FInventoryContainerSource::CreateViewModel(
 
 ***
 
-## Cache Identity (`GetContentHash`)
+## Cache Identity (`BuildContainerViewModelKey`)
 
-The UI Manager aggressively caches ViewModels. If two different windows (e.g., "Main Inventory" and "Crafting Source") request the same inventory, they should get the **same ViewModel instance**.
+The UI manager caches ViewModels so that two widgets viewing the same container share one instance. The cache is keyed by `FLyraContainerViewModelKey`, a small struct combining the source struct type with the owning object pointer and an optional item GUID. Equality is field-by-field; the hash exists only so the underlying map can bucket entries.
 
-To achieve this, the Source must provide a unique hash.
+Each source populates the key by overriding `BuildContainerViewModelKey`. The base implementation handles the common case automatically:
 
 ```cpp
-virtual uint32 GetContentHash() const override
+virtual bool BuildContainerViewModelKey(FLyraContainerViewModelKey& OutKey) const
 {
-    // Hashing the pointer ensures uniqueness per component instance
-    return GetTypeHash(InventoryComponent);
+    if (UObject* Owner = GetOwner())
+    {
+        OutKey.ContainerObject = Owner;
+        return true;
+    }
+    return false;
 }
 ```
 
-The UI Manager combines this hash with the Struct Type to form a composite key:
+Any source backed by a component or actor can use the default. The manager stamps `SourceStructType` itself after the override returns, so two different source types pointing at the same component still resolve to different ViewModels.
 
-```
-Key = HashCombine(StructType, ContentHash)
-```
+### Item-Owned Sources Need GUID Identity
 
-### Why Hashing Matters
+Item-owned containers face a problem that direct sources don't: the underlying item pointer can be replaced during prediction reconciliation. If the cache key held a weak pointer to a specific item instance, the predicted-to-authoritative swap would orphan the ViewModel and create a new one for the same conceptual container.
 
-Consider Attachments. An item can have multiple attachment slots. If we just hashed the Item Pointer, all attachment slots would return the same ViewModel.
-
-The `FAttachmentContainerSource` gets clever here: it doesn't just hash the item; it hashes the item **plus the hierarchy path**.
+`FAttachmentContainerSource` and `FTetrisChildContainerSource` solve this by keying on the item's stable GUID instead:
 
 ```cpp
-friend uint32 GetTypeHash(const FAttachmentContainerSource& Src)
+bool FAttachmentContainerSource::BuildContainerViewModelKey(
+    FLyraContainerViewModelKey& OutKey) const
 {
-    // Hash combine Item + The specific slot hierarchy we are looking at
-    uint32 Hash = GetTypeHash(Src.ItemInstance);
-
-    // Include the path for nested attachments
-    for (const FGameplayTag& PathTag : Src.ContainerPath)
+    if (!ItemGuid.IsValid())
     {
-        Hash = HashCombine(Hash, GetTypeHash(PathTag));
+        return false;
     }
 
-    return Hash;
+    OutKey.ItemGuid = ItemGuid;
+    return true;
 }
 ```
 
-{% hint style="info" %}
-In the provided code, `FAttachmentContainerSource` currently hashes `ItemInstance`, but for nested attachments, it would need to include `RootSlot` or `ContainerPath` in the hash to differentiate nested views of the same item.
-{% endhint %}
+The ViewModel resolves the current item through `ULyraItemSubsystem::FindItemByGuid` on each access, so the cached entry survives the underlying pointer swap.
 
 ***
 
@@ -175,11 +171,14 @@ In the provided code, `FAttachmentContainerSource` currently hashes `ItemInstanc
 
 The system provides these sources out of the box:
 
-| Source Struct                | ViewModel Created          | Use Case                          |
-| ---------------------------- | -------------------------- | --------------------------------- |
-| `FInventoryContainerSource`  | `ULyraInventoryViewModel`  | Player inventory, chests, storage |
-| `FEquipmentContainerSource`  | `ULyraEquipmentViewModel`  | Equipment slots by GameplayTag    |
-| `FAttachmentContainerSource` | `ULyraAttachmentViewModel` | Item attachments (scopes, grips)  |
+| Source Struct                 | ViewModel Created               | Identity     | Use Case                                  |
+| ----------------------------- | ------------------------------- | ------------ | ----------------------------------------- |
+| `FInventoryContainerSource`   | `ULyraInventoryViewModel`       | Object-keyed | Player inventory, chests, storage         |
+| `FEquipmentContainerSource`   | `ULyraEquipmentViewModel`       | Object-keyed | Equipment slots by GameplayTag            |
+| `FWorldPickupContainerSource` | `ULyraWorldPickupViewModel`     | Object-keyed | World pickups and dropped loot            |
+| `FTetrisContainerSource`      | `ULyraTetrisInventoryViewModel` | Object-keyed | Grid-shaped tetris inventories            |
+| `FAttachmentContainerSource`  | `ULyraAttachmentViewModel`      | GUID-keyed   | Item attachments (scopes, grips)          |
+| `FTetrisChildContainerSource` | `ULyraTetrisInventoryViewModel` | GUID-keyed   | Tetris inventories carried inside an item |
 
 ***
 
@@ -215,14 +214,6 @@ UClass* FVendorContainerSource::GetViewModelClass() const
     return UVendorViewModel::StaticClass();
 }
 
-uint32 FVendorContainerSource::GetContentHash() const
-{
-    return HashCombine(
-        GetTypeHash(Vendor),
-        GetTypeHash(CategoryFilter)
-    );
-}
-
 UObject* FVendorContainerSource::GetOwner() const
 {
     return Vendor.Get();
@@ -238,6 +229,12 @@ ULyraContainerViewModel* FVendorContainerSource::CreateViewModel(
     return VM;
 }
 ```
+
+Notice that there is no `BuildContainerViewModelKey` override. The base implementation calls `GetOwner()` and uses the returned object as the cache key, which is exactly what a component-backed vendor needs. Only override when the source is item-owned and needs GUID identity, or when one component exposes multiple distinct views that need to disambiguate further.
+
+{% hint style="success" %}
+**Inversion of Control**: The UI manager never needs to include `VendorViewModel.h`. It stays lightweight and compilation times stay fast.
+{% endhint %}
 {% endstep %}
 
 {% step %}
@@ -251,17 +248,30 @@ void UVendorInteractAbility::OpenVendorUI()
     FVendorContainerSource Source;
     Source.Vendor = TargetVendor;
     Source.CategoryFilter = FGameplayTag::EmptyTag;
+    FInstancedStruct SourceStruct = FInstancedStruct::Make(Source);
 
-    FLyraWindowOpenRequest Request;
-    Request.WindowType = TAG_UI_Window_Vendor;
-    Request.SourceDesc = FInstancedStruct::Make(Source);
-    Request.SessionHandle = UIManager->CreateChildSession(BaseSession, TargetVendor);
+    FItemWindowSpec Spec;
+    Spec.WindowType = TAG_UI_Window_Vendor;
+    Spec.SourceDesc = SourceStruct;
+    Spec.SessionHandle = UIManager->CreateChildSession(
+        TAG_UI_Session_Vendor,
+        SourceStruct,
+        UIManager->GetBaseSession()
+    );
 
-    UIManager->RequestOpenWindow(Request);
+    UIManager->RequestOpenWindow(Spec);
 }
 ```
 
-The system will automatically cache it, track its lifecycle, and serve it to any widget that asks.
+A HUD widget reading the same vendor without opening a window asks the manager directly under the base session:
+
+```cpp
+ULyraContainerViewModel* VM = UIManager->GetOrCreateViewModelForSession(
+    FInstancedStruct::Make(Source),
+    UIManager->GetBaseSession());
+```
+
+The system caches the ViewModel under its `FLyraContainerViewModelKey`, tracks the owning session, and serves the same instance to any other widget that asks for the same vendor.
 {% endstep %}
 {% endstepper %}
 
@@ -278,16 +288,17 @@ sequenceDiagram
     participant VM as ViewModel
 
     Code->>Source: Create source struct
-    Code->>Manager: AcquireViewModel(Source)
-    Manager->>Source: GetContentHash()
-    Manager->>Cache: Check cache[Hash]
+    Code->>Manager: GetOrCreateViewModelForSession(Source, Session)
+    Manager->>Source: BuildContainerViewModelKey(OutKey)
+    Manager->>Cache: Lookup by FLyraContainerViewModelKey
     alt Cache Hit
         Cache->>Manager: Return existing VM
+        Manager->>Cache: Add Session to OwningSessions
     else Cache Miss
         Manager->>Source: CreateViewModel()
         Source->>VM: NewObject + Initialize
         Source->>Manager: Return new VM
-        Manager->>Cache: Store in cache
+        Manager->>Cache: Store with Session in OwningSessions
     end
     Manager->>Code: Return ViewModel
 ```

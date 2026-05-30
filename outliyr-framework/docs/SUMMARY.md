@@ -171,8 +171,8 @@
       * [DataFlow & Reactivity](base-lyra-modified/ui/item-container-ui-system/core-architecture-and-data-structures/dataflow-and-reactivity.md)
       * [The Window Model](base-lyra-modified/ui/item-container-ui-system/core-architecture-and-data-structures/the-window-model.md)
     * [Item Container UI Manager](base-lyra-modified/ui/item-container-ui-system/item-container-ui-manager/README.md)
-      * [The Lease System](base-lyra-modified/ui/item-container-ui-system/item-container-ui-manager/the-lease-system.md)
       * [Session Management](base-lyra-modified/ui/item-container-ui-system/item-container-ui-manager/session-management.md)
+      * [Viewmodel Cache](base-lyra-modified/ui/item-container-ui-system/item-container-ui-manager/viewmodel-cache.md)
       * [Lifecycle & Security](base-lyra-modified/ui/item-container-ui-system/item-container-ui-manager/lifecycle-and-security.md)
     * [Data Layers (View Models)](base-lyra-modified/ui/item-container-ui-system/data-layers-view-models/README.md)
       * [Container Logic](base-lyra-modified/ui/item-container-ui-system/data-layers-view-models/container-logic.md)
@@ -195,9 +195,10 @@
       * [Cross Window Navigation](base-lyra-modified/ui/item-container-ui-system/geometric-navigation/cross-window-navigation.md)
       * [Cursor Alignment](base-lyra-modified/ui/item-container-ui-system/geometric-navigation/cursor-alignment.md)
       * [Window Cycling](base-lyra-modified/ui/item-container-ui-system/geometric-navigation/window-cycling.md)
-    * [Extension & Integration Guide](base-lyra-modified/ui/item-container-ui-system/extension-and-integration-guide/README.md)
-      * [Custom Container Types](base-lyra-modified/ui/item-container-ui-system/extension-and-integration-guide/custom-container-types.md)
-      * [Custom Windows](base-lyra-modified/ui/item-container-ui-system/extension-and-integration-guide/custom-windows.md)
+    * [Extension & Integration](base-lyra-modified/ui/item-container-ui-system/extension-and-integration/README.md)
+      * [Custom Container Types](base-lyra-modified/ui/item-container-ui-system/extension-and-integration/custom-container-types.md)
+      * [Custom Windows](base-lyra-modified/ui/item-container-ui-system/extension-and-integration/custom-windows.md)
+      * [ViewModels Without a Window Shell](base-lyra-modified/ui/item-container-ui-system/extension-and-integration/viewmodels-without-a-window-shell.md)
 
 ## Core Modules
 

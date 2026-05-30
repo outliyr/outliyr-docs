@@ -13,36 +13,36 @@ Windows are opened via requests to the UI Manager:
 {% tabs %}
 {% tab title="C++" %}
 ```cpp
-FLyraWindowOpenRequest Request;
-Request.WindowType = MyWindowTypeTag;           // Identifies content widget class
-Request.SourceDesc = ContainerSource;           // The container to display
-Request.SessionHandle = ParentSessionHandle;    // Which session owns this window
-Request.Placement = EWindowPlacement::Automatic;
+FItemWindowSpec Spec;
+Spec.WindowType = MyWindowTypeTag;           // Identifies content widget class
+Spec.SourceDesc = ContainerSource;           // The container to display
+Spec.SessionHandle = ParentSessionHandle;    // Which session owns this window
+Spec.Placement = EItemWindowPlacement::Automatic;
 
-UIManager->RequestOpenWindow(Request);
+UIManager->RequestOpenWindow(Spec);
 ```
 
 ```cpp
 void UMyGameplayCode::OpenInventoryWindow()
 {
     ULyraItemContainerUIManager* UIManager =
-        ULocalPlayer::GetSubsystem<ULyraItemContainerUIManager>(GetLocalPlayer());
+        GetLocalPlayer()->GetSubsystem<ULyraItemContainerUIManager>();
 
     FInventoryContainerSource Source;
     Source.InventoryComponent = PlayerInventoryComponent;
 
-    FLyraWindowOpenRequest Request;
-    Request.WindowType = TAG_UI_Window_Inventory;
-    Request.SourceDesc = FInstancedStruct::Make(Source);
-    Request.SessionHandle = UIManager->GetOrCreateBaseSession();
+    FItemWindowSpec Spec;
+    Spec.WindowType = TAG_UI_Window_Inventory;
+    Spec.SourceDesc = FInstancedStruct::Make(Source);
+    Spec.SessionHandle = UIManager->GetBaseSession();
 
-    UIManager->RequestOpenWindow(Request);
+    UIManager->RequestOpenWindow(Spec);
 }
 ```
 {% endtab %}
 
 {% tab title="Blueprints" %}
-<figure><img src="../../../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 
@@ -53,7 +53,7 @@ void UMyGameplayCode::OpenInventoryWindow()
 | `Automatic`        | System chooses position (avoids overlap) |
 | `CenterScreen`     | Centered on screen                       |
 | `RelativeToSource` | Near the triggering UI element           |
-| `Explicit`         | Uses `Request.ExplicitPosition`          |
+| `Explicit`         | Uses `Spec.InitialPosition`              |
 | `Cascade`          | Offset from previous window              |
 
 ### What Happens on Open
@@ -67,12 +67,13 @@ sequenceDiagram
     participant Content
 
     Code->>UIManager: RequestOpenWindow(Request)
-    UIManager->>UIManager: AcquireViewModel(Source)
     UIManager->>Layer: OnWindowOpenRequested
     Layer->>Shell: Create WindowShell
     Layer->>Content: Create Content Widget
     Shell->>Content: SetContent()
     Shell->>Content: SetContainerSource(Source)
+    Content->>Shell: GetOrCreateViewModel(Source)
+    Shell->>UIManager: GetOrCreateViewModelForSession(Source, Session)
     Layer->>Layer: Position window
     Layer->>Layer: Register in ActiveWindows
     Layer->>Layer: FocusWindow()
@@ -121,11 +122,11 @@ UIManager->RequestCloseWindow(WindowHandle);
 {% endtab %}
 
 {% tab title="Blueprints" %}
-<figure><img src="../../../../.gitbook/assets/image (4).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (4) (1).png" alt=""><figcaption></figcaption></figure>
 
 Or if you are inside a content widget
 
-<figure><img src="../../../../.gitbook/assets/image (5).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (5) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 
@@ -143,7 +144,7 @@ UIManager->CloseSession(SessionHandle);
 {% endtab %}
 
 {% tab title="Second Tab" %}
-<figure><img src="../../../../.gitbook/assets/image (6).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (6) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 
@@ -181,7 +182,7 @@ sequenceDiagram
     UIManager->>Layer: CloseWindow(Handle, Reason)
     Layer->>Shell: BeginClose()
     Shell->>Content: Cleanup
-    Content->>ViewModel: Release ViewModel (automatic with lease)
+    UIManager->>UIManager: Session closes, ViewModels released
     Shell->>Shell: Destroy Widget
     Layer->>Layer: Remove from ActiveWindows
     Layer->>Layer: Update focus to next window

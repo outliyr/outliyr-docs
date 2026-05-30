@@ -1,4 +1,4 @@
-# Extension & Integration Guide
+# Extension & Integration
 
 This section covers how to extend the Item Container UI system for your specific needs. Whether you're adding new container types, creating custom window layouts, or integrating with external systems, these guides will help you work within the framework's architecture.
 
@@ -39,18 +39,28 @@ Build specialized window layouts and chrome:
 * Navigation support for keyboard/controller users
 * Item tracking and reparenting
 
+#### [**ViewModels Without a Window Shell**](viewmodels-without-a-window-shell.md)
+
+Build item-container widgets that don't sit inside a window shell, static inventory UI that persists across the player's session, or transient widgets like loot-container previews that own their own lifecycle:
+
+* The base session as the home for player-scoped ViewModels
+* Calling `UIManager->GetOrCreateViewModelForSession` directly
+* A worked HUD inventory example with no shell, no layer, no session ceremony
+* When to stay flat and when to opt back into windows
+
 ***
 
 ## Common Extension Scenarios
 
-| Scenario                    | Guide                  | Key Classes                               |
-| --------------------------- | ---------------------- | ----------------------------------------- |
-| New inventory type (vendor) | Custom Container Types | `FContainerSource`, `UContainerViewModel` |
-| Different grid layout       | Custom Windows         | Content widget implementing interface     |
-| Side-by-side comparison     | Custom Windows         | Multi-source content widget               |
-| Minimal tooltip window      | Custom Windows         | Custom shell subclass                     |
-| Trade/exchange UI           | Custom Windows         | Composite source with two `ViewModels`    |
-| Controller navigation       | Custom Windows         | Navigation interface methods              |
+| Scenario                                   | Guide                                         | Key Classes                               |
+| ------------------------------------------ | --------------------------------------------- | ----------------------------------------- |
+| New inventory type (vendor)                | Custom Container Types                        | `FContainerSource`, `UContainerViewModel` |
+| Different grid layout                      | Custom Windows                                | Content widget implementing interface     |
+| Side-by-side comparison                    | Custom Windows                                | Multi-source content widget               |
+| Minimal tooltip window                     | Custom Windows                                | Custom shell subclass                     |
+| Trade/exchange UI                          | Custom Windows                                | Composite source with two `ViewModels`    |
+| Controller navigation                      | Custom Windows                                | Navigation interface methods              |
+| Static inventory screen (no window shells) | Using the Container UI Without a Window Shell | `UIManager->GetBaseSession()`             |
 
 ***
 
@@ -128,7 +138,7 @@ See [The Window Content Interface](../the-windowing-system/the-window-content-in
 ## Best Practices
 
 {% hint style="success" %}
-Use ViewModel leasing. Call `Shell->AcquireViewModelLease(Source)` for automatic cleanup when windows close.
+Ask the shell for ViewModels. The window owns the ViewModel's lifetime, close the window and the ViewModel is released for you.
 {% endhint %}
 
 {% hint style="success" %}

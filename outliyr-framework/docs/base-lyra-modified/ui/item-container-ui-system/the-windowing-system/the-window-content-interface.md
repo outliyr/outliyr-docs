@@ -44,7 +44,7 @@ public:
 
 This is your "Construct" event. The source context passed into the `FItemWindowSpec`'s `SourceDesc` when creating a window is delivered here.
 
-<figure><img src="../../../../.gitbook/assets/image (9).png" alt=""><figcaption><p><code>FItemWindowSpec</code>'s <code>SourceDesc</code></p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (9) (1).png" alt=""><figcaption><p><code>FItemWindowSpec</code>'s <code>SourceDesc</code></p></figcaption></figure>
 
 ```cpp
 UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
@@ -59,7 +59,7 @@ Receive your data source and acquire your ViewModel.
 
 {% stepper %}
 {% step %}
-Call `GetOwningWindowShell()` → `AcquireViewModelLease(Source)`
+Call `GetOwningWindowShell()` → `GetOrCreateViewModel(Source)`
 {% endstep %}
 
 {% step %}
@@ -68,7 +68,7 @@ Take the returned ViewModel and bind your widget content to it
 {% endstepper %}
 
 {% hint style="success" %}
-**Why use the Lease API?** By using `AcquireViewModelLease` through the Shell instead of calling the UI Manager directly, your ViewModel is automatically cleaned up when the window closes. No manual cleanup code required.
+**Why ask through the Shell?** The shell hands the ViewModel back fully initialized. When the window closes, the ViewModel is released for you. Content widgets in window shells don't need to track or handle view models manually if the view model doesn't change while the widget is open.
 {% endhint %}
 
 ### 2. `GetFocusableContent`
@@ -279,7 +279,7 @@ void UMyInventoryContent::SetContainerSource_Implementation(const FInstancedStru
 {
     if (ULyraItemContainerWindowShell* Shell = ULyraItemContainerWindowShell::GetOwningWindowShell(this))
     {
-        ViewModel = Cast<ULyraInventoryViewModel>(Shell->AcquireViewModelLease(Source));
+        ViewModel = Cast<ULyraInventoryViewModel>(Shell->GetOrCreateViewModel(Source));
         // Bind UI to ViewModel...
     }
 }
@@ -339,10 +339,10 @@ Implement the interface events in your Event Graph
 #### `SetContainerSource` Event
 
 * Get Owning Window Shell
-* Call `AcquireViewModelLease` with the Source
+* Call `GetOrCreateViewModel` with the Source
 * Bind your UI to the returned `ViewModel`
 
-<figure><img src="../../../../.gitbook/assets/image (195).png" alt=""><figcaption><p>Example setting the content interface for the equipment widget</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (13).png" alt=""><figcaption><p>Example setting the content interface for the equipment widget</p></figcaption></figure>
 
 #### `GetFocusableContent` Function
 

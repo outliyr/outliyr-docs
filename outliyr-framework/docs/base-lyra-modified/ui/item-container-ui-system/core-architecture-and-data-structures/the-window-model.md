@@ -192,13 +192,13 @@ flowchart TB
 
 ```cpp
 // Request to open a window
-FLyraWindowOpenRequest Request;
-Request.WindowType = WindowTypeTag;           // Tag identifying content widget class
-Request.SourceDesc = ContainerSource;         // Polymorphic container source
-Request.SessionHandle = ParentSession;        // Which session to add to
-Request.Placement = EWindowPlacement::Auto;   // Where to put it
+FItemWindowSpec Spec;
+Spec.WindowType = WindowTypeTag;                  // Tag identifying content widget class
+Spec.SourceDesc = ContainerSource;                // Polymorphic container source
+Spec.SessionHandle = ParentSession;               // Which session to add to
+Spec.Placement = EItemWindowPlacement::Automatic; // Where to put it
 
-UIManager->RequestOpenWindow(Request);
+UIManager->RequestOpenWindow(Spec);
 ```
 
 {% stepper %}
@@ -244,8 +244,8 @@ sequenceDiagram
     Window->>Layer: RequestCloseWindow
     Layer->>UIManager: NotifyWindowClosed
     Layer->>Window: Destroy widget
-    UIManager->>ViewModel: ReleaseViewModel (refcount--)
-    Note over ViewModel: If refcount == 0, VM cleaned up
+    UIManager->>UIManager: Remove session from cache entry OwningSessions
+    Note over ViewModel: If OwningSessions becomes empty, VM uninitialized and removed
 ```
 
 ***

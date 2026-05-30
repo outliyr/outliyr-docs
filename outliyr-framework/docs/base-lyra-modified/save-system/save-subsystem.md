@@ -185,7 +185,7 @@ Both operate on `FGameplayTag` keys and `FInstancedStruct` values. In Blueprint,
 {% endtab %}
 
 {% tab title="Saving" %}
-<figure><img src="../../.gitbook/assets/image (13) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (13) (1) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 
 {% tab title="Loading" %}

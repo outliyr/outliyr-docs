@@ -145,9 +145,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Window_Crafting, "UI.Window.Crafting");
 
 The most common customization: a different layout for an existing container type.
 
-### Recommended: ViewModel Leasing
+### From Inside a Window Shell
 
-The simplest approach uses the window shell's lease system for automatic cleanup:
+The simplest path. The shell already owns a session, so it can hand back a fully initialized ViewModel and release it automatically when the window closes.
 
 ```cpp
 UCLASS()
@@ -160,12 +160,12 @@ public:
     //~ ILyraItemContainerWindowContentInterface
     virtual void SetContainerSource_Implementation(const FInstancedStruct& Source) override
     {
-        // Get owning shell and use its lease system
+        // Ask the owning shell for the ViewModel. The cache entry is owned by
+        // the shell's session and evicts automatically when the window closes.
         ULyraItemContainerWindowShell* Shell =
             ULyraItemContainerWindowShell::GetOwningWindowShell(this);
 
-        // AcquireViewModelLease auto-releases when window closes
-        ContainerVM = Shell->AcquireViewModelLease(Source);
+        ContainerVM = Shell->GetOrCreateViewModel(Source);
 
         // Set up your custom layout
         TilePanel->SetNumColumns(8);  // Dense 8-column grid
@@ -205,38 +205,28 @@ private:
 };
 ```
 
-### Alternative: Manual ViewModel Management
+### From Outside a Window Shell
 
-For finer control over ViewModel lifetime:
+Item-container widgets that aren't hosted inside a window shell ask the UI manager directly under a session handle. The base session is the right home for player-scoped item-container widgets, a static inventory screen, an equipment panel, any item-container UI for a game without windowed inventory chrome:
 
 ```cpp
-void UMyContent::SetContainerSource_Implementation(const FInstancedStruct& Source)
+void UMyHUDContent::NativeConstruct()
 {
-    // Store source for later release
-    CachedSource = Source;
+    Super::NativeConstruct();
 
-    // Get UIManager and acquire manually
     ULyraItemContainerUIManager* UIManager =
         GetOwningLocalPlayer()->GetSubsystem<ULyraItemContainerUIManager>();
+    if (!UIManager) { return; }
 
-    ContainerVM = UIManager->AcquireViewModel(Source);
+    ContainerVM = UIManager->GetOrCreateViewModelForSession(
+        BuildSourceForThisHUD(),
+        UIManager->GetBaseSession());
+
     SetupBindings();
 }
-
-void UMyContent::NativeDestruct()
-{
-    // Must release manually
-    if (ContainerVM)
-    {
-        ULyraItemContainerUIManager* UIManager =
-            GetOwningLocalPlayer()->GetSubsystem<ULyraItemContainerUIManager>();
-        UIManager->ReleaseViewModel(CachedSource);
-        ContainerVM = nullptr;
-    }
-
-    Super::NativeDestruct();
-}
 ```
+
+If your widget has its own open/close lifecycle (a loot-container preview, a custom interaction screen), the bounded-lifecycle pattern on [ViewModels Without a Window Shell](viewmodels-without-a-window-shell.md) is the right shape instead, the widget creates and closes its own session so the ViewModel is released when the widget closes. That page also covers the player-scoped case with a worked static inventory screen example.
 
 ***
 
@@ -323,8 +313,8 @@ virtual void SetContainerSource_Implementation(const FInstancedStruct& Source) o
     ULyraItemContainerWindowShell* Shell =
         ULyraItemContainerWindowShell::GetOwningWindowShell(this);
 
-    // Single lease for the trade ViewModel (which manages both inventories internally)
-    TradeVM = Cast<UTradeViewModel>(Shell->AcquireViewModelLease(Source));
+    // One ViewModel for the trade window (which manages both inventories internally).
+    TradeVM = Cast<UTradeViewModel>(Shell->GetOrCreateViewModel(Source));
 
     // TradeVM exposes both inventories' items
     PlayerPanel->SetItemsSource(TradeVM->GetPlayerItems());
@@ -374,9 +364,9 @@ public:
         FInventoryContainerSource TargetSource;
         TargetSource.InventoryComponent = TradeSource->TargetInventory.Get();
 
-        // Acquire ViewModels via lease (auto-cleanup on window close)
-        PlayerVM = Shell->AcquireViewModelLease(FInstancedStruct::Make(PlayerSource));
-        TargetVM = Shell->AcquireViewModelLease(FInstancedStruct::Make(TargetSource));
+        // Ask the shell for both ViewModels. Both release automatically when the window closes.
+        PlayerVM = Shell->GetOrCreateViewModel(FInstancedStruct::Make(PlayerSource));
+        TargetVM = Shell->GetOrCreateViewModel(FInstancedStruct::Make(TargetSource));
 
         PlayerPanel->SetContainerViewModel(PlayerVM);
         TargetPanel->SetContainerViewModel(TargetVM);
@@ -448,19 +438,22 @@ private:
 ```cpp
 void OpenTradeWindow(ULyraInventoryManagerComponent* TargetInventory)
 {
-    ULyraItemContainerUIManager* UIManager = GetUIManager();
+    ULyraItemContainerUIManager* UIManager =
+        GetOwningLocalPlayer()->GetSubsystem<ULyraItemContainerUIManager>();
 
     // Build composite source with both inventories
     FTradeWindowSource Source;
     Source.PlayerInventory = PlayerInventory;
     Source.TargetInventory = TargetInventory;
+    FInstancedStruct SourceStruct = FInstancedStruct::Make(Source);
 
     FItemWindowSpec Spec;
     Spec.WindowType = TAG_UI_Window_Trade;
-    Spec.SourceDesc = FInstancedStruct::Make(Source);
+    Spec.SourceDesc = SourceStruct;
     Spec.SessionHandle = UIManager->CreateChildSession(
-        UIManager->GetBaseSession(),
-        TargetInventory->GetOwner()  // Close when target actor is destroyed
+        TAG_UI_Session_Trade,
+        SourceStruct,
+        UIManager->GetBaseSession()
     );
     Spec.Title = LOCTEXT("Trade", "Trade");
 
@@ -875,7 +868,7 @@ private:
 ## Best Practices
 
 {% hint style="success" %}
-Use ViewModel leasing. Call `Shell->AcquireViewModelLease(Source)` instead of manual acquire/release. The shell handles cleanup automatically.
+Ask the shell for the ViewModel. The window owns its lifetime, close the window and the ViewModel is released for you.
 {% endhint %}
 
 {% hint style="success" %}
@@ -898,13 +891,13 @@ Don't hardcode window positions. Use placement options and let the system handle
 
 ## Summary
 
-| Customization       | Approach                                              |
-| ------------------- | ----------------------------------------------------- |
-| Different layout    | Custom content widget implementing interface          |
-| Multiple containers | Multi-source content with multiple `ViewModel` leases |
-| Different chrome    | Custom shell subclass                                 |
-| No chrome           | Overlay widget on `PopupOverlay`                      |
-| Item comparison     | Specialized content with multi-item display           |
+| Customization       | Approach                                                                |
+| ------------------- | ----------------------------------------------------------------------- |
+| Different layout    | Custom content widget implementing interface                            |
+| Multiple containers | Multi-source content that requests several ViewModels through the shell |
+| Different chrome    | Custom shell subclass                                                   |
+| No chrome           | Overlay widget on `PopupOverlay`                                        |
+| Item comparison     | Specialized content with multi-item display                             |
 
 ### Key Interface Methods
 
@@ -917,11 +910,11 @@ Don't hardcode window positions. Use placement options and let the system handle
 
 ### Key Shell Methods
 
-| Method                    | Purpose                        |
-| ------------------------- | ------------------------------ |
-| `AcquireViewModelLease()` | Auto-managed `ViewModel`       |
-| `SetTitle()`              | Set window title               |
-| `GetOwningWindowShell()`  | Static - find shell from child |
-| `RequestContentFocus()`   | Focus the content widget       |
-| `CanUserClose()`          | Check if closeable             |
-| `CanDrag()`               | Check if draggable             |
+| Method                   | Purpose                        |
+| ------------------------ | ------------------------------ |
+| `GetOrCreateViewModel()` | Session-owned `ViewModel`      |
+| `SetTitle()`             | Set window title               |
+| `GetOwningWindowShell()` | Static - find shell from child |
+| `RequestContentFocus()`  | Focus the content widget       |
+| `CanUserClose()`         | Check if closeable             |
+| `CanDrag()`              | Check if draggable             |

@@ -72,7 +72,7 @@ Select `ItemViewModel.DisplayName`.
 
 Now whenever `DisplayName` changes, the Text widget updates automatically.
 
-<figure><img src="../../../../.gitbook/assets/image (14) (1) (1).png" alt=""><figcaption><p>Example of binding Equipment Slot View Model values to the Item Icon and Background Icon</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (14) (1) (1) (1).png" alt=""><figcaption><p>Example of binding Equipment Slot View Model values to the Item Icon and Background Icon</p></figcaption></figure>
 
 ***
 
@@ -257,12 +257,13 @@ ItemViewModel->FieldNotifyDelegate(
 
 ### Common Events
 
-| ViewModel            | Event/Property         | When It Fires                        |
-| -------------------- | ---------------------- | ------------------------------------ |
-| `ContainerViewModel` | `OnItemsChanged`       | Items added/removed/reordered        |
-| `ContainerViewModel` | `OnFocusedItemChanged` | User navigates to different item     |
-| `ItemViewModel`      | `OnStatTagChanged`     | Item stats change (durability, ammo) |
-| `ItemViewModel`      | `bIsGhost`             | Prediction state changes             |
+| ViewModel            | Event/Property           | When It Fires                                                                                                                 |
+| -------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `ContainerViewModel` | `OnItemsChanged`         | Items added/removed/reordered                                                                                                 |
+| `ContainerViewModel` | `OnFocusedItemChanged`   | User navigates to different item                                                                                              |
+| `ItemViewModel`      | `OnStatTagChanged`       | Item stats change (durability, ammo)                                                                                          |
+| `ItemViewModel`      | `OnItemViewModelChanged` | Any proxied display field updates; slot ViewModels listen here so their bound fields stay in sync without a container rebuild |
+| `ItemViewModel`      | `bIsGhost`               | Prediction state changes                                                                                                      |
 
 ***
 

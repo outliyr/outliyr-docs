@@ -72,21 +72,12 @@ struct FVendorContainerSource : public FLyraContainerSourceBase
     // --- Required overrides ---
 
     // What ViewModel class to create
-    virtual TSubclassOf<ULyraContainerViewModel> GetViewModelClass() const override
+    virtual UClass* GetViewModelClass() const override
     {
         return UVendorViewModel::StaticClass();
     }
 
-    // Unique hash for caching
-    virtual uint32 GetContentHash() const override
-    {
-        return HashCombine(
-            GetTypeHash(VendorComponent.Get()),
-            GetTypeHash(CategoryFilter)
-        );
-    }
-
-    // Object to watch for destruction
+    // Object used for cache identity
     virtual UObject* GetOwner() const override
     {
         return VendorComponent.Get();
@@ -106,6 +97,8 @@ struct FVendorContainerSource : public FLyraContainerSourceBase
 
 
 </details>
+
+The base `FLyraContainerSourceBase` implementation of `BuildContainerViewModelKey` reads `GetOwner()` and uses it as the cache key, which is exactly what a component-backed vendor needs. Override `BuildContainerViewModelKey` only when your source is item-owned and needs `ItemGuid` identity to survive prediction reconciliation, or when one component exposes multiple distinct views and needs additional sub-discrimination. The polymorphic container sources page covers both cases.
 
 ***
 
@@ -354,7 +347,7 @@ void UVendorWindowContent::SetContainerSource(const FInstancedStruct& Source)
     if (VendorSource)
     {
         VendorVM = Cast<UVendorViewModel>(
-            UIManager->AcquireViewModel(Source)
+            OwningShell->GetOrCreateViewModel(Source)
         );
 
         // Bind vendor-specific properties
@@ -435,26 +428,31 @@ WindowTypeMap.Add(TAG_UI_Window_Vendor, UVendorWindowContent::StaticClass());
 ```cpp
 void UVendorInteractionComponent::OpenVendorUI()
 {
-    ULyraItemContainerUIManager* UIManager = GetUIManager();
+    ULyraItemContainerUIManager* UIManager =
+        GetOwningLocalPlayer()->GetSubsystem<ULyraItemContainerUIManager>();
 
     // Create source
     FVendorContainerSource Source;
     Source.VendorComponent = VendorComponent;
     Source.CategoryFilter = FGameplayTag::EmptyTag;  // All categories
+    FInstancedStruct SourceStruct = FInstancedStruct::Make(Source);
 
-    // Create session for this vendor
-    FLyraUISessionHandle VendorSession = UIManager->CreateChildSession(
-        UIManager->GetOrCreateBaseSession(),
-        GetOwner()  // Vendor actor
+    // Create a session for this vendor under the base session. SessionType is a
+    // gameplay tag you define for your vendor windows; SourceContext is the
+    // descriptor that produced the session, used by the cascade-close logic.
+    FItemWindowSessionHandle VendorSession = UIManager->CreateChildSession(
+        TAG_UI_Session_Vendor,
+        SourceStruct,
+        UIManager->GetBaseSession()
     );
 
-    // Build request
-    FLyraWindowOpenRequest Request;
-    Request.WindowType = TAG_UI_Window_Vendor;
-    Request.SourceDesc = FInstancedStruct::Make(Source);
-    Request.SessionHandle = VendorSession;
+    // Build the window spec
+    FItemWindowSpec Spec;
+    Spec.WindowType = TAG_UI_Window_Vendor;
+    Spec.SourceDesc = SourceStruct;
+    Spec.SessionHandle = VendorSession;
 
-    UIManager->RequestOpenWindow(Request);
+    UIManager->RequestOpenWindow(Spec);
 
     // Also open player inventory for comparison
     OpenPlayerInventory(VendorSession);

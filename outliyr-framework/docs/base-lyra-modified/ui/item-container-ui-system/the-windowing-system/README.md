@@ -1,8 +1,10 @@
 # The Windowing System
 
-The Windowing System is the visual framework that manages your UI for comlex item container systems. It turns widgets into tangible, draggable, closable windows on the screen.
+The Windowing System is the visual framework for games whose inventory UI is **windowed**, Tarkov / RE4 style designs with separate movable windows for the inventory, equipment, attachments, item inspection, loot containers, and so on. The player can drag those windows around, close them individually, and open more on demand.
 
-It is designed to be **Composable**. A "Window" is not a single widget; it is a sandwich:
+If your game shows all of its inventory data on a single static screen the player opens with one button, common for most action games, including battle-royale-style HUDs, you do not need any of this. The static-screen pattern lives on [ViewModels Without a Window Shell](../extension-and-integration/viewmodels-without-a-window-shell.md), and the rest of the item container UI subsystem works without ever activating the windowing layer.
+
+For the games that do want windowed UI, the system turns widgets into tangible, draggable, closable windows on the screen and is designed to be **Composable**. A "Window" is not a single widget; it is a sandwich:
 
 1. **The Shell:** The reusable frame (Title bar, background, drag logic).
 2. **The Content:** Your specific game logic (Inventory Grid, Vendor List).
@@ -45,7 +47,7 @@ flowchart TB
 This is the "Physical" window. It handles:
 
 * **Input:** Dragging the window around the screen.
-* **Lifecycle:** Automatically acquiring and releasing ViewModels (preventing memory leaks).
+* **Lifecycle:** Owning the session that backs the window so ViewModels are released automatically when the window closes.
 * **Focus:** Telling the system "I was clicked."
 
 #### 2. The Layer (`LyraItemContainerLayer`)
@@ -67,7 +69,7 @@ To put _your_ widget inside a Shell, it needs to implement `ILyraItemContainerWi
 * [**The Window Lifecycle**](window-lifecycle.md)
   * Explores how windows are created, managed, and destroyed
 * [**The Window Shell**](the-window-shell.md)
-  * How the shell manages ViewModel leasing.
+  * How the shell owns the session that backs the window's ViewModels.
   * Setting up the blueprint widgets (`DragHandle`, `CloseButton`).
 * [**The Item Container Layer**](the-item-container-layer.md)
   * Implementing the `GetContentWidgetClass` mapping function.

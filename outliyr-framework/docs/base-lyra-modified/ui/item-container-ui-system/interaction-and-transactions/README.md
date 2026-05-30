@@ -60,6 +60,8 @@ The backbone of server-authoritative, predicted item manipulation. This GAS abil
 
 ## Rejection Feedback
 
+Servers reject transactions for all kinds of reasons, full inventory, missing permissions, an item that just got picked up by another player. Your UI needs to react to those rejections so the player understands what happened. The framework hands you the rejection through a gameplay message; the simplest response is a short toast, and the richer pattern below uses the structured reason tag to do something more specific.
+
 Transactions report back via the `Lyra.Item.Message.TransactionResult` gameplay message. The payload is an `FItemTransactionResultMessage` carrying a player-facing `FText ErrorMessage` and a structured `FGameplayTag RejectReason` drawn from the `Lyra.Item.Reject.*` hierarchy. Widgets listen directly for the scope they care about; no shared listener class is needed.
 
 The tag hierarchy and emission flow are documented in the backend [Transaction Validation](../../../item-container/transactions/transaction-validation.md) page.

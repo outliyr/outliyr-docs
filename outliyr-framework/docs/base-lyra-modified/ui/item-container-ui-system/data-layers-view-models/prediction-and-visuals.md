@@ -2,7 +2,7 @@
 
 In a high-latency environment, waiting for the server to confirm a drag-and-drop operation makes the UI feel sluggish and unresponsive.
 
-To solve this, the system implements a **Predictive "Ghost" Layer**. This allows the UI to lie to the player, showing them the result of an action before it actually happens.
+To solve this, the system implements a **Predictive "Ghost" Layer**. A ghost is a temporary, client-only entry shown to the player while the server-confirmed result is still in flight, the UI shows the outcome immediately and the ghost is replaced (or rolled back) once the server responds.
 
 ***
 
@@ -89,7 +89,7 @@ The system manages the transition from ghost to authoritative data through a str
 
 #### How It Works Internally
 
-The system utilizes the [**Prediction Engine**](/broken/pages/TFvvZl5DLdV6FNHgYCEl) that sits between the replicated data and the ViewModels. When a ViewModel rebuilds its list, it doesn't just look at the server's array; it looks at the **Composed View**.
+The system utilizes the [Prediction Engine](../../../item-container/prediction/prediction-architecture.md) that sits between the replicated data and the ViewModels. When a ViewModel rebuilds its list, it doesn't just look at the server's array; it looks at the **Composed View**.
 
 **Implementation Example: `RebuildItemsList`**
 
@@ -109,7 +109,7 @@ If the server rejects the move (e.g., item was stolen by another player, invento
 
 The system handles this automatically via the **Prediction Key** mechanism (As seen in the diagram above).
 
-1. The [Item Transaction Ability](/broken/pages/ZUPt9j5HfmobQDveNTPm) receives a `ClientNotifyTxFailed` RPC.
+1. The [Item Transaction Ability](../interaction-and-transactions/ui-transaction-pipeline.md) receives a `ClientNotifyTxFailed` RPC.
 2. It triggers a **Rollback**.
 3. The Container ViewModel detects the state reversion.
 4. `bIsGhost` is cleared, and the item "snaps" back to its original position.
