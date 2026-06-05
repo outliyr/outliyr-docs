@@ -10,7 +10,7 @@ This page walks through both patterns and explains how to pick between them.
 
 ***
 
-### Why You Can Skip the Windowing System
+## Why You Can Skip the Windowing System
 
 The windowing system handles drag-rearrangeable surfaces, focusable subwindows, nested context windows, and the cascading close behaviour described under session management. If your design doesn't need those features, you don't need a window shell.
 
@@ -25,11 +25,11 @@ The only piece you skip is `ULyraItemContainerLayer`. The cache, sessions, and V
 
 ***
 
-### Pattern 1: Player-Scoped Widget Under the Base Session
+## Pattern 1: Player-Scoped Widget Under the Base Session
 
 Use this for the widgets that make up the player's main inventory UI, the static screen they open with one button to see their inventory and equipment, an always-available character panel, any item-container surface the player will open and close many times during a play session. The ViewModels should be cached across reopens so the screen comes back instantly without rebuilding.
 
-#### The Basic Call
+### The Basic Call
 
 ```cpp
 ULyraItemContainerUIManager* UIManager =
@@ -47,7 +47,7 @@ The ViewModel returned is fully initialized, bound to the underlying component's
 
 In Blueprints the same call exists on the UI manager as `GetOrCreateViewModelForSession`. The session handle is `Get Base Session` on the same manager.
 
-#### Worked Example: A Static Inventory Screen
+### Worked Example: A Static Inventory Screen
 
 This example shows the widget for a single-screen inventory UI, the kind a player opens with one button and that displays their inventory and equipment side by side. No window shell, no layer activation, no session ceremony.
 
@@ -131,13 +131,13 @@ If the player closes the screen and reopens it a moment later, the same `Invento
 
 ***
 
-### Pattern 2: Widget With Its Own Bounded Lifecycle
+## Pattern 2: Widget With Its Own Bounded Lifecycle
 
 Use this when the widget exists for a limited time, a loot-container preview that appears while the player is near a chest, an inspection panel that opens for a single item, a custom interaction screen that opens and closes with a gameplay event. The ViewModel should disappear when the widget closes, even if the player will eventually open another widget like it.
 
 If you put a transient widget on the base session by mistake, every container the player ever looks at accumulates a ViewModel that lives until the player session ends. The bounded-lifecycle pattern avoids that by giving each widget its own session.
 
-#### The Basic Call
+### The Basic Call
 
 ```cpp
 // On construct: create the session, then acquire the ViewModel under it.
@@ -156,7 +156,7 @@ UIManager->CloseSession(SessionHandle, EItemWindowCloseReason::Programmatic);
 
 `CreateChildSession` returns a `FItemWindowSessionHandle`. Store it on the widget, you need it both for any further `GetOrCreateViewModelForSession` calls and for the close call on destruct.
 
-#### Worked Example: A Loot-Container Preview
+### Worked Example: A Loot-Container Preview
 
 This widget appears when the player walks up to a chest. It shows the contents of the chest's inventory as long as the widget is on screen. When the widget tears down, the ViewModel is released, so reopening the next chest creates a fresh ViewModel for that chest's inventory.
 
@@ -256,7 +256,7 @@ When the widget closes, the session closes too. The session's cache entries are 
 
 ***
 
-### Picking Between the Two Patterns
+## Picking Between the Two Patterns
 
 The decision is about lifetime, not visuals:
 
@@ -267,7 +267,7 @@ If both apply (a static inventory screen that should persist _and_ a separate in
 
 ***
 
-### When to Reach for the Window Shell System Instead
+## When to Reach for the Window Shell System Instead
 
 The two patterns above cover the case where the player's inventory UI is a single screen (or a small set of screens) that appears and disappears as a whole. Reach for the window shell system instead when your design is closer to **Tarkov / Tetris-style UI**, separate movable windows for inventory, equipment, attachments, item inspection, loot containers, where the player can drag them around, close individual windows, and open more on demand. That's the case the windowing system was built for.
 
@@ -276,13 +276,13 @@ In windowed UI the shell handles the features you'd otherwise have to wire up by
 * **Drag-rearrangeable surfaces** — moving a window shell around the screen with focus and z-order management.
 * **Nested context windows** — a parent window shell that spawns child window shells whose lifetime cascades from the parent.
 * **Per-shell focus and navigation** — controller navigation that scopes to a window shell and hops to siblings via the cross-window navigation rules.
-* **Mandatory window shells on layer activation** — registering shells that auto-spawn when the inventory layer is enabled.
+* **Startup window shells** — registering shells that the Window Host spawns automatically when it activates.
 
 The decision is "does my design have windowed UI?" not "do I need an inventory ViewModel?" If the answer is no, one of the two patterns above is enough.
 
 ***
 
-### Mixed UIs
+## Mixed UIs
 
 Nothing prevents widgets using different patterns from reading the same container. A static inventory screen (Pattern 1), a loot-container preview (Pattern 2), and a windowed inventory shell all looking at the same source acquire the same `ULyraInventoryViewModel` instance through the cache. Each registers its own session against the entry, and the entry stays alive as long as at least one session still owns it.
 

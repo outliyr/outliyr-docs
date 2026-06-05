@@ -376,7 +376,7 @@ If you don't implement certain methods, the system provides sensible defaults:
 | Method                    | Default Behavior                                         |
 | ------------------------- | -------------------------------------------------------- |
 | `GetFocusableContent`     | Returns `nullptr` → Unreal focuses first focusable child |
-| `GetCursorScreenPosition` | Returns `false` → Layer uses window center               |
+| `GetCursorScreenPosition` | Returns `false` → Window Host uses window center         |
 | `ReceiveNavigationEntry`  | No-op → Focus goes to `GetFocusableContent` result       |
 
 For simple content widgets that don't need precise cursor alignment, you may only need to implement `SetContainerSource` and `GetFocusableContent`.

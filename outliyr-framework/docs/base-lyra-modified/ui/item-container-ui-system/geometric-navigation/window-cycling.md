@@ -184,7 +184,7 @@ if (InKeyEvent.GetKey() == EKeys::Tab)
 To exclude certain windows from cycling (e.g., tooltips, temporary popups), override `CycleFocusedWindow` and filter the window list before sorting:
 
 ```cpp
-void UMyLayer::CycleFocusedWindow(bool bForward)
+void UMyWindowHost::CycleFocusedWindow(bool bForward)
 {
     // Build filtered list — exclude non-cycling windows
     TArray<FItemWindowHandle> Windows;

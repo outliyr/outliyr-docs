@@ -1,6 +1,6 @@
 # Geometric Algorithm
 
-At the heart of cross-window navigation is `LyraItemContainerLayer::FindWindowInDirection`. The algorithm uses **Exit/Entry Point scoring**: a geometric approach that measures the distance between where the cursor "leaves" one window and where it would "enter" each candidate, rewarding candidates that share perpendicular alignment. The result is a scoring system that "just feels right", it naturally prefers aligned, nearby windows without any magic numbers or hand-tuned thresholds.
+At the heart of cross-window navigation is `LyraItemContainerWindowHost::FindWindowInDirection`. The algorithm uses **Exit/Entry Point scoring**: a geometric approach that measures the distance between where the cursor "leaves" one window and where it would "enter" each candidate, rewarding candidates that share perpendicular alignment. The result is a scoring system that "just feels right", it naturally prefers aligned, nearby windows without any magic numbers or hand-tuned thresholds.
 
 ## The Concept: Exit and Entry Points
 

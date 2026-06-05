@@ -1,5 +1,9 @@
 # Geometric Navigation
 
+{% hint style="info" %}
+This section is optional. It is only needed when you support keyboard/gamepad navigation across multiple floating item-container windows.
+{% endhint %}
+
 **Controller-driven UI** navigation becomes significantly more complex in dynamic layouts.\
 In a standard UMG setup, Unreal’s built-in directional navigation (Up, Down, Left, Right) works well for simple, static interfaces. However, this system breaks down once you introduce **floating windows**.
 
@@ -75,7 +79,7 @@ When navigation reaches the edge of a content widget, it returns `FNavigationRep
 {% endstep %}
 
 {% step %}
-#### Layer Interception
+#### **Window Host Interception**
 
 The Layer's `NativeOnNavigation` catches escaped navigation events.
 {% endstep %}

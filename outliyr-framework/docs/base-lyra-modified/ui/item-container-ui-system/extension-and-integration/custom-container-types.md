@@ -417,8 +417,12 @@ void HandleBuyClicked()
 // Define window type tag
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Window_Vendor, "UI.Window.Vendor");
 
-// Register in the ItemLayerContainer's GetContentWidgetClassForWindowType
-WindowTypeMap.Add(TAG_UI_Window_Vendor, UVendorWindowContent::StaticClass());
+// Register on the Window Host: add an entry to its ContentWidgetClasses array
+// (or return the class from a GetContentWidgetClassForWindowType override).
+FLyraItemWindowContentClassMapping Mapping;
+Mapping.WindowType = TAG_UI_Window_Vendor;
+Mapping.ContentWidgetClass = UVendorWindowContent::StaticClass();
+ContentWidgetClasses.Add(Mapping);
 ```
 
 ***

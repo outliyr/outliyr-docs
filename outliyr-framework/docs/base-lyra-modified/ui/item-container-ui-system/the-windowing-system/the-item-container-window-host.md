@@ -1,4 +1,4 @@
-# The Item Container Layer
+# The Item Container Window Host
 
 The Container Layer is the visual root of the entire windowing system. It is a `CommonActivatableWidget` that you push onto your UI stack (usually as part of your HUD).
 
@@ -12,13 +12,16 @@ The Layer is the Orchestrator: it spawns windows, manages their z-order, handles
 {% step %}
 ### The Spawning Registry (`GetContentWidgetClass`)
 
-When an ability or another window requests a new window via a Gameplay Tag, the Layer acts as a lookup table. It needs to know which Blueprint widget matches that tag.
+When an ability or another window requests a new window via a Gameplay Tag, the Window Host needs to know which Blueprint widget matches that tag.
 
-Implementation:
+The simple path is data-driven. On your Window Host Blueprint, fill the `ContentWidgetClasses` array with one entry per window type:
 
-* In your Blueprint subclass (e.g., `W_ItemContainerLayer`), override `GetContentWidgetClassForWindowType`.
-* Input: A Gameplay Tag (e.g., `UI.Window.Inventory.Backpack`).
-* Output: A Widget Class (e.g., `W_BackpackContent`).
+* WindowType: A Gameplay Tag (e.g., `UI.Window.Inventory.Backpack`).
+* ContentWidgetClass: A Widget Class (e.g., `W_BackpackContent`).
+
+<figure><img src="../../../../.gitbook/assets/image (335).png" alt=""><figcaption></figcaption></figure>
+
+For dynamic or runtime selection, override `GetContentWidgetClassForWindowType` instead. The host resolves a content class by calling that Blueprint event first, then falling back to the `ContentWidgetClasses` array, so an override can return null for a tag to defer back to the data table.
 
 <figure><img src="../../../../.gitbook/assets/image (7) (1).png" alt=""><figcaption><p>Example binding the wiget classes to window gameplay tags</p></figcaption></figure>
 
@@ -28,13 +31,13 @@ Design Tip: Using Gameplay Tags for routing allows you to swap your entire UI lo
 {% endstep %}
 
 {% step %}
-### Initializing the HUD (`SpawnMandatoryWindows`)
+### Initializing the HUD (`SpawnStartupWindows`)
 
-When the Inventory UI is first activated, the screen is empty. The Layer is responsible for the "Boot Sequence."
+When the host activates (when you push it onto your UI stack), it runs a "Boot Sequence" that lays out your home UI. It automatically calls its `SpawnStartupWindows` event under the base session, which you override in Blueprint to define your "Home" UI layout.
 
-Immediately after activation, the UI Manager triggers the `SpawnMandatoryWindows` event. Override this in Blueprint to define your "Home" UI layout.
+To re-open the startup workspace while the host is already active, call `EnsureStartupWindowsOpen()` on the Item Container UI Manager. Removing or deactivating the host closes the base session, which destroys its windows and releases their ViewModels.
 
-<figure><img src="../../../../.gitbook/assets/image (8) (1).png" alt=""><figcaption><p>Mandatory spawning of the equipment window and inventory grid</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/image (337).png" alt=""><figcaption><p>Mandatory spawning of the equipment window and inventory grid</p></figcaption></figure>
 
 #### Standard sequence:
 
@@ -298,8 +301,9 @@ Most of these functions are used by the `ItemContainerUIManager` and the `ItemCo
 
 To get the windowing system running:
 
-1. Subclass `ULyraItemContainerLayer` in Blueprint.
+1. Subclass `ULyraItemContainerWindowHost` in Blueprint.
 2. Bind your `WindowCanvas` (a Canvas Panel) in the widget designer.
-3. Implement the Tag-to-Class mapping in `GetContentWidgetClassForWindowType`.
-4. Define your default layout in `SpawnMandatoryWindows`.
-5. Push the Layer widget onto your UI stack when opening inventory.
+3. Map window types to content widgets by filling `ContentWidgetClasses` (or override `GetContentWidgetClassForWindowType` for dynamic selection).
+4. Define your default layout in `SpawnStartupWindows`.
+5. Push the Window Host widget onto your UI stack; it spawns your startup windows automatically on activation.
+6. (Optional) Call `EnsureStartupWindowsOpen()` to refresh the startup workspace while the host is already active.

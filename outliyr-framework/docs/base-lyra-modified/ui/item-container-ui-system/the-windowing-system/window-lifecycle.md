@@ -46,6 +46,15 @@ void UMyGameplayCode::OpenInventoryWindow()
 {% endtab %}
 {% endtabs %}
 
+### Avoiding Duplicate Windows
+
+For windows a player can re-trigger (toggles, abilities), prefer `EnsureWindowOpen` over `RequestOpenWindow`. It reuses and focuses an existing equivalent window instead of stacking a duplicate. Equivalence is based on session, window type, tracked item, and source identity. Use `FindOpenWindowForSpec` when you only want to find one.
+
+```cpp
+// Opens once; re-triggering focuses the existing window instead of duplicating it
+UIManager->EnsureWindowOpen(Spec);
+```
+
 ### Window Placement Options
 
 | Placement          | Behavior                                 |
@@ -62,7 +71,7 @@ void UMyGameplayCode::OpenInventoryWindow()
 sequenceDiagram
     participant Code
     participant UIManager
-    participant Layer
+    participant Layer as Window Host
     participant Shell
     participant Content
 
@@ -173,7 +182,7 @@ flowchart TB
 sequenceDiagram
     participant Trigger
     participant UIManager
-    participant Layer
+    participant Layer as Window Host
     participant Shell
     participant Content
     participant ViewModel
@@ -213,7 +222,7 @@ TArray<FItemWindowHandle> Windows = Layer->GetWindowsByFocusOrder();
 
 ### Z-Order
 
-The Layer tracks when each window was last focused and uses this for z-order:
+The Window Host tracks when each window was last focused and uses this for z-order:
 
 ```cpp
 // Each window has a timestamp for when it was last focused
@@ -296,9 +305,9 @@ During dragging:
 
 ***
 
-## Window Types (GameplayTags)
+## Window Types (`GameplayTags`)
 
-Window types are identified by `GameplayTags`, this will be discussed in more detail in the [Item Container Layer](the-item-container-layer.md):
+Window types are identified by `GameplayTags`, this will be discussed in more detail in the [Item Container Window Host](the-item-container-window-host.md):
 
 ```cpp
 // In your GameplayTags file
@@ -308,9 +317,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Window_Container, "UI.Window.Container");
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Window_Attachment, "UI.Window.Attachment");
 ```
 
-The Layer maps tags to content widget classes:
+The Window Host maps tags to content widget classes:
 
 ```cpp
-// Configuration in Layer or Data Asset
+// Configuration in Window Host
 TMap<FGameplayTag, TSubclassOf<UUserWidget>> WindowTypeToContentClass;
 ```

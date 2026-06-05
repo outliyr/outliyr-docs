@@ -40,7 +40,7 @@ public:
 
 ```mermaid
 sequenceDiagram
-    participant Layer
+    participant Layer as Window Host
     participant Shell
     participant Content
 
@@ -59,12 +59,12 @@ sequenceDiagram
 
 ## Registering Window Types
 
-The Layer maps `WindowType` tags to content widget classes via `GetContentWidgetClassForWindowType()`. This enables reusable windows that work with any compatible container source.
+The Window Host maps `WindowType` tags to content widget classes. The simplest path is data-driven: fill the host's `ContentWidgetClasses` array with one entry per window type. For dynamic or runtime selection, override `GetContentWidgetClassForWindowType` instead; the host calls that event first and falls back to the array, so an override can return null for a tag to defer to the data. This enables reusable windows that work with any compatible container source.
 
-### Override in Your Layer Blueprint
+### Override in Your Window Host Blueprint
 
 ```cpp
-// In your Layer subclass
+// In your Window Host subclass
 TSubclassOf<UUserWidget> UMyItemContainerLayer::GetContentWidgetClassForWindowType_Implementation(
     FGameplayTag WindowType)
 {
@@ -117,7 +117,7 @@ class UInventoryGridContent : public UUserWidget,
     // FLootCrateContainerSource - any source that creates a ULyraContainerViewModel
 };
 
-// In Layer:
+// In your Window Host:
 if (WindowType == TAG_UI_Window_Inventory ||
     WindowType == TAG_UI_Window_Chest ||
     WindowType == TAG_UI_Window_LootCrate ||
@@ -528,10 +528,10 @@ The shell provides these Blueprint-implementable events:
 
 ### Registering Custom Shells
 
-Override `GetWindowShellClass()` in your Layer Blueprint to provide custom shells:
+Override `GetWindowShellClass()` in your Window Host Blueprint to provide custom shells:
 
 ```cpp
-// In your Layer Blueprint
+// In your Window Host Blueprint
 TSubclassOf<ULyraItemContainerWindowShell> UMyLayer::GetWindowShellClass_Implementation()
 {
     // Return your custom shell class
@@ -542,7 +542,7 @@ TSubclassOf<ULyraItemContainerWindowShell> UMyLayer::GetWindowShellClass_Impleme
 For per-window-type shells, check the spec's `WindowType`:
 
 ```cpp
-TSubclassOf<ULyraItemContainerWindowShell> UMyLayer::GetWindowShellClass_Implementation()
+TSubclassOf<ULyraItemContainerWindowShell> UMyWindowHost::::GetWindowShellClass_Implementation()
 {
     // Different shells for different window types
     // (Note: you'd need to store/pass the current spec)

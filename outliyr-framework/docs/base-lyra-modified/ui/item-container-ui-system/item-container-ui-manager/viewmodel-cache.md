@@ -34,7 +34,7 @@ Two entry points cover every case:
 *
 
     **From outside a window shell, player-scoped** — widgets that should persist while the player's UI is up (a static inventory screen the player opens with one button, an equipment panel) call `UIManager->GetOrCreateViewModelForSession(Source, UIManager->GetBaseSession())`. The ViewModel lives for the player session.
-* **From outside a window shell, with a bounded lifecycle** — widgets with their own open/close lifecycle (a loot-container preview, a custom interaction screen) create their own session via `UIManager->CreateChildSession(Tag, SourceContext, ParentSession)` on construct, acquire the ViewModel under that session, and call `UIManager->CloseSession(Handle)` on destruction. ViewModels acquired under that session are released as part of the cascade. See U[ViewModels Without a Window Shell](../extension-and-integration/viewmodels-without-a-window-shell.md) for the worked example.
+* **From outside a window shell, with a bounded lifecycle** — widgets with their own open/close lifecycle (a loot-container preview, a custom interaction screen) create their own session via `UIManager->CreateChildSession(Tag, SourceContext, ParentSession)` on construct, acquire the ViewModel under that session, and call `UIManager->CloseSession(Handle)` on destruction. ViewModels acquired under that session are released as part of the cascade. See [ViewModels Without a Window Shell](../extension-and-integration/viewmodels-without-a-window-shell.md) for the worked example.
 
 The `Source` argument is a polymorphic container source. The return value is a fully initialized `ULyraContainerViewModel*` ready to bind.
 
@@ -47,7 +47,7 @@ The base session is created when the UI manager initializes for the local player
 It is the right home for ViewModels backing widgets that the player opens and closes many times during a play session and that should come back from the cache instantly instead of rebuilding. For example:
 
 * A static inventory screen the player opens with one button, the same widget appears every time without re-subscribing to the inventory component.
-* The mandatory inventory windows the [windowing layer](../the-windowing-system/) spawns on activation, in games that use windowed inventory UI.
+* The startup inventory windows the [Window Host](../the-windowing-system/) spawns when requested, in games that use windowed inventory UI.
 
 For widgets with their own bounded open/close lifecycle that opted out of using a window shell, a loot-container preview, a transient interaction screen, create a session under the base session via `CreateChildSession` instead, and close it when the widget tears down. See [ViewModels Without a Window Shell](../extension-and-integration/viewmodels-without-a-window-shell.md) for both patterns side by side.
 

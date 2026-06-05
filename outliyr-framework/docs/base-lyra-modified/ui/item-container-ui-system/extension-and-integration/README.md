@@ -1,5 +1,10 @@
 # Extension & Integration
 
+{% hint style="info" %}
+This is the advanced track. Read the [quick-start](../quick-start/) pages first if you only need a\
+standard inventory, equipment, or Tetris UI on screen.
+{% endhint %}
+
 This section covers how to extend the Item Container UI system for your specific needs. Whether you're adding new container types, creating custom window layouts, or integrating with external systems, these guides will help you work within the framework's architecture.
 
 ***
@@ -154,5 +159,5 @@ Don't bypass sessions. All windows should belong to sessions for proper lifecycl
 {% endhint %}
 
 {% hint style="warning" %}
-Don't hardcode window positions. Use placement options and let the Layer handle positioning.
+Don't hardcode window positions. Use placement options and let the Window Host handle positioning.
 {% endhint %}

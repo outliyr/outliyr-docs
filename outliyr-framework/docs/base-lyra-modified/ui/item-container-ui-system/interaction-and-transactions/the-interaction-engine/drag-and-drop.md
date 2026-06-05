@@ -69,9 +69,9 @@ bool BeginInteraction(
 
 ***
 
-## Step 2: The Drag Visual (Layer Widget)
+## Step 2: The Drag Visual (Window Host Widget)
 
-You do **NOT** need to create a `UDragDropOperation`. The `LyraItemContainerLayer` handles the visual representation globally.
+You do **NOT** need to create a `UDragDropOperation`. The `LyraItemContainerWindowHost` handles the visual representation globally.
 
 Bind your **Drag Cursor Widget** to these ViewModel properties:
 

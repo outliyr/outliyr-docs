@@ -113,6 +113,19 @@ flowchart TB
 ## Where Should I Start?
 
 {% tabs %}
+{% tab title="I want to get UI on screen" %}
+Start with the quick-start track. It explains the minimum path first:
+
+```
+Layer -> Shell -> Container Source -> GetOrCreateViewModel -> Bind Widget
+```
+
+* **Quick Start** The buyer-facing path for getting a working inventory UI on screen before reading the internals.
+* **Minimum Path** The smallest setup for windowed and static inventory screens.
+* **Working Example** How to modify a working setup instead of starting from low-level APIs.
+* **Blueprint ViewModel Cheat Sheet** The properties and functions most UI widgets bind to.
+{% endtab %}
+
 {% tab title="I want to understand how it works" %}
 This documentation is split into several detailed sections to help you navigate the architecture:
 
@@ -128,3 +141,7 @@ This documentation is split into several detailed sections to help you navigate 
 [**Extension Guide**](extension-and-integration/) Practical guides on how to create new container types, custom windows, and debug the system using built-in logging tools.
 {% endtab %}
 {% endtabs %}
+
+{% hint style="info" %}
+The window/session model, dynamic reparenting, and geometric navigation are advanced systems. A single static inventory panel can use the ViewModel layer without using floating windows or cross-window navigation.
+{% endhint %}

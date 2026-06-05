@@ -1,6 +1,10 @@
 # The Windowing System
 
-The Windowing System is the visual framework for games whose inventory UI is **windowed**, Tarkov / RE4 style designs with separate movable windows for the inventory, equipment, attachments, item inspection, loot containers, and so on. The player can drag those windows around, close them individually, and open more on demand.
+{% hint style="info" %}
+This section is optional for static inventory screens. Use it when your game needs floating, draggable, closable inventory windows.
+{% endhint %}
+
+The Windowing System is the visual framework for games whose inventory UI is **windowed**, Tarkov style designs with separate movable windows for the inventory, equipment, attachments, item inspection, loot containers, and so on. The player can drag those windows around, close them individually, and open more on demand.
 
 If your game shows all of its inventory data on a single static screen the player opens with one button, common for most action games, including battle-royale-style HUDs, you do not need any of this. The static-screen pattern lives on [ViewModels Without a Window Shell](../extension-and-integration/viewmodels-without-a-window-shell.md), and the rest of the item container UI subsystem works without ever activating the windowing layer.
 
@@ -71,9 +75,9 @@ To put _your_ widget inside a Shell, it needs to implement `ILyraItemContainerWi
 * [**The Window Shell**](the-window-shell.md)
   * How the shell owns the session that backs the window's ViewModels.
   * Setting up the blueprint widgets (`DragHandle`, `CloseButton`).
-* [**The Item Container Layer**](the-item-container-layer.md)
-  * Implementing the `GetContentWidgetClass` mapping function.
-  * Spawning mandatory windows (like the Player Inventory) on startup.
+* [**The Item Container Window Host**](the-item-container-window-host.md)
+  * &#x20;Mapping window types to content widgets with `ContentWidgetClasses`.
+  * Spawning startup windows (like the Player Inventory) automatically when the host activates.
 * [**The Content Interface**](the-window-content-interface.md)
   * Understanding the initialization flow.
   * How to receive the Data Source and Navigation Router.

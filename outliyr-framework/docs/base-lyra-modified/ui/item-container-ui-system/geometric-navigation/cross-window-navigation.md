@@ -1,6 +1,6 @@
 # Cross Window Navigation
 
-When a user navigates to the edge of a window's content and tries to continue, the system must find the appropriate target window and transfer focus. This page explains how the **Layer** intercepts navigation events, finds the best neighbor using the [geometric scoring algorithm](geometric-algorithm.md), and bridges focus between windows using a **deferred focus pattern** that prevents double-processing.
+When a user navigates to the edge of a window's content and tries to continue, the system must find the appropriate target window and transfer focus. This page explains how the **Window Host** intercepts navigation events, finds the best neighbour using the [geometric scoring algorithm](geometric-algorithm.md), and bridges focus between windows using a **deferred focus pattern** that prevents double-processing.
 
 ***
 
@@ -42,7 +42,7 @@ sequenceDiagram
 
 ***
 
-## Layer Interception
+## Window Host Interception
 
 The `LyraItemContainerLayer` overrides `NativeOnNavigation` to catch escaped navigation. Three mechanisms work together: a **focus hierarchy walk** to verify the event came from the right window, the **geometric scoring algorithm** to find the best target, and a **deferred focus transfer** to avoid double-processing.
 
@@ -232,8 +232,8 @@ RequestContentFocus(bIsRestoringFocus):
         return
 
     // Path 2: Navigation with content handling
-    if Layer has pending navigation context:
-        consume Direction and CursorPos from Layer
+    if Window Host has pending navigation context:
+        consume Direction and CursorPos from Window Host
         ScreenCoord = CursorPos.Y (for Left/Right) or CursorPos.X (for Up/Down)
 
         if ContentWidget implements the interface:

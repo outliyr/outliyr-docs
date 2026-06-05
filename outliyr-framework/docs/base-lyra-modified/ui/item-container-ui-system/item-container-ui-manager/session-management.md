@@ -31,7 +31,7 @@ The primary benefit of the session system is **Cascading Logic**. When a session
 1. **Direct Request:** A session is told to close (e.g., the player walks too far from a chest).
 2. **Recursive Search:** The manager identifies all `ChildSessions` belonging to that session.
 3. **Recursive Closure:** Every child session is closed first.
-4. **Window Disposal:** Every `FItemWindowHandle` registered to these sessions is sent a close request to the UI Layer.
+4. **Window Disposal:** Every `FItemWindowHandle` registered to these sessions is sent a close request to the Window Host.
 5. **ViewModel Release:** Any ViewModels the closing session was holding are released. If no other open session is using a given ViewModel, it is torn down at the same time.
 
 ### The Hierarchy
@@ -42,9 +42,9 @@ Every window belongs to a **Session** (`FItemWindowSession`).
 
 This represents the player's persistent UI state.
 
-* **Created:** When the UI manager initializes for the local player. Available immediately and independently of the windowing layer.
-* **Content:** The persistent UI state for the player. Holds the mandatory windows the Layer spawns on activation, plus ViewModels for any item-container widgets the game shows outside a window shell, a static inventory screen, an equipment panel, or any other item-container UI for a game that doesn't use windowed UI.
-* **Lifetime:** Survives across map transitions. Closed only when the local player is destroyed.
+* **Created:** When the UI manager initializes for the local player, and recreated whenever the Window Host activates.
+* **Content:** The persistent UI state for the player. Holds the startup windows the Window Host spawns automatically when it activates, plus ViewModels for any item-container widgets the game shows outside a window shell, a static inventory screen, an equipment panel, or any other item-container UI for a game that doe
+* **Lifetime:** Survives across map transitions. Closed when the Window Host deactivates, or when the local player is destroyed.
 
 #### 2. Child Sessions
 

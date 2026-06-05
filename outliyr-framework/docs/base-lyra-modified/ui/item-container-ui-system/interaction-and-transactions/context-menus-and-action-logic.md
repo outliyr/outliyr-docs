@@ -68,7 +68,7 @@ You typically trigger the menu from your **Slot Widget** (the widget representin
 
 ## Step 2: The Menu Widget
 
-You need to create a widget that _is_ the menu. This widget should exist in your `LyraItemContainerLayer` (or be spawned dynamically).
+You need to create a widget that _is_ the menu. This widget should exist in your `LyraItemContainerWindow Host` (or be spawned dynamically).
 
 ### Binding Setup
 

@@ -87,11 +87,11 @@ flowchart TB
 
 ### Key Components
 
-| Component                                                                           | Role                                                                                                                     |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| [**`LyraItemContainerLayer`**](../the-windowing-system/the-item-container-layer.md) | The canvas that hosts all windows. Manages window creation, dragging, z-order, focus, and cross-window navigation.       |
-| [**`LyraItemContainerWindowShell`**](../the-windowing-system/the-window-shell.md)   | The window frame, title bar, close button, drag handle. Contains a content widget.                                       |
-| **Content Widget**                                                                  | The actual container display (list panel, tile panel, or custom). Implements `ILyraItemContainerWindowContentInterface`. |
+| Component                                                                                      | Role                                                                                                                     |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| [**`LyraItemContainerWindowHost`**](../the-windowing-system/the-item-container-window-host.md) | The canvas that hosts all windows. Manages window creation, dragging, z-order, focus, and cross-window navigation.       |
+| [**`LyraItemContainerWindowShell`**](../the-windowing-system/the-window-shell.md)              | The window frame, title bar, close button, drag handle. Contains a content widget.                                       |
+| **Content Widget**                                                                             | The actual container display (list panel, tile panel, or custom). Implements `ILyraItemContainerWindowContentInterface`. |
 
 ***
 
@@ -207,11 +207,11 @@ UI Manager creates (or reuses) a ViewModel for the container.
 {% endstep %}
 
 {% step %}
-Layer creates the window shell.
+Window Host creates the window shell.
 {% endstep %}
 
 {% step %}
-Layer creates the content widget.
+Window Host creates the content widget.
 {% endstep %}
 
 {% step %}
@@ -219,7 +219,7 @@ Shell calls `SetContainerSource` on content with the ViewModel.
 {% endstep %}
 
 {% step %}
-Layer registers window and focuses it.
+Window Host registers window and focuses it.
 {% endstep %}
 {% endstepper %}
 
@@ -280,24 +280,24 @@ Content returns `FNavigationReply::Escape()` to signal edge reached.
 {% endstep %}
 
 {% step %}
-Layer's `NativeOnNavigation` intercepts the escaped navigation.
+Window Host's `NativeOnNavigation` intercepts the escaped navigation.
 {% endstep %}
 
 {% step %}
-Layer uses `FindWindowInDirection` with geometric scoring to find neighbor.
+Window Host uses `FindWindowInDirection` with geometric scoring to find neighbor.
 {% endstep %}
 
 {% step %}
-Layer stores pending navigation context (direction and cursor position).
+Window Host stores pending navigation context (direction and cursor position).
 {% endstep %}
 
 {% step %}
-Layer focuses the target window, which calls `ReceiveNavigationEntry` on content.
+Window Host focuses the target window, which calls `ReceiveNavigationEntry` on content.
 {% endstep %}
 {% endstepper %}
 
 ```cpp
-// Layer finds geometric neighbors
+// Window Host finds geometric neighbors
 FItemWindowHandle FindWindowInDirection(
     FItemWindowHandle FromWindow,
     EUINavigation Direction,
@@ -316,7 +316,7 @@ FItemWindowHandle FindWindowInDirection(
 ```mermaid
 flowchart TB
     subgraph Summary ["Window Model Summary"]
-        L[Layer hosts windows & handles navigation]
+        L[Window Host hosts windows & handles navigation]
         S[Shells provide chrome]
         C[Content displays container]
         M[Manager orchestrates data lifecycle]

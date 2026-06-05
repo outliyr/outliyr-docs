@@ -20,7 +20,7 @@ This routing applies to widgets hosted inside a window shell. An item-container 
 
 ### 2. Focus & Z-Order
 
-When a user clicks on the Shell (or any part of your content), the Shell catches the `OnMouseButtonDown` event. It calls `BringToFront()`, which notifies the Layer and Window Manager. This ensures the window pops to the top of the stack visually.
+When a user clicks on the Shell (or any part of your content), the Shell catches the `OnMouseButtonDown` event. It calls `BringToFront()`, which notifies the Window Host and Window Manager. This ensures the window pops to the top of the stack visually.
 
 ### 3. Dragging Logic
 
@@ -69,7 +69,7 @@ class UMyMinimalWindowShell : public ULyraItemContainerWindowShell
 
 ### Integration Example
 
-If you want to open a window manually from C++ code (bypassing the UIManager/Layer logic, e.g., for testing):
+If you want to open a window manually from C++ code (bypassing the UIManager/Window Host logic, e.g., for testing):
 
 ```cpp
 // 1. Create Shell
