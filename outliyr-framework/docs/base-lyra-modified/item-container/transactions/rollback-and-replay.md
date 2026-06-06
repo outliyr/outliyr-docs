@@ -193,11 +193,11 @@ Repeat for each affected transaction in reverse arrival order.
 {% step %}
 **Undo the rejected transaction (rejection trigger only).**
 
-The supersession trigger has no separate "rejected transaction" — only the affected ones. The rejection trigger ends Phase 2 by reversing the originally rejected transaction's deltas.
+The supersession trigger has no separate "rejected transaction", only the affected ones. The rejection trigger ends Phase 2 by reversing the originally rejected transaction's deltas.
 {% endstep %}
 {% endstepper %}
 
-The intra-transaction delta reverse order (Run Execution Deep Dive for that detail) is unchanged. Phase 2 simply applies it across multiple transactions in the right outer order.
+The intra-transaction delta reverse order (Read [Execution Deep Dive](how-transactions-work/execution-deep-dive.md) for that detail) is unchanged. Phase 2 simply applies it across multiple transactions in the right outer order.
 
 ### Phase 3: Replay oldest-first
 
