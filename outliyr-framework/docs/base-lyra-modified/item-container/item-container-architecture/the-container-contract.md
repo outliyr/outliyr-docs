@@ -149,6 +149,21 @@ Framework-defined tags live in `LyraItemRejectionTags` under categories such as 
 
 ***
 
+### **`GetAcceptableQuantity`**
+
+```cpp
+virtual int32 GetAcceptableQuantity(
+    TSubclassOf<ULyraInventoryItemDefinition> ItemDef,
+    ULyraInventoryItemInstance* Item,
+    int32 RequestedQuantity) const;
+```
+
+Measures how many of an item the container will accept right now, applying capacity rules that span the whole container rather than a single slot, such as weight, total count, and per-definition limits. The result is clamped between `0` and `RequestedQuantity`.
+
+Where `CanAcceptItem` validates one specific slot, this answers "how much of this item fits anywhere in the container." That is what auto-placement and pickup-merge paths need to know before they begin writing stacks, since those paths fill stack counts directly rather than going through a per-slot add.
+
+**Default returns `RequestedQuantity` unchanged**, so a container with no whole-container limits accepts the full amount. The base inventory overrides it to enforce its weight, count, and per-definition caps, and a nested container can widen the existing-count check to include its children.
+
 ### **`GetItemInSlot`**
 
 ```cpp

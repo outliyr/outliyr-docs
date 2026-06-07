@@ -107,6 +107,8 @@ static bool FindAvailableSlot(
 
 Finds an available slot for an item in a container. The `ExcludedItemIds` parameter lets you treat slots containing specific items as available, useful for swap operations.
 
+***
+
 ### Move Validation
 
 #### `CanMoveItem`
@@ -126,6 +128,8 @@ Use this for:
 * UI drag-and-drop feedback
 * Enabling/disabling move actions
 * Pre-validation before committing
+
+***
 
 ### Transaction Execution
 
@@ -159,6 +163,8 @@ Executes a batch of transaction operations. The request can contain multiple ope
 
 See [How Transactions Work](../transactions/how-transactions-work/) for details on building transaction requests.
 
+***
+
 ### Stack Information
 
 #### `GetStackInfoFromSlot`
@@ -178,6 +184,8 @@ Gets stack count information for an item in a slot. Returns:
 * `OutCurrentStack`: Current stack count
 * `OutMaxStack`: Maximum stack size (0 = unlimited)
 * `OutItem`: The item instance
+
+***
 
 ### Server-Only Operations
 
@@ -223,6 +231,8 @@ static bool AddItemDefinitionToAvailableSlot(
 ```
 
 Creates an item from a definition and adds it to the first available slot. Checks slot availability **before** creating the item to avoid orphans.
+
+***
 
 ### Search and Removal
 
@@ -313,6 +323,25 @@ Parameters:
 
 * `bOnlyRemoveIfAllRequirementsMet`: If true, only removes when every requirement can be fully satisfied
 * `bDestroy`: If true, destroys the removed items via `DestroyItem()`
+
+***
+
+### Capacity
+
+#### **`GetAcceptableQuantity`**
+
+```cpp
+UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ItemContainer|Query")
+static int32 GetAcceptableQuantity(
+    TScriptInterface<ILyraItemContainerInterface> Container,
+    TSubclassOf<ULyraInventoryItemDefinition> ItemDef,
+    ULyraInventoryItemInstance* Item,
+    int32 RequestedQuantity);
+```
+
+Measures how many units of an item a container can actually take right now, across the whole container. It accounts for eligibility, slot or grid geometry, stacking into existing items, and limits such as weight and count. The result is clamped between `0` and `RequestedQuantity`. **Read-only**, doesn't modify the container.
+
+Where `CanSlotAcceptItem` validates one specific slot, this asks how many of the item fit anywhere in the container, and returns `0` when none can be placed. An equipment component returns `0` for a non-equippable item or when its slots are full, an attachment container returns `0` for an incompatible item, and an inventory returns the count its free slots and partial stacks can hold within its limits. Use it to size a pickup before merging, to show "you can carry 7 more" in UI, or to gate a vendor purchase against the buyer's remaining space.
 
 ***
 
