@@ -148,4 +148,53 @@ if (fs.existsSync(gitbookAssetsSrc)) {
   console.log('✅ Copied image assets');
 }
 
+// --- SEO: robots.txt + sitemap.xml -----------------------------------------
+// Base URL of the published site. Update this if a custom domain is adopted
+// (e.g. 'https://docs.outliyr.com'); everything below derives from it.
+const SITE_BASE = 'https://outliyr.github.io/outliyr-docs';
+
+// Map a SUMMARY.md link like '/dir/page.md' or '/dir/README.md' to a canonical
+// clean URL (no '.md', folder indexes collapse to a trailing slash).
+function summaryLinkToUrl(link) {
+  const route = link
+    .replace(/^\//, '')               // drop leading slash
+    .replace(/\.md$/i, '')            // drop .md extension
+    .replace(/(^|\/)README$/i, '$1'); // README segment -> folder index ('' or 'dir/')
+  return route ? `${SITE_BASE}/${route}` : `${SITE_BASE}/`;
+}
+
+if (fs.existsSync(summaryPath)) {
+  const summaryRaw = fs.readFileSync(summaryPath, 'utf8');
+  // Collect markdown links pointing at local .md files: ](/path/to/page.md)
+  const urls = [];
+  const seen = new Set();
+  const linkRe = /\]\((\/[^)]+\.md)\)/gi;
+  let lm;
+  while ((lm = linkRe.exec(summaryRaw)) !== null) {
+    const url = summaryLinkToUrl(lm[1]);
+    if (!seen.has(url)) { seen.add(url); urls.push(url); }
+  }
+  // Ensure the homepage is always present and listed first.
+  const home = `${SITE_BASE}/`;
+  const ordered = [home, ...urls.filter(u => u !== home)];
+
+  const body = ordered
+    .map(u => `  <url>\n    <loc>${u}</loc>\n  </url>`)
+    .join('\n');
+  const sitemap =
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    body + '\n' +
+    '</urlset>\n';
+  fs.writeFileSync('./docsify/sitemap.xml', sitemap, 'utf8');
+  console.log(`✅ Generated sitemap.xml (${ordered.length} URLs)`);
+}
+
+const robots =
+  'User-agent: *\n' +
+  'Allow: /\n' +
+  `Sitemap: ${SITE_BASE}/sitemap.xml\n`;
+fs.writeFileSync('./docsify/robots.txt', robots, 'utf8');
+console.log('✅ Generated robots.txt');
+
 console.log('✅ Docs transformed to ./docsify');
