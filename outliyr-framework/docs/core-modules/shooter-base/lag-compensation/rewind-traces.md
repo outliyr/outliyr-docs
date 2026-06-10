@@ -581,7 +581,7 @@ sequenceDiagram
     W->>W: DrainSnapshots() - update history
     W->>Q: Dequeue request
 
-    rect rgb(240, 240, 255)
+    rect rgb(20, 20, 40)
         Note over W: Processing Pipeline
         W->>W: Phase 1: Broadphase culling
         W->>W: Phase 2: Interpolate poses
