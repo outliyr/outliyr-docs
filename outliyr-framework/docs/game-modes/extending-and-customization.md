@@ -1,92 +1,65 @@
 # Extending & Customization
 
-This page covers how to customize existing game modes and create new ones.
+This page is the guide for customizing a mode or building a new one: how to choose an approach, which existing mode to start from, and the steps to stand up a new mode plugin. It has two companions. Each mode's own **Extending** section lists the specific hooks for changing that mode, and the [game modes overview](game-mode-details/) describes the [shared systems](game-mode-details/#shared-infrastructure) every mode is built on (the scoring component, game phases, control points, and the loot and pickup system). Read those for the foundation; this page is about assembling a mode out of it.
 
 ***
 
-### Customization Approaches
+## Customization approaches
 
-There are three main ways to customize gameplay, each with different tradeoffs:
+There are three ways to customize gameplay, each with different tradeoffs:
 
-#### Create a New Game Feature Plugin
+### Create a new Game Feature Plugin
 
-The easiest approach. Your content lives in its own plugin, completely separate from the framework's core and example plugins. Framework updates apply cleanly with no merge work.
-
-This is the right choice for:
-
-* New game modes
-* Major feature additions
-* Building on an existing game mode (copy the relevant Experience, Pawn Data, and Action Set assets into your plugin and modify the copies)
+The cleanest approach. Your content lives in its own plugin, separate from the framework's core and example plugins, so framework updates apply with no merge work. This is the right choice for new game modes, major feature additions, or building on an existing mode by copying its Experience, Pawn Data, and Action Set assets into your plugin and modifying the copies.
 
 See [Installing & Setup](../introduction/installing-and-setup.md) for how to create a Game Feature Plugin.
 
-#### Modify an Example Game Mode Directly
+### Modify an example game mode directly
 
-If you want to tweak an existing game mode (like TeamDeathmatch or Arena) without creating a separate plugin, you can edit its assets directly. This is the most straightforward approach for quick iteration.
+To tweak an existing mode without a separate plugin, edit its assets in place. This is the fastest path for quick iteration. The tradeoff is that a later framework update to that mode has to be merged with your changes through Git.
 
-Keep in mind that if you update the framework later, you'll need to merge your changes with any updates to that game mode using Git.
+### Modify core systems
 
-#### Modify Core Systems
-
-If you need to change how a core system works (ShooterBase, TetrisInventory, etc.), you can edit it directly. Use Git to track your changes so you can merge future framework updates.
+To change how a shared system works (`ShooterBase`, `ControlPointCore`, `TetrisInventory`), edit it directly and track your changes with Git so future framework updates can be merged.
 
 ***
 
-### Creating a New Game Mode
+## Start from the closest mode
 
-Before jumping into the editor, it helps to think through the design of your game mode. The checklist below covers the key decisions you'll need to make. Each section maps to assets or systems you'll create in your Game Feature Plugin.
+The fastest way to build a mode is to copy the example that already solves your hardest problem and change it, rather than starting from an empty plugin. Find the row closest to what you are making, open that mode's page for the detail, and copy its plugin as a starting point.
 
-#### Planning Checklist
-
-Teams
-
-* [ ] What is the team structure? (No teams, two teams, multiple teams, asymmetric teams)
-* [ ] How many players per match?
-* [ ] How is team color handled? Perspective-based (ally vs enemy) or team ID-based (team 1 = blue, team 2 = red)?
-* [ ] Do different teams need different pawn data? (Relevant for asymmetric modes like Infection or Prop Hunt)
-
-Input
-
-* [ ] Does this mode need new input actions?
-* [ ] Does this mode need new input mappings?
-* [ ] Does this mode need new gameplay abilities?
-
-Hero Data
-
-* [ ] Which pawns are available in this mode?
-* [ ] What abilities does each pawn have? (What can the player do?)
-* [ ] What are the tag relationships between abilities? (e.g., action abilities blocked when dead)
-* [ ] What input mappings does each pawn use?
-* [ ] Does each pawn need different widgets? (e.g., props vs hunters in Prop Hunt)
-* [ ] What camera mode does each pawn start with?
-
-User Interface
-
-* [ ] Does this mode need unique UI widgets? (Scoreboard, objective tracker, mode-specific HUD, etc.)
-
-Mode-Specific Features
-
-* [ ] Does this mode need custom mechanics, objectives, or systems? (e.g., safe zone in Battle Royale, buy menu in Arena, control points in Domination, dog tags in Kill Confirmed)
-
-Game Rules & Scoring
-
-* [ ] Does this mode have unique rules? (Create a gamestate component or a Blueprint child of `ShooterScoring_Base`)
-* [ ] Can the rules be separated into distinct components? (e.g., Arena separates economy and character selection into different managers, smaller, focused components are more reusable and easier to maintain)
-
-Experience Definition
-
-* [ ] The Experience ties everything together. Think of it as the recipe, the systems and features you created are the ingredients, and the Experience combines them into a playable game.
-* [ ] You can create multiple experiences per game mode (e.g., `BattleRoyale_Solo`, `BattleRoyale_Duo`, `BattleRoyale_Squads`, or `TDM`, `TDM_Hardcore`, `TDM_Realism`).
-* [ ] The Experience defines: the default pawn, which Game Features to enable, what UI to give players, which components to add, and which Action Sets to include.
-* [ ] See [Game Framework & Experiences](../base-lyra-modified/gameframework-and-experience/) for full documentation.
+| If your mode needs…                   | Start from                                                                                                       | What it already solves                                                    |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Continuous team scoring to a limit    | [Team Deathmatch](game-mode-details/team-deathmatch.md)                                                          | A minimal `UShooterScoring_Base` child with a score and time limit        |
+| No teams, every player for themselves | [Free For All](game-mode-details/free-for-all.md)                                                                | Per-player team ids and a highest-score resolve                           |
+| Per-kill progression                  | [Gun Game](game-mode-details/gun-game.md)                                                                        | A weapon ladder driven by an ability, separate from scoring               |
+| Rounds with no mid-round respawns     | [Search And Destroy](game-mode-details/search-and-destroy.md)                                                    | The round phase loop, `HandleRoundVictory`, and side switching            |
+| A planted or defended objective       | [Search And Destroy](game-mode-details/search-and-destroy.md)                                                    | A carried objective with plant and defuse abilities gated by phase        |
+| Capturing and holding territory       | [Domination](game-mode-details/domination.md), [Hardpoint](game-mode-details/hardpoint.md)                       | The shared `AControlPoint` actor and its `FControlPointSettings` policies |
+| A moving or escorted objective        | [Payload](game-mode-details/payload.md)                                                                          | A control point that moves along a spline with ownership                  |
+| A carried pickup objective            | [Capture The Flag](game-mode-details/capture-the-flag.md), [Kill Confirmed](game-mode-details/kill-confirmed.md) | A carry or pickup actor, base scoring, and objective-aware bots           |
+| Asymmetric teams or role conversion   | [Infection](game-mode-details/infection.md), [Prop Hunt](game-mode-details/prop-hunt.md)                         | Per-role pawn data, team assignment, and role-transition abilities        |
+| A buy economy or hero selection       | [Arena](game-mode-details/arena.md)                                                                              | A persistent economy ledger and a character-selection flow                |
+| Looting and extraction                | [Battle Royale](game-mode-details/battle-royale.md), [Extraction](game-mode-details/extraction.md)               | The zone loot spawner, pickup routing, and a stash and loadout flow       |
+| Survival in a shrinking space         | [Battle Royale](game-mode-details/battle-royale.md)                                                              | A staged shrinking safe zone and the drop plane                           |
 
 ***
 
-### Walkthrough: Creating a TDM Game Mode
+## Key design decisions
 
-A quick walkthrough of the steps involved, using Team Deathmatch as an example.
+Whichever mode you start from, a few decisions shape the rest of the build. Most map directly to an asset in your plugin.
 
-For each step you can look at the existing `TeamDeathmatch` plugin for a working reference.
+* **Team structure.** No teams, two teams, multiple teams, or asymmetric teams, and how many players per match. Asymmetric modes give each role its own pawn data; see Infection and Prop Hunt. Decide whether team color is perspective-based (ally versus enemy) or fixed per team id.
+* **Where the rules live.** Win conditions and scoring are a Blueprint child of `UShooterScoring_Base` that drives the [Game Phase System](../base-lyra-modified/game-phase-system/). Keep distinct concerns in distinct components rather than one large one: Arena, for example, splits its economy and character selection into separate managers, which are easier to reuse and maintain.
+* **The signature mechanic.** Most modes add one custom system on top of scoring, the buy menu, the bomb, the control point, the safe zone. The catalog above points to the closest existing one to copy.
+* **Pawns, input, and UI.** Which pawns are available, what abilities and input each has, the tag relationships between them (for example abilities blocked while dead), and which mode-specific widgets each role needs.
+* **The Experience.** The Experience is the recipe that combines everything into a playable mode: the default pawn, which Game Features to enable, which components and UI to add, and which Action Sets to include. You can ship several per mode (for example `BattleRoyale_Solo` and `BattleRoyale_Squads`, or `TDM` and `TDM_Hardcore`). See [Game Framework & Experiences](../base-lyra-modified/gameframework-and-experience/).
+
+***
+
+## Walkthrough: creating a Team Deathmatch mode
+
+A from-scratch walkthrough using Team Deathmatch as the example, the simplest mode in the framework. Open the existing `TeamDeathmatch` plugin alongside these steps as a working reference.
 
 {% stepper %}
 {% step %}
@@ -98,74 +71,68 @@ For each step you can look at the existing `TeamDeathmatch` plugin for a working
 4. Name it (e.g., `MyTDM`)
 5. Add dependencies: `ShooterBase`, `GameplayMaps`, and any other relevant plugins
 
-See [Installing & Setup](../introduction/installing-and-setup.md) for more details on plugin creation and dependencies.
+See [Installing & Setup](../introduction/installing-and-setup.md) for more on plugin creation and dependencies.
 {% endstep %}
 
 {% step %}
-### Set Up Hero Data
+### Set up Hero Data
 
-Create a `ULyraPawnData` asset in your plugin's `Plugins/GameFeatures/MyTDM/Content/Hero/` folder. This defines the player character for your mode:
+Create a `ULyraPawnData` asset in your plugin's `Content/Hero/` folder. It defines the player character:
 
-* **Pawn Class** — The character Blueprint to spawn
-* **Ability Sets** — Which abilities the player has
-* **Input Config** — Input action bindings
-* **Camera Mode** — Default camera behavior
+* **Pawn Class** — the character Blueprint to spawn
+* **Ability Sets** — which abilities the player has
+* **Input Config** — input action bindings
+* **Camera Mode** — default camera behavior
 
-You can reference an existing pawn data asset (like the one in TeamDeathmatch or ShooterBase) or create your own.
+You can reference an existing pawn data asset (such as TeamDeathmatch's or ShooterBase's) or create your own.
 {% endstep %}
 
 {% step %}
 ### Create the Experience Definition
 
-Create a `ULyraExperienceDefinition` in `Plugins/GameFeatures/MyTDM/Content/Experiences/`:
+Create a `ULyraExperienceDefinition` in `Content/Experiences/`:
 
-* **Game Features To Enable** — Add your plugin and `ShooterBase`
-* **Default Pawn Data** — Point to the pawn data you set up
-* **Action Sets** — Add any action sets for features you want (kill cam, accolades, spectating, etc.)
-* **Actions** — Add game feature actions for components, UI, or other systems
+* **Game Features To Enable** — your plugin and `ShooterBase`
+* **Default Pawn Data** — the pawn data from the previous step
+* **Action Sets** — action sets for features you want (kill cam, accolades, spectating)
+* **Actions** — game feature actions for components, UI, and other systems
 
-See [Game Framework & Experiences](../base-lyra-modified/gameframework-and-experience/) for the full breakdown of experience configuration.
+See [Game Framework & Experiences](../base-lyra-modified/gameframework-and-experience/) for the full breakdown.
 {% endstep %}
 
 {% step %}
-### Set Up the Map
+### Set up the map
 
-1. Create or copy a map to `Plugins/GameFeatures/MyTDM/Content/Maps/`
+1. Create or copy a map into `Content/Maps/`
 2. Open **Window > World Settings**
 3. Set **Default Gameplay Experience** to your experience definition
 {% endstep %}
 
 {% step %}
-### Add Game Rules
+### Add game rules
 
-For scoring and win conditions, create a gamestate component or a Blueprint child of `ShooterScoring_Base`:
+Create your win logic as a Blueprint child of `UShooterScoring_Base` (the [shared scoring component](game-mode-details/#shared-systems-every-mode-builds-on)). The base already records eliminations and assists; your child defines the rules on top:
 
-* Define score values per kill/event
-* Set win conditions (score limit, time limit, etc.)
-* Add the component to players through your experience's action sets
+* Set the score and time limits
+* Override `OnEliminationScored` for kill-driven win checks, and add a timer for clock-driven ones
+* Drive the match through its phases and call `HandleVictory` when a side wins
 
-Look at the existing `TeamDeathmatch` plugin's `Game/` folder for a working reference.
+Add the component through your experience's action sets. Team Deathmatch's `Game/B_Scoring_TeamDeathmatch` is the reference, and its [Extending section](game-mode-details/team-deathmatch.md#extending) lists the exact hooks.
 {% endstep %}
 
 {% step %}
 ### Add UI
 
-Create any mode-specific widgets in `Content/UserInterface/`:
-
-* Scoreboard widget
-* HUD elements
-* End-of-match screen
-
-Add these through your experience definition's actions or action sets.
+Create any mode-specific widgets in `Content/UserInterface/` (scoreboard, HUD elements, end-of-match screen) and add them through your experience's actions or action sets.
 {% endstep %}
 
 {% step %}
 ### Playtest
 
 1. Open your map in the editor
-2. Click **Play** (or use **Play As Client** for multiplayer testing)
-3. Iterate on your game rules, scoring, and UI
+2. Click **Play**, or **Play As Client** for multiplayer testing
+3. Iterate on rules, scoring, and UI
 
-For a working reference of all these pieces, explore the existing `TeamDeathmatch` plugin at `Plugins/GameFeatures/TeamDeathmatch/`.
+For a working reference of every piece, explore the existing `TeamDeathmatch` plugin.
 {% endstep %}
 {% endstepper %}
