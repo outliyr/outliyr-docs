@@ -1,0 +1,90 @@
+# The Window Shell
+
+The Shell (`ULyraItemContainerWindowShell`) is the standardized frame that wraps every content widget. If you look at Windows or macOS, every application has the same bar at the top with "Minimize/Maximize/Close." The Shell is that bar.
+
+By centralizing this logic, we ensure consistent behavior: drag physics, focus rules, and cleanup logic are defined in one place.
+
+***
+
+## Core Responsibilities
+
+### **1. V**iewModel Lifetime
+
+The shell owns the window's session. Content widgets call `Shell->GetOrCreateViewModel(Source)` and the shell forwards the call to the UI manager under its session. When the window closes, the session closes and the ViewModels the window was using are released on its behalf.
+
+Content widgets never call release. The window owns the lifetime end to end.
+
+> [!WARNING]
+> This routing applies to widgets hosted inside a window shell. An item-container widget that lives outside a shell, for example a static inventory screen the player opens with one button, calls `UIManager->GetOrCreateViewModelForSession(Source, UIManager->GetBaseSession())` directly. See [ViewModels Without a Window Shell](../extension-and-integration/viewmodels-without-a-window-shell.md).
+
+### 2. Focus & Z-Order
+
+When a user clicks on the Shell (or any part of your content), the Shell catches the `OnMouseButtonDown` event. It calls `BringToFront()`, which notifies the Window Host and Window Manager. This ensures the window pops to the top of the stack visually.
+
+### 3. Dragging Logic
+
+The Shell implements the "Physical" movement.
+
+* **Start:** When you click the Drag Handle, it captures the mouse.
+* **Update:** It calculates the delta mouse movement and tells the Layer to update the Canvas Slot.
+* **End:** Release mouse capture.
+
+***
+
+## Blueprint Setup
+
+The C++ class `ULyraItemContainerWindowShell` is abstract logic. You must subclass it in Blueprint (`W_WindowShell`) to give it visuals.
+
+The code looks for specific widgets by name (using `BindWidgetOptional`).
+
+| Widget Name     | Type         | Purpose                                                                    |
+| --------------- | ------------ | -------------------------------------------------------------------------- |
+| **TitleText**   | `TextBlock`  | Displays the window title (e.g., "Backpack").                              |
+| **CloseButton** | `Button`     | Triggers the `RequestClose` logic. Hidden if `bCanUserClose` is false.     |
+| **DragHandle**  | `UserWidget` | The "Hit Box" for dragging. Usually the background image of the title bar. |
+| **ContentSlot** | `NamedSlot`  | **Crucial.** This is where your Widget will be injected at runtime.        |
+
+### Visual Feedback Events
+
+The Shell exposes Blueprint events so you can add animations without touching C++.
+
+* `OnDragStarted`: Fade opacity to 0.8?
+* `OnDragEnded`: Restore opacity?
+* `OnWindowFocused`: Highlight the border color?
+* `OnWindowUnfocused`: Dim the border?
+
+### Customizing the Shell
+
+You can create custom shell subclasses for different window styles:
+
+```cpp
+UCLASS()
+class UMyMinimalWindowShell : public ULyraItemContainerWindowShell
+{
+    // No title bar, just content with thin border
+    // Override visual setup in NativeConstruct
+};
+```
+
+### Integration Example
+
+If you want to open a window manually from C++ code (bypassing the UIManager/Window Host logic, e.g., for testing):
+
+```cpp
+// 1. Create Shell
+auto* Shell = CreateWidget<ULyraItemContainerWindowShell>(Player, ShellClass);
+
+// 2. Init
+FItemWindowSpec Spec;
+Spec.Title = FText::FromString("Test Window");
+Shell->InitializeWindow(Spec, Layer);
+
+// 3. Create Content
+auto* Content = CreateWidget<UUserWidget>(Player, MyInventoryClass);
+
+// 4. Inject
+Shell->SetContent(Content); // Calls SetContainerSource on Content automatically
+```
+
+> [!INFO]
+> _In 99% of cases, you should use `UIManager->RequestOpenWindow`, which handles all of this boilerplate for you._

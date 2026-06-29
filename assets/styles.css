@@ -1,0 +1,1339 @@
+/* =========================================================
+   Outliyr Framework — Docsify theme
+   Dark-first, with light-mode fallback.
+   ========================================================= */
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@master/fonts/webfonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@master/fonts/webfonts/JetBrainsMono-Medium.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@master/fonts/webfonts/JetBrainsMono-Bold.woff2') format('woff2');
+}
+
+:root {
+    --surface-0:    #0f1115;
+    --surface-1:    #151923;
+    --surface-2:    #1b2130;
+    --surface-3:    #222a3c;
+    --text-0:       #e6e6e6;
+    --text-muted:   #9aa3b2;
+    --text-dim:     #6b7280;
+    --accent:       #7c5cff;
+    --accent-hover: #9479ff;
+    --accent-weak:  rgba(124, 92, 255, 0.14);
+    --accent-rail:  rgba(124, 92, 255, 0.55);
+    --link:         #b3a0ff;
+    --link-hover:   #d4c8ff;
+    --link-underline: rgba(179, 160, 255, 0.45);
+    --border:       rgba(255, 255, 255, 0.08);
+    --border-strong:rgba(255, 255, 255, 0.16);
+    --code-bg:      #151923;
+    --code-fg:      #f2f2f2;
+    --code-inline-bg: rgba(124, 92, 255, 0.12);
+    --code-inline-fg: #d9d2ff;
+    --radius-sm:    6px;
+    --radius-md:    10px;
+    --radius-lg:    14px;
+    --shadow-soft:  0 1px 2px rgba(0, 0, 0, 0.25), 0 4px 16px rgba(0, 0, 0, 0.18);
+    --font-sans:    "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --font-mono:    "JetBrains Mono", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+
+    /* Docsify variable overrides (vue/dark themes read these) */
+    --theme-color:       var(--accent);
+    --theme-color-dark:  var(--accent-hover);
+}
+
+/* Dark-first, always. We intentionally do NOT flip to light via
+   prefers-color-scheme — the project is designed as dark-first and a
+   light flip here caused body/sidebar rules using these tokens to
+   render the whole site as white on light-OS users. */
+
+/* =========================================================
+   Base surfaces + typography
+   ========================================================= */
+
+html, body {
+    background: var(--surface-0);
+    color: var(--text-0);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body, .markdown-section {
+    color: var(--text-0);
+}
+
+.markdown-section {
+    max-width: 860px;
+    line-height: 1.7;
+}
+
+.markdown-section h1,
+.markdown-section h2,
+.markdown-section h3,
+.markdown-section h4,
+.markdown-section h5,
+.markdown-section h6 {
+    color: var(--text-0);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.markdown-section h1 { font-size: 2.1rem; margin-top: 1.5rem; }
+.markdown-section h2 {
+    font-size: 1.55rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--border);
+    margin-top: 2.4rem;
+}
+.markdown-section h3 { font-size: 1.2rem; margin-top: 2rem; }
+
+.markdown-section p,
+.markdown-section li {
+    color: var(--text-0);
+}
+
+.markdown-section a {
+    color: var(--link);
+    text-decoration: none;
+    border-bottom: 1px solid var(--link-underline);
+    transition: border-color .15s ease, color .15s ease;
+}
+.markdown-section a:hover {
+    color: var(--link-hover);
+    border-bottom-color: var(--link-hover);
+}
+
+.markdown-section blockquote {
+    background: var(--surface-1);
+    border-left: 3px solid var(--accent);
+    color: var(--text-muted);
+    padding: 0.8rem 1rem;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.markdown-section hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+}
+
+/* <mark> — GitBook authors use <mark style="color:red"> for emphasis.
+   Browser default is yellow background; on dark theme we want a subtle
+   tinted background that matches the inline text color. */
+.markdown-section mark {
+    background: rgba(255, 255, 255, 0.06);
+    color: inherit;
+    padding: 0.05em 0.3em;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.markdown-section mark[style*="color:red"],
+.markdown-section mark[style*="color: red"] {
+    background: rgba(248, 113, 113, 0.12);
+    border-color: rgba(248, 113, 113, 0.35);
+    color: #f87171 !important;
+}
+.markdown-section mark[style*="color:green"],
+.markdown-section mark[style*="color: green"] {
+    background: rgba(74, 222, 128, 0.12);
+    border-color: rgba(74, 222, 128, 0.35);
+    color: #4ade80 !important;
+}
+.markdown-section mark[style*="color:blue"],
+.markdown-section mark[style*="color: blue"] {
+    background: rgba(78, 168, 255, 0.12);
+    border-color: rgba(78, 168, 255, 0.35);
+    color: #4ea8ff !important;
+}
+.markdown-section mark[style*="color:orange"],
+.markdown-section mark[style*="color: orange"],
+.markdown-section mark[style*="color:yellow"],
+.markdown-section mark[style*="color: yellow"] {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.35);
+    color: #f59e0b !important;
+}
+.markdown-section mark h1, .markdown-section mark h2,
+.markdown-section mark h3, .markdown-section mark h4,
+.markdown-section mark h5, .markdown-section mark h6,
+.markdown-section h1 mark, .markdown-section h2 mark,
+.markdown-section h3 mark, .markdown-section h4 mark,
+.markdown-section h5 mark, .markdown-section h6 mark {
+    /* When used in headings, drop the pill styling so it reads as a heading */
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.markdown-section table {
+    border-collapse: collapse;
+    width: 100%;
+}
+.markdown-section table th,
+.markdown-section table td {
+    border: 1px solid var(--border);
+    padding: 0.6rem 0.8rem;
+}
+.markdown-section table th {
+    background: var(--surface-2);
+    color: var(--text-0);
+    font-weight: 600;
+}
+.markdown-section table tr:nth-child(2n) {
+    background: var(--surface-1);
+}
+
+/* =========================================================
+   Images: center divs that wrap a single image
+   ========================================================= */
+
+div:has(> img) {
+    display: block !important;
+    text-align: center !important;
+    margin: 1em auto;
+}
+
+.markdown-section img {
+    border-radius: var(--radius-md);
+    max-width: 100%;
+}
+
+/* medium-zoom overlay (used by docsify zoom-image plugin) — dark theme
+   instead of the default white flash. */
+.medium-zoom-overlay {
+    background: rgba(15, 17, 21, 0.92) !important;
+}
+
+/* =========================================================
+   Sidebar
+   ========================================================= */
+
+.sidebar {
+    background: var(--surface-1);
+    border-right: 1px solid var(--border);
+    padding: 1rem 0.75rem;
+    font-size: 14.5px;
+}
+
+.sidebar-toggle {
+    background: transparent;
+}
+.sidebar-toggle span {
+    background-color: var(--text-muted);
+}
+
+/* Wordmark — fixes "OutliyrFramework looks funny" */
+.sidebar .app-name {
+    margin: 0.25rem 0 1.25rem;
+    padding: 0 0.5rem;
+}
+.sidebar .app-name-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-sans);
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text-0) !important;
+    text-decoration: none;
+    line-height: 1.1;
+}
+.sidebar .app-name-link::before {
+    content: "";
+    display: inline-block;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: url("logo.png") center / cover no-repeat #000;
+    flex-shrink: 0;
+}
+
+/* Nav items */
+.sidebar ul li a {
+    padding: 0.45rem 0.7rem;
+    display: block;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    transition: background .15s ease, color .15s ease;
+}
+.sidebar ul li a:hover {
+    background: var(--surface-2);
+    color: var(--text-0);
+    text-decoration: none;
+}
+
+/* Section headers (collapsible group titles) */
+.sidebar ul li > p {
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.75rem 0.7rem 0.35rem;
+    margin: 0.75rem 0 0.25rem;
+    color: var(--text-dim);
+}
+
+/* Active page — accent pill with left rail */
+.sidebar ul li.active > a {
+    background: var(--accent-weak);
+    color: var(--text-0);
+    font-weight: 600;
+    box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* Tree caret alignment (carried over from original) */
+.sidebar-nav ul:not(.app-sub-sidebar) > li:not(.file)::before {
+    top: 19px;
+}
+.sidebar-nav ul:not(.app-sub-sidebar) > li.open::before {
+    top: 17px;
+}
+
+/* Search box */
+.search {
+    margin-bottom: 0.75rem;
+    /* docsify injects `.search { border-bottom: 1px solid #eee }` at runtime,
+       which wins on source order — kill the underline with !important. */
+    border-bottom: 0 !important;
+}
+.search input {
+    background: var(--surface-2);
+    color: var(--text-0);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.7rem;
+}
+.search input::placeholder {
+    color: var(--text-dim);
+}
+.search .results-panel {
+    color: var(--text-0);
+}
+.search .matching-post {
+    border-bottom: 1px solid var(--border);
+}
+.search .matching-post:last-child {
+    border-bottom: 0;
+}
+/* docsify wraps each result's <h2>/<p> in an <a>; give that the row padding
+   and zero out the default heading/paragraph margins that cause uneven gaps. */
+.search .matching-post a {
+    display: block;
+    padding: 10px 16px;
+    text-decoration: none;
+}
+.search .matching-post a:hover {
+    background: var(--surface-2);
+}
+.search .matching-post h2 {
+    margin: 0 0 4px;
+    padding: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text-0);
+    border: 0;
+}
+.search .matching-post p {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+.search .matching-post em {
+    color: var(--accent-hover);
+    font-style: normal;
+}
+
+/* Scrollbars inside sidebar */
+.sidebar::-webkit-scrollbar { width: 8px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb {
+    background: var(--surface-3);
+    border-radius: 8px;
+}
+
+/* =========================================================
+   Right-side Table of Contents (docsify-plugin-toc)
+   ---------------------------------------------------------
+   The plugin wraps the TOC in <aside class="toc-nav"> with its
+   own fixed positioning (right: 3%, width: 250px) and handles
+   responsive collapse below 1300px viewport. Do NOT override
+   position/width here — only restyle colors/typography using
+   the plugin's actual selectors (div.lv2…lv6, div.active, p.title).
+   ========================================================= */
+
+aside.toc-nav {
+    background: transparent;
+}
+
+.page_toc {
+    font-size: 0.85rem;
+    border-left: 1px solid var(--border);
+    padding-left: 0.9rem;
+}
+
+.page_toc p.title {
+    margin: 0 0 0.6rem;
+    padding: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+
+.page_toc div[class^="lv"] {
+    display: block;
+    padding: 0.25rem 0.5rem;
+    margin: 0.1rem 0;
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    line-height: 1.4;
+    border-left: 2px solid transparent;
+    transition: color .15s ease, border-color .15s ease, background .15s ease;
+    cursor: pointer;
+}
+.page_toc div[class^="lv"] a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: none;
+}
+.page_toc div[class^="lv"]:hover {
+    color: var(--text-0);
+    background: var(--surface-2);
+}
+.page_toc div.active {
+    color: var(--accent-hover);
+    border-left-color: var(--accent);
+    background: var(--accent-weak);
+}
+.page_toc div.active a {
+    color: var(--accent-hover);
+}
+
+.page_toc div.lv3 { padding-left: 1.25rem; font-size: 0.8rem; }
+.page_toc div.lv4 { padding-left: 2rem; font-size: 0.78rem; }
+.page_toc div.lv5,
+.page_toc div.lv6 { padding-left: 2.75rem; font-size: 0.76rem; }
+
+/* =========================================================
+   Code blocks + inline code
+   ========================================================= */
+
+.markdown-section pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.1rem;
+    box-shadow: var(--shadow-soft);
+    overflow-x: auto;
+    white-space: pre;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+.markdown-section pre > code {
+    background: transparent;
+    color: var(--code-fg);
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    line-height: 1.6;
+    padding: 0;
+    text-shadow: none;
+    white-space: pre;
+    word-break: normal;
+    overflow-wrap: normal;
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "calt" 0;
+}
+
+.markdown-section code {
+    background: var(--code-inline-bg);
+    color: var(--code-inline-fg);
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    font-weight: 500;
+    padding: 0.12em 0.4em;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+}
+.markdown-section a code {
+    color: var(--accent);
+}
+
+/* Prism token tweaks for readability */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata { color: #6b7280; font-style: italic; }
+.token.punctuation { color: #c5c8ce; }
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol { color: #f0a868; }
+.token.string,
+.token.char,
+.token.attr-value,
+.token.inserted { color: #a5e1ad; }
+.token.operator,
+.token.entity,
+.token.url { color: #9cdcfe; }
+.token.atrule,
+.token.keyword { color: #c792ea; }
+.token.function { color: #82aaff; }
+.token.regex,
+.token.important,
+.token.variable { color: #ffcb6b; }
+.token.selector,
+.token.attr-name { color: #f07178; }
+
+/* =========================================================
+   Flexible alerts (note / tip / warning / attention)
+   ========================================================= */
+
+/* =========================================================
+   Mermaid diagram overrides
+   Theme variables in index.html cover most cases, but subgraph
+   (cluster) rects and their labels sometimes need direct SVG
+   targeting to stay readable on dark backgrounds.
+   ========================================================= */
+
+.mermaid .cluster rect,
+.mermaid g.cluster > rect {
+    fill: #151923 !important;
+    stroke: rgba(124, 92, 255, 0.4) !important;
+    stroke-width: 1px !important;
+}
+
+.mermaid .cluster text,
+.mermaid .cluster .nodeLabel,
+.mermaid .cluster-label text,
+.mermaid .cluster-label .nodeLabel,
+.mermaid .cluster-label foreignObject span,
+.mermaid .cluster-label foreignObject div,
+.mermaid .cluster-label foreignObject p {
+    fill: #e6e6e6 !important;
+    color: #e6e6e6 !important;
+}
+
+/* Edge labels — readable chip over arrows */
+.mermaid .edgeLabel,
+.mermaid .edgeLabel rect,
+.mermaid .edgeLabel foreignObject div,
+.mermaid .edgeLabel foreignObject span {
+    background-color: #1b2130 !important;
+    color: #e6e6e6 !important;
+    fill: #e6e6e6 !important;
+}
+
+/* docsify-mermaid-zoom injects anonymous <button>s with
+   stroke="currentColor" SVGs next to each diagram. Without a color
+   rule they render black and camouflage on the dark surface. */
+.mermaid button {
+    color: var(--text-muted);
+    opacity: 0.7;
+    padding: 2px 4px;
+    border-radius: var(--radius-sm) !important;
+    transition: color .15s ease, opacity .15s ease, background-color .15s ease;
+}
+.mermaid button:hover {
+    color: var(--accent-hover);
+    opacity: 1;
+    background-color: var(--accent-weak) !important;
+}
+
+/* =========================================================
+   Flexible alerts overrides
+   The plugin injects its CSS via JS after this file loads,
+   so !important is required on rules that compete with variant
+   selectors (.alert.flat.note, .alert.flat.warning, etc.).
+   ========================================================= */
+
+.alert.flat {
+    border-radius: var(--radius-md) !important;
+    border: 1px solid var(--border) !important;
+    border-left-width: 4px !important;
+    padding: 0.85rem 1rem !important;
+    color: var(--text-0) !important;
+    background-color: var(--surface-1) !important;
+}
+
+/* Force readable body text inside alerts — covers all descendants
+   except the colored title (styled separately below) */
+.alert.flat,
+.alert.flat p,
+.alert.flat li,
+.alert.flat strong,
+.alert.flat em,
+.alert.flat blockquote,
+.alert.flat span:not(.icon) {
+    color: var(--text-0) !important;
+}
+
+/* Per-variant: bright left-border + subtly tinted dark background.
+   Using rgba over surface-1 avoids reliance on color-mix() support. */
+.alert.flat.note {
+    border-left-color: #4ea8ff !important;
+    background-color: #15202f !important;
+}
+.alert.flat.tip {
+    border-left-color: #4ade80 !important;
+    background-color: #142620 !important;
+}
+.alert.flat.warning {
+    border-left-color: #f59e0b !important;
+    background-color: #2a1f12 !important;
+}
+.alert.flat.attention {
+    border-left-color: #f87171 !important;
+    background-color: #2a1818 !important;
+}
+.alert.flat.important {
+    border-left-color: #a78bfa !important;
+    background-color: #1e1a33 !important;
+}
+
+/* Title row (the "Info"/"Warning" label) — keep the accent color
+   but bright enough to read on the dark tinted background */
+.alert.flat .title {
+    color: var(--text-0) !important;
+    font-weight: 700 !important;
+}
+.alert.flat.note    .title { color: #7cc1ff !important; }
+.alert.flat.tip     .title { color: #6ee7a3 !important; }
+.alert.flat.warning .title { color: #fbbf4f !important; }
+.alert.flat.attention .title { color: #fca5a5 !important; }
+.alert.flat.important .title { color: #c4b5fd !important; }
+
+/* Warning callout icon. The plugin paints the glyph as a background-image SVG
+   with its fill colour baked into the path (a dark red that reads like danger),
+   so `color` has no effect. Override the background-image with the same warning
+   triangle filled in the orange accent (#f59e0b) so it matches the warning
+   theme and stays distinct from the red danger callout. Targeting the shared
+   `.icon` class with !important beats the plugin's non-important .icon-warning
+   rule that loads after this stylesheet. */
+.alert.flat.warning .icon {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 56 56'%3E%3Cpath fill='%23f59e0b' d='M9.965 50.207h36.07c3.985 0 6.469-2.86 6.469-6.469 0-1.078-.281-2.18-.867-3.187L33.567 9.074c-1.22-2.133-3.352-3.281-5.555-3.281-2.18 0-4.336 1.148-5.579 3.281l-18.07 31.5a6.25 6.25 0 0 0-.867 3.164c0 3.61 2.508 6.469 6.469 6.469m.047-3.68c-1.641 0-2.72-1.336-2.72-2.789 0-.422.071-.914.306-1.406l18.046-31.477c.516-.89 1.454-1.312 2.368-1.312s1.804.398 2.32 1.312l18.047 31.5c.234.47.351.961.351 1.383 0 1.453-1.125 2.79-2.742 2.79Zm18-12.117c1.125 0 1.78-.656 1.804-1.875l.328-12.351c.024-1.196-.914-2.086-2.156-2.086-1.265 0-2.156.867-2.133 2.062l.305 12.375c.023 1.196.68 1.875 1.852 1.875m0 7.617c1.359 0 2.53-1.078 2.53-2.437 0-1.383-1.148-2.438-2.53-2.438-1.383 0-2.532 1.078-2.532 2.438 0 1.336 1.172 2.437 2.532 2.437'/%3E%3C/svg%3E") !important;
+}
+
+/* Links inside alerts */
+.alert.flat a {
+    text-decoration: underline;
+    font-weight: 600;
+    border-bottom: none;
+}
+.alert.flat.note a      { color: #7cc1ff !important; }
+.alert.flat.tip a       { color: #6ee7a3 !important; }
+.alert.flat.warning a   { color: #fbbf4f !important; }
+.alert.flat.attention a { color: #fca5a5 !important; }
+.alert.flat.important a { color: #c4b5fd !important; }
+
+.alert.flat a:hover {
+    text-decoration: none;
+    opacity: 0.85;
+}
+
+/* Inline code inside alerts */
+.alert.flat code {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: var(--code-fg) !important;
+}
+
+/* =========================================================
+   GitBook-style expandables (.gb-stack, .gb-toggle)
+   ========================================================= */
+
+:root {
+    --gb-border:     var(--border);
+    --gb-open-bg:    var(--surface-1);
+    --gb-accent:     var(--accent);
+    --gb-radius:     12px;
+    --gb-hiw:        1px;
+}
+
+.gb-stack {
+    border: 1px solid var(--gb-border);
+    border-radius: var(--gb-radius);
+    overflow: hidden;
+    background: var(--gb-open-bg);
+    margin: 1rem 0;
+}
+
+.gb-stack > .gb-toggle:first-child {
+    border-top-left-radius: var(--gb-radius);
+    border-top-right-radius: var(--gb-radius);
+}
+.gb-stack > .gb-toggle:last-child {
+    border-bottom-left-radius: var(--gb-radius);
+    border-bottom-right-radius: var(--gb-radius);
+}
+
+.gb-stack > .gb-toggle + .gb-toggle {
+    border-top: 1px solid var(--gb-border);
+}
+
+.gb-stack > .gb-toggle {
+    margin: 0;
+    border: 0;
+    background: transparent;
+    border-radius: 0;
+    transition: background .15s ease, box-shadow .15s ease;
+    display: flow-root;
+}
+
+.gb-stack > .gb-toggle[open] {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.gb-toggle:not(.gb-stack > .gb-toggle) {
+    border: 1px solid var(--gb-border);
+    border-radius: var(--gb-radius);
+    margin: 1rem 0;
+    overflow: hidden;
+    background: var(--surface-1);
+}
+.gb-toggle :last-child { margin-bottom: 0; }
+.gb-toggle > :not(summary):last-child { padding-bottom: 1rem; }
+
+.gb-stack > .gb-toggle:hover,
+.gb-stack > .gb-toggle:focus-within {
+    box-shadow: inset 0 0 0 var(--gb-hiw) var(--gb-accent) !important;
+}
+
+.gb-toggle > summary {
+    list-style: none;
+    cursor: pointer;
+    outline: none;
+    padding: 0.85rem 1rem;
+    min-height: 2.75rem;
+    font-weight: 700;
+    font-size: 0.98rem;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    border-radius: inherit;
+    transition: background .15s ease, color .15s ease;
+    color: var(--text-0);
+    background: rgba(255, 255, 255, 0.02);
+}
+.gb-toggle[open] > summary {
+    color: var(--accent-hover);
+    background: rgba(124, 92, 255, 0.06);
+}
+.gb-toggle > summary:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+.gb-toggle > summary::-webkit-details-marker { display: none; }
+.gb-toggle > summary::before {
+    content: "";
+    width: .5rem;
+    height: .5rem;
+    border-right: 2px solid var(--accent);
+    border-bottom: 2px solid var(--accent);
+    transform: rotate(-45deg);
+    transition: transform .25s cubic-bezier(.4, 0, .2, 1);
+    opacity: .9;
+    flex-shrink: 0;
+}
+.gb-toggle[open] > summary::before {
+    transform: rotate(45deg);
+    border-right-color: var(--accent-hover);
+    border-bottom-color: var(--accent-hover);
+    opacity: 1;
+}
+
+.gb-toggle > *:not(summary) {
+    padding: 0 1rem 1rem 2rem;
+    animation: gb-slide-down .2s ease;
+}
+.gb-toggle > summary + * { margin-top: .6rem; }
+
+@keyframes gb-slide-down {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.gb-toggle > summary[data-variant="example"] { color: #4ade80; }
+.gb-toggle > summary[data-variant="warning"] { color: #f59e0b; }
+.gb-toggle > summary[data-variant="info"]    { color: #4ea8ff; }
+
+@media (prefers-reduced-motion: reduce) {
+    .gb-toggle > *:not(summary) { animation: none; }
+    .gb-toggle > summary::before { transition: none; }
+}
+
+/* =========================================================
+   Stepper (gb-stepper)
+   ========================================================= */
+
+:root {
+    --gb-step-circle:     32px;
+    --gb-step-line-w:     2px;
+    --gb-step-color:      var(--accent);
+    --gb-step-line-color: var(--border-strong);
+    --gb-step-gap:        16px;
+}
+
+.gb-stepper {
+    margin: 1.5rem 0;
+    padding: 0;
+}
+
+.gb-step {
+    display: flex;
+    gap: var(--gb-step-gap);
+    position: relative;
+}
+
+.gb-step-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: var(--gb-step-circle);
+}
+
+.gb-step-number {
+    width: var(--gb-step-circle);
+    height: var(--gb-step-circle);
+    border-radius: 50%;
+    background: var(--gb-step-color);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+    z-index: 1;
+}
+
+.gb-step-line {
+    width: var(--gb-step-line-w);
+    flex: 1;
+    background: var(--gb-step-line-color);
+    min-height: 16px;
+    margin: 4px 0;
+}
+
+.gb-step-content {
+    flex: 1;
+    min-width: 0;
+    padding-bottom: 1.5rem;
+}
+
+.gb-step:last-child .gb-step-content {
+    padding-bottom: 0;
+}
+
+.gb-step-title {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: var(--gb-step-circle);
+    margin: 0 0 0.5rem 0;
+    color: var(--text-0);
+}
+
+.gb-step-body {
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.gb-step-body > :first-child { margin-top: 0; }
+.gb-step-body > :last-child  { margin-bottom: 0; }
+
+.gb-step-body pre {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+/* =========================================================
+   Code title bar (.gb-code-title)
+   ========================================================= */
+
+.gb-code-title {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    padding: 0.45rem 0.95rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0;
+    margin-top: 1rem;
+}
+
+.gb-code-title + pre,
+.gb-code-title + p > code,
+.gb-code-title + div > pre {
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* =========================================================
+   Breadcrumb + pagination
+   ========================================================= */
+
+.docsify-breadcrumb,
+.docsify-breadcrumb a {
+    color: var(--text-muted);
+}
+.docsify-breadcrumb a:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+}
+
+.docsify-pagination-container {
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+    padding-top: 1rem;
+}
+.pagination-item a {
+    color: var(--text-0) !important;
+    border-bottom: none !important;
+}
+.pagination-item-title {
+    color: var(--text-muted) !important;
+}
+.pagination-item:hover .pagination-item-title {
+    color: var(--accent-hover) !important;
+}
+
+/* =========================================================
+   Tabs (docsify-tabs)
+   ========================================================= */
+
+.docsify-tabs__tab {
+    background: var(--surface-2) !important;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+}
+.docsify-tabs__tab:hover {
+    color: var(--text-0);
+}
+.docsify-tabs__tab--active {
+    color: var(--accent-hover) !important;
+    border-bottom-color: var(--accent) !important;
+    background: transparent !important;
+}
+.docsify-tabs__content {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
+}
+
+/* =========================================================
+   Top navbar (header)
+   ========================================================= */
+
+/* =========================================================
+   Header layout (desktop)
+   - Full-width fixed bar with contained content (max 1100px)
+   - Left: static brand (logo + name)
+   - Center: sidebar's search projected via position:fixed (DOM stays in sidebar)
+   - Right: .app-nav links
+   ========================================================= */
+@media (min-width: 769px) {
+    /* The header bar itself — a fixed strip with a blurred dark bg */
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        /* Opaque bar. NB: do NOT add backdrop-filter here — it renders a blur
+           layer that washes out the search box and nav buttons sitting on the
+           bar (they paint in a stacking context below this pseudo-element). */
+        background: #0f1115;
+        border-bottom: 1px solid var(--border);
+        z-index: 19;
+        pointer-events: none;
+    }
+
+    /* Left: brand */
+    .site-header-brand {
+        position: fixed;
+        top: 0;
+        left: max(20px, calc((100% - 1100px) / 2));
+        height: 56px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 0.01em;
+        text-decoration: none;
+        z-index: 21;
+    }
+    .site-header-brand:hover { color: var(--accent-hover); }
+    .site-header-logo {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        object-fit: contain;
+    }
+
+    /* Center: the search box. navPlacementPlugin (index.html) hoists it out of
+       the sidebar to <body> on desktop so this fixed positioning isn't clipped
+       by the sidebar's overflow/stacking context (which hid its text + icon). */
+    .search {
+        position: fixed;
+        top: 10px;
+        /* Anchor between the brand (left) and nav (right) so the gap on each
+           side is equal at any width. Offsets ≈ each element's width + ~40px
+           gap; brand/nav share this same max(20px, …) edge anchor. width:auto
+           fills the space between, so widening the window widens the search. */
+        left: calc(max(20px, (100% - 1100px) / 2) + 222px);
+        right: calc(max(20px, (100% - 1100px) / 2) + 282px);
+        width: auto;
+        margin: 0;
+        /* kill docsify's runtime padding so the field sits centered vertically */
+        padding: 0 !important;
+        border: 0;
+        background: transparent;
+        z-index: 22;
+    }
+    .search .input-wrap { margin: 0; position: relative; }
+    /* Clear ("erase text") button — docsify scales its SVG to .5 (tiny); bump
+       it up and pin it to the right edge of the field, vertically centered. */
+    .search .clear-button {
+        position: absolute;
+        top: 50%;
+        right: 8px;
+        transform: translateY(-50%);
+        width: auto;
+        height: 22px;
+    }
+    .search .clear-button svg { transform: scale(0.85); }
+    .search input[type="search"] {
+        width: 100%;
+        height: 36px;
+        /* left padding clears the magnifier icon, right padding the clear button */
+        padding: 0 34px 0 36px;
+        /* surface-2 is lighter than the bar bg, so the field reads as distinct */
+        background-color: var(--surface-2);
+        /* magnifying-glass icon so the field reads as "search" against the dark bar */
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239aa3b2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: 12px center;
+        background-size: 16px 16px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        color: var(--text-0);
+        -webkit-text-fill-color: var(--text-0);
+        font-size: 0.9rem;
+        line-height: 36px;
+    }
+    .search input[type="search"]::placeholder {
+        color: var(--text-muted);
+        opacity: 1;
+    }
+    .search input[type="search"]:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-weak);
+        outline: none;
+    }
+    .search .results-panel {
+        position: fixed;
+        top: 56px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(640px, 90vw);
+        max-height: 70vh;
+        overflow: auto;
+        background: var(--surface-1);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        z-index: 30;
+    }
+
+    /* Hide the sidebar's app-name since we now have a brand in the header */
+    .sidebar .app-name { display: none; }
+
+    /* Right: .app-nav links */
+    .app-nav {
+        position: fixed;
+        top: 0;
+        right: max(20px, calc((100% - 1100px) / 2));
+        margin: 0;
+        padding: 0;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        background: transparent;
+        z-index: 21;
+    }
+    .app-nav ul {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        list-style: none;
+    }
+    .app-nav li { margin: 0; }
+    .app-nav a {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        border-radius: var(--radius-sm);
+        font-size: 0.92rem;
+        font-weight: 500;
+        color: var(--text-0);
+        background: transparent;
+        border: 1px solid transparent;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+    .app-nav a:hover {
+        color: var(--link-hover);
+        background: var(--accent-weak);
+        border-color: var(--accent-rail);
+    }
+    /* Primary CTA: first link (Buy) */
+    .app-nav li:first-child a {
+        background: var(--accent);
+        color: #ffffff;
+        border-color: var(--accent);
+    }
+    .app-nav li:first-child a:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+        color: #ffffff;
+    }
+
+    /* Push page chrome below the fixed header */
+    .sidebar,
+    .content { top: 56px; }
+
+    /* Sidebar toggle — circular chevron on the sidebar's right edge.
+       Docsify defaults this to a 284px-wide bar at bottom:0 that steals all
+       clicks on the sidebar bottom. We replace it with a small floating
+       button that slides + rotates as the sidebar opens/closes. */
+    .sidebar-toggle {
+        position: fixed;
+        top: calc(50% + 28px); /* offset by half the header height */
+        left: 300px;            /* sidebar width */
+        bottom: auto;
+        width: 26px;
+        height: 26px;
+        padding: 0;
+        border: 1px solid var(--border-strong);
+        border-radius: 50%;
+        background: var(--surface-2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+        transform: translate(-50%, -50%);
+        transition:
+            left 0.25s ease,
+            background 0.15s ease,
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+        z-index: 25;
+        cursor: pointer;
+    }
+    .sidebar-toggle:hover {
+        background: var(--accent);
+        border-color: var(--accent);
+        box-shadow: 0 4px 14px rgba(124, 92, 255, 0.45);
+    }
+    /* Hide docsify's default hamburger bars */
+    .sidebar-toggle span { display: none; }
+    /* Chevron drawn with borders — points left when sidebar open ("close me") */
+    .sidebar-toggle::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 7px;
+        height: 7px;
+        border-left: 2px solid var(--text-0);
+        border-bottom: 2px solid var(--text-0);
+        transform: translate(-30%, -50%) rotate(45deg);
+        transition: transform 0.25s ease, border-color 0.15s ease;
+    }
+    .sidebar-toggle:hover::before {
+        border-color: #ffffff;
+    }
+    /* Sidebar closed: slide toggle to viewport edge, flip chevron */
+    body.close .sidebar-toggle {
+        left: 0;
+        width: 26px;
+    }
+    body.close .sidebar-toggle::before {
+        transform: translate(-70%, -50%) rotate(-135deg);
+    }
+}
+
+/* Mobile: no header strip — keep everything as docsify default */
+@media (max-width: 768px) {
+    /* Hide desktop header chrome */
+    .site-header-brand { display: none; }
+
+    /* Search stays inside the sidebar (no header to project into) */
+    .search {
+        position: static;
+        transform: none;
+        width: auto;
+        background: transparent;
+        margin: 0 0 1rem;
+        padding: 6px 8px;
+        z-index: auto;
+    }
+    .search input[type="search"] {
+        width: 100%;
+        height: 36px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        color: var(--text-0);
+        padding: 0 12px;
+    }
+    .search .results-panel {
+        position: static;
+        transform: none;
+        width: auto;
+        max-height: none;
+        box-shadow: none;
+        border: 0;
+        background: transparent;
+    }
+    .sidebar .app-name { display: block; }
+
+    /* Nav links are relocated into the sidebar menu on mobile (see
+       navPlacementPlugin in index.html). Hide any body-level instance so it
+       never shows as the clipped top row before/if relocation runs. */
+    body > .app-nav { display: none; }
+    .sidebar .app-nav {
+        display: block;
+        position: static;
+        margin: 0 0 1rem;
+        padding: 0 8px;
+    }
+    /* docsify hides .app-nav while the mobile menu is open (body.close) — it
+       assumes the nav lives in the top-right corner. We relocated it INTO the
+       menu, so override that to keep it visible when the sidebar is open. */
+    body.close .sidebar .app-nav { display: block; }
+    .sidebar .app-nav ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .sidebar .app-nav li { margin: 0; }
+    .sidebar .app-nav a {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-0);
+    }
+    .sidebar .app-nav a:hover { color: var(--link-hover); }
+    /* Buy = primary CTA */
+    .sidebar .app-nav li:first-child a {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+    }
+    .sidebar .app-nav li:first-child a:hover {
+        background: var(--accent-hover);
+        color: #fff;
+    }
+
+    /* Same chevron toggle on mobile, repositioned for the no-header layout.
+       When sidebar is closed (default on mobile), button sits at top-left of
+       viewport. When open, it slides to the sidebar's right edge. */
+    .sidebar-toggle {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        bottom: auto;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border: 1px solid var(--border-strong);
+        border-radius: 50%;
+        background: var(--surface-2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        transition:
+            left 0.25s ease,
+            top 0.25s ease,
+            background 0.15s ease,
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+        z-index: 30;
+        cursor: pointer;
+    }
+    .sidebar-toggle:hover,
+    .sidebar-toggle:active {
+        background: var(--accent);
+        border-color: var(--accent);
+        box-shadow: 0 4px 14px rgba(124, 92, 255, 0.45);
+    }
+    .sidebar-toggle span { display: none; }
+    .sidebar-toggle::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 8px;
+        height: 8px;
+        border-left: 2px solid var(--text-0);
+        border-bottom: 2px solid var(--text-0);
+        /* Mobile default: sidebar is CLOSED, so chevron points right ("open me") */
+        transform: translate(-70%, -50%) rotate(-135deg);
+        transition: transform 0.25s ease, border-color 0.15s ease;
+    }
+    .sidebar-toggle:hover::before { border-color: #ffffff; }
+
+    /* When sidebar is OPEN on mobile, slide button to sidebar's right edge
+       and flip chevron to point left ("close me") */
+    body.close .sidebar-toggle {
+        left: 300px;
+        top: 16px;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        background: var(--surface-2);
+    }
+    body.close .sidebar-toggle::before {
+        transform: translate(-30%, -50%) rotate(45deg);
+    }
+
+    /* Hide the floating right-hand "On this page" TOC on phones.
+       The plugin collapses it into an awkward tap-to-expand sliver below
+       1300px; on touch screens that's unusable, so remove it entirely here. */
+    aside.toc-nav,
+    #toc {
+        display: none !important;
+    }
+}
