@@ -192,25 +192,41 @@
                     });
                 },
                 function navPlacementPlugin(hook, vm) {
-                    // Docsify renders .app-nav as a direct child of <body>. On
-                    // desktop it's projected into the header bar; on mobile that
-                    // top row overflows and clips. Relocate it into the sidebar
-                    // menu (right after the search box) on mobile, and move it
-                    // back out on desktop. Docsify keeps the same .app-nav node
-                    // and only rewrites its innerHTML, so moving it is safe.
+                    // Docsify renders .search inside the sidebar and .app-nav as
+                    // a direct child of <body>. The desktop header projects both
+                    // via position:fixed — but a fixed element trapped inside the
+                    // sidebar (itself fixed, with overflow:auto and its own
+                    // stacking context) renders unreliably across browsers, which
+                    // left the search box's text + icon invisible. So on desktop
+                    // we hoist BOTH the search and the nav out to <body> (like the
+                    // brand, which works); on mobile we put the search back at the
+                    // top of the sidebar and the nav just below it. Docsify keeps
+                    // the same nodes and only rewrites their contents, so moving
+                    // them is safe.
                     function place() {
-                        var nav = document.querySelector('.app-nav');
-                        if (!nav) return;
                         var mobile = window.matchMedia('(max-width: 768px)').matches;
                         var sidebar = document.querySelector('.sidebar');
-                        if (mobile && sidebar) {
-                            if (nav.parentNode !== sidebar) {
-                                var search = sidebar.querySelector('.search');
-                                sidebar.insertBefore(nav, search ? search.nextSibling : sidebar.firstChild);
+                        var app = document.getElementById('app');
+                        var search = document.querySelector('.search');
+                        var nav = document.querySelector('.app-nav');
+                        // Search first, so the mobile nav can anchor after it.
+                        if (search) {
+                            if (!mobile && search.parentNode !== document.body) {
+                                document.body.insertBefore(search, app);
+                            } else if (mobile && sidebar && search.parentNode !== sidebar) {
+                                sidebar.insertBefore(search, sidebar.firstChild);
                             }
-                        } else if (!mobile && nav.parentNode !== document.body) {
-                            var brand = document.querySelector('.site-header-brand');
-                            document.body.insertBefore(nav, brand || document.getElementById('app'));
+                        }
+                        if (nav) {
+                            if (mobile && sidebar) {
+                                if (nav.parentNode !== sidebar) {
+                                    var s = sidebar.querySelector('.search');
+                                    sidebar.insertBefore(nav, s ? s.nextSibling : sidebar.firstChild);
+                                }
+                            } else if (!mobile && nav.parentNode !== document.body) {
+                                var brand = document.querySelector('.site-header-brand');
+                                document.body.insertBefore(nav, brand || app);
+                            }
                         }
                     }
                     hook.ready(function () {

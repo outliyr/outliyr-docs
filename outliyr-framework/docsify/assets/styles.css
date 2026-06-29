@@ -308,40 +308,40 @@ div:has(> img) {
 }
 
 /* Search box */
-.sidebar .search {
+.search {
     border-bottom: 1px solid var(--border);
     margin-bottom: 0.75rem;
 }
-.sidebar .search input {
+.search input {
     background: var(--surface-2);
     color: var(--text-0);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 0.5rem 0.7rem;
 }
-.sidebar .search input::placeholder {
+.search input::placeholder {
     color: var(--text-dim);
 }
-.sidebar .search .results-panel {
+.search .results-panel {
     color: var(--text-0);
 }
-.sidebar .search .matching-post {
+.search .matching-post {
     border-bottom: 1px solid var(--border);
 }
-.sidebar .search .matching-post:last-child {
+.search .matching-post:last-child {
     border-bottom: 0;
 }
 /* docsify wraps each result's <h2>/<p> in an <a>; give that the row padding
    and zero out the default heading/paragraph margins that cause uneven gaps. */
-.sidebar .search .matching-post a {
+.search .matching-post a {
     display: block;
     padding: 10px 16px;
     text-decoration: none;
 }
-.sidebar .search .matching-post a:hover {
+.search .matching-post a:hover {
     background: var(--surface-2);
 }
-.sidebar .search .matching-post h2 {
+.search .matching-post h2 {
     margin: 0 0 4px;
     padding: 0;
     font-size: 0.92rem;
@@ -349,13 +349,13 @@ div:has(> img) {
     color: var(--text-0);
     border: 0;
 }
-.sidebar .search .matching-post p {
+.search .matching-post p {
     margin: 0;
     font-size: 0.82rem;
     line-height: 1.45;
     color: var(--text-muted);
 }
-.sidebar .search .matching-post em {
+.search .matching-post em {
     color: var(--accent-hover);
     font-style: normal;
 }
@@ -996,9 +996,10 @@ aside.toc-nav {
         object-fit: contain;
     }
 
-    /* Center: project the sidebar's existing search element into the header.
-       DOM stays in .sidebar so docsify's search/sidebar-collapse plugins keep working. */
-    .sidebar .search {
+    /* Center: the search box. navPlacementPlugin (index.html) hoists it out of
+       the sidebar to <body> on desktop so this fixed positioning isn't clipped
+       by the sidebar's overflow/stacking context (which hid its text + icon). */
+    .search {
         position: fixed;
         top: 10px;
         left: 50%;
@@ -1010,8 +1011,8 @@ aside.toc-nav {
         background: transparent;
         z-index: 22;
     }
-    .sidebar .search .input-wrap { margin: 0; }
-    .sidebar .search input[type="search"] {
+    .search .input-wrap { margin: 0; }
+    .search input[type="search"] {
         width: 100%;
         height: 36px;
         /* extra left padding leaves room for the magnifier icon */
@@ -1030,17 +1031,17 @@ aside.toc-nav {
         font-size: 0.9rem;
         line-height: 36px;
     }
-    .sidebar .search input[type="search"]::placeholder {
+    .search input[type="search"]::placeholder {
         color: var(--text-muted);
         opacity: 1;
     }
-    .sidebar .search input[type="search"]:focus {
+    .search input[type="search"]:focus {
         border-color: var(--accent);
         box-shadow: 0 0 0 3px var(--accent-weak);
         outline: none;
     }
-    .sidebar .search .clear-button { right: 8px; }
-    .sidebar .search .results-panel {
+    .search .clear-button { right: 8px; }
+    .search .results-panel {
         position: fixed;
         top: 56px;
         left: 50%;
@@ -1177,7 +1178,7 @@ aside.toc-nav {
     .site-header-brand { display: none; }
 
     /* Search stays inside the sidebar (no header to project into) */
-    .sidebar .search {
+    .search {
         position: static;
         transform: none;
         width: auto;
@@ -1186,7 +1187,7 @@ aside.toc-nav {
         padding: 6px 8px;
         z-index: auto;
     }
-    .sidebar .search input[type="search"] {
+    .search input[type="search"] {
         width: 100%;
         height: 36px;
         background: var(--surface-2);
@@ -1195,7 +1196,7 @@ aside.toc-nav {
         color: var(--text-0);
         padding: 0 12px;
     }
-    .sidebar .search .results-panel {
+    .search .results-panel {
         position: static;
         transform: none;
         width: auto;
