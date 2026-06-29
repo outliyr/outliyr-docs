@@ -1178,12 +1178,50 @@ aside.toc-nav {
     }
     .sidebar .app-name { display: block; }
 
-    .app-nav {
-        padding: 8px 12px;
-        text-align: right;
+    /* Nav links are relocated into the sidebar menu on mobile (see
+       navPlacementPlugin in index.html). Hide any body-level instance so it
+       never shows as the clipped top row before/if relocation runs. */
+    body > .app-nav { display: none; }
+    .sidebar .app-nav {
+        display: block;
+        position: static;
+        margin: 0 0 1rem;
+        padding: 0 8px;
     }
-    .app-nav a { color: var(--text-0); font-weight: 500; }
-    .app-nav a:hover { color: var(--link-hover); }
+    /* docsify hides .app-nav while the mobile menu is open (body.close) — it
+       assumes the nav lives in the top-right corner. We relocated it INTO the
+       menu, so override that to keep it visible when the sidebar is open. */
+    body.close .sidebar .app-nav { display: block; }
+    .sidebar .app-nav ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .sidebar .app-nav li { margin: 0; }
+    .sidebar .app-nav a {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-0);
+    }
+    .sidebar .app-nav a:hover { color: var(--link-hover); }
+    /* Buy = primary CTA */
+    .sidebar .app-nav li:first-child a {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+    }
+    .sidebar .app-nav li:first-child a:hover {
+        background: var(--accent-hover);
+        color: #fff;
+    }
 
     /* Same chevron toggle on mobile, repositioned for the no-header layout.
        When sidebar is closed (default on mobile), button sits at top-left of
