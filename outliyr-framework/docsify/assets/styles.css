@@ -309,8 +309,10 @@ div:has(> img) {
 
 /* Search box */
 .search {
-    border-bottom: 1px solid var(--border);
     margin-bottom: 0.75rem;
+    /* docsify injects `.search { border-bottom: 1px solid #eee }` at runtime,
+       which wins on source order — kill the underline with !important. */
+    border-bottom: 0 !important;
 }
 .search input {
     background: var(--surface-2);
@@ -1002,21 +1004,37 @@ aside.toc-nav {
     .search {
         position: fixed;
         top: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: min(420px, 36vw);
+        /* Anchor between the brand (left) and nav (right) so the gap on each
+           side is equal at any width. Offsets ≈ each element's width + ~40px
+           gap; brand/nav share this same max(20px, …) edge anchor. width:auto
+           fills the space between, so widening the window widens the search. */
+        left: calc(max(20px, (100% - 1100px) / 2) + 222px);
+        right: calc(max(20px, (100% - 1100px) / 2) + 282px);
+        width: auto;
         margin: 0;
-        padding: 0;
+        /* kill docsify's runtime padding so the field sits centered vertically */
+        padding: 0 !important;
         border: 0;
         background: transparent;
         z-index: 22;
     }
-    .search .input-wrap { margin: 0; }
+    .search .input-wrap { margin: 0; position: relative; }
+    /* Clear ("erase text") button — docsify scales its SVG to .5 (tiny); bump
+       it up and pin it to the right edge of the field, vertically centered. */
+    .search .clear-button {
+        position: absolute;
+        top: 50%;
+        right: 8px;
+        transform: translateY(-50%);
+        width: auto;
+        height: 22px;
+    }
+    .search .clear-button svg { transform: scale(0.85); }
     .search input[type="search"] {
         width: 100%;
         height: 36px;
-        /* extra left padding leaves room for the magnifier icon */
-        padding: 0 12px 0 36px;
+        /* left padding clears the magnifier icon, right padding the clear button */
+        padding: 0 34px 0 36px;
         /* surface-2 is lighter than the bar bg, so the field reads as distinct */
         background-color: var(--surface-2);
         /* magnifying-glass icon so the field reads as "search" against the dark bar */
@@ -1040,7 +1058,6 @@ aside.toc-nav {
         box-shadow: 0 0 0 3px var(--accent-weak);
         outline: none;
     }
-    .search .clear-button { right: 8px; }
     .search .results-panel {
         position: fixed;
         top: 56px;
