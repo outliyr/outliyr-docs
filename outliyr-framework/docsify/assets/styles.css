@@ -936,9 +936,10 @@ aside.toc-nav {
         left: 0;
         right: 0;
         height: 56px;
-        background: rgba(15, 17, 21, 0.92);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
+        /* Opaque bar. NB: do NOT add backdrop-filter here — it renders a blur
+           layer that washes out the search box and nav buttons sitting on the
+           bar (they paint in a stacking context below this pseudo-element). */
+        background: #0f1115;
         border-bottom: 1px solid var(--border);
         z-index: 19;
         pointer-events: none;
@@ -986,16 +987,28 @@ aside.toc-nav {
     .sidebar .search input[type="search"] {
         width: 100%;
         height: 36px;
-        padding: 0 12px;
-        background: var(--surface-2);
-        border: 1px solid var(--border);
+        /* extra left padding leaves room for the magnifier icon */
+        padding: 0 12px 0 36px;
+        background-color: var(--surface-2);
+        /* magnifying-glass icon so the field reads as "search" against the dark bar */
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239aa3b2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: 12px center;
+        /* stronger border + inset shadow so it stands out from the header bg */
+        border: 1px solid var(--border-strong);
         border-radius: var(--radius-sm);
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
         color: var(--text-0);
         font-size: 0.9rem;
         line-height: 36px;
     }
+    .sidebar .search input[type="search"]::placeholder {
+        color: var(--text-muted);
+        opacity: 1;
+    }
     .sidebar .search input[type="search"]:focus {
-        border-color: var(--accent-rail);
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-weak);
         outline: none;
     }
     .sidebar .search .clear-button { right: 8px; }
