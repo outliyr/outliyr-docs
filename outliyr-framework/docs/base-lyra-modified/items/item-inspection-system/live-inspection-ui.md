@@ -1,14 +1,12 @@
-# Live Inspection UI
+# Live Inspection Ui
 
-A player right-clicks a weapon in their inventory. A panel slides open showing a full 3D model of the weapon,every attachment visible, every detail rendered. They click and drag to rotate it, scroll to zoom in on the engraving, then release. The model smoothly returns to its default pose.
+A player right-clicks a weapon in their inventory. A panel slides open showing a full 3D model of the weapon, every attachment visible, every detail rendered. They click and drag to rotate it, scroll to zoom in on the engraving, then release. The model smoothly returns to its default pose.
 
-All of that is driven by one widget: `UInventoryRepresentationWidget`.
+All of that is driven by one widget: `UItemRepresentationWidget`.
 
-***
+## What the Widget Does
 
-### What the Widget Does
-
-`UInventoryRepresentationWidget` is a specialized UMG User Widget that bridges the gap between the UI layer and the hidden PocketWorlds rendering system. Its responsibilities:
+`UItemRepresentationWidget` is a specialized UMG User Widget that bridges the gap between the UI layer and the hidden PocketWorlds rendering system. Its responsibilities:
 
 * **Manages a pocket level** - Spawns a private pocket world instance for this specific inspection widget
 * **Displays the render target** - Shows the 3D render from `UPocketCapture` inside a UMG Image element
@@ -16,13 +14,11 @@ All of that is driven by one widget: `UInventoryRepresentationWidget`.
 * **Forwards interaction** - Relays rotation deltas and FOV changes to the `APocketLevelStageManager`
 * **Stays in sync** - Reacts to external item visual changes (e.g., an attachment added while the panel is open) and refreshes the preview
 
-***
-
-### Widget Lifecycle
+## Widget Lifecycle
 
 {% stepper %}
 {% step %}
-#### NativeConstruct - Spawn the Pocket World
+### `NativeConstruct` - Spawn the Pocket World
 
 When the widget is created:
 
@@ -34,7 +30,7 @@ When the widget is created:
 {% endstep %}
 
 {% step %}
-#### OnInventoryLevelReady - Wire Up the Rendering
+### `OnInventoryLevelReady` - Wire Up the Rendering
 
 Once the pocket level is fully loaded and visible:
 
@@ -47,7 +43,7 @@ Once the pocket level is fully loaded and visible:
 {% endstep %}
 
 {% step %}
-#### InitialiseInspection - Set the Item
+### `InitialiseInspection` - Set the Item
 
 Called externally (e.g., by a parent inventory UI) to specify which item to display:
 
@@ -58,7 +54,7 @@ Called externally (e.g., by a parent inventory UI) to specify which item to disp
 {% endstep %}
 
 {% step %}
-#### User Input - Rotate and Zoom
+### User Input - Rotate and Zoom
 
 While the widget is active, it processes player input:
 
@@ -70,7 +66,7 @@ While the widget is active, it processes player input:
 {% endstep %}
 
 {% step %}
-#### NativeDestruct - Clean Up
+### `NativeDestruct` - Clean Up
 
 When the widget is destroyed:
 
@@ -80,13 +76,11 @@ When the widget is destroyed:
 {% endstep %}
 {% endstepper %}
 
-***
+## UMG Setup
 
-### UMG Setup
+When creating a Blueprint widget derived from `UItemRepresentationWidget`, set up two bound child widgets:
 
-When creating a Blueprint widget derived from `UInventoryRepresentationWidget`, set up two bound child widgets:
-
-#### RenderImage (UMG Image - Required)
+### RenderImage (UMG Image - Required)
 
 ```
 Binding:    meta = (BindWidget)
@@ -100,7 +94,7 @@ This is the core visual element where the 3D render appears. The `CameraRenderMa
 
 The widget's code dynamically assigns the correct `UTextureRenderTarget2D` assets to these parameters during `OnInventoryLevelReady`. The UMG Image updates automatically as the render targets change.
 
-#### RenderButtonContainer (UMG Button - Recommended)
+### RenderButtonContainer (UMG Button - Recommended)
 
 ```
 Binding:      meta = (BindWidget)
@@ -114,9 +108,7 @@ Place this button visually over the `RenderImage`. Buttons provide more reliable
 The button does not need to be visually styled -- it just needs to be positioned on top of the render image to intercept mouse events reliably.
 {% endhint %}
 
-***
-
-### Responding to External Visual Changes
+## Responding to External Visual Changes
 
 If an attachment is added or removed from the item while the inspection panel is open, the widget handles it automatically:
 
@@ -136,9 +128,7 @@ void OnItemVisualChangeMessage(FGameplayTag Channel,
 
 This uses `UGameplayMessageSubsystem` with the `TAG_Lyra_Inventory_Message_ItemVisualChange` channel, so any system that modifies an item's visual state just needs to broadcast on that channel.
 
-***
-
-### Input Handling Internals
+## Input Handling Internals
 
 <details>
 
@@ -163,9 +153,7 @@ This uses `UGameplayMessageSubsystem` with the `TAG_Lyra_Inventory_Message_ItemV
 
 </details>
 
-***
-
-### Blueprint-Callable Functions
+## Blueprint-Callable Functions
 
 | Function                                         | Description                                                                                     |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
@@ -173,6 +161,4 @@ This uses `UGameplayMessageSubsystem` with the `TAG_Lyra_Inventory_Message_ItemV
 | `SetManualFOV(float FOV)`                        | Set the camera FOV directly from Blueprint                                                      |
 | `InitialiseFinished()` (BlueprintNativeEvent)    | Override in Blueprint to run logic after the pocket world is ready and the first item is staged |
 
-***
-
-The `UInventoryRepresentationWidget` orchestrates a surprisingly complex pipeline, pocket world spawning, level streaming, material wiring, render target management, input processing, and presents it as a single drag-and-drop widget in your UI. Players just see a smooth, interactive 3D preview.
+The `UItemRepresentationWidget` orchestrates a surprisingly complex pipeline, pocket world spawning, level streaming, material wiring, render target management, input processing, and presents it as a single drag-and-drop widget in your UI. Players just see a smooth, interactive 3D preview.

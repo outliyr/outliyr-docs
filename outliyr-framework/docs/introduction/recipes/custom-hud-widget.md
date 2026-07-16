@@ -23,7 +23,7 @@ This recipe assumes you've completed the [Quick Start Guide](../quick-start-guid
 
 The framework gives you four registration paths, each suited to a different scenario. Pick the one that matches your goal, they're not interchangeable.
 
-### **`UGameFeatureAction_AddWidget` from an Experience.**&#x20;
+### **`UGameFeatureAction_AddWidgets` from an Experience.**&#x20;
 
 The widget is added to the running HUD when the Experience activates and removed when it ends.
 
@@ -74,12 +74,12 @@ Push widgets onto layered stacks. Each layer is its own stack, pushing adds a wi
 
 ## **Pick the right base class**
 
-| Subclass                                                      | When to use                                                                                                                                                                                    |
-| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ULyraHUDWidget`                                              | A widget that's part of the persistent HUD, added via Path 1 or Path 2 above. The default for HUD elements.                                                                                    |
-| `UCommonActivatableWidget`                                    | A widget that gets pushed and popped on a CommonUI layer (Path 4). Required for menus, modals, pause screens.                                                                                  |
-| `ULyraTaggedWidget` (`Source/LyraGame/UI/LyraTaggedWidget.h`) | A widget whose visibility is driven by gameplay tags on the player. Useful for "hide on death," "show only while aiming," etc. Cross-cutting, combine with any of the four registration paths. |
-| `UUserWidget`                                                 | Plain UMG widget. Right for scoreboards, resource bars, ticker entries, anything that doesn't need framework-specific behaviour. The worked example below uses this.                           |
+| Subclass                                                                                       | When to use                                                                                                                                                                                                                     |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <p><code>ULyraHUDLayout</code><br>(<code>Source/LyraGame/UI/LyraHUDLayout.h</code>)</p>        | The screen-level HUD layout pushed onto a UI layer (typically `UI.Layer.Game`) by Path 1's Layout list. It hosts the extension points individual HUD widgets mount into; subclass it when a mode needs its own HUD arrangement. |
+| `UCommonActivatableWidget`                                                                     | A widget that gets pushed and popped on a CommonUI layer (Path 4). Required for menus, modals, pause screens.                                                                                                                   |
+| <p><code>ULyraTaggedWidget</code> <br>(<code>Source/LyraGame/UI/LyraTaggedWidget.h</code>)</p> | A widget whose visibility is driven by gameplay tags on the player. Useful for "hide on death," "show only while aiming," etc. Cross-cutting, combine with any of the four registration paths.                                  |
+| `UUserWidget`                                                                                  | Plain UMG widget. Right for scoreboards, resource bars, ticker entries, anything that doesn't need framework-specific behaviour. The worked example below uses this.                                                            |
 
 The rule of thumb: **start with `UUserWidget` and only subclass something more specific when you need that subclass's specific behaviour.** Most HUD widgets don't need to be HUD widgets in the technical sense; they just need to render on the HUD.
 
@@ -91,7 +91,7 @@ The cardinal rule for HUD widgets in this framework: **don't tick to read state.
 
 * **Gameplay Messages.** A pub/sub system. The `UGameplayMessageSubsystem` lets a widget listen on a tag and react when something broadcasts on that tag. Best for **discrete events** (score changed, round timer ticked, kill happened). The worked example below uses this.
 * **Attribute change callbacks (GAS).** When the value you care about lives in an `AttributeSet` (health, stamina, ammo), bind a delegate to the attribute's change event on the player's Ability System Component. Best for **GAS-owned numeric state**.
-* **MVVM (Model-View-ViewModel).** A widget binds to a ViewModel, the ViewModel listens to the underlying system, the widget reflects the ViewModel automatically. Best for **complex container UIs** where multiple widgets share state and rendering logic. The framework ships MVVM examples for inventory and equipment, look at the inventory UIs in the **Tetris Inventory** plugin (`Plugins/GameFeatures/TetrisInventory/Content/UI/`) and **Battle Royale** plugin for two stylistically different takes (jigsaw / extraction-style vs. Apex-style). Both use MVVM specifically so the inventory rendering logic isn't duplicated across every widget that touches the inventory.
+* **MVVM (Model-View-ViewModel).** A widget binds to a ViewModel, the ViewModel listens to the underlying system, the widget reflects the ViewModel automatically. Best for **complex container UIs** where multiple widgets share state and rendering logic. The framework ships MVVM examples for inventory and equipment, look at the inventory UIs in the **Tetris Inventory** plugin (`Plugins/GameFeatures/TetrisInventory/Content/UserInterface/`) and **Battle Royale** plugin for two stylistically different takes (jigsaw / extraction-style vs. Apex-style). Both use MVVM specifically so the inventory rendering logic isn't duplicated across every widget that touches the inventory.
 
 When in doubt: **start with Gameplay Messages**. They're the simplest event mechanism and cover most HUD-update scenarios.
 
@@ -118,7 +118,7 @@ When in doubt: **start with Gameplay Messages**. They're the simplest event mech
 
 Two topics worth knowing about that the recipe above doesn't cover:
 
-* **`ULyraTaggedWidget`** — for visibility driven by gameplay tags. Subclass it instead of `UUserWidget` when a widget should hide and show automatically based on tags on the player. e.g. hiding the HUD when the player is downed (`Status.Death.Dying`), The configuration lives in the header at `Source/LyraGame/UI/LyraTaggedWidget.h`.
-* **MVVM** — for inventory, equipment, and other complex UIs where multiple widgets share state. Examples live under `Plugins/GameFeatures/TetrisInventory/Content/UI/` and in the Battle Royale plugin's UI folder. See [Item Containers UI MVVM](../../base-lyra-modified/ui/item-container-ui-system/core-architecture-and-data-structures/mvvm.md) for more info.
+* **`ULyraTaggedWidget`** — for visibility driven by gameplay tags. Subclass it when a widget should hide and show automatically based on tags on the player. e.g. hiding the HUD when the player is downed (`Status.Death.Dying`), The configuration lives in the header at `Source/LyraGame/UI/LyraTaggedWidget.h`.
+* **MVVM** — for inventory, equipment, and other complex UIs where multiple widgets share state. Examples live under `Plugins/GameFeatures/TetrisInventory/Content/UserInterface/` and in the Battle Royale plugin's UserInterface folder. See [Item Containers UI MVVM](../../base-lyra-modified/ui/item-container-ui-system/core-architecture-and-data-structures/mvvm.md) for more info.
 
 When you're ready for a different system, head back to the [Recipes](./).

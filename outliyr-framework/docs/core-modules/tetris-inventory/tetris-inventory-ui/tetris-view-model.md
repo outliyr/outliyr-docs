@@ -366,7 +366,7 @@ For details on shape definition, see [Shape Property](../item-fragments-tetris-s
 
 #### Async Icon System
 
-Tetris items can generate their icons dynamically using the [Item Inspection System's](../item-inspection-system/) icon generator. The item ViewModel manages this lifecycle:
+Tetris items can generate their icons dynamically using the [Item Inspection System's](/broken/pages/mgYIONfNO4MuUx7DMEy6) icon generator. The item ViewModel manages this lifecycle:
 
 | Property / Method           | Purpose                                                    |
 | --------------------------- | ---------------------------------------------------------- |

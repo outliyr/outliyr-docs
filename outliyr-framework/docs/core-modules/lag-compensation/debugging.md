@@ -440,7 +440,7 @@ Mitigation: GAS and the engine have mechanisms to validate and clamp timestamps.
 
 ### Animation Accuracy
 
-ShooterBase captures bone transforms directly from the finalized animation pose each frame, after all graph evaluations are complete. This means historical hitboxes reflect the exact animation state at that moment, including:
+The snapshot backend captures bone transforms directly from the finalized animation pose each frame, after all graph evaluations are complete. This means historical hitboxes reflect the exact animation state at that moment, including:
 
 * Skeletal animation playback
 * Blend spaces and state machines
@@ -449,6 +449,6 @@ ShooterBase captures bone transforms directly from the finalized animation pose 
 
 What this means in practice: Rewound poses align visually with the original animation to within a single frame of error, more than sufficient for both gameplay accuracy and visual debugging.
 
-Comparison to full rollback: Advanced systems that re-simulate animation or physics states can offer marginally higher precision, but require deep engine integration and high data throughput. ShooterBase focuses on a balanced, production-ready solution that achieves sub-frame positional accuracy within Unreal's standard architecture.
+Comparison to full rollback: systems that re-simulate animation or physics states can offer marginally higher precision, but require deeper engine integration. The snapshot backend focuses on a balanced, production-ready solution that achieves sub-frame positional accuracy within Unreal's standard architecture; the on-demand Anim Rewind backend is exactly such a reconstruction approach, for skeletal meshes that animate using UAF and mover.
 
 ***

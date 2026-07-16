@@ -26,10 +26,11 @@ Before the steps, the mental model. Equipment is built from a small graph of ass
 **The item itself.** The data record is an _Item Definition_ (e.g. `ID_RocketShoes`). On its own it's mostly empty, every capability the equipment has comes from _fragments_ added to it. A fragment is a small data class that grants one capability:
 
 * _Equipment_ — links the item to the Equipment Definition. This is what makes the item equippable rather than just inventoriable. **Required.**
-* _Inventory Icon_ — name, description, icon, weight, max stack. **Required** for the item to appear in the inventory at all.
+* _Item Details_ — name, description, weight, max stack. **Required** for the item to behave properly in the inventory.
+* _Icon_ — the item's picture in the inventory UI.
 * _Pickup_ — world drop / pickup. Optional.
 
-Other fragments exist for consumables, attachments, category sorting, and custom data, see the [Custom Item Recipe](custom-item.md) for the full menu. Rocket shoes use just these three.
+Other fragments exist for consumables, attachments, category sorting, and custom data, see the [Custom Item Recipe](custom-item.md) for the full menu. Rocket shoes use just these four.
 
 #### **When the player equips it.**&#x20;
 
@@ -48,15 +49,16 @@ The rocket shoes asset graph:
 ```
 ID_RocketShoes (Item Definition)
  ├─ Equipment Fragment ............ → WID_RocketShoes
- ├─ Inventory Icon Fragment ....... icon, weight, max stacks
+ ├─ Item Details Fragment ......... name, weight, max stacks
+ ├─ Icon Fragment ................. icon texture
  └─ Pickup Fragment (optional) .... drop / world pickup behaviour
 
 WID_RocketShoes (Equipment Definition)
- ├─ Equipment Instance Class ...... default Equipment Instance (no subclass)
- ├─ Ability Sets To Grant ......... → AbilitySet_RocketShoes
- │                                       └─ GA_RocketJump bound to InputTag.Jump
- ├─ Slot configuration ............ feet slot, holster-only behaviour
- └─ Actors To Spawn ............... → B_RocketShoe (spawned twice — left foot + right foot socket)
+ ├─ Instance Type ................. default Equipment Instance (no subclass)
+ └─ Holstered Behaviors ........... entry keyed to the feet slot tag
+      ├─ Ability Sets To Grant .... → AbilitySet_RocketShoes
+      │                                  └─ GA_RocketJump bound to InputTag.Jump
+      └─ Actors To Spawn .......... → B_RocketShoe (spawned twice — left foot + right foot socket)
 ```
 
 ***
@@ -131,7 +133,7 @@ This is a self-contained ability, no Gameplay Effects, no cues, no animation mon
 
 <figure><img src="../../.gitbook/assets/image (284).png" alt=""><figcaption></figcaption></figure>
 
-References: [Abilities](../../base-lyra-modified/gas/abilities.md), [Custom Ability Recipe](/broken/pages/652e02ba3c28a2dd5bcd91ae867ff93eb963a9f1) for the deeper ability authoring patterns.
+References: [Abilities](../../base-lyra-modified/gas/abilities.md), [Custom Ability Recipe](custom-ability.md) for the deeper ability authoring patterns.
 {% endstep %}
 
 {% step %}
@@ -160,10 +162,11 @@ Create a new **Lyra Equipment Definition**. This is the composition panel, what 
 
 Set:
 
-* **Equipment Instance Class** — the default `Equipment Instance`. **No subclass needed.** Rocket shoes have no settings to author on a subclass, all the behaviour is in the ability.&#x20;
-* **Ability Sets To Grant** — `AbilitySet_RocketShoes` from Step 2.
-* **Slot configuration** — feet slot. This equipment can't be held, so there is no need to populate held behvaiours
-* **Actors To Spawn** — leave empty for now; you'll wire `B_RocketShoe` in Step 4.
+* **Instance Type** — the default `Equipment Instance`. **No subclass needed.** Rocket shoes have no settings to author on a subclass, all the behaviour is in the ability.
+* **Holstered Behaviors** — add one entry keyed to the feet slot tag. The per-slot entry is where the grant and spawn settings live:
+  * **Ability Sets To Grant** — `AbilitySet_RocketShoes` from Step 2.
+  * **Actors To Spawn** — leave empty for now; you'll wire `B_RocketShoe` in Step 4.
+* **Held Behaviors** — leave empty. This equipment can't be held in the hands; everything happens from the holstered slot.
 
 <figure><img src="../../.gitbook/assets/image (287).png" alt=""><figcaption></figcaption></figure>
 
@@ -179,7 +182,7 @@ For rocket shoes, create a Blueprint Class with a skeletal or static mesh compon
 
 You _could_ split this into separate left and right models for fidelity. The shipped rocket shoes use one mesh for both feet, fine for most uses, easy to extend later.
 
-Now go back to `WID_RocketShoes` (Step 3) and add `B_RocketShoe` to **Actors To Spawn** _twice_:
+Now go back to `WID_RocketShoes` (Step 3) and add `B_RocketShoe` to the feet-slot entry's **Actors To Spawn** _twice_::
 
 * First entry → attached to the left-foot socket on the character
 * Second entry → attached to the right-foot socket
@@ -191,7 +194,8 @@ Now go back to `WID_RocketShoes` (Step 3) and add `B_RocketShoe` to **Actors To 
 Create a new **Lyra Inventory Item Definition**. Add fragments:
 
 * **Equipment Fragment** → point at `WID_RocketShoes` from Step 3. _Required._
-* **Inventory Icon Fragment** → set the inventory icon texture, weight, and max stack. _Required for the item to display in inventory._
+* **Item Details Fragment** → set the name, weight, and max stack. _Required for the item to behave properly in the inventory._
+* **Icon Fragment** → point at the inventory icon texture.
 * **Pickup Fragment** _(optional)_ → if the item should be droppable.
 * _**Tetris Fragment** (optional)_ -> if the item has a particular shape in the tetris invenotry
 
@@ -216,7 +220,7 @@ Reference: [Item Definition](../../base-lyra-modified/items/items-and-fragments/
    * Pressing jump launches the character upward more than a regular jump
    * **Press jump a second time** to check if it activates again after landing. This is the real test that the ability ended cleanly: an ability that didn't end would block re-activation, and would not longer have super jumps.
 
-If the shoes equip but the jump isn't replaced, the input tag binding in the Ability Set didn't take, confirm `InputTag.Jump` is exact and that the ability is being granted (use `showdebug abilitysystem` from the [Custom Ability Recipe](/broken/pages/652e02ba3c28a2dd5bcd91ae867ff93eb963a9f1#debug-helpers)).
+If the shoes equip but the jump isn't replaced, the input tag binding in the Ability Set didn't take, confirm `InputTag.Jump` is exact and that the ability is being granted (use `showdebug abilitysystem` from the [Custom Ability Recipe](custom-ability.md)).
 {% endstep %}
 {% endstepper %}
 
@@ -239,7 +243,7 @@ This is the smallest equipment graph. Real-world equipment often skips even more
 * **Forgetting to call `EndAbility` in the granted ability.** Abilities don't auto-end. If `GA_RocketJump` activates but never calls `EndAbility`, the ability stays running, the player launches once and can't trigger jump again, because the ability blocks re-activation. Rocketshoes uses `WaitForMovementModeChange` to fire `EndAbility` on landing; any custom ability you grant through equipment needs an equivalent end condition.
 * **Wiring ability and equipment together before either works in isolation.** If you build `GA_RocketJump`, the Ability Set, and the Equipment Definition all at once and nothing fires, the bug could be in any of three layers and you can't tell which. Grant the ability through a Pawn Data's `AbilitySets` first to confirm it activates on jump, then move it into the equipment Ability Set once it works on its own.
 * **Subclassing the Equipment Instance with nothing to override.** A pointless subclass adds maintenance burden for no benefit. Use the default `Equipment Instance` unless your equipment has settings only a subclass can hold, [Where equipment state lives](custom-equipment.md#where-equipment-state-lives) lists what those look like.
-* **Inventory Icon Fragment missing.** The item won't display in the inventory UI without it. This is required, not cosmetic.
+* **Item Details Fragment missing.** Without it the item won't stack, won't count toward weight or item limits, and the inventory UI has no name or stack data to show. This is required, not cosmetic.
 
 ***
 

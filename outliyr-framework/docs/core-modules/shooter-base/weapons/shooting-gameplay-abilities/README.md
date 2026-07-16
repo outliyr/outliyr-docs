@@ -127,7 +127,7 @@ All three abilities inherit from `UGameplayAbility_RangedWeapon`, which provides
 
 | Blueprint Ability           | C++ Base Class                             | Uses System                                           |
 | --------------------------- | ------------------------------------------ | ----------------------------------------------------- |
-| `GA_Weapon_Fire_Hitscan`    | `UGameplayAbility_HitScanPenetration`      | [Lag Compensation](../../lag-compensation/)           |
+| `GA_Weapon_Fire_Hitscan`    | `UGameplayAbility_HitScanPenetration`      | [Lag Compensation](../../../lag-compensation/)        |
 | `GA_Weapon_Fire_Projectile` | `UGameplayAbility_PredictiveProjectile`    | [Predictive Projectile System](../projectile-system/) |
 | `GA_Weapon_Fire_BulletDrop` | `UGameplayAbility_RangedWeapon_Projectile` | [Projectile Manager](../../projectile-manager/)       |
 

@@ -139,7 +139,7 @@ The requesting system calls `CaptureDiffuse()` and/or `CaptureAlphaMask()`. Thes
 
 The requesting system accesses the updated render targets:
 
-* **Live inspection:** `UInventoryRepresentationWidget` samples the render targets through a UMG material, the image updates automatically.
+* **Live inspection:** `UItemRepresentationWidget` samples the render targets through a UMG material, the image updates automatically.
 * **Icon generation:** `UItemIconGeneratorComponent` reads back the pixel data asynchronously to create a static `UTexture2D`.
 {% endstep %}
 {% endstepper %}

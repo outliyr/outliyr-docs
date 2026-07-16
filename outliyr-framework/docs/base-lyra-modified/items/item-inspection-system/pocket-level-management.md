@@ -1,6 +1,6 @@
 # Pocket Level Management
 
-Imagine you need to render a weapon in perfect isolation -- controlled lighting, no other actors interfering, no risk of the main game camera catching a stray mesh floating in the sky. That is exactly what pocket levels provide: small, self-contained levels streamed into the world at a far-off location, purpose-built for rendering items.
+Imagine you need to render a weapon in perfect isolation, controlled lighting, no other actors interfering, no risk of the main game camera catching a stray mesh floating in the sky. That is exactly what pocket levels provide: small, self-contained levels streamed into the world at a far-off location, purpose-built for rendering items.
 
 This page covers the three classes that make pocket level management work: the **definition** asset, the **runtime instance**, and the **bridge subsystem** that ties them together.
 
@@ -38,7 +38,7 @@ This Data Asset defines a _type_ of pocket world. You create one in the Content 
 
 **Inherits from:** `UPocketLevel` (provided by the PocketWorlds plugin)
 
-**What it adds:** A single `FGameplayTag` property,  `IdentifingGameplayTag`, that gives each pocket level definition a unique identity (e.g., `PocketWorld.Inventory.Inspection`). The bridge subsystem uses this tag to request, track, and retrieve specific pocket worlds.
+**What it adds:** A single `FGameplayTag` property, `IdentifingGameplayTag`, that gives each pocket level definition a unique identity (e.g., `PocketWorld.Inventory.Inspection`). The bridge subsystem uses this tag to request, track, and retrieve specific pocket worlds.
 
 **Properties:**
 
@@ -86,7 +86,7 @@ While the Data Asset is the _blueprint_, `UPocketLevelInstance` is the _living i
 FPocketLevelInstanceEvent OnReadyEvent;
 ```
 
-Systems like `UInventoryRepresentationWidget` and `UItemIconGeneratorComponent` listen to this event to know when it is safe to interact with actors inside the pocket level.
+Systems like `UItemRepresentationWidget` and `UItemIconGeneratorComponent` listen to this event to know when it is safe to interact with actors inside the pocket level.
 
 ***
 
@@ -98,7 +98,10 @@ This `UWorldSubsystem` is the primary interface for the entire Item Inspection S
 
 The bridge subsystem offers two spawning strategies depending on whether you need a **shared** or **unique** instance:
 
-<table><thead><tr><th width="278.3333740234375">Method</th><th>When to Use</th><th>Tracking</th></tr></thead><tbody><tr><td><code>SpawnPocketLevel(Player, Definition, Location)</code></td><td>Shared/singleton pocket worlds (e.g., icon generator)</td><td>By <code>FGameplayTag</code></td></tr><tr><td><code>SpawnPocketLevelWithUniqueID(Player, Definition, Location)</code></td><td>Independent instances (e.g., each inspection widget gets its own)</td><td>By unique <code>int32</code> ID</td></tr></tbody></table>
+| Method                                                       | When to Use                                                       | Tracking             |
+| ------------------------------------------------------------ | ----------------------------------------------------------------- | -------------------- |
+| `SpawnPocketLevel(Player, Definition, Location)`             | Shared/singleton pocket worlds (e.g., icon generator)             | By `FGameplayTag`    |
+| `SpawnPocketLevelWithUniqueID(Player, Definition, Location)` | Independent instances (e.g., each inspection widget gets its own) | By unique `int32` ID |
 
 {% hint style="warning" %}
 `SpawnPocketLevel` may reuse an existing instance if one with the same tag already exists for the player. `SpawnPocketLevelWithUniqueID` always creates a new, independent instance, use this when multiple inspection windows can be open simultaneously.
@@ -170,4 +173,4 @@ Call `UPocketLevelBridgeSubsystem::DestroyPocketLevelInstance` when the pocket w
 {% endstep %}
 {% endstepper %}
 
-This layered approach, definition, instance, subsystem, keeps pocket level management organized and predictable, even when multiple inspection windows and an icon generator are all running at the same time.
+This layered approach,definition, instance, subsystem, keeps pocket level management organized and predictable, even when multiple inspection windows and an icon generator are all running at the same time.

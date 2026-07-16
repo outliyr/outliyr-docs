@@ -4,7 +4,7 @@
 
 A **consumable medkit** as the worked example, pick it up, click "Use" in the inventory, restore health, stack decrements.
 
-The bigger goal: understand **items as a composition of fragments**. The medkit is one specific composition (Inventory Icon + Pickup + Consume); other items use different combinations. Once you see the pattern, you compose each item exactly to its role rather than trying to fit a one-size template.
+The bigger goal: understand **items as a composition of fragments**. The medkit is one specific composition (Item Details + Icon + Pickup + Consume); other items use different combinations. Once you see the pattern, you compose each item exactly to its role rather than trying to fit a one-size template.
 
 By the end you'll know:
 
@@ -25,7 +25,7 @@ An **Item Definition** is a thin data record. Almost every behaviour comes from 
 
 You build an item by deciding what it _does_, then adding the fragments that match. There's no "copy this folder" template that fits every case, no two items have quite the same shape. A bandage and a medkit might share most of their fragments; a medkit and a backpack share almost none. Pick from the fragment menu below for each item you build.
 
-The only thing every inventoryable item must have is the **Inventory Icon Fragment**, without it, the item can't appear in the inventory UI. Everything else is optional and additive.
+The one fragment nearly every inventoryable item carries is the **Item Details Fragment**, it supplies the name, weight, and stack rules that containers and the inventory UI run on. Pair it with the **Icon Fragment** so the item has a picture. Everything else is optional and additive.
 
 ***
 
@@ -35,7 +35,8 @@ Add fragments to the Item Definition's `Fragments` array, one per capability. Mo
 
 | Fragment                               | What it adds                                                                                                                        | When to add it                                                                                                                                                                       | Deep dive                                                                                                                         |
 | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| **`InventoryFragment_InventoryIcon`**  | Inventory icon, weight, max stack, background. The item appears in the inventory UI.                                                | Required for **any** item in an inventory.                                                                                                                                           | [Inventory Icon Fragment](../../base-lyra-modified/items/item-fragments-in-depth/inventory-icon-fragment.md)                      |
+| **`InventoryFragment_ItemDetails`**    | Name, description, weight, max stack size, and the icon background colour. The data containers and the inventory UI run on.         | For **any** item players see in an inventory                                                                                                                                         | [Item Details Fragment](../../base-lyra-modified/items/item-fragments-in-depth/inventory-icon-fragment.md)                        |
+| **`InventoryFragment_Icon`**           | The item's picture, either an authored texture or a runtime render of the item's mesh.                                              | For any item that shows an icon in the UI.                                                                                                                                           | [Icon Fragment](../../base-lyra-modified/items/item-fragments-in-depth/icon-fragment.md)                                          |
 | **`InventoryFragment_PickupItem`**     | World-droppable; the item can be dropped from the inventory and picked up off the ground.                                           | Optional. Add if the item should leave the inventory.                                                                                                                                | [Pickup Item Fragment](../../base-lyra-modified/items/item-fragments-in-depth/pickup-item-fragment.md)                            |
 | **`InventoryFragment_Consume`**        | A "Use" action in the item's context menu, wired to a Gameplay Ability that runs on use. The item is consumable.                    | For consumables, medkits, bandages, ammo packs, food, throwables triggered from the inventory.                                                                                       | [Consume Fragment](../../base-lyra-modified/items/item-fragments-in-depth/consumable-items/)                                      |
 | **`InventoryFragment_QuickBarIcon`**   | Quickbar slot icon (separate from the inventory icon). The item displays in the quickbar when slotted.                              | For items that can be bound to a quickbar (held weapons, hotbar consumables).                                                                                                        | [Quick Bar Component](../../base-lyra-modified/equipment/quick-bar-component.md)                                                  |
@@ -48,7 +49,7 @@ Add fragments to the Item Definition's `Fragments` array, one per capability. Mo
 | **`InventoryFragment_Tetris`**         | Grid shape, the polyomino footprint the item occupies in a Tetris-style inventory.                                                  | When using the Tetris Inventory plugin.                                                                                                                                              | [InventoryFragment\_Tetris](../../core-modules/tetris-inventory/item-fragments-tetris-specific/inventoryfragment_tetris.md)       |
 | **`InventoryFragment_Container`**      | The item is itself a container, it holds other items inside it (a backpack, a briefcase, a pouch).                                  | For nested-inventory items.                                                                                                                                                          | [InventoryFragment\_Container](../../core-modules/tetris-inventory/item-fragments-tetris-specific/inventoryfragment_container.md) |
 | **`InventoryFragment_CraftRecipe`**    | The item is a crafting recipe / blueprint.                                                                                          | For craftable items in the Tetris plugin.                                                                                                                                            | [InventoryFragment\_CraftRecipe](../../core-modules/tetris-inventory/item-fragments-tetris-specific/inventoryfragment_combine.md) |
-| **`InventoryFragment_Inspect`**        | "Inspect" action that opens a 3D inspection view of the item.                                                                       | For items the player should be able to examine in 3D.                                                                                                                                | [InventoryFragment\_Inspect](../../core-modules/tetris-inventory/item-fragments-tetris-specific/inventoryfragment_inspect.md)     |
+| **`InventoryFragment_Inspect`**        | "Inspect" action that opens a 3D inspection view of the item.                                                                       | For items the player should be able to examine in 3D.                                                                                                                                | [InventoryFragment\_Inspect](../../base-lyra-modified/items/item-fragments-in-depth/inspect-fragment.md)                          |
 
 If nothing in the menu fits a behaviour you need, write your own fragment, see [Creating Custom Fragments](../../base-lyra-modified/items/items-and-fragments/creating-custom-fragments.md). The fragment system is open and additive.
 
@@ -56,25 +57,25 @@ If nothing in the menu fits a behaviour you need, write your own fragment, see [
 
 ## Create A New Item
 
-Five steps. Goal: a player picks up `ID_Medkit`, presses **Use** in the inventory, gains 50 HP, and the stack decrements by one. When the stack reaches zero, the item is removed.
+Five steps. Goal: a player picks up `ID_Medkit`, presses **Use** in the inventory, gains 40 HP, and the stack decrements by one. When the stack reaches zero, the item is removed.
 
 {% stepper %}
 {% step %}
-#### Item Definition + Inventory Icon Fragment
+#### Item Definition + Item Details and Icon Fragments
 
-Create a new **Lyra Inventory Item Definition** asset (e.g. `ID_Medkit`). On the **Fragments** array, add an **`InventoryFragment_InventoryIcon`**.
+Create a new **Lyra Inventory Item Definition** asset (e.g. `ID_Medkit`). On the **Fragments** array, add an **`InventoryFragment_ItemDetails`** and configure it:
 
-Configure it:
-
-* **Inventory Icon** — the icon texture shown in the inventory grid
-* **Display Name** — "Medkit"
-* **Weight** — How heavy the medkit is
+* **Name** — "Medkit"
+* **Description** — the tooltip text
+* **Weight** — how heavy one medkit is
 * **Max Stack Size** — how many medkits stack into one slot (e.g. 5)
-* **Background Color / Frame -** The background color of the icon
+* **Background Colour** — the background behind the icon in the inventory grid
 
-This is the fragment that makes the item _real_ from the inventory's perspective. Skip this and the medkit can technically exist as a data asset, but it can't be added to an inventory or shown in the UI.
+Then add an **`InventoryFragment_Icon`** and point **Static Icon** at the medkit's icon texture. (The fragment can alternatively render the icon from a mesh at runtime; a static texture is the simple path.)
 
-<figure><img src="../../.gitbook/assets/image (310).png" alt=""><figcaption></figcaption></figure>
+These two fragments make the item _real_ from the inventory's perspective. Skip them and the medkit can technically exist as a data asset, but it won't stack, won't contribute to weight or item counts, and has nothing to show in the UI.
+
+<figure><img src="../../.gitbook/assets/image (338).png" alt=""><figcaption></figcaption></figure>
 {% endstep %}
 
 {% step %}
@@ -146,14 +147,14 @@ If the Use button doesn't appear, the Consume Fragment isn't pointing at the rig
 
 ## Other item shapes
 
-The medkit's composition is `InventoryIcon` + `Pickup` + `Consume`. Other items use different combinations of the same fragment menu:
+The medkit's composition is `ItemDetails` + `Icon` + `Pickup` + `Consume`. Other items use different combinations of the same fragment menu (each shape below also carries `ItemDetails` and `Icon`, they're left out of the lists for brevity):
 
-* **Crafting material** — `InventoryIcon` + `Category`. Exists in the inventory; gets carried; gets spent by a recipe somewhere else. No pickup if granted-only, no consume. Examples: scrap metal, wire.
-* **Container item** — `InventoryIcon` + `Container` + `Pickup`. The container fragment turns the item itself into an inventory that holds nested items. Examples: `Pouch`, `SecureBriefcase`, `LargeBackpack` in `Plugins/GameFeatures/TetrisInventory/Content/Demo/Items/`.
-* **Item with attachment slots** — `InventoryIcon` + `Attachment` + `Pickup`. The Attachment Fragment defines what slots the item exposes, which item definitions can attach to each slot, and how each attached item behaves while attached. Attachments themselves are just normal items, they don't need a special fragment. Example: `KineticShield` in `Plugins/GameFeatures/TetrisInventory/Content/Demo/Items/` exposes a slot that accepts `PowerCrystal`.
-* **Equipment item** — `InventoryIcon` + `EquippableItem` plus whatever else fits. The Equipment Definition handles the rest; see the [Custom Equipment Recipe](custom-equipment.md). Examples: rocket shoes, vortex armour, all weapons.
+* **Crafting material** — `Category`. Exists in the inventory; gets carried; gets spent by a recipe somewhere else. No pickup if granted-only, no consume. Examples: scrap metal, wire.
+* **Container item** — `Container` + `Pickup`. The container fragment turns the item itself into an inventory that holds nested items. Examples: `SecureBriefcase`, `LargeBackpack` in `Plugins/GameFeatures/TetrisInventory/Content/Demo/Items/`.
+* **Item with attachment slots** — `Attachment` + `Pickup`. The Attachment Fragment defines what slots the item exposes, which item definitions can attach to each slot, and how each attached item behaves while attached. Attachments themselves are just normal items, they don't need a special fragment. Example: `KineticShield` in `Plugins/GameFeatures/TetrisInventory/Content/Demo/Items/` exposes a slot that accepts `PowerCrystal`.
+* **Equipment item** — `EquippableItem` plus whatever else fits. The Equipment Definition handles the rest; see the [Custom Equipment Recipe](custom-equipment.md). Examples: rocket shoes, vortex armour, all weapons.
 * **Inspectable item** — your other fragments _plus_ `Inspect`, for a 3D inspection view. Layers on top of any other shape.
-* **Gun** — `InventoryIcon` + `EquippableItem` + `Gun` + `ReticleConfig` + `QuickBarIcon` + `Pickup`. The most fragment-heavy shape; see the [Custom Weapon Recipe](custom-weapon.md).
+* **Gun** — `EquippableItem` + `Gun` + `ReticleConfig` + `QuickBarIcon` + `Pickup`. The most fragment-heavy shape; see the [Custom Weapon Recipe](custom-weapon.md).
 
 **The pattern.** Every item is its own composition of the same fragment menu, there's no fixed taxonomy of item types. Don't ask "what _kind_ of item is this?" Ask "what capabilities does it need?"
 
@@ -161,7 +162,7 @@ The medkit's composition is `InventoryIcon` + `Pickup` + `Consume`. Other items 
 
 ## Common pitfalls
 
-* **Forgetting the Inventory Icon Fragment.** The most common silent failure. The item exists as a data asset, can be granted, can be referenced, but never appears in any inventory UI. Every inventoryable item needs this fragment.
+* **Forgetting the Item Details Fragment.** The most common silent failure. The item exists as a data asset, can be granted, can be referenced, but it won't stack, won't count toward weight or item limits, and the inventory UI has no name or stack data to display. Nearly every inventoryable item needs this fragment, plus the Icon Fragment for its picture.
 * **Wrong fragment for the capability.** Each fragment in the menu provides one specific behaviour. Pick the one that names the capability you're after. If nothing in the menu fits, write a custom fragment rather than coercing an existing one into a role it wasn't designed for.
 * **Authoring items inside framework plugins.** Always work inside _your own_ Game Feature Plugin. Items in `Source/LyraGame/...`, `ShooterBase`, `TetrisInventory`, or any other framework plugin are framework code; your changes will fight future updates.
 

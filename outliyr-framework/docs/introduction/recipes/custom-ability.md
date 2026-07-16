@@ -4,7 +4,7 @@
 
 Two worked examples teaching the two ability authoring patterns:
 
-1. **Sniper ADS**, the **subclass-and-configure** pattern. Subclass the existing `GA_ADS` ability and set two property values. No graph edits, no overrides, the parent already wires the lifecycle. The textbook case for parameterisable variants where only data changes between siblings.
+1. **Sniper ADS**, the **subclass-and-configure** pattern. Subclass the existing `GA_ADS` ability, set a handful of Class Defaults, and implement the scope view in the weapon's reticle widget. No graph edits to the ability, no overrides, the parent already wires the lifecycle. The textbook case for parameterisable variants where only data changes between siblings.
 2. **Stim Injection,** where an ability is created **from-scratch**. Subclass `ULyraGameplayAbility` directly, author the `Activate` graph, apply a buff Gameplay Effect, wire a custom input, and call `EndAbility` when the buff duration expires. The textbook case for genuinely new behaviour no parent ability covers.
 
 Together they cover the two patterns: subclass when only properties vary, build from scratch when the behaviour is new. The Sniper ADS recipe pairs with the sniper variant from the [Custom Weapon Recipe](custom-weapon.md); Stim Injection stands alone as a teaching example for the lifecycle (Activate → work → `EndAbility`) you'll use any time the framework doesn't already have a parent for what you're building.
@@ -12,15 +12,13 @@ Together they cover the two patterns: subclass when only properties vary, build 
 By the end you'll know:
 
 * When to subclass an existing ability vs. build one from scratch
-* How to use a parent ability's Class Defaults properties to vary behaviour without writing code (Sniper ADS)
+* How to use a parent ability's Class Defaults properties to vary behaviour without touching its graph (Sniper ADS)
 * The full Activate → work → `EndAbility` lifecycle for from-scratch abilities, including cooldowns and duration-based effects (Stim Injection)
 * The common pitfalls that break abilities in subtle, multiplayer-only ways
 
 {% hint style="info" %}
-This recipe assumes you've completed the [Quick Start Guide](../quick-start-guide.md), have a [Game Feature Plugin](../installing-and-setup.md) of your own, and have read [Abilities](../../base-lyra-modified/gas/abilities.md) and [Ability Sets](../../base-lyra-modified/gas/abilities.md) at a glance.
+This recipe assumes you've completed the [Quick Start Guide](../quick-start-guide.md), have a [Game Feature Plugin](../installing-and-setup.md) of your own, and have read [Abilities](../../base-lyra-modified/gas/abilities.md) and [Ability Sets](../../base-lyra-modified/gas/ability-sets.md) at a glance.
 {% endhint %}
-
-***
 
 ## First: see what already exists
 
@@ -43,8 +41,6 @@ Once you know what's there, you have three approaches:
 
 **The default for genuinely new behaviour is standalone.** Subclassing is the right tool only when the variation is parameterisable.
 
-***
-
 ## The shape of an ability
 
 A Gameplay Ability is a self-contained chunk of "something the pawn can do." At runtime it has a small lifecycle:
@@ -58,42 +54,53 @@ Abilities are flexible, there are no strict constraints on what you put in C++ v
 
 References: [Abilities](../../base-lyra-modified/gas/abilities.md), [Ability Sets](../../base-lyra-modified/gas/ability-sets.md), [Gameplay Effects](../../base-lyra-modified/gas/gameplay-effects.md), [Gameplay Cues](../../base-lyra-modified/gas/gameplay-cues.md).
 
-***
-
 ## Worked Example #1 — Sniper ADS (subclass and configure)
 
-You have a sniper rifle from the weapon recipe. It currently uses the generic `GA_ADS` ability granted by the default rifle's ability set, pulls up a slight FOV zoom, no scope view. We're going to give it a proper scope.
+You have a sniper rifle from the weapon recipe. Aiming with it runs the framework's generic `GA_ADS`, a slight FOV zoom and a walk-speed reduction, no scope view. We're going to give it a proper scope.
 
-The asset graph for this is small:
+Three things to know about how the generic ADS works, because the sniper version plugs into all three:
+
+* **`GA_ADS` is granted at character level, not per weapon.** The hero Ability Set your experience uses grants it to every player, bound to `InputTag.Weapon.ADS`. Your sniper variant is granted per weapon on the _same_ input tag, and declares block and cancel tags so only one of the two runs.
+* **The ability handles camera and movement.** On activate it pushes the camera mode from its **Third Person ADS** property, saves the character's walk speed, and multiplies it by **ADS Multiplier**. On end, when the aim input is released, it reverses both.
+* **The scope visuals belong to the weapon's reticle widget.** While ADS is active the ability broadcasts a `Gameplay.Message.ADS` gameplay message. Every shipped reticle widget already subscribes to it and routes it into a custom `ADS` event that the standard weapons leave empty. The sniper's reticle implements that event to swap the crosshair for a scope overlay.
+
+The asset graph:
 
 ```
 GA_ADS_Sniper (Gameplay Ability — subclass of GA_ADS, no graph edits)
  └─ Class Defaults:
-      ├─ Camera Mode ........... → CM_SniperScope
-      ├─ Widget ................ → W_Scope_Sniper
-      └─ Extension Point ....... → the HUD slot tag the scope mounts into
+      ├─ Third Person ADS ............. → CM_SniperScope
+      ├─ ADS Multiplier ............... → optional, walk speed while scoped
+      ├─ Block Abilities with Tag ..... → Ability.Type.Action.ADS
+      └─ Cancel Abilities with Tag .... → Ability.Type.Action.ADS
 
-WID_Rifle_Sniper (Equipment Definition from the weapon recipe)
- └─ Ability Set To Grant — replace default ADS with GA_ADS_Sniper
+CM_SniperScope (Camera Mode — subclass of CM_ThirdPersonADS)
+
+W_Reticle_Sniper (reticle widget — copy of W_Reticle_Rifle)
+ └─ implements its ADS event: show scope overlay while aiming
+
+Ability Set used by the sniper's Equipment Definition
+ └─ add GA_ADS_Sniper, input tag InputTag.Weapon.ADS
+
+ID_Rifle_Sniper (Item Definition from the weapon recipe)
+ └─ ReticleConfig fragment → W_Reticle_Sniper
 ```
-
-The parent `GA_ADS` already pushes the camera mode and shows the widget on activate, and reverses both on end. Your subclass exists only to hold the per-weapon property values.
 
 {% stepper %}
 {% step %}
 ### Subclass `GA_ADS`
 
-Create a new Gameplay Ability blueprint (or C++ class). **Subclass `GA_ADS`** at `Plugins/GameFeatures/ShooterBase/Content/Input/Abilities/GA_ADS`. Name it `GA_ADS_Sniper` and place it in your Game Feature Plugin's content folder.
-
-Subclassing `GA_ADS` gives you all the ADS plumbing for free, input handling, blocking-tag setup, replication policy, end-on-input-release, _and_ the camera-mode push and widget-mount behaviour. You don't override anything; your subclass exists only to hold the sniper-specific property values you'll set in Step 4.
+Create a new Gameplay Ability blueprint. **Subclass `GA_ADS`** at `Plugins/GameFeatures/ShooterBase/Content/Input/Abilities/GA_ADS`. Name it `GA_ADS_Sniper` and place it in your Game Feature Plugin's content folder.
 
 <figure><img src="../../.gitbook/assets/image (282).png" alt=""><figcaption></figcaption></figure>
+
+Subclassing `GA_ADS` gives you all the ADS plumbing for free: the camera-mode push, the walk-speed reduction and restore, the ADS gameplay message the UI reacts to, and end-on-input-release. You don't override anything; your subclass exists only to hold the sniper-specific property values you'll set in Step 3.
 {% endstep %}
 
 {% step %}
 ### Custom camera mode for the scope view
 
-The third-person sniper scope is mostly an illusion: the camera stays roughly where third-person normally puts it, the FOV drops dramatically (the zoom), and the visible "scope", the round black housing, crosshair, mil-dots, windage indicator, is the UI widget you'll build in Step 3. The camera mode handles the zoom; the widget handles everything that looks like a scope.
+The third-person sniper scope is mostly an illusion: the camera stays roughly where third-person normally puts it, the FOV drops dramatically (the zoom), and the visible "scope", the round black housing, crosshair, mil-dots, windage indicator, is the reticle overlay you'll build in Step 4. The camera mode handles the zoom; the reticle widget handles everything that looks like a scope.
 
 Create a new camera mode asset (subclass `CM_ThirdPersonADS`). Name it `CM_SniperScope`. Configure on the Class Defaults:
 
@@ -112,31 +119,41 @@ Reference: [Camera Modes](../../base-lyra-modified/camera/camera-modes.md).
 {% endstep %}
 
 {% step %}
-### Scope widget (UMG)
+### Configure `GA_ADS_Sniper`'s Class Defaults
 
-Create a UMG widget, `W_Scope_Sniper`, that draws the scope reticle full-screen. Black borders top/bottom/sides for the scope-housing effect; crosshair / mil-dots in the centre.&#x20;
+Open `GA_ADS_Sniper` and set four things in the Class Defaults panel:
 
-If you want the on-screen ammo counter to remain visible while scoped, layer it inside this widget; if not, leave it out and the player only sees the scope while ADS is active.
+* **Third Person ADS** → `CM_SniperScope` (from Step 2). The parent pushes this on activate and clears it on end. If your project also runs a first-person viewpoint, set **First Person ADS** to a matching first-person camera mode.
+* **ADS Multiplier** → optional. The parent multiplies the character's walk speed by this while aiming and restores it on end. Snipers usually want a lower value than the default 0.5.
+* **Block Abilities with Tag** → `Ability.Type.Action.ADS`.
+* **Cancel Abilities with Tag** → `Ability.Type.Action.ADS`.
+
+The last two matter. The generic `GA_ADS` is still granted to the character and listens on the same input tag, so pressing aim while the sniper is held asks _both_ abilities to activate. `Ability.Type.Action.ADS` is the tag every ADS ability carries (your subclass inherits it), and the pair of tag settings makes the sniper version win regardless of activation order: cancel ends the generic one if it got in first, block stops it activating afterwards. Skip these and both abilities run at once, each saving and restoring walk speed over the top of the other, and the player comes out of aim stuck at ADS speed.
+
+Save and compile. That's the whole ability.
 {% endstep %}
 
 {% step %}
-### Configure `GA_ADS_Sniper`'s Class Defaults
+### Scope overlay in the sniper's reticle widget
 
-Open `GA_ADS_Sniper` and look at its Class Defaults panel. The parent `GA_ADS` exposes the relevant ADS settings as properties, you don't override `Activate` or `EndAbility`; the parent already pushes the camera mode and mounts the widget on activate, and reverses both on end, driven by these values:
+The scope view is part of the weapon's reticle widget, the same widget that draws the hip-fire crosshair while the weapon is held. Copy `W_Reticle_Rifle` from `Plugins/GameFeatures/ShooterBase/Content/Weapons/Guns/Rifle` into your plugin and name it `W_Reticle_Sniper`.
 
-* **Camera Mode** → `CM_SniperScope` (from Step 2). The parent pushes this on activate, pops on end.
-* **Widget** → `W_Scope_Sniper` (from Step 3). The parent mounts this while the ability is active and removes it when the ability ends.
-* **Extension Point** → the gameplay tag for the HUD slot where the scope should mount. Match this to a slot your HUD declares for full-screen ADS overlays.
+The copy already does the plumbing: on Construct it listens for the `Gameplay.Message.ADS` gameplay message and routes it into a custom **ADS** event with a boolean `On` parameter, which the rifle leaves empty. Build your scope as a new full-screen layer in the designer, black borders for the scope housing, crosshair and mil-dots in the centre, collapsed by default, then implement the ADS event: when `On` is true, show the scope layer and hide the hip-fire crosshair; when false, reverse it. If you want the ammo counter visible while scoped, layer it inside the scope view too.
 
-Save and compile. That's the customization.
+Finally, open `ID_Rifle_Sniper` (the sniper's Item Definition from the weapon recipe) and point the **ReticleConfig fragment** at `W_Reticle_Sniper`. Reticle widgets are shown while the weapon is held and removed when it's put away, which is why the scope layer starts collapsed and only appears when the ADS message says so.
+
+Reference: [Reticle Fragment](../../base-lyra-modified/weapons/reticle-fragment.md).
 {% endstep %}
 
 {% step %}
 ### Wire `GA_ADS_Sniper` into the sniper's Ability Set
 
-Open the Ability Set used by `WID_Rifle_Sniper` (the equipment definition for the sniper variant from the [weapon recipe](custom-weapon.md), or your own custom weapon equipment definition). Replace the default `GA_ADS` entry with `GA_ADS_Sniper`. Save.
+Open the Ability Set used by the sniper's Equipment Definition (from the [weapon recipe](custom-weapon.md), or your own custom weapon). Add an entry:
 
-Now whenever the player has the sniper equipped, holding the ADS input runs the sniper-specific ability. Other weapons keep using the generic ADS, that separation is _why_ the abilities are granted through the equipment definition rather than baked into the Pawn Data.
+* **Ability** → `GA_ADS_Sniper`
+* **Input tag** → `InputTag.Weapon.ADS`
+
+Now holding aim with the sniper equipped runs the sniper ability, and the block and cancel tags from Step 3 keep the character-level `GA_ADS` out of the way. Every other weapon keeps the generic ADS, the sniper behaviour travels with the sniper.
 
 References: [Defining Equippable Items](../../base-lyra-modified/equipment/defining-equippable-items.md), [Ability Sets](../../base-lyra-modified/gas/ability-sets.md).
 {% endstep %}
@@ -145,15 +162,14 @@ References: [Defining Equippable Items](../../base-lyra-modified/equipment/defin
 ### Verify
 
 1. Equip the sniper variant in PIE.
-2. Hold ADS input → camera mode blends to the scope view, scope widget appears, sway is dampened.
-3. Release ADS input → camera blends back, scope widget hides, normal HUD restored.
-4. Take a long-range shot while scoped, confirm the bullet drop you tuned in the [weapon recipe](custom-weapon.md) is visible at range.
+2. Hold the aim input → camera blends to the scope FOV, the scope overlay appears, walk speed drops.
+3. Release → camera blends back, the overlay hides, the hip-fire crosshair returns, and walk speed is back to normal. The walk-speed restore is the canary for the block and cancel tags: if you come out of aim still moving at ADS speed, both ADS abilities ran at once, recheck Step 3.
+4. Run `showdebug abilitysystem` and aim: `GA_ADS_Sniper` should go active and the generic `GA_ADS` should stay inactive.
+5. Take a long-range shot while scoped, confirm the bullet drop you tuned in the [Weapon Recipe](custom-weapon.md) is visible at range.
 
-If the camera mode doesn't push, check the Camera Mode property in Step 4, the reference may be unset. If the widget doesn't mount, check the Widget reference and the Extension Point tag in Step 4: the tag must exactly match a slot your HUD declares.
+If the camera doesn't zoom, the Third Person ADS property from Step 3 may be unset. If the scope overlay never appears, check that the ReticleConfig fragment points at `W_Reticle_Sniper` and that its ADS event toggles the right layers.
 {% endstep %}
 {% endstepper %}
-
-***
 
 ## Worked Example #2 — Stim Injection (from-scratch)
 
@@ -171,8 +187,8 @@ Create a new Gameplay Ability blueprint. **Subclass `ULyraGameplayAbility`**, th
 
 Configure on Class Defaults:
 
-* **Replication Policy** — `Do Not Replicate`, the ability does not to replicate. The ability will run once on the client and then on the server separately.
-* **Net Execution Policy** — `Local Predicted`  for input-responsive self-buffs like this. The buff effect should feel instant on the local client
+* **Replication Policy** — `Do Not Replicate`, the ability does not replicate. The ability will run once on the client and then on the server separately.
+* **Net Execution Policy** — `Local Predicted` for input-responsive self-buffs like this. The buff effect should feel instant on the local client
 * **Ability Tags** — a unique tag identifying this ability (e.g. `Ability.StimInjection`).
 * **Activation Owned Tags** — tags applied to the player while the ability is active (e.g. `Status.Buff.StimActive`). Useful if other systems (animation, audio, FX) need to know the player is in the stim state. The framework adds and removes these automatically.
 * **Cancel / Block Abilities With Tag** — usually leave empty for a self-buff.
@@ -231,6 +247,8 @@ This is the meaty step. In `GA_StimInjection`'s `ActivateAbility` graph:
 
 The `Status.Buff.StimActive` tag from Activation Owned Tags in Step 1 is automatically applied when `Activate` runs and removed when `EndAbility` is called, no manual tag management needed.
 
+
+
 <figure><img src="../../.gitbook/assets/image (315).png" alt=""><figcaption></figcaption></figure>
 {% endstep %}
 
@@ -259,8 +277,6 @@ Where the Ability Set lives depends on whether the ability is character-level or
 {% endstep %}
 {% endstepper %}
 
-***
-
 ## Common pitfalls
 
 These are the four ways abilities break that you'll see most often. Three of the four work in a single-player PIE session and only manifest in multiplayer, a particularly cruel failure mode.
@@ -269,8 +285,7 @@ These are the four ways abilities break that you'll see most often. Three of the
 * **Wrong trigger tag / input tag.** The ability has a tag that the input system uses to find it. If the tag on the ability and the tag in the input mapping don't match _exactly_, the ability is granted but never activates, and there's no error. If your ability isn't firing, this is the first thing to check.
 * **Wrong blocking / cancellation tags.** Abilities cancel each other through tag relationships. A misconfigured blocking tag means your ability cancels something it shouldn't (the player can't fire while crouched), or _is_ cancelled by something it shouldn't be (your ADS ends the moment another ability starts). Set blocking tags only for genuine conflicts.
 * **Wrong replication policy.** `Local Predicted` for client-responsiveness, `Server Initiated` for server-authority, `Server Only` for server-only logic. Pick the wrong one and the ability works in PIE-as-listen-server but fails in dedicated-server or PIE-as-client.
-
-***
+* **Two abilities on one input tag.** Granting a variant ability on an input tag that a character-level ability already listens on means a single press activates both. For abilities that save and restore state that goes subtly wrong: each activation saves the other's modified value as its "default," and the restore puts back the wrong one. The fix is the block and cancel tag pair from the Sniper ADS example, so only one of the two ever runs. If a value set by an ability sticks around after the ability ends, count how many abilities went active in `showdebug abilitysystem` before debugging the graph.
 
 ## Debug helpers
 
@@ -281,18 +296,14 @@ When an ability misbehaves, two console commands get you 80% of the way:
 
 Run both at once in PIE. Together they answer: _is the ability granted, is the input reaching it, is something cancelling it?_
 
-***
-
 ## More ability ideas
 
-If you want to author another ability after these two, here are short sketches for a few that don't ship with the framework. Like Active Scan, these are genuinely new behaviours, so they go in standalone abilities subclassing `ULyraGameplayAbility` directly. (Copying an existing ability as a starting template is a fine shortcut where one is close enough.)
+If you want to author another ability after these two, here are short sketches for a few that don't ship with the framework. These are genuinely new behaviours, so they go in standalone abilities subclassing `ULyraGameplayAbility` directly. (Copying an existing ability as a starting template is a fine shortcut where one is close enough.)
 
 * **Self-Revive.** For BR / extraction modes. Player goes "down", holds an input for N seconds, recovers. Touches: down-state tag check, channelled-cast pattern (cancellable on damage / movement), cooldown GE, animation montage, optional UI revive bar.
 * **Ground Slam.** Less typical for a shooter, but useful as a movement ultimate. Leap up, slam down, AoE damage on impact. Touches: movement override during the leap, AoE damage GE, on-impact cue, cooldown GE.
 
-For all three, [Abilities](../../base-lyra-modified/gas/abilities.md) is the reference, and [Gameplay Effects](../../base-lyra-modified/gas/gameplay-effects.md) covers cooldown / damage GE patterns.
-
-***
+For both, [Abilities](../../base-lyra-modified/gas/abilities.md) is the reference, and [Gameplay Effects](../../base-lyra-modified/gas/gameplay-effects.md) covers cooldown / damage GE patterns.
 
 ## How to extend further
 
@@ -301,4 +312,4 @@ For all three, [Abilities](../../base-lyra-modified/gas/abilities.md) is the ref
 * **Cooldowns and costs.** [Gameplay Effects](../../base-lyra-modified/gas/gameplay-effects.md) is also where you author cooldown and resource-cost effects that the ability checks before activating.
 * **Custom ability-system attributes.** If your ability needs to read or modify a stat that doesn't exist yet (charge level, ability charges), see [Attribute Sets](../../base-lyra-modified/gas/attribute-sets.md).
 
-When you're ready for a different system, head back to the [Recipes](./).
+When you're ready for a different system, head back to the [Recipes](file:///).

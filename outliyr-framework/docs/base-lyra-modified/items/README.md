@@ -70,7 +70,8 @@ The design adheres to several key principles:
 ULyraInventoryItemDefinition (Blueprint Class - Static Template)
 ├── DisplayName
 ├── Fragments[] (Instanced UObjects)
-│   ├── UInventoryFragment_InventoryIcon
+│   ├── UInventoryFragment_ItemDetails
+│   ├── UInventoryFragment_Icon
 │   ├── UInventoryFragment_Equippable
 │   ├── UInventoryFragment_Consumable
 │   └── UInventoryFragment_Attachment
@@ -111,6 +112,6 @@ All containers implement `ILyraItemContainerInterface`. For container-specific d
 * [Modularity: Fragment Injector](modularity-fragment-injector.md)\
   Adding functionality via plugins using the Fragment Injector system.
 * [Item Fragments In-Depth](item-fragments-in-depth/)\
-  Detailed explanations and usage for specific fragments (Attachment, Consume, Icon, Category, Pickup, SetStats).
+  Detailed explanations and usage for specific fragments (Attachment, Consume, Icon, Category, Pickup, SetStats, etc).
 
 ***

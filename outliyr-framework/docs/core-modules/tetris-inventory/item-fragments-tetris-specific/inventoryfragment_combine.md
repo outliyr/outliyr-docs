@@ -102,7 +102,7 @@ If `AmountToCreate` is 0, returns `false`,  not enough ingredients.
 {% step %}
 #### Validate the Result Item
 
-Confirms that the `ResultingItemDefinition` has both `InventoryFragment_InventoryIcon` and `InventoryFragment_Tetris` (required for grid placement). Returns `false` if either is missing.
+Confirms that the `ResultingItemDefinition` has both `InventoryFragment_ItemDetails` and `InventoryFragment_Tetris` (required for grid placement). Returns `false` if either is missing.
 {% endstep %}
 
 {% step %}

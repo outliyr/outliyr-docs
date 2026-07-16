@@ -71,7 +71,7 @@ The worker running on a dedicated background thread. It:
 The time machine. When the projectile thread needs to check for collisions, it doesn't trace against current world state, it traces against where targets _were_ when the shooter fired. This ensures fair hit detection despite network latency.
 
 {% hint style="info" %}
-Read the [lag compensation manager](../lag-compensation/) for more indepth details
+Read the [lag compensation manager](../../lag-compensation/) for more indepth details
 {% endhint %}
 
 ***
@@ -218,7 +218,7 @@ Problem: Without compensation, a player with 100ms ping would have to lead targe
 
 Solution: Store target positions over time. When tracing, rewind to where targets were when the shooter fired.
 
-Trade-off: Requires the [Lag Compensation system](../lag-compensation/) to be active and configured. Adds computational cost for historical lookups.
+Trade-off: Requires the [Lag Compensation system](../../lag-compensation/) to be active and configured. Adds computational cost for historical lookups.
 
 ***
 

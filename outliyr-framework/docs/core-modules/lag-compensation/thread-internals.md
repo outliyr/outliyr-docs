@@ -1,4 +1,4 @@
-# Internals
+# Thread Internals
 
 The lag compensation thread handles all heavy computation: maintaining history, interpolating poses, expanding shapes, and performing collision tests. This page covers the internal systems, required reading for debugging hit detection issues or understanding system behavior.
 
@@ -8,10 +8,10 @@ The lag compensation thread handles all heavy computation: maintaining history, 
 
 #### Storage Structure
 
-Each registered source maintains a time-ordered doubly-linked list of historical poses:
+Each registered source maintains a time-ordered doubly-linked list of trail history:
 
 ```plaintext
-ActorHistoryData: Map<ULagCompensationSource*, LinkedList<FLagCompensationData>>
+ActorHistoryData: Map<HitboxSource, LinkedList<FLagCompensationData>>
 
 FLagCompensationData:
     Timestamp: double              // World time when captured
@@ -22,7 +22,7 @@ FLagCompensationData:
     StaticComponentToWorld: FTransform  // Component transform (static)
 ```
 
-New snapshots are prepended to the list head, creating a chronological buffer from newest (head) to oldest (tail).
+New entries are prepended to the list head, creating a chronological buffer from newest (head) to oldest (tail). The pose fields (`BoneWorld` / `StaticComponentToWorld`) are the in-trail payload; a source on the on-demand channel stores only the broadphase fields here and reconstructs its poses through its provider when a trace needs them.
 
 ### Snapshot Processing
 
@@ -50,7 +50,7 @@ The system handles this scale efficiently, but extremely long history times or v
 
 ### Source Cleanup
 
-When an actor with `ULagCompensationSource` is destroyed, the component unregisters itself. On the next drain cycle, the worker detects the invalid source and deletes its entire history list.
+When an actor's hitbox source is destroyed, the component unregisters itself. On the next drain cycle, the worker detects the invalid source and deletes its entire history list.
 
 ***
 
@@ -168,7 +168,7 @@ Unlike systems that store pre-expanded hitboxes every frame, ShooterBase records
 
 ### Shape Definition Tables
 
-At registration time, `ULagCompensationSource` extracts collision shapes from the physics asset and stores them in static tables. These tables describe the local-space geometry and never change at runtime.
+At registration time, a hitbox source extracts collision shapes from the physics asset and stores them in static tables. These tables describe the local-space geometry and never change at runtime.
 
 ### Expansion Process
 
@@ -282,17 +282,5 @@ The worker thread is completely isolated from gameplay code:
 ### Queue Design
 
 The system uses Multiple Producer, Single Consumer (MPSC) queues. The worker is the only consumer; the game thread and sources are producers.
-
-***
-
-## Summary
-
-| Phase               | What It Does                                                     |
-| ------------------- | ---------------------------------------------------------------- |
-| **Broadphase**      | Multi-stage filtering to quickly reject actors that can't be hit |
-| **Interpolation**   | Reconstruct poses between captured snapshots                     |
-| **Shape Expansion** | Transform local shapes to world space with proper scaling        |
-| **Collision**       | Chaos sweep queries for each shape                               |
-| **Aggregation**     | Sort by distance, merge with world trace, fulfill promise        |
 
 ***

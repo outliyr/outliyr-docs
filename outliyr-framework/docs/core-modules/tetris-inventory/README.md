@@ -28,6 +28,10 @@ The Tetris Inventory Plugin extends the base Lyra inventory system with spatial 
 
 All of this integrates with the [Item Container](../../base-lyra-modified/item-container/) system for container-agnostic transactions, predictions, and UI, so the same drag-and-drop, context menus, and windowing system that work with slot-based inventories also work with tetris grids.
 
+{% hint style="info" %}
+3D Inspection and Async Icon are not exclusive to the Tetris Inventory. All other inventories can also take advantage of this.
+{% endhint %}
+
 ***
 
 ### How It Builds on Base Lyra
@@ -67,5 +71,4 @@ A quick orientation of the major ideas you'll encounter:
 | [**Tetris Inventory Manager Component**](tetris-inventory-manager-component/) | The grid-based inventory container - grid system, configuration, item operations, nesting, prediction, and resizing |
 | [**Querying Tetris Inventories**](querying-tetris-inventories.md)             | Hierarchical item tracking across nested containers in C++ and Blueprints                                           |
 | [**Tetris Utilities**](utilities/)                                            | Helper libraries and data structures for shapes, rotation, and world-space items                                    |
-| [**Item Inspection System**](item-inspection-system/)                         | 3D item previews and dynamic icon generation via PocketWorlds                                                       |
 | [**Tetris Inventory UI**](tetris-inventory-ui/)                               | The UI layer that renders grids and handles input - ViewModel, grid clump widget, and input handler                 |

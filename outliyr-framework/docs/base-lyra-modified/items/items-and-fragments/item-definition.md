@@ -32,14 +32,15 @@ A definition on its own only holds a `DisplayName`. Its real power comes from th
 ```mermaid
 flowchart TB
     ItemDef["ID_Rifle_AK47<br/><b>ULyraInventoryItemDefinition</b>"]
-    ItemDef --> F1["InventoryFragment_InventoryIcon<br/><i>Name, Icon, Weight, MaxStack</i>"]
-    ItemDef --> F2["InventoryFragment_EquippableItem<br/><i>Equipment Definition</i>"]
-    ItemDef --> F3["InventoryFragment_SetStats<br/><i>Initial Ammo: 30</i>"]
-    ItemDef --> F4["InventoryFragment_PickupItem<br/><i>World Mesh</i>"]
-    ItemDef --> F5["InventoryFragment_Attachment<br/><i>Optic Slot, Muzzle Slot</i>"]
+    ItemDef --> F1["InventoryFragment_ItemDetails<br/><i>Name, Weight, MaxStack</i>"]
+    ItemDef --> F2["InventoryFragment_Icon<br/><i>Display Icon</i>"]
+    ItemDef --> F3["InventoryFragment_EquippableItem<br/><i>Equipment Definition</i>"]
+    ItemDef --> F4["InventoryFragment_SetStats<br/><i>Initial Ammo: 30</i>"]
+    ItemDef --> F5["InventoryFragment_PickupItem<br/><i>World Mesh</i>"]
+    ItemDef --> F6["InventoryFragment_Attachment<br/><i>Optic Slot, Muzzle Slot</i>"]
 ```
 
-Adding or removing fragments changes what the item can do without touching any other code. A healing potion might only need `InventoryIcon`, `SetStats`, and `Consume`. A weapon needs those plus `EquippableItem`, `PickupItem`, and `Attachment`. This is composition over inheritance, covered in depth on the [Item Fragments](item-fragments.md) page.
+Adding or removing fragments changes what the item can do without touching any other code. A healing potion might only need `ItemDetails`, `Icon`, `SetStats`, and `Consume`. A weapon needs those plus `EquippableItem`, `PickupItem`, and `Attachment`. This is composition over inheritance, covered in depth on the [Item Fragments](item-fragments.md) page.
 
 ***
 

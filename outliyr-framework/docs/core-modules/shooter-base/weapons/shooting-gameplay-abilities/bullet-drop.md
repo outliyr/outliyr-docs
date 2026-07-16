@@ -197,7 +197,7 @@ The main thread then applies damage, sends hit markers, and queues VFX via the [
 
 ### Lag Compensation Chain
 
-Even with struct-based simulation, fairness matters. The Projectile Manager integrates with [Lag Compensation](../../lag-compensation/) to ensure hits register against where targets _were_ when the player fired.
+Even with struct-based simulation, fairness matters. The Projectile Manager integrates with [Lag Compensation](../../../lag-compensation/) to ensure hits register against where targets _were_ when the player fired.
 
 ```mermaid
 flowchart TD
@@ -287,7 +287,7 @@ For advanced customization, subclass `UGameplayAbility_RangedWeapon_Projectile` 
 **Key Systems**:
 
 * [Projectile Manager](../../projectile-manager/) - Struct-based simulation
-* [Lag Compensation](../../lag-compensation/) - Fair hit detection
+* [Lag Compensation](../../../lag-compensation/) - Fair hit detection
 
 **Key Tags**:
 

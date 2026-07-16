@@ -302,10 +302,10 @@ TSubclassOf<ULyraInventoryItemDefinition> Def = Item->GetItemDef();
 const ULyraInventoryItemDefinition* DefCDO = Def.GetDefaultObject();
 
 // Find a specific fragment on the definition
-const UInventoryFragment_InventoryIcon* IconFrag = Item->FindFragmentByClass<UInventoryFragment_InventoryIcon>();
-if (IconFrag)
+const UInventoryFragment_ItemDetails* DetailsFrag = Item->FindFragmentByClass<UInventoryFragment_ItemDetails>();
+if (DetailsFrag)
 {
-    UTexture2D* Icon = IconFrag->Icon;
+    int32 MaxStack = DetailsFrag->MaxStackSize;
 }
 ```
 {% endtab %}

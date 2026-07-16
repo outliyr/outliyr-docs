@@ -454,7 +454,7 @@ Subclass `UGameplayAbility_HitScanPenetration` (C++) when:
 
 **Related Systems**:
 
-* [Lag Compensation](../../lag-compensation/) - Historical hitbox management
+* [Lag Compensation](../../../lag-compensation/) - Historical hitbox management
 * [Weapon State Component](../../../../base-lyra-modified/weapons/weapon-state-component.md) - Hit marker display
 
 ***

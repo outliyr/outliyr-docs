@@ -10,7 +10,7 @@ That "something" is the `APocketLevelStageManager`.
 
 The `APocketLevelStageManager` is an Actor placed inside each pocket level. Think of it as a scene director:
 
-* **Reads item data** from `InventoryFragment_Inspect` and `InventoryFragment_Attachment` to decide what meshes to spawn
+* **Reads item data** to decide what meshes to spawn: `InventoryFragment_Inspect` for live inspection, `InventoryFragment_Icon` for icon captures, and `InventoryFragment_Attachment` for everything mounted on the item
 * **Recursively builds attachment trees**, if an attachment has its own attachments, it keeps going
 * **Controls the camera** via a spring arm, with configurable distance, FOV, and rotation
 * **Accepts interaction commands** (rotation deltas, zoom) forwarded from the UI
@@ -28,22 +28,22 @@ APocketLevelStageManager
 ├── RootSceneComponent
 │   │
 │   ├── SpringArmComponent
-│   │   │   Controls camera distance (TargetArmLength)
-│   │   │   Optionally receives rotation input
-│   │   │
-│   │   └── CameraComponent
-│   │       Virtual camera captured by UPocketCapture
-│   │       FOV and post-processing live here
+│   │   Controls camera distance (TargetArmLength)
+│   │   Optionally receives rotation input
 │   │
-│   └── ActorSpawnPointComponent
-│       │   Pivot point for the item mesh
-│       │   Receives rotation input when bRotateSpringArm is false
-│       │
-│       ├── StaticMeshComponent  (activated for static meshes)
-│       │
-│       └── SkeletalMeshComponent (activated for skeletal meshes)
+│   └── CameraComponent
+│       Virtual camera captured by UPocketCapture
+│       FOV and post-processing live here
 │
-└── PocketCaptureInst (UPocketCapture, created at BeginPlay)
+└── ActorSpawnPointComponent
+    │   Pivot point for the item mesh
+    │   Receives rotation input when bRotateSpringArm is false
+    │
+    ├── StaticMeshComponent  (activated for static meshes)
+    │
+    └── SkeletalMeshComponent (activated for skeletal meshes)
+
+PocketCaptureInst (UPocketCapture, created at BeginPlay)
 ```
 
 This hierarchy lets you independently control the camera's position/distance (via the spring arm) and the item's orientation (via the spawn point), or combine them by rotating the spring arm instead.
@@ -58,7 +58,7 @@ The Stage Manager has two initialization paths depending on whether you are sett
 {% step %}
 #### Initialise (Live Inspection)
 
-Called by `UInventoryRepresentationWidget` with a `ULyraInventoryItemInstance`.
+Called by `UItemRepresentationWidget` with a `ULyraInventoryItemInstance`.
 
 * Reads settings from `InventoryFragment_Inspect`: rotation/zoom enabled, axis clamps, default rotation, FOV range
 * Calls `InitialiseItemMesh` to spawn the base item and all attachments
@@ -78,8 +78,8 @@ Called by `UInventoryRepresentationWidget` with a `ULyraInventoryItemInstance`.
 Called by `UItemIconGeneratorComponent` with an item instance and target image dimensions.
 
 * Calls `InitialiseItemMesh` to spawn the base item and all attachments
-* Reads icon-specific settings (`ImageRotation`, `FitToScreenRatio`) from `InventoryFragment_Inspect::InventoryIconImage`
-* Applies the `ImageRotation`
+* Reads icon-specific settings (`IconRotation`, `FitToScreenRatio`) from the item's `InventoryFragment_Icon`
+* Applies the `IconRotation`
 * Calls `PositionStageManager` to calculate the optimal camera distance and FOV to frame the item within the target dimensions
 * Calls `CenterPivot`
 {% endstep %}
@@ -90,7 +90,7 @@ Called by `UItemIconGeneratorComponent` with an item instance and target image d
 Both paths call this to build the visual representation.
 
 * Clears any previously spawned actors via `ClearSpawnedAttachments`
-* Reads the mesh from `InventoryFragment_Inspect` and activates either `StaticMeshComponent` or `SkeletalMeshComponent`
+* Resolves the mesh for the staging context, the inspect fragment's mesh for live inspection, the icon fragment's mesh for icon captures, with no fallback between them, and activates either `StaticMeshComponent` or `SkeletalMeshComponent`
 * Checks for `InventoryFragment_Attachment` -- if present, resolves the transient runtime fragment and kicks off `InitialiseAttachmentsRecursive`
 {% endstep %}
 {% endstepper %}
@@ -107,13 +107,35 @@ This is where the system handles complex assemblies like a weapon with a scope t
 
 The function walks the attachment tree depth-first:
 
-1. Iterates through the `AttachmentArray` in the provided `UTransientRuntimeFragment_Attachment`
-2. For each attached `ItemInstance`, reads the `ActorToSpawn` info from its `FLyraEquipmentActorToSpawn` structure (using Held or Holstered settings based on the fragment's state, typically "Held" for inspection)
-3. Spawns the specified attachment actor via `SpawnActor`
-4. Tracks the spawned actor in `SpawnedAttachmentActors` for later cleanup
-5. Attaches the spawned actor to the Stage Manager actor itself
-6. Attaches the spawned actor's root component to the provided `ParentComponent` (either the base item's mesh or another attachment's component) using the socket and transform from `ActorSpawnInfo`
-7. If the newly spawned attachment also has an `InventoryFragment_Attachment`, the function calls itself recursively, passing the nested fragment and the new actor's root component as the next `ParentComponent`
+{% stepper %}
+{% step %}
+Iterates through the `AttachmentArray` in the provided `UTransientRuntimeFragment_Attachment`.
+{% endstep %}
+
+{% step %}
+For each attached `ItemInstance`, reads the `ActorToSpawn` info from its `FLyraEquipmentActorToSpawn` structure (using Held or Holstered settings based on the fragment's state, typically "Held" for inspection).
+{% endstep %}
+
+{% step %}
+Spawns the specified attachment actor via `SpawnActor`.
+{% endstep %}
+
+{% step %}
+Tracks the spawned actor in `SpawnedAttachmentActors` for later cleanup.
+{% endstep %}
+
+{% step %}
+Attaches the spawned actor to the Stage Manager actor itself.
+{% endstep %}
+
+{% step %}
+Attaches the spawned actor's root component to the provided `ParentComponent` (either the base item's mesh or another attachment's component) using the socket and transform from `ActorSpawnInfo`.
+{% endstep %}
+
+{% step %}
+If the newly spawned attachment also has an `InventoryFragment_Attachment`, the function calls itself recursively, passing the nested fragment and the new actor's root component as the next `ParentComponent`.
+{% endstep %}
+{% endstepper %}
 
 ```
 Assault Rifle (base)
@@ -179,7 +201,7 @@ The Stage Manager receives input forwarded from the UI layer and applies it to t
 UPocketCapture* GetPocketCapture();
 ```
 
-External systems, `UInventoryRepresentationWidget` for live previews, `UItemIconGeneratorComponent` for icon snapshots, call this to get the capture object, trigger rendering, and access the resulting render targets.
+External systems, `UItemRepresentationWidget` for live previews, `UItemIconGeneratorComponent` for icon snapshots, call this to get the capture object, trigger rendering, and access the resulting render targets.
 
 ***
 

@@ -320,9 +320,12 @@ Fragments:
   - UInventoryFragment_EquippableItem
       EquipmentDefinition: ED_AssaultRifle
 
-  - UInventoryFragment_InventoryIcon
-      Icon: T_AssaultRifle_Icon
+  - UInventoryFragment_ItemDetails
+      Name: Assault Rifle
       Weight: 3.5
+
+  - UInventoryFragment_Icon
+      StaticIcon: T_AssaultRifle_Icon
 
   - UInventoryFragment_Attachment
       CompatibleAttachments:

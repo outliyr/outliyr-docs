@@ -6,25 +6,28 @@ A rifle needs a mesh, an icon, ammo tracking, equipment bindings, and attachment
 flowchart LR
     subgraph Rifle["ID_Rifle_AK47"]
         direction TB
-        R1[InventoryIcon]
-        R2[EquippableItem]
-        R3[SetStats]
-        R4[PickupItem]
-        R5[Attachment]
+        R1[ItemDetails]
+        R2[Icon]
+        R3[EquippableItem]
+        R4[SetStats]
+        R5[PickupItem]
+        R6[Attachment]
     end
 
     subgraph Potion["ID_HealthPotion"]
         direction TB
-        P1[InventoryIcon]
-        P2[SetStats]
-        P3[Consume]
+        P1[ItemDetails]
+        P2[Icon]
+        P3[SetStats]
+        P4[Consume]
     end
 
     subgraph Helmet["ID_Helmet_Tactical"]
         direction TB
-        H1[InventoryIcon]
-        H2[EquippableItem]
-        H3[PickupItem]
+        H1[ItemDetails]
+        H2[Icon]
+        H3[EquippableItem]
+        H4[PickupItem]
     end
 ```
 
@@ -60,10 +63,10 @@ These let fragments influence container operations and item combinations.
 
 These calculate values that containers and UI aggregate across all fragments on an item.
 
-| Virtual Function           | Purpose                                                                                                                                                                                |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GetWeightContribution`    | How much weight this fragment adds to the item total. `InventoryIcon` returns its configured `Weight * stack count`. `Attachment` sums attached item weights. Most fragments return 0. |
-| `GetItemCountContribution` | How much this fragment contributes toward container item-count limits. Typically only `InventoryIcon` returns 1; others return 0.                                                      |
+| Virtual Function           | Purpose                                                                                                                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GetWeightContribution`    | How much weight this fragment adds to the item total. `ItemDetails` returns its configured `Weight * stack count`. `Attachment` sums attached item weights. Most fragments return 0. |
+| `GetItemCountContribution` | How much this fragment contributes toward container item-count limits. Typically only `ItemDetails` returns the item's stack count; others return 0.                                 |
 
 #### Type Resolution
 
@@ -95,7 +98,7 @@ void ExampleClass::ItemDefExample(TSubclassOf<ULyraInventoryItemDefinition> Item
         return;
 
     const ULyraInventoryItemDefinition* ItemDefinition = ItemDef.GetDefaultObject();
-    const UInventoryFragment_InventoryIcon* InventoryIconFragment = ItemDefinition->FindFragmentByClass<UInventoryFragment_InventoryIcon>();
+    const UInventoryFragment_ItemDetails* ItemDetailsFragment = ItemDefinition->FindFragmentByClass<UInventoryFragment_ItemDetails>();
 }
 
 // Example of using the ItemInstance

@@ -9,9 +9,10 @@ A weapon's icon needs to show its current attachments, a red dot sight, suppress
 ### What It Provides
 
 * **Asynchronous operation** - Icons generate in the background without stalling the game thread
-* **High-quality snapshots** - Renders the full 3D model (with attachments) from a pose defined in `InventoryFragment_Inspect::InventoryIconImage`
+* **High-quality snapshots** - Renders the full 3D model (with attachments) from the pose defined on the item's [Icon Fragment](../item-fragments-in-depth/icon-fragment.md) (`IconRotation`, `FitToScreenRatio`)
 * **Visual accuracy** - Icons reflect the item's current visual state, not a generic pre-made image
-* **Optional caching** - Stores raw pixel data per item definition to skip redundant generation
+* **Optional caching** - Stores raw pixel data per loadout (the item definition plus its attachment set) to skip redundant generation
+* **Loadout rendering** - `GenerateLoadoutIcon` renders a weapon-plus-attachments loadout described purely by asset paths, no live item required, so a client can render a loadout it only heard about through a message
 
 ***
 
@@ -21,13 +22,13 @@ A weapon's icon needs to show its current attachments, a red dot sight, suppress
 {% step %}
 #### Setup
 
-Add `UItemIconGeneratorComponent` to a relevant Controller or Player State Blueprint using [the experience system](../../../base-lyra-modified/gameframework-and-experience/). Configure its `IconPocketLevelDefinition` property to point to a `UIdentifyingPocketLevel` asset.
+Add `UItemIconGeneratorComponent` to the player controller using [the experience system](../../gameframework-and-experience/experiences.md). It is a controller component, so it lives on the local player's controller. Configure its `IconPocketLevelDefinition` property to point to a `UIdentifyingPocketLevel` asset.
 {% endstep %}
 
 {% step %}
 #### Initialization
 
-The component automatically spawns its own dedicated pocket level instance using the specified definition. This instance is separate from any pocket world used by `UInventoryRepresentationWidget`. It starts loaded but streamed out.
+The component automatically spawns its own dedicated pocket level instance using the specified definition. This instance is separate from any pocket world used by `UItemRepresentationWidget`. It starts loaded but streamed out.
 {% endstep %}
 
 {% step %}
@@ -43,7 +44,7 @@ An external system (e.g., inventory UI needing a slot icon) calls `GenerateItemI
 {% step %}
 #### Cache Check
 
-The component checks if caching is enabled (`InventoryIconImage.bCacheRenderTarget` in the item's `InventoryFragment_Inspect`) and if cached pixel data exists for this item's definition in `CachedIconPixels`. On a cache hit, it immediately recreates the texture from stored pixels and fires the callback.
+The component checks if caching is enabled (`bCacheGeneratedIcon` on the item's `InventoryFragment_Icon`) and if cached pixel data exists in `CachedIconPixels` for this item's loadout, the cache key combines the item definition with its currently applied attachments. On a cache hit, it immediately recreates the texture from stored pixels and fires the callback.
 {% endstep %}
 
 {% step %}
@@ -67,7 +68,7 @@ Ensures the dedicated pocket level, Stage Manager, and `UPocketCapture` are init
 {% step %}
 #### Staging and Capture
 
-Calls `PocketLevelStageManager->InitialiseSnapCaptor`, passing the item instance and target image size. The Stage Manager uses `ImageRotation` and `FitToScreenRatio` from the item's `InventoryIconImage` settings to pose the item. Then sets up alpha masking actors and calls `CaptureDiffuse()` / `CaptureAlphaMask()` to render onto render targets.
+Calls `PocketLevelStageManager->InitialiseSnapCaptor`, passing the item instance and target image size. The Stage Manager uses `IconRotation` and `FitToScreenRatio` from the item's `InventoryFragment_Icon` to pose the item. Then sets up alpha masking actors and calls `CaptureDiffuse()` / `CaptureAlphaMask()` to render onto render targets.
 {% endstep %}
 
 {% step %}
@@ -79,7 +80,7 @@ Initiates an asynchronous GPU readback, the critical step that avoids stalling t
 {% step %}
 #### Texture Creation
 
-Once the GPU fence signals completion, pixel data is read back and a transient `UTexture2D` is created. If caching is enabled, the raw pixel data is stored in `CachedIconPixels` keyed by item definition class.
+Once the GPU fence signals completion, pixel data is read back and a transient `UTexture2D` is created. If caching is enabled, the raw pixel data is stored in `CachedIconPixels` under the request's loadout cache key.
 {% endstep %}
 
 {% step %}
@@ -131,7 +132,7 @@ The icon generator uses its own pocket level instance, separate from any live in
 
 #### Request Queue
 
-```
+```cpp
 TQueue<FIconRequest> IconRequestQueue
 ```
 
@@ -154,15 +155,15 @@ During `EndPlay`, the component destroys its dedicated pocket level instance thr
 {% endhint %}
 
 {% hint style="info" %}
-**Memory:** Caching icons (`bCacheRenderTarget = true`) consumes memory to store raw pixel data in the `CachedIconPixels` map. Caching works best for item definitions whose icons are always the same regardless of instance data. For items where every instance looks different (e.g., weapons with varying attachments), caching at the definition level may not help.
+**Memory:** Caching icons (`bCacheGeneratedIcon = true` on the Icon Fragment) consumes memory to store raw pixel data in the `CachedIconPixels` map. The cache key is loadout-aware, the item definition plus its attachment set, so a rifle with a scope and the same rifle without one cache separately and both hit on repeat requests. Disable caching only for items whose appearance varies in ways the loadout key cannot see.
 {% endhint %}
 
 {% hint style="info" %}
 **Setup checklist:**
 
-* Add `UItemIconGeneratorComponent` to the appropriate Blueprint
+* Add `UItemIconGeneratorComponent` to the player controller
 * Configure `IconPocketLevelDefinition` to point to a valid `UIdentifyingPocketLevel`
-* Ensure items have `InventoryFragment_Inspect` with `InventoryIconImage` settings configured (including `bUseAsInventoryImage = true`)
+* Ensure items have an `InventoryFragment_Icon` with `Source` set to `Generated` and its Static or Skeletal Mesh set, the generator refuses requests without one and asset validation flags the fragment
 {% endhint %}
 
 {% hint style="warning" %}

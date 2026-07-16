@@ -48,7 +48,6 @@ Unlike [**TetrisInventory**](../tetris-inventory/) where a sequential reading is
 * **GameState Scoring System:** Understand the foundational component for tracking scores (team and individual) and implementing game mode rules based on common events like eliminations and assists.
 * **Influence Spawn System:** Explore the intelligent spawning system that considers game state (teammates, enemies, Line of Sight) to provide safer and more strategic spawn locations.
 * **Killcam System:** Delve into the system that allows players to witness their elimination from their opponent's perspective, leveraging Unreal Engine's replay and world duplication features.
-* **Lag Compensation:** Understand the server-side technique for rewinding world state to accurately validate client-side actions (like hitscan shots) in networked environments, ensuring fair hit registration despite latency.
 * **Projectile Manager:** Learn about the high-performance system for simulating large numbers of fast-moving, trace-based projectiles (e.g., bullets) efficiently on a background thread with lag-compensated collision.
 * **Spectator System:** Discover how to implement an immersive, first-person spectating experience that mirrors the viewed player's UI and camera state, for both live spectating and killcam playback.
 * **Weapons:** Explore the advanced weapon functionalities, including a compositional design, predictive recoil, diverse projectile types (hitscan, simulated bullet drop), and robust hit registration for modern shooter gameplay

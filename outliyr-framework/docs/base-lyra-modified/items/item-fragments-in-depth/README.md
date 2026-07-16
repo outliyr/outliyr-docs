@@ -20,7 +20,9 @@ This asset provides several fragment types to handle common inventory and item f
 
 * **Attachment System (`UInventoryFragment_Attachment`):** Enables items to host other item instances. Involves a complex `UTransientRuntimeFragment_Attachment` for managing attached items.
 * **Consume Fragment (`UInventoryFragment_Consume`):** Defines behavior for consumable items by granting and activating the specified Gameplay Ability upon use.
-* **Inventory Icon Fragment (`UInventoryFragment_InventoryIcon`):** Crucial for basic inventory interaction. Defines UI appearance (Icon), stacking behavior (`MaxStackSize`), base weight (`Weight`), and grid size (if applicable).
+* **Item Details Fragment (`UInventoryFragment_ItemDetails`):** Crucial for basic inventory interaction. Defines the item's name and description, stacking behavior (`MaxStackSize`), and base weight (`Weight`).
+* **Icon Fragment (`UInventoryFragment_Icon`):** Owns the item's display icon, either an authored texture or a runtime render of the item's mesh.
+* **Inspect Fragment (`UInventoryFragment_Inspect`):** Configures the 3D inspection view, the mesh, camera limits, and rotation constraints used when a player examines the item up close.
 * **Category Fragment (`UInventoryFragment_Category`):** Assigns Gameplay Tags to items for categorization, filtering, and sorting.
 * **Pickup Item Fragment (`UInventoryFragment_PickupItem`):** Defines the item's visual representation (mesh, display name) when it exists as a physical object in the world (`ALyraWorldCollectable`).
 * **Set Stats Fragment (`UInventoryFragment_SetStats`):** Initializes `StatTags` (like ammo, charges, initial stack count) on an `ULyraInventoryItemInstance` when it's first created.
@@ -36,7 +38,8 @@ Note: The [Container](../../../core-modules/tetris-inventory/item-fragments-tetr
 
 When designing a new item, consider the features it needs and select the appropriate fragments to add to its Definition:
 
-* Does it need to appear in a grid UI and stack? -> Add `InventoryFragment_InventoryIcon`.
+* Does it need to appear in an inventory and stack? -> Add `InventoryFragment_ItemDetails`, and `InventoryFragment_Icon` for its picture.
+* Should the player be able to examine it in 3D? -> Add `InventoryFragment_Inspect`.
 * Can it be equipped as a weapon or armor? -> Add `InventoryFragment_EquippableItem` (Covered in Equipment System).
 * Can it be used/consumed? -> Add `InventoryFragment_Consume` and define the ability.
 * Can it be dropped in the world? -> Add `InventoryFragment_PickupItem` and configure meshes.
@@ -54,10 +57,12 @@ Explore the following sub-pages for detailed information on each fragment type:
 
 1. **Attachment System (`UInventoryFragment_Attachment`)**
 2. **Consume Fragment (`UInventoryFragment_Consume`)**
-3. **Inventory Icon Fragment (`UInventoryFragment_InventoryIcon`)**
-4. **Category Fragment (`UInventoryFragment_Category`)**
-5. **Pickup Item Fragment (`UInventoryFragment_PickupItem`)**
-6. **Set Stats Fragment (`UInventoryFragment_SetStats`)**
+3. **Item Details Fragment (`UInventoryFragment_ItemDetails`)**
+4. **Icon Fragment (`UInventoryFragment_Icon`)**
+5. **Inspect Fragment (`UInventoryFragment_Inspect`)**
+6. **Category Fragment (`UInventoryFragment_Category`)**
+7. **Pickup Item Fragment (`UInventoryFragment_PickupItem`)**
+8. **Set Stats Fragment (`UInventoryFragment_SetStats`)**
 
 ***
 

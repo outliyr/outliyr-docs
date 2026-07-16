@@ -225,7 +225,7 @@ The `SameItem` case is particularly important for multi-cell items. When you dra
 
 Items with the same definition can merge into a single stack when one is dropped onto the other, up to a configurable maximum.
 
-An item is stackable when its `InventoryFragment_InventoryIcon` has a `MaxStackSize` greater than 1. The current count is tracked via a stat tag (`TAG_Lyra_Inventory_Item_Count`) on the item instance.
+An item is stackable when its `InventoryFragment_ItemDetails` has a `MaxStackSize` greater than 1. The current count is tracked via a stat tag (`TAG_Lyra_Inventory_Item_Count`) on the item instance.
 
 When you drag a stack of 15 ammo onto an existing stack of 20 (with `MaxStackSize: 50`):
 

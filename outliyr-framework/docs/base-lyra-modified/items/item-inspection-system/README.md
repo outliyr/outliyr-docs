@@ -7,7 +7,7 @@ That is exactly what the Item Inspection System delivers. Built on top of Lyra's
 * **Live Item Inspection** - Players rotate, zoom, and examine a high-fidelity 3D model of any item (with all its current attachments) directly inside the UI.
 * **Dynamic Icon Generation** - The same 3D rendering pipeline generates static 2D icons asynchronously, capturing every possible attachment combination on the fly.
 
-Both features read their configuration from the [`InventoryFragment_Inspect`](../item-fragments-tetris-specific/inventoryfragment_inspect.md) fragment, which defines meshes, camera angles, rotation constraints, icon poses, and more.
+Both features read their configuration from the [`InventoryFragment_Inspect`](../item-fragments-in-depth/inspect-fragment.md) fragment, which defines meshes, camera angles, rotation constraints, icon poses, and more.
 
 ***
 
@@ -88,7 +88,7 @@ The Stage Manager's `UPocketCapture` component renders the staged scene from its
 {% step %}
 #### Output
 
-**Live Inspection:** A `UInventoryRepresentationWidget` displays the render target in UMG and forwards player input (mouse drag/wheel) back to the Stage Manager for interactive rotation and zoom.
+**Live Inspection:** A `UItemRepresentationWidget` displays the render target in UMG and forwards player input (mouse drag/wheel) back to the Stage Manager for interactive rotation and zoom.
 
 **Icon Generation:** The `UItemIconGeneratorComponent` performs an asynchronous GPU readback of the render target, creates a static `UTexture2D`, and fires a delegate back to the requesting system.
 {% endstep %}
@@ -103,7 +103,7 @@ The Stage Manager's `UPocketCapture` component renders the staged scene from its
 ```mermaid
 sequenceDiagram
     participant UI as User Interface
-    participant IRW as UInventoryRepresentationWidget
+    participant IRW as UItemRepresentationWidget
     participant PLBS as UPocketLevelBridgeSubsystem
     participant PLI as UPocketLevelInstance
     participant PLSM as APocketLevelStageManager
@@ -193,13 +193,13 @@ sequenceDiagram
 
 ## Key Components at a Glance
 
-| Component                        | Role                                                                                                                                                    |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `UIdentifyingPocketLevel`        | Data Asset that pairs a pocket level with a `FGameplayTag` for easy lookup                                                                              |
-| `UPocketLevelBridgeSubsystem`    | World subsystem that manages creation, tracking (by tag or unique ID), and lifecycle of pocket level instances                                          |
-| `APocketLevelStageManager`       | Actor inside the pocket level that spawns meshes, controls the camera, and handles interaction                                                          |
-| `UInventoryRepresentationWidget` | UMG widget that displays the live render target and translates player input into rotation/zoom commands                                                 |
-| `UItemIconGeneratorComponent`    | Component that asynchronously generates and caches static 2D icons, keeping UI icons in sync with the item's current visual state (attachments and all) |
+| Component                     | Role                                                                                                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UIdentifyingPocketLevel`     | Data Asset that pairs a pocket level with a `FGameplayTag` for easy lookup                                                                              |
+| `UPocketLevelBridgeSubsystem` | World subsystem that manages creation, tracking (by tag or unique ID), and lifecycle of pocket level instances                                          |
+| `APocketLevelStageManager`    | Actor inside the pocket level that spawns meshes, controls the camera, and handles interaction                                                          |
+| `UItemRepresentationWidget`   | UMG widget that displays the live render target and translates player input into rotation/zoom commands                                                 |
+| `UItemIconGeneratorComponent` | Component that asynchronously generates and caches static 2D icons, keeping UI icons in sync with the item's current visual state (attachments and all) |
 
 ***
 
@@ -212,5 +212,5 @@ The following pages dive into each layer of the system:
 | [Pocket Level Management](pocket-level-management.md) | How `UPocketLevelBridgeSubsystem` and `UIdentifyingPocketLevel` spawn and track isolated rendering environments |
 | [Scene Staging](scene-staging.md)                     | How `APocketLevelStageManager` builds the 3D scene from item data, including recursive attachment spawning      |
 | [Scene Capture](scene-capture.md)                     | How `UPocketCapture` renders the 3D scene onto 2D render targets                                                |
-| [Live Inspection UI](live-inspection-ui.md)           | How `UInventoryRepresentationWidget` displays the live preview and handles player interaction                   |
+| [Live Inspection UI](live-inspection-ui.md)           | How `UItemRepresentationWidget` displays the live preview and handles player interaction                        |
 | [Async Icon Generation](async-icon-generation.md)     | How `UItemIconGeneratorComponent` generates static icons with GPU readback and caching                          |

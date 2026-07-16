@@ -6,13 +6,13 @@ Stat Tags are the simplest form of per-instance data. Each `ULyraInventoryItemIn
 
 ### Common Use Cases
 
-| Gameplay Tag                | Represents                                                          |
-| --------------------------- | ------------------------------------------------------------------- |
-| `Lyra.Inventory.Item.Count` | Stack size (used by `InventoryFragment_InventoryIcon` for stacking) |
-| `Weapon.Ammo.Magazine`      | Current magazine ammo                                               |
-| `Weapon.Ammo.Reserve`       | Reserve ammo pool                                                   |
-| `Item.Charges.Current`      | Remaining charges on a consumable                                   |
-| `Item.Durability`           | Durability points                                                   |
+| Gameplay Tag                | Represents                                                        |
+| --------------------------- | ----------------------------------------------------------------- |
+| `Lyra.Inventory.Item.Count` | Stack size (used by `InventoryFragment_ItemDetails` for stacking) |
+| `Weapon.Ammo.Magazine`      | Current magazine ammo                                             |
+| `Weapon.Ammo.Reserve`       | Reserve ammo pool                                                 |
+| `Item.Charges.Current`      | Remaining charges on a consumable                                 |
+| `Item.Durability`           | Durability points                                                 |
 
 Any Gameplay Tag can be used. A stack count > 0 can also serve as a boolean flag (e.g., `Item.State.IsJammed`).
 

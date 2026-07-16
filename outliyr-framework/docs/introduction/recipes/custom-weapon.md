@@ -44,7 +44,8 @@ Before the steps, the mental model. A weapon in this framework is built from a s
 
 * _Gun_ — ammo, magazine size, spare ammo.
 * _Equipment_ — links the item to the Equipment Definition. This is what makes the item equippable rather than just inventoriable.
-* _Inventory Icon_ — name, description, icon, weight, max stack. **Required** for the weapon to appear in the inventory at all.
+* _Item Details_ — name, description, weight, max stack. **Required** for the weapon to behave properly in the inventory.
+* _Icon_ — the weapon's picture in the inventory UI.
 * _QuickBarIcon_ — quickbar slot icon, ammo glyph, name shown while equipped. **Required** for the quickbar to render the weapon.
 * _ReticleConfig_ — reticle widget + ammo counter widget. Optional but strongly recommended.
 * _Pickup_ — world drop / pickup. Optional.
@@ -71,21 +72,24 @@ The assets wire roughly like this:
 ID_Rifle (Item Definition)
  ├─ Gun Fragment .................. ammo, magazine
  ├─ Equipment Fragment ............ → WID_Rifle
- ├─ Inventory Icon Fragment ....... name, icon, weight, max stacks (required for inventory)
+ ├─ Item Details Fragment ......... name, weight, max stacks (required for inventory)
+ ├─ Icon Fragment ................. inventory icon texture
  ├─ QuickBarIcon Fragment ......... quickbar slot icon + ammo glyph (required for quickbar)
  ├─ ReticleConfig Fragment ........ → W_Reticle_Rifle, W_AmmoCounter_Rifle
  └─ Pickup Fragment (optional) .... drop / world pickup behaviour
 
 WID_Rifle (Equipment Definition)
- ├─ Actors To Spawn ............... → B_Rifle (BP Gun Actor — mesh, VFX, audio)
- ├─ Ability Sets To Grant ......... → AbilitySet_ShooterRifle
- │                                       ├─ GA_Weapon_Fire_Rifle ── damage GE: GE_Damage_Rifle
- │                                       │                          (default cues route to B_Rifle)
- │                                       └─ GA_Weapon_Reload_Rifle
- ├─ Input Mappings ................ fire / reload / aim bindings
- └─ Equipment Instance Class ...... → B_GunWeaponInstance_Rifle
-                                          (subclass of B_GunWeaponInstanceBase —
-                                           recoil curves, spread, falloff curve, animation layer)
+ ├─ Instance Type ................. → B_GunWeaponInstance_Rifle
+ │                                       (subclass of B_GunWeaponInstanceBase —
+ │                                        recoil curves, spread, falloff curve, animation layer)
+ ├─ Held Behaviors ................ entry keyed to the primary held slot
+ │    ├─ Ability Sets To Grant .... → AbilitySet_ShooterRifle
+ │    │                                  ├─ GA_Weapon_Fire_Rifle ── damage GE: GE_Damage_Rifle
+ │    │                                  │                          (default cues route to B_Rifle)
+ │    │                                  └─ GA_Weapon_Reload_Rifle
+ │    └─ Actors To Spawn .......... → B_Rifle (BP Gun Actor — mesh, VFX, audio)
+ └─ Holstered Behaviors ........... primary / secondary weapon slots —
+                                        spawn B_Rifle on the holster sockets
 ```
 
 Every step in [Build the rifle from scratch](custom-weapon.md#build-the-rifle-from-scratch) creates one of those nodes.
@@ -300,13 +304,14 @@ Create two UMG widgets, or copy and rename `W_Reticle_Rifle` and `W_AmmoCounter_
 * The **reticle widget** — your crosshair
 * The **ammo counter widget** — current / spare ammo display
 
-Then open `ID_Rifle` (Step 1) and add three more fragments:
+Then open `ID_Rifle` (Step 1) and add four more fragments:
 
-* **Inventory Icon Fragment** — set the inventory icon texture, name, description, weight, and max stacks. **Required** for the weapon to display in the inventory UI at all.
+* **Item Details Fragment** — set the name, description, weight, and max stacks. **Required** for the weapon to behave properly in the inventory.
+* **Icon Fragment** — set the inventory icon texture the player sees when browsing the inventory.
 * **QuickBarIcon Fragment** — set the quickbar slot icon brush, the ammo brush (the ammo-type glyph shown next to the slot), and the display name shown while the weapon is equipped. **Required** for the quickbar to render the weapon correctly.
 * **ReticleConfig Fragment** — point at the reticle widget and the ammo counter widget. Optional but strongly recommended.
 
-The two icon fragments serve different surfaces. **Inventory Icon** is what the player sees when browsing the inventory, the full record (name, description, weight). **QuickBarIcon** is what the player sees on the quickbar slot, a smaller icon plus the ammo glyph that tells them at a glance which weapon is in which slot. Without Inventory Icon the weapon won't show up in the inventory at all; without QuickBarIcon the quickbar slot won't render properly when the weapon is bound to it. Without ReticleConfig the weapon still functions (fire, reload, hit things), the player just gets no crosshair and no ammo HUD.
+The icon fragments serve different surfaces. **Icon** is what the player sees when browsing the inventory, alongside the Item Details record (name, description, weight). **QuickBarIcon** is what the player sees on the quickbar slot, a smaller icon plus the ammo glyph that tells them at a glance which weapon is in which slot. Without QuickBarIcon the quickbar slot won't render properly when the weapon is bound to it. Without ReticleConfig the weapon still functions (fire, reload, hit things), the player just gets no crosshair and no ammo HUD.
 
 Reference: [Reticle Fragment](../../base-lyra-modified/weapons/reticle-fragment.md), [Inventory Icon Fragment](../../base-lyra-modified/items/item-fragments-in-depth/inventory-icon-fragment.md).
 {% endstep %}
@@ -368,7 +373,7 @@ The advanced-copy duplicated `B_Rifle` into your folder. After renaming it to `B
 * **Tracer system** — sniper rounds often show a visible tracer at long range. Optional.
 * **Shell eject** mesh + Niagara — larger-calibre shell. Optional.
 
-`WID_Rifle_Sniper`'s **Actors To Spawn** entry should already point at `B_SniperRifle` (the advanced-copy preserved local references inside the duplicated folder). Confirm it does, if it still points back at `B_Rifle`, you missed re-pointing references in Step 1.
+`WID_Rifle_Sniper`'s **Actors To Spawn** entries (inside its Held and Holstered Behaviors) should already point at `B_SniperRifle` (the advanced-copy preserved local references inside the duplicated folder). Confirm they do, if one still points back at `B_Rifle`, you missed re-pointing references in Step 1.
 {% endstep %}
 
 {% step %}
@@ -390,8 +395,8 @@ This step is the bulk of the variant work and it's all property panels. Three as
 
 * **Spread** tightened, snipers should be near-pinpoint accurate. The value you set here seeds the live `SpreadExponent` tag attribute the firing ability reads at fire time, so any stability attachment (e.g. a heavy barrel) composes on top of the sniper's tighter base
 * **Recoil profile** more vertical, larger single kick (use the [Recoil Editor](../../core-modules/shooter-base/weapons/gun-weapon-instance/recoil-editor-guide.md))
-* **Distance damage falloff** flattened,snipers shouldn't lose damage at range
-* **Linked Animation Layer**,swap to a sniper anim BP if you have one
+* **Distance damage falloff** flattened, snipers shouldn't lose damage at range
+* **Equipped Anim Set**, swap to a sniper anim BP layer if you have one
 {% endstep %}
 
 {% step %}
@@ -399,7 +404,7 @@ This step is the bulk of the variant work and it's all property panels. Three as
 
 Open `ID_Rifle_Sniper` and find its **ReticleConfig Fragment**. Repoint the reticle widget reference at a sniper-style crosshair widget (or duplicate `W_Reticle_Rifle`, redesign it, and reference the new one). Repoint the ammo counter widget too if you want a sniper-specific HUD.
 
-A scope-view ADS ability is _not_ part of this step, that's an ability concern, covered in the [Custom Ability Recipe](/broken/pages/652e02ba3c28a2dd5bcd91ae867ff93eb963a9f1). The reticle change here is just the on-screen crosshair when the weapon is held but not aimed.
+A scope-view ADS ability is _not_ part of this step, that's an ability concern, covered in the [Custom Ability Recipe](custom-ability.md). The reticle change here is just the on-screen crosshair when the weapon is held but not aimed.
 {% endstep %}
 
 {% step %}

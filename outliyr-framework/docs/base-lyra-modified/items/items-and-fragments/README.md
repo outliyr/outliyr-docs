@@ -40,11 +40,12 @@ Instead of creating deeply nested classes for every item variation (e.g., `UWeap
   * **Role:** A base `UObject` class designed to be added to the `Fragments` array within an `ULyraInventoryItemDefinition`. Each fragment encapsulates a specific piece of data or behavior.
   * **Examples:**
     * `UInventoryFragment_EquippableItem`: Makes the item usable by the Equipment System.
-    * `UInventoryFragment_InventoryIcon`: Provides data for grid-based UI (icon, size, max stack).
+    * `UInventoryFragment_ItemDetails`: Provides inventory bookkeeping data (name, weight, max stack).
+    * `UInventoryFragment_Icon`: Provides the item's display icon, authored or rendered at runtime.
     * `UInventoryFragment_Consume`: Defines logic for when the item is consumed.
     * `UInventoryFragment_Attachment`: Enables the item to host attachments _or_ be an attachment itself.
     * `UInventoryFragment_SetStats`: Initializes `StatTags` on the Item Instance upon creation.
-  * **Composition:** An item definition achieves its full functionality by combining multiple fragments. A rifle might have `EquippableItem`, `InventoryIcon`, `Attachment`, and `SetStats` fragments. A simple consumable might only have `InventoryIcon`, `Consume`, and `SetStats`.
+  * **Composition:** An item definition achieves its full functionality by combining multiple fragments. A rifle might have `EquippableItem`, `ItemDetails`, `Icon`, `Attachment`, and `SetStats` fragments. A simple consumable might only have `ItemDetails`, `Icon`, `Consume`, and `SetStats`.
 * **Transient Data & Fragments:** A key enhancement is the link between static fragments and instance-specific data:
   * Static `ULyraInventoryItemFragment`s on the Definition can specify associated **Transient Data** types (either `FTransientFragmentData` structs or `UTransientRuntimeFragment` UObjects).
   * When an `ULyraInventoryItemInstance` is created, the system instantiates these transient data payloads and stores them _on the instance_.
