@@ -1,59 +1,70 @@
 # Weapon Instance
 
-The `ULyraWeaponInstance` serves as the **base runtime class** for all weapon equipment within the system. It inherits directly from `ULyraEquipmentInstance`, gaining all the standard equipment functionality (lifecycle events, instigator tracking, attribute container, subobject replication), and adds features specifically relevant to wieldable weapons.
+When a player equips a rifle, the equipment system spawns a `ULyraWeaponInstance`, the live runtime object that manages everything weapon-specific for as long as it's equipped. It selects the right animation layers based on cosmetic tags, activates controller haptics like trigger resistance, tracks when the weapon was last fired for idle animations, and cleans up gracefully when the player dies.
 
-### Role and Purpose
-
-* **Foundation for Weapons:** Provides common functionality expected from most weapon types (melee or ranged).
-* **Extends Equipment:** Builds upon the `ULyraEquipmentInstance` base, ensuring weapons integrate seamlessly with the equipment management and GAS granting mechanisms.
-* **Animation Control:** Manages selection of appropriate Animation Layers based on the weapon's equipped state and cosmetic tags.
-* **Input Device Feedback:** Handles applying and removing platform-specific input device properties (like controller vibration or adaptive triggers) while the weapon is equipped.
-* **Interaction Timing:** Tracks when the weapon was last equipped and fired, potentially useful for idle animations or other time-sensitive logic.
-
-### Inheritance
-
-```
-UObject
-└─ ULyraEquipmentInstance
-   └─ ULyraWeaponInstance
-      └─ ULyraRangedWeaponInstance (Covered on next page)
+```mermaid
+flowchart TB
+    ULyraEquipmentInstance --> ULyraWeaponInstance
+    ULyraWeaponInstance --> ULyraRangedWeaponInstance["ULyraRangedWeaponInstance<br/><i>(next page)</i>"]
 ```
 
-Because it inherits from `ULyraEquipmentInstance`, you configure which specific `ULyraWeaponInstance` subclass (or this base class itself if sufficient) to spawn using the **`Instance Type`** property within the weapon's corresponding `ULyraEquipmentDefinition` asset.
-
-### Key Added Features
-
-Compared to the base `ULyraEquipmentInstance`, `ULyraWeaponInstance` adds:
-
-1. **Animation Layer Selection:**
-   * `EquippedAnimSet` (`FLyraAnimLayerSelectionSet`): A data structure (likely containing mappings of Gameplay Tags to Animation Layer Interface classes) defining animation layers to apply when the weapon is **actively held**.
-   * `UneuippedAnimSet` (`FLyraAnimLayerSelectionSet`): Defines animation layers to apply when the weapon is **equipped but not held** (i.e., Holstered, although often weapons might not have specific holstered anim layers distinct from the base locomotion).
-   * `PickBestAnimLayer(bool bEquipped, const FGameplayTagContainer& CosmeticTags) const`: A function (callable from animation blueprints or character logic) that evaluates the appropriate `SelectionSet` (`EquippedAnimSet` or `UneuippedAnimSet`) against provided cosmetic tags (e.g., `Weapon.Material.Wood`, `Weapon.Sight.Iron`) to select the best matching `TSubclassOf<UAnimInstance>` (Animation Layer Interface) to apply. This allows weapon animations to vary based on cosmetic choices or states represented by tags.
-2. **Input Device Properties:**
-   * `ApplicableDeviceProperties` (`TArray<TObjectPtr<UInputDeviceProperty>>`): An array configured in derived Blueprint classes (or C++ defaults). It holds references to `UInputDeviceProperty` assets (like `InputDeviceTriggerFeedbackProperty`, `InputDeviceVibrationProperty`).
-   * `ApplyDeviceProperties()`: Called internally during `OnEquipped`. Iterates through `ApplicableDeviceProperties` and activates them on the owning player's input device (using `UInputDeviceSubsystem`) in **looping mode**. This ensures effects like trigger resistance or idle vibrations persist while the weapon is held. Stores handles to the activated properties.
-   * `RemoveDeviceProperties()`: Called internally during `OnUnequipped` (and `OnDeathStarted`). Uses the stored handles to deactivate any looping device properties that were applied by this weapon instance.
-3. **Interaction Timing:**
-   * `TimeLastEquipped` (`double`): Stores the `WorldTimeSeconds` when `OnEquipped` was last called.
-   * `TimeLastFired` (`double`): Stores the `WorldTimeSeconds` when `UpdateFiringTime()` was last called.
-   * `UpdateFiringTime()`: A simple function meant to be called by the weapon's firing Gameplay Ability upon successful firing execution to update `TimeLastFired`.
-   * `GetTimeSinceLastInteractedWith() const`: Calculates and returns the minimum time elapsed since the weapon was either equipped (`TimeLastEquipped`) or fired (`TimeLastFired`). Useful for triggering idle animations or weapon lowering logic after a period of inactivity.
-4. **Death Handling:**
-   * `OnDeathStarted(AActor* OwningActor)`: A function bound (in the constructor) to the `OnDeathStarted` delegate of the owning Pawn's `ULyraHealthComponent` (if found and player-controlled).
-   * **Purpose:** Ensures that if the owning player dies while holding the weapon, any active `ApplicableDeviceProperties` (like looping vibrations) are cleanly removed via `RemoveDeviceProperties()`. Prevents lingering haptic effects after death.
-5. **Tick Function:**
-   * `Tick(float DeltaSeconds)`: A virtual tick function. While the base implementation is empty, it allows derived classes (like `ULyraRangedWeaponInstance`) to implement per-frame logic. Note that the `ULyraWeaponStateComponent` often drives the call to this `Tick` function for the currently held weapon.
-
-### Overridden Lifecycle Functions
-
-* `OnEquipped()`: Calls `Super::OnEquipped`, updates `TimeLastEquipped`, and calls `ApplyDeviceProperties()`.
-* `OnUnequipped()`: Calls `Super::OnUnequipped` and calls `RemoveDeviceProperties()`.
-
-### Customization
-
-* **Blueprint Subclassing:** Create Blueprints derived from `ULyraWeaponInstance` for specific weapon types that don't need complex C++ logic but might require unique configurations of `ApplicableDeviceProperties` or simple Blueprint logic in the `K2_` lifecycle events. Remember to set the `Instance Type` in the `ULyraEquipmentDefinition`.
-* **C++ Subclassing:** Create C++ classes derived from `ULyraWeaponInstance` (like `ULyraRangedWeaponInstance`) for weapons requiring more complex state management, custom C++ functions, or specific interfaces.
+Because it inherits from `ULyraEquipmentInstance`, it gets all standard equipment functionality, lifecycle events, instigator tracking, the attribute container, and subobject replication. You configure which weapon instance class to spawn using the **Instance Type** property on the weapon's `ULyraEquipmentDefinition`.
 
 ***
 
-`ULyraWeaponInstance` provides essential weapon-centric extensions to the base equipment instance, handling animations, input device feedback, and basic interaction timing. It serves as the direct parent for more specialized weapon types like `ULyraRangedWeaponInstance`.
+## Animation Layer Selection
+
+Weapons need different animation sets depending on whether they're held or holstered, and those animations may vary based on cosmetic choices (iron sights vs. scope, wood vs. polymer stock). The weapon instance handles this through two `FLyraAnimLayerSelectionSet` properties:
+
+* `EquippedAnimSet` — animation layers for when the weapon is **actively held**
+* `UnequippedAnimSet` — animation layers for when the weapon is **equipped but holstered**
+
+Each selection set maps Gameplay Tags to Animation Layer Interface classes. When the animation system needs to know which layer to apply, it calls `PickBestAnimLayer`:
+
+```cpp
+TSubclassOf<UAnimInstance> PickBestAnimLayer(
+    bool bEquipped,
+    const FGameplayTagContainer& CosmeticTags) const;
+```
+
+This evaluates the appropriate set against the provided cosmetic tags (e.g., `Weapon.Material.Wood`, `Weapon.Sight.Scope`) and returns the best matching animation layer. The character's animation blueprint uses this to swap layers when weapons change or cosmetic states update.
+
+***
+
+## Input Device Feedback
+
+Modern controllers support features like adaptive trigger resistance and persistent vibration patterns. The weapon instance manages these through `ApplicableDeviceProperties` — an array of `UInputDeviceProperty` assets configured in Blueprint defaults.
+
+When the weapon is equipped, `ApplyDeviceProperties()` activates each property in **looping mode** through the `UInputDeviceSubsystem`, so effects like trigger resistance persist while the weapon is held. When the weapon is unequipped (or the player dies), `RemoveDeviceProperties()` deactivates them using stored handles.
+
+***
+
+## Interaction Timing
+
+Two timestamps track weapon activity:
+
+| Property           | Updated When                                         | Purpose                        |
+| ------------------ | ---------------------------------------------------- | ------------------------------ |
+| `TimeLastEquipped` | `OnEquipped` fires                                   | Know when the weapon was drawn |
+| `TimeLastFired`    | `UpdateFiringTime()` is called by the firing ability | Know when the player last shot |
+
+`GetTimeSinceLastInteractedWith()` returns the time since whichever happened more recently, useful for triggering idle animations or weapon-lowering logic after a period of inactivity.
+
+***
+
+## Death Handling
+
+If the player dies while holding a weapon with active haptic effects, those effects need to stop immediately. The constructor binds to the owning pawn's `ULyraHealthComponent::OnDeathStarted` delegate, and the handler calls `RemoveDeviceProperties()` to clean up any lingering vibrations or trigger effects.
+
+***
+
+## Tick
+
+The base `Tick(float DeltaSeconds)` is empty but virtual — `ULyraRangedWeaponInstance` overrides it to update spread and heat. Note that `ULyraWeaponStateComponent` typically drives this tick for the currently held weapon.
+
+***
+
+## Customization
+
+* **Blueprint subclassing** — for weapons that need unique `ApplicableDeviceProperties` configurations or simple Blueprint logic in `K2_` lifecycle events. Set the `Instance Type` in the equipment definition.
+* **C++ subclassing** — for weapons requiring complex state management (like [Ranged Weapon Instance](range-weapon-instance.md)) or custom interfaces.

@@ -2,7 +2,7 @@
 
 You have a grid of cells, items with irregular shapes, a cursor that needs to hop between separate grid sections, and a placement preview that shows whether a rotated L-shaped item will actually fit. All of this needs to feel responsive under prediction, update reactively when the server confirms, and work seamlessly with both gamepad and mouse. How do you build a UI layer for that?
 
-The Tetris Inventory UI layer sits between the raw data (the `ULyraTetrisInventoryManagerComponent` and its dual-data architecture) and the pixels on screen. It transforms grid state into bindable ViewModel properties, renders individual grid sections through clump widgets, and processes input through a dedicated handler -- all while plugging cleanly into the shared [Item Container UI System](/broken/pages/12c32adebf963fc77fe62c5168ffed1f804ac52b).
+The Tetris Inventory UI layer sits between the raw data (the `ULyraTetrisInventoryManagerComponent` and its dual-data architecture) and the pixels on screen. It transforms grid state into bindable ViewModel properties, renders individual grid sections through clump widgets, and processes input through a dedicated handler -- all while plugging cleanly into the shared [Item Container UI System](../../../base-lyra-modified/ui/item-container-ui-system/).
 
 ***
 

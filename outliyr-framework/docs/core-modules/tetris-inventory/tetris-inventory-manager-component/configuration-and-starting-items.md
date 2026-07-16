@@ -43,10 +43,6 @@ This defines the shape of your inventory grid, rows, columns, and clump grouping
 
 Multiple clumps let you model inventories with separate sections, a main compartment and a side pocket, for example, all managed by a single component.
 
-{% hint style="info" %}
-Use the Tetris Workspace (`EUW_InventoryLayoutCreator`) to visually design layouts instead of manually editing the array. See [Grid Layout](/broken/pages/bcb1990331a91edf01375aaa93ead2d308328203#best-practice-using-the-layout-editor-utility-widget) for details.
-{% endhint %}
-
 #### Capacity Limits
 
 | Property                  | Type                     | Default              | Purpose                                               |

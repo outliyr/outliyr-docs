@@ -2,26 +2,24 @@
 
 You have berries in one slot and an empty bottle in another. The player drags the berries onto the bottle and a health potion appears in their inventory. Just drag, drop, and combine, right there in the grid.
 
-`InventoryFragment_Combine` makes this possible. Attach it to an item definition, configure a recipe map, and the inventory handles the rest, consuming ingredients, validating space, and placing the result, all within the Tetris grid.
-
-
+`InventoryFragment_CraftRecipe` makes this possible. Attach it to an item definition, configure a recipe map, and the inventory handles the rest, consuming ingredients, validating space, and placing the result, all within the Tetris grid.
 
 ***
 
 ### What It Does
 
 * **Recipe Definitions** - Map incoming items to combination results with quantity requirements for both ingredients and outputs.
-* **Ingredient Consumption** - Automatically deducts the correct stack counts from both items involved.
-* **Result Placement** - Places the crafted item(s) directly into the grid, respecting spatial constraints.
-* **Safe Simulation** - Validates that results can actually fit before consuming anything, so players never lose items to a full inventory.
+* **Ingredient Consumption** - Deducts the correct stack counts from both items involved, recording every change so client prediction can roll it back.
+* **Result Placement** - The server creates the crafted item(s) and places them directly into the grid, respecting spatial constraints.
+* **Safe Validation** - Checks that the result can actually be placed before committing, so a full inventory rejects the combine instead of eating the ingredients.
 
 ***
 
 ### Configuration
 
-The fragment lives on the **target item** - the item that _receives_ the drop. The incoming item (the one being dragged) is looked up as a key in the recipe map.
-
 <figure><img src="../../../.gitbook/assets/image (10) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+
+The fragment lives on the **target item** - the item that _receives_ the drop. The incoming item (the one being dragged) is looked up as a key in the recipe map.
 
 ### The `CombinationList` (TMap)
 
@@ -36,13 +34,17 @@ Each entry in the `CombinationList` pairs an incoming item definition (the key) 
 
 A single target item can have multiple recipes, one entry per incoming item type.
 
+{% hint style="info" %}
+Items never combine with themselves. Dropping an item onto another item of the same definition stacks them instead, so a recipe keyed on the target's own definition will never trigger.
+{% endhint %}
+
 ***
 
 ### Example: Health Potion
 
 > Drop **5 Berries** onto an **Empty Bottle** to produce **1 Health Potion**.
 
-Add `InventoryFragment_Combine` to `ID_Misc_EmptyBottle`, then configure:
+Add `InventoryFragment_CraftRecipe` to `ID_Misc_EmptyBottle`, then configure:
 
 ```
 CombinationList
@@ -58,24 +60,33 @@ If the player has 10 berries and 2 empty bottles, the system automatically calcu
 
 ***
 
-### Runtime: The `CombineItems` Workflow
+### The Combine Interface
 
-When a player drops one item onto another, `ULyraTetrisInventoryManagerComponent` calls the target fragment's `CombineItems` override. Here is the full flow:
+The fragment overrides the three combine hooks that every item fragment can implement:
 
 ```cpp
-virtual bool CombineItems(
-    ULyraInventoryManagerComponent* SourceInventory,
-    ULyraInventoryItemInstance* SourceInstance,
-    ULyraInventoryManagerComponent* DestinationInventory,
-    ULyraInventoryItemInstance* DestinationInstance
-) override;
+virtual bool IsCombineCompatible(const FItemCombineContext& Context) const override;
+virtual bool CanCombineItems(const FItemCombineContext& Context, FItemRejectionReason& OutRejection) const override;
+virtual bool CombineItems(FItemCombineContext& Context, FItemRejectionReason& OutRejection) override;
 ```
+
+* **`IsCombineCompatible`** - A type-only check: is the incoming item's definition a key in the `CombinationList`? Useful for UI highlighting before a drop is committed.
+* **`CanCombineItems`** - A read-only validation: does a recipe exist, and do both stacks meet their minimum required quantities right now? Fills `OutRejection` with a reason when the answer is no. Neither of these mutates any state.
+* **`CombineItems`** - Performs the combination.
+
+The `FItemCombineContext` carries both sides of the operation (source and destination containers, slots, and item instances) along with the prediction key and delta record, so the fragment can mutate either side and stay consistent with the rest of the transaction.
+
+***
+
+### Runtime: The `CombineItems` Workflow
+
+When a player drops one item onto another of a different type, the move transaction packages both sides into an `FItemCombineContext` and calls `TryCombineItems` on the destination container. The container walks the destination item's fragments and the first fragment whose `CombineItems` succeeds wins. For a recipe combine, that is this fragment, and it runs the following steps:
 
 {% stepper %}
 {% step %}
 #### Check Recipe Compatibility
 
-Looks up `SourceInstance->GetItemDef()` in the `CombinationList`. If there is no entry for this item type, returns `false` immediately, - no recipe exists for this pairing.
+Looks up the incoming item's definition in the `CombinationList`. If there is no entry for this item type, the combine is rejected with "That can't be combined" - no recipe exists for this pairing.
 {% endstep %}
 
 {% step %}
@@ -96,55 +107,49 @@ MaxSets     = Min(SourceSets, DestSets)
 AmountToCreate = MaxSets * ResultingItemQuantity
 ```
 
-If `AmountToCreate` is 0, returns `false`,  not enough ingredients.
-{% endstep %}
-
-{% step %}
-#### Validate the Result Item
-
-Confirms that the `ResultingItemDefinition` has both `InventoryFragment_ItemDetails` and `InventoryFragment_Tetris` (required for grid placement). Returns `false` if either is missing.
+If `AmountToCreate` is 0, the combine is rejected with "Not enough to combine".
 {% endstep %}
 
 {% step %}
 #### Simulate Consumption
 
-**Temporarily** reduces the stack counts on both `SourceInstance` and `DestinationInstance` by the amounts needed. The items are not destroyed yet, this is a dry run so the placement check has accurate grid state.
+Reduces the stack counts on both ingredients by the amounts needed. The items stay in their slots and nothing is destroyed yet. Each stack change is recorded as a transaction delta, so if this runs as a client prediction that the server later rejects, the whole thing unwinds cleanly.
 {% endstep %}
 
 {% step %}
-#### Check Destination Capacity
+#### Mark Slots That Will Be Freed
 
-Calls `DestinationInventory->CanAddItem()` to verify weight limits, item count limits, and other constraints for the result items.
+Any ingredient whose stack will reach zero goes on an exclusion list. During the placement check, cells occupied by excluded items are treated as available, because those items will be gone by the time the result is placed.
 {% endstep %}
 
 {% step %}
-#### Phase 1 - Place in Empty Slots
+#### Validate Space
 
-Searches for available slots in the destination grid (empty cells only) and places as many result items as possible via `TryAddItemDefinitionToSlot`. Tracks how many still need placement (`Remaining`).
-{% endstep %}
-
-{% step %}
-#### Phase 2 - Place in Freed Slots
-
-If items remain unplaced, builds an `IgnoreItems` list from any ingredients whose stacks were reduced to zero. Searches again, this time treating those consumed items' cells as available. Places remaining results in these newly freed slots.
+Searches the destination grid for an available slot per result item, using the exclusion list. This counts how many of the results can actually be placed.
 {% endstep %}
 
 {% step %}
 #### Finalize or Rollback
 
-* **Nothing placed?** Restores the simulated stack counts on both ingredients and returns `false`. No items are lost.
-* **Some or all placed?** Permanently removes fully consumed ingredients (stack count reached 0) via `RemoveItem`. Updates stack counts on partially consumed items and broadcasts the changes. Returns `true`.
+* **No space for any result?** Restores the simulated stack counts on both ingredients and rejects with "No room for the result". No items are lost.
+* **Space found?** Fully consumed ingredients (stack count reached zero) are removed from their slots, with the removals recorded as deltas for rollback.
+{% endstep %}
+
+{% step %}
+#### Create and Place (Server Only)
+
+The server creates each result item through the item subsystem and places it into a found slot. On a predicting client the workflow stops after cleanup: the predicted ingredient consumption stands, and the created result items arrive through replication once the server confirms.
 {% endstep %}
 {% endstepper %}
 
 ***
 
-### Why the Two-Phase Approach?
+### Why the Exclusion List?
 
 Consider this scenario: you combine two items that each occupy a 2x2 area, producing a single 2x2 result. If the grid is nearly full, there might be no empty 2x2 space available, but removing the consumed ingredients _creates_ that space.
 
-The simulation step ensures ingredients are never consumed unless the result can actually be placed. Phase 1 tries empty slots first (the common case). Phase 2 reclaims space from consumed items when needed. Together, they guarantee that a combination either succeeds cleanly or leaves the inventory untouched.
+The placement check runs while the ingredients still physically occupy their cells, so it can't just look for empty space. Instead, ingredients that will be fully consumed are excluded from the search, letting the result claim the cells they are about to vacate. Combined with the simulate-then-restore pattern, a combination with no room for any result leaves the inventory exactly as it was.
 
 {% hint style="info" %}
-The simulation-then-commit pattern is what prevents the worst-case scenario in any crafting system: consuming the player's ingredients and then failing to deliver the result. If placement fails entirely, everything rolls back.
+The simulation-then-commit pattern is what prevents the worst-case scenario in any crafting system: consuming the player's ingredients and then failing to deliver the result. If no result can be placed, everything rolls back.
 {% endhint %}

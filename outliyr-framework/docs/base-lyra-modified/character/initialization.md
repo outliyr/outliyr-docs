@@ -60,7 +60,7 @@ stateDiagram-v2
 
 **Role:** Player-specific setup. Input binding, camera mode, and ASC event registration.
 
-**Problem it solves:** The ASC lives on the PlayerState (see [ASC Setup](/broken/pages/7f997042ae24d2dfe33ad98a92bceeef1a9f6e5e)), but binding input to abilities and setting up the camera requires the ASC, the PlayerState, the PawnData, and an InputComponent to all be present. The HeroComponent waits until all of these exist before wiring them together.
+**Problem it solves:** The ASC lives on the PlayerState (see [ASC Setup](../gas/asc-setup.md)), but binding input to abilities and setting up the camera requires the ASC, the PlayerState, the PawnData, and an InputComponent to all be present. The HeroComponent waits until all of these exist before wiring them together.
 
 **What it waits for at each transition:**
 

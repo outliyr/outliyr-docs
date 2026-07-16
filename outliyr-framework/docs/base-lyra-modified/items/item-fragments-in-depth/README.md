@@ -27,7 +27,7 @@ This asset provides several fragment types to handle common inventory and item f
 * **Pickup Item Fragment (`UInventoryFragment_PickupItem`):** Defines the item's visual representation (mesh, display name) when it exists as a physical object in the world (`ALyraWorldCollectable`).
 * **Set Stats Fragment (`UInventoryFragment_SetStats`):** Initializes `StatTags` (like ammo, charges, initial stack count) on an `ULyraInventoryItemInstance` when it's first created.
 * **Container Fragment (`UInventoryFragment_Container`):** Allows an item instance to possess its _own_ internal inventory component (`FTransientFragmentData_Container`).
-* **Combine Fragment (`UInventoryFragment_Combine`):** Defines rules for combining this item with other specific item types when dropped onto each other.
+* **CraftRecipe Fragment (`UInventoryFragment_CraftRecipe`):** Defines rules for combining this item with other specific item types when dropped onto each other.
 * _(Others as applicable, e.g., EquippableItem fragment covered in Equipment System docs but relevant here)_
 
 {% hint style="danger" %}
@@ -47,7 +47,7 @@ When designing a new item, consider the features it needs and select the appropr
 * Can it hold other items inside it? -> Add `InventoryFragment_Container`.
 * Can it attach to other items, or have items attach to it? -> Add `InventoryFragment_Attachment`.
 * Does it belong to specific categories for sorting? -> Add `InventoryFragment_Category`.
-* Can it be crafted by combining with another item? -> Add `InventoryFragment_Combine` to the _target_ item.
+* Can it be crafted by combining with another item? -> Add `InventoryFragment_CraftRecipe` to the _target_ item.
 
 You can combine multiple fragments on a single Item Definition to create items with rich, multifaceted behaviors.
 
