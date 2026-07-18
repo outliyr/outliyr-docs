@@ -6,17 +6,21 @@ Setting up teams starts with a single component on the game state. The `ULyraTea
 
 `ULyraTeamCreationComponent` inherits from `UGameStateComponent`, so it lives on the game state and participates in the experience lifecycle. You configure it in the Experience's action set or directly on a game state Blueprint. Its properties define the shape of your team setup:
 
-| Property                 | Type                                  | Purpose                                                                                                                                                                                                                  |
-| ------------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `TeamsToCreate`          | `TMap<uint8, ULyraTeamDisplayAsset*>` | Each entry creates a team. The key is the Team ID, the value is the display asset that defines that team's visual identity (colors, textures, scalars). The display asset can be left null if you only need the team ID. |
-| `TeamPawnData`           | `TMap<uint8, ULyraPawnData*>`         | Optional. Maps Team IDs to pawn configurations for asymmetric modes. When populated, players on different teams spawn with different pawns.                                                                              |
-| `PerspectiveColorConfig` | `FLyraPerspectiveColorConfig`         | Controls whether team colors are absolute or relative to the viewer. Contains `bPerspectiveColorMode`, `AllyTeamDisplayAsset`, and `EnemyTeamDisplayAsset`.                                                              |
-| `PublicTeamInfoClass`    | `TSubclassOf<ALyraTeamPublicInfo>`    | The actor class spawned for each team's public (replicated-to-all) info. Defaults to `ALyraTeamPublicInfo`.                                                                                                              |
-| `PrivateTeamInfoClass`   | `TSubclassOf<ALyraTeamPrivateInfo>`   | The actor class spawned for each team's private (replicated-to-team-only) info. Defaults to `ALyraTeamPrivateInfo`.                                                                                                      |
+| Property                 | Type                                | Purpose                                                                                                                                                                                                   |
+| ------------------------ | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AuthoredTeams`          | `TMap<uint8, FLyraTeamSetupEntry>`  | Teams authored individually by ID. Each entry carries the team's display asset and, for asymmetric modes, its pawn data. Both can be left unset if you only need the team ID.                             |
+| `FirstTeamId`            | `int32`                             | The first team ID the component hands out. The fill range numbers up from here. Defaults to 1.                                                                                                            |
+| `FillToTeamCount`        | `int32`                             | Total team count to reach across the ID range starting at `FirstTeamId`. Any ID in that range not claimed by an authored entry is created automatically. Leave at zero to create only the authored teams. |
+| `FillDisplayAsset`       | `ULyraTeamDisplayAsset*`            | The display asset shared by every fill-created team. May be left unset.                                                                                                                                   |
+| `PerspectiveColorConfig` | `FLyraPerspectiveColorConfig`       | Controls whether team colors are absolute or relative to the viewer. Contains `bPerspectiveColorMode`, `AllyTeamDisplayAsset`, and `EnemyTeamDisplayAsset`.                                               |
+| `PublicTeamInfoClass`    | `TSubclassOf<ALyraTeamPublicInfo>`  | The actor class spawned for each team's public (replicated-to-all) info. Defaults to `ALyraTeamPublicInfo`.                                                                                               |
+| `PrivateTeamInfoClass`   | `TSubclassOf<ALyraTeamPrivateInfo>` | The actor class spawned for each team's private (replicated-to-team-only) info. Defaults to `ALyraTeamPrivateInfo`.                                                                                       |
 
-For most game modes, you only touch `TeamsToCreate` and possibly `PerspectiveColorConfig`. The info class overrides exist for cases where you need custom replicated state on the team actors themselves.
+The roster is described in two parts. `AuthoredTeams` is for teams that need individual identity: their own colors, or their own pawn data in an asymmetric mode. A classic two-team mode authors teams 1 and 2 and stops there. `FillToTeamCount` is for large symmetric rosters where authoring every team by hand would be busywork: a battle royale with sixty solo players sets it to 60 and lets every team share `FillDisplayAsset`. The two combine, authored entries claim their IDs and the fill creates whatever else the range needs, so a mode can hand-author one special team and generate the rest.
 
-<figure><img src="../../.gitbook/assets/image (19).png" alt=""><figcaption><p>Simple example of a two team setup</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/Screenshot 2026-07-18 150322.png" alt=""><figcaption><p>Simple example of a two team setup</p></figcaption></figure>
+
+<figure><img src="../../.gitbook/assets/Screenshot 2026-07-18 150428.png" alt=""><figcaption><p>Creating 60 teams for BR solos</p></figcaption></figure>
 
 ### The Creation Flow
 
@@ -32,7 +36,7 @@ When the experience finishes loading, the component's `OnExperienceLoaded` callb
 {% step %}
 **Server creates teams**
 
-`ServerCreateTeams()` iterates `TeamsToCreate`. For each entry, `ServerCreateTeam()` spawns two actors: a public info actor (using `PublicTeamInfoClass`) and a private info actor (using `PrivateTeamInfoClass`). The public info actor receives the team ID and the display asset. The private info actor receives the team ID. Both actors register themselves with the `ULyraTeamSubsystem` on `BeginPlay`.
+`ServerCreateTeams()` creates the authored teams first, recording any per-team pawn data as it goes, then loops the ID range from `FirstTeamId` up to `FillToTeamCount`, creating a fill team for every ID an authored entry did not claim. Each creation runs through `ServerCreateTeam()`, which spawns two actors: a public info actor (using `PublicTeamInfoClass`) and a private info actor (using `PrivateTeamInfoClass`). The public info actor receives the team ID and the display asset. The private info actor receives the team ID. Both actors register themselves with the `ULyraTeamSubsystem` on `BeginPlay`.
 {% endstep %}
 
 {% step %}
@@ -58,9 +62,9 @@ On all machines, the component registers the perspective display assets with the
 
 The assignment path has two layers. `ServerChooseTeamForPlayer()` is the entry point, but the actual team selection is delegated to `ServerAssignPlayerTeam()`, a `BlueprintNativeEvent` that you can override.
 
-`ServerChooseTeamForPlayer()` first checks whether the player is a spectator. Spectators get `FGenericTeamId::NoTeam` and skip further assignment. For everyone else, it calls `ServerAssignPlayerTeam()` to get the target team ID, sets the generic team ID on the player state, and then checks `TeamPawnData` to see if that team has a dedicated pawn configuration. If it does, the component calls `SetPawnData()` on the player state to override the default pawn.
+`ServerChooseTeamForPlayer()` first checks whether the player is a spectator. Spectators get `FGenericTeamId::NoTeam` and skip further assignment. For everyone else, it calls `ServerAssignPlayerTeam()` to get the target team ID, sets the generic team ID on the player state, and then checks whether that team has a dedicated pawn configuration. If it does, the component calls `SetPawnData()` on the player state to override the default pawn.
 
-The default implementation of `ServerAssignPlayerTeam()` calls `GetLeastPopulatedTeamID()` with empty include and exclude sets, which simply returns the team with the fewest active, non-inactive players. When counts are tied, the lower team ID wins.
+The default implementation of `ServerAssignPlayerTeam()` calls `GetLeastPopulatedTeamID()` with empty include and exclude sets, which returns the team with the fewest active, non-inactive players. The candidates are exactly the teams this component creates, the authored IDs plus the fill range, so balancing never assigns a player to a team that does not exist. When counts are tied, the lower team ID wins.
 
 <details>
 
@@ -73,8 +77,6 @@ Override `ServerAssignPlayerTeam` in a Blueprint or C++ subclass to implement yo
 * **Skill-based**: Query an MMR value and distribute players to balance team strength rather than team size.
 
 `GetLeastPopulatedTeamID()` is available as a helper even in custom implementations. It accepts `IncludedTeams` and `ExcludedTeams` sets, so you can constrain the balancing to a subset of teams.
-
-<figure><img src="../../.gitbook/assets/image (22).png" alt=""><figcaption><p>Example that splitting AI into different teams, but keeps all players on the same team</p></figcaption></figure>
 
 </details>
 
@@ -100,17 +102,17 @@ The perspective assets are registered with special internal IDs (`PERSPECTIVE_AL
 
 ### Asymmetric Modes
 
-The `TeamPawnData` map enables asymmetric game modes where teams have fundamentally different gameplay. One team spawns as soldiers with shooter pawn data, another spawns as creatures with melee pawn data. Each entry maps a team ID to a `ULyraPawnData` asset.
+Per-team pawn data enables asymmetric game modes where teams have fundamentally different gameplay. One team spawns as soldiers with shooter pawn data, another spawns as creatures with melee pawn data. It is configured on the authored team's entry: set the `PawnData` field of the team's `FLyraTeamSetupEntry` in `AuthoredTeams`, which means an asymmetric team is always an authored one. Fill teams start on the experience's default pawn data.
 
-During initial assignment, `ServerChooseTeamForPlayer()` checks this map after setting the team ID. If an entry exists for the player's team, `SetPawnData()` is called on the player state, overriding whatever pawn data the experience would normally provide.
+During team creation the component gathers those entries into a runtime pawn-data map. During initial assignment, `ServerChooseTeamForPlayer()` checks that map after setting the team ID; if an entry exists for the player's team, `SetPawnData()` is called on the player state, overriding whatever pawn data the experience would normally provide.
 
 Two runtime functions support dynamic changes:
 
-* `SetTeamPawnData(TeamId, NewPawnData, bApplyToExistingPlayers)` updates the map entry for a team at runtime. When `bApplyToExistingPlayers` is true (the default), it iterates all current players on that team and calls `ApplyTeamPawnDataToPlayer()` on each.
-* `ApplyTeamPawnDataToPlayer(PS)` looks up the player's current team in the `TeamPawnData` map and calls `SetPawnData()` if a mapping exists.
+* `SetTeamPawnData(TeamId, NewPawnData, bApplyToExistingPlayers)` updates the runtime map entry for a team. When `bApplyToExistingPlayers` is true (the default), it iterates all current players on that team and calls `ApplyTeamPawnDataToPlayer()` on each.
+* `ApplyTeamPawnDataToPlayer(PS)` looks up the player's current team in the runtime map and calls `SetPawnData()` if a mapping exists.
 
 {% hint style="info" %}
-The creation component's `TeamPawnData` only applies during initial team assignment. If a player changes teams at runtime via `ChangeTeamForActor()`, the subsystem's implementation calls `ApplyTeamPawnDataToPlayer()` automatically, so the player gets the correct pawn data for their new team.
+Per-team pawn data only applies automatically during initial team assignment. If a player changes teams at runtime via `ChangeTeamForActor()`, the subsystem's implementation calls `ApplyTeamPawnDataToPlayer()` automatically, so the player gets the correct pawn data for their new team.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/image (21).png" alt=""><figcaption><p>Asymmetric Prop Hunt Example, where the two teams have different pawn sets hence abilities, inputs, UI and characters</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/Screenshot 2026-07-18 150549.png" alt=""><figcaption><p>Asymmetric Prop Hunt Example, where the two teams have different pawn sets hence abilities, inputs, UI and characters</p></figcaption></figure>

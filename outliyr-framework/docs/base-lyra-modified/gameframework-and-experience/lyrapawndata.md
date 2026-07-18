@@ -26,7 +26,7 @@ Each property on `ULyraPawnData` controls a different axis of pawn configuration
 PawnData reaches the pawn through two paths, and the GameMode arbitrates between them:
 
 * **Experience DefaultPawnData** — the experience definition specifies a default `ULyraPawnData` for all players. This is the baseline. When the GameMode calls `GetPawnDataForController()` and no team-specific override exists, it returns this default. Most symmetric game modes (everyone plays the same character type) use only this path.
-* **Per-team PawnData** — the `ULyraTeamCreationComponent` (which lives on the GameState and is injected by the experience) can override PawnData per team through its `TeamPawnData` map. This maps team IDs to PawnData assets. In asymmetric modes, hunters vs. prey, attackers vs. defenders, different teams get entirely different pawn configurations: different classes, different abilities, different input, different cameras. The `SetTeamPawnData()` function can update a team's PawnData at runtime, optionally re-applying the change to players already on that team.
+* **Per-team PawnData** — the `ULyraTeamCreationComponent` (which lives on the GameState and is injected by the experience) can override PawnData per team through the `PawnData` field on each authored team entry. In asymmetric modes, hunters vs. prey, attackers vs. defenders, different teams get entirely different pawn configurations: different classes, different abilities, different input, different cameras. The `SetTeamPawnData()` function can update a team's PawnData at runtime, optionally re-applying the change to players already on that team.
 
 ### How PawnData Is Applied
 
@@ -79,7 +79,7 @@ In the Content Browser, right-click and create a new Data Asset of type `ULyraPa
 6. Optionally assign a **TagRelationshipMapping** if your pawn type needs custom ability interaction rules.
 7. Configure **Layout** and **Widgets** if this pawn type needs a specific HUD configuration beyond what the experience's game feature actions provide.
 
-Reference the finished asset from your Experience Definition's `DefaultPawnData`, or from a team's `TeamPawnData` entry on the `ULyraTeamCreationComponent` for asymmetric modes.
+Reference the finished asset from your Experience Definition's `DefaultPawnData`, or from a team's authored entry on the `ULyraTeamCreationComponent` for asymmetric modes.
 
 {% file src="../../.gitbook/assets/create_pawn_data.mp4" %}
 Create Pawn Data

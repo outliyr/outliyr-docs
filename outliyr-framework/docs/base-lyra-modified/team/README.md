@@ -4,7 +4,7 @@ Welcome to the Team System documentation. This system provides the framework for
 
 The team system manages team identity, membership, visual representation, and cross-team queries for every actor in a match. It is designed around four principles:
 
-* **Data-driven** — teams are defined in the Experience, not hardcoded. A `ULyraTeamCreationComponent` on the GameState reads a simple `TeamsToCreate` map (team ID to display asset) and builds everything at runtime.
+* **Data-driven** — teams are defined in the Experience, not hardcoded. A `ULyraTeamCreationComponent` on the GameState reads a map of authored teams plus an optional fill count for large symmetric rosters, and builds everything at runtime.
 * **Replicated** — team state flows from server to all clients automatically. Each team is represented by a pair of always-relevant info actors that carry the team's ID, tags, and visuals.
 * **Visually flexible** — display assets define named color, scalar, and texture parameters that materials and UI read by key. A perspective mode can override these so the local player always sees allies as blue and enemies as red, regardless of actual team IDs.
 * **Query-friendly** — the `ULyraTeamSubsystem` answers "is X on the same team as Y?" without the actors knowing about each other. Any system that needs team information goes through this single entry point.
@@ -34,9 +34,11 @@ flowchart LR
 graph TD
     subgraph "Configuration & Setup"
         Experience["ULyraExperienceDefinition"] -- Contains --> TeamCreationAction["Action: Add ULyraTeamCreationComponent"]
-        TeamCreationCompConfig["ULyraTeamCreationComponent (Defaults)"] -- Defines --> TeamsToCreate["TeamsToCreate Map (ID -> DisplayAsset)"]
+        TeamCreationCompConfig["ULyraTeamCreationComponent (Defaults)"] -- Defines --> AuthoredTeams["AuthoredTeams Map (ID -> DisplayAsset + PawnData)"]
+        TeamCreationCompConfig -- Defines --> FillConfig["FillToTeamCount + FillDisplayAsset"]
         TeamDisplayAsset["ULyraTeamDisplayAsset"]
-        TeamsToCreate -- Uses --> TeamDisplayAsset
+        AuthoredTeams -- Uses --> TeamDisplayAsset
+        FillConfig -- Uses --> TeamDisplayAsset
         TeamCreationCompConfig -- Defines --> PerspectiveConfig["PerspectiveColorConfig"]
         PerspectiveConfig -- Uses --> TeamDisplayAsset
     end
@@ -77,7 +79,7 @@ graph TD
 4. It assigns initial Team IDs to players/AI implementing `ILyraTeamAgentInterface`.
 5. During gameplay, other systems query the `ULyraTeamSubsystem` to find an actor's team ID or compare affiliations.
 6. The subsystem provides team data, including the appropriate `ULyraTeamDisplayAsset` (which might be the actual team's asset or an Ally/Enemy perspective asset).
-7. Visual systems use the Display Asset data to apply team colors/textures to actors and UI elements.
+7. Visual systems use the Display Asset data to apply team colors/textures to actors and UI elements
 {% endtab %}
 {% endtabs %}
 

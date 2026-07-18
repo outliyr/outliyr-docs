@@ -100,13 +100,13 @@ The full flow from Experience definition to runtime query looks like this:
 {% step %}
 **Experience defines teams**
 
-The `ULyraTeamCreationComponent` (a GameState component added by the [Experience](../gameframework-and-experience/)) holds a `TeamsToCreate` map, each entry is a team ID paired with an optional display asset. It also holds a `PerspectiveColorConfig` with ally/enemy display assets and a flag to enable perspective mode.
+The `ULyraTeamCreationComponent` (a GameState component added by the [Experience](../gameframework-and-experience/experiences.md)) holds an `AuthoredTeams` map, each entry a team ID paired with an optional display asset and pawn data, plus a fill count that generates additional teams for large symmetric rosters. It also holds a `PerspectiveColorConfig` with ally/enemy display assets and a flag to enable perspective mode.
 {% endstep %}
 
 {% step %}
 **Creation component spawns info actors**
 
-On the server, after the Experience loads, the creation component iterates `TeamsToCreate` and calls `ServerCreateTeam()` for each entry. This spawns one `ALyraTeamPublicInfo` and one `ALyraTeamPrivateInfo`, sets their team IDs, and assigns the display asset to the public info actor. The info classes are configurable via `PublicTeamInfoClass` and `PrivateTeamInfoClass` properties, so game features can subclass them.
+On the server, after the Experience loads, the creation component calls `ServerCreateTeam()` for each authored team and then for every fill team the configured count requires. This spawns one `ALyraTeamPublicInfo` and one `ALyraTeamPrivateInfo`, sets their team IDs, and assigns the display asset to the public info actor. The info classes are configurable via `PublicTeamInfoClass` and `PrivateTeamInfoClass` properties, so game features can subclass them.
 {% endstep %}
 
 {% step %}
@@ -136,7 +136,7 @@ Any system that needs team information calls into `ULyraTeamSubsystem`. `FindTea
 
 ```mermaid
 flowchart TD
-    A[Experience] --> B[TeamCreationComponent.TeamsToCreate]
+    A[Experience] --> B["TeamCreationComponent: AuthoredTeams + fill count"]
     B --> C["spawns PublicInfo + PrivateInfo per team"]
     C --> D["info actors register with TeamSubsystem on BeginPlay"]
     D --> E["Subsystem.TeamMap[TeamID] = { PublicInfo, PrivateInfo, DisplayAsset }"]
