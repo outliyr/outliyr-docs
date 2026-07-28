@@ -154,11 +154,17 @@ Struct-based transient fragments (`FTransientFragmentData`) are saved automatica
 
 However, if your struct fragment contains **UObject pointers** or **nested data that needs special handling**, override these virtuals:
 
-| Virtual                           | Purpose                                        | When to Override                                                     |
-| --------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------- |
-| `PrepareForSave()`                | Clear UObject pointers before serialization    | Your struct has `TObjectPtr` members                                 |
-| `HasNestedSaveData()`             | Return `true` if this fragment has nested data | Your struct serializes child data in PrepareForSave                  |
-| `RestoreFromSavedCopy(SavedCopy)` | Restore nested data into the live fragment     | Your struct has nested items or containers that need deserialization |
+| Virtual                           | Purpose                                          | When to Override                                                     |
+| --------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------- |
+| `PrepareForSave()`                | Clear UObject pointers before serialization      | Your struct has `TObjectPtr` members                                 |
+| `HasNestedSaveData()`             | Route restoration through `RestoreFromSavedCopy` | Your struct owns live state created during item initialisation       |
+| `RestoreFromSavedCopy(SavedCopy)` | Restore nested data into the live fragment       | Your struct has nested items or containers that need deserialization |
+
+{% hint style="warning" %}
+`HasNestedSaveData()` is a property of the fragment **type**, not of a particular save file. Return a constant.
+
+When it returns `false` the deserializer overwrites the live fragment with the saved copy, replacing every live pointer with the null that `PrepareForSave()` wrote. If you make the answer depend on how much data happened to be saved, the fragment gets clobbered whenever its payload is empty. A container saved with nothing in it is still a container, and it still has a live child component that must survive the load.
+{% endhint %}
 
 <details>
 
@@ -177,20 +183,34 @@ void FTransientFragmentData_Container::PrepareForSave()
     ChildInventory = nullptr;  // Prevent stale GC reference
 }
 
+// Always true. The live ChildInventory must never be overwritten by the saved
+// copy, whose pointer PrepareForSave deliberately nulled.
 bool FTransientFragmentData_Container::HasNestedSaveData() const
 {
-    return SavedChildInventory.Items.Num() > 0;
+    return true;
 }
 
 void FTransientFragmentData_Container::RestoreFromSavedCopy(
     const FTransientFragmentData& SavedCopy)
 {
-    // Deserialize saved items into the live child inventory
     const auto& Saved = static_cast<const FTransientFragmentData_Container&>(SavedCopy);
+    if (!IsValid(ChildInventory))
+    {
+        return;
+    }
+
+    // Configuration first, so a child that was resized at runtime is rebuilt to its
+    // saved layout before any item is placed into it
+    if (Saved.SavedChildInventory.SpecificData.Num() > 0)
+    {
+        ChildInventory->ApplySavedConfig(Saved.SavedChildInventory.SpecificData);
+    }
+
+    // Deserialize saved items into the live child inventory
     for (const FSavedItemData& ChildItem : Saved.SavedChildInventory.Items)
     {
         ULyraInventoryItemInstance* Item = /* deserialize */;
-        if (Item && ChildInventory)
+        if (Item)
         {
             ChildInventory->AddItemToSlot(ChildItem.CurrentSlot, Item,
                 FPredictionKey(), true);
@@ -199,7 +219,7 @@ void FTransientFragmentData_Container::RestoreFromSavedCopy(
 }
 ```
 
-The deserializer calls `HasNestedSaveData()` to detect fragments that need special restoration, then calls `RestoreFromSavedCopy()` instead of overwriting the live fragment (which already has a valid `ChildInventory` pointer from creation).
+The deserializer calls `HasNestedSaveData()` to decide how to restore, then calls `RestoreFromSavedCopy()` instead of overwriting the live fragment, which already has a valid `ChildInventory` pointer from creation. An empty item list is not a special case: the loop simply does nothing, and keeping the live child inventory is the restoration.
 
 </details>
 

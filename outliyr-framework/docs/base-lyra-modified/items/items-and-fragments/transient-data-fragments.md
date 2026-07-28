@@ -155,7 +155,9 @@ For persistence support, three additional methods exist:
 
 * `PrepareForSave()` — clear UObject references or other non-serializable data before saving
 * `RestoreFromSavedCopy()` — restore nested data after loading from a save
-* `HasNestedSaveData()` — return `true` if the struct contains nested data that needs special save handling
+* `HasNestedSaveData()` — return `true` to route restoration through `RestoreFromSavedCopy` rather than letting the saved copy overwrite the live fragment
+
+Return a constant from `HasNestedSaveData()`. It describes the fragment type, not the contents of any one save file. See [Extending the Save System](../../save-system/extending-the-save-system.md) for why.
 
 </details>
 

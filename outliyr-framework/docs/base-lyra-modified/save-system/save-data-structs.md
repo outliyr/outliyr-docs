@@ -102,7 +102,7 @@ Item slot structs and transient fragments can contain `TObjectPtr` members point
 
 Three mechanisms prevent this:
 
-### 1. ClearContainerReference on Slot Structs
+### 1. `ClearContainerReference` on Slot Structs
 
 Every slot struct inherits from `FAbilityData_SourceItem`, which provides a virtual `ClearContainerReference()`. `SerializeItem` calls this immediately after copying the slot, nulling out the component pointer while preserving the positional data (grid position, rotation, equipment slot tag).
 
@@ -113,11 +113,13 @@ Every slot struct inherits from `FAbilityData_SourceItem`, which provides a virt
 | `FEquipmentAbilityData_SourceEquipment`   | `EquipmentManager`                             |
 | `FAttachmentAbilityData_SourceAttachment` | Recursively clears nested `RootAttachmentSlot` |
 
-### 2. PrepareForSave on Fragment Structs
+### 2. `PrepareForSave` on Fragment Structs
 
 `FTransientFragmentData` provides a virtual `PrepareForSave()` called by `SerializeItem` on every copied fragment. Subclasses override it to null out their UObject pointers.
 
 The container fragment (`FTransientFragmentData_Container`) uses this to serialize its child inventory's items into `SavedChildInventory` and then null the `ChildInventory` pointer, preventing the GC from tracing into the old world.
+
+On load, that same fragment restores through `RestoreFromSavedCopy` rather than being overwritten by the saved copy, so the child inventory component created during item initialisation survives. Restoration applies `SavedChildInventory.SpecificData` before placing any item, which means a child container that was resized at runtime comes back at its saved layout instead of the item definition's default grid.
 
 ### 3. Automatic Cache Clearing
 
