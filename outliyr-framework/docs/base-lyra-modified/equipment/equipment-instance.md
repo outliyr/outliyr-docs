@@ -391,7 +391,7 @@ float GetTagAttributeValue(FGameplayTag Tag) const;
 {% step %}
 #### Initialization
 
-Abilities granted by the equipment (via `ULyraAbilitySet` in the `ULyraEquipmentDefinition`) can add their relevant parameters to the container when the ability is granted.
+Abilities granted by the equipment (via `ULyraAbilitySet` in the `ULyraEquipmentDefinition`) can add their relevant parameters to the container when the ability is granted. The value supplied here becomes the attribute's base value, which every later modification is computed from.
 
 ```cpp
 EquipmentInstance->AddTagAttribute(TAG_Weapon_SpreadExponent, 1.0f);
@@ -411,14 +411,18 @@ Other systems can modify these values:
 ```cpp
 // Attachment reduces spread by 20%
 ModHandle = EquipmentInstance->ModifyTagAttribute(
-    TAG_Weapon_SpreadExponent, 0.8f, EFloatModOp::Multiply);
+    TAG_Lyra_RangeWeapon_Stat_SpreadExponent, 0.8f, EFloatModOp::Multiply);
 ```
+
+`ModifyTagAttribute` returns a receipt identifying the modifier it applied. Hold onto it and pass it to `ReverseTagAttributeModification` to take that one modifier back off again. The attribute is then recomputed from its base value with whatever modifiers remain, so several systems can modify the same tag at once and remove their contributions in any order without disturbing each other. Additions are folded in first, then multiplications, then divisions, so the result does not depend on the order the modifiers arrived.
+
+Read the value a modifier stack builds on with `GetBaseTagAttributeValue`, and replace it with `SetBaseTagAttributeValue`, which keeps the live modifiers applied.
 {% endstep %}
 
 {% step %}
 #### Query&#x20;
 
-Abilities or other systems can read the current value using `GetTagAttributeValue(FGameplayTag Tag)` or check for existence using `HasTagAttribute(FGameplayTag Tag)`.
+Abilities or other systems can read the current value using `GetTagAttributeValue(FGameplayTag Tag)` or check for existence using `HasTagAttribute(FGameplayTag Tag)`. The current value is the base value with every live modifier applied, which is what clients receive.
 
 <figure><img src="../../.gitbook/assets/image (208).png" alt=""><figcaption></figcaption></figure>
 {% endstep %}

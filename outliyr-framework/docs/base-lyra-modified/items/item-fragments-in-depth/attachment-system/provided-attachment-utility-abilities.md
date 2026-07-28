@@ -26,26 +26,26 @@ These abillities can be found in **ShooterBase/Content/Attachments/Generic\_Abil
 * **Purpose:** Designed to allow attachments to modify [**Tag Attributes**](../../../equipment/equipment-instance.md#managing-runtime-state-tag-attributes-fgameplaytagattributecontainer) (float values stored in the `FGameplayTagAttributeContainer`) on the **`ULyraEquipmentInstance`** of the _root equipped item_ that the attachment chain is ultimately connected to. Ideal for stats like recoil, spread, sway, damage multipliers, etc., that are part of the active equipment's runtime state.
 * **Inheritance:** Subclass of `ULyraGameplayAbility_FromAttachment`.
 * **Configuration (in your Subclass Defaults):**
-  * **`Float Stat Modifications` (`TArray<FFloatStatModification>`):** This is the key array you configure. Each element defines a single stat modification:
-    * `Tag` (`FGameplayTag`): The Gameplay Tag of the attribute on the `ULyraEquipmentInstance` to modify (e.g., `Weapon.Stat.RecoilVertical`, `Weapon.Stat.SpreadADSModifier`).
-    * `Modification Value` (`float`): The value to apply (e.g., -0.1, 1.2).
-    * `Mod Op` (`EFloatModOp`): The operation (Add, Multiply, Divide).
+  * **`Modifications` (`TArray<FFloatStatModification>`):** This is the key array you configure. Each element defines a single stat modification:
+    * `Tag` (`FGameplayTag`): The Gameplay Tag of the attribute on the `ULyraEquipmentInstance` to modify (e.g., `Lyra.RangeWeapon.Gun.Stat.VerticalRecoil`, `Lyra.RangeWeapon.Gun.Stat.MuzzleVelocity`).
+      * `Modifier` (`float`): The value to apply (e.g., 0.8, 1.2).
+      * `Mod Op` (`EFloatModOp`): The operation (Add, Multiply, Divide).
 * **Runtime Logic:**
   * **On Grant (Ability Activation - often `OnSpawn` or when an `Event.Attachment.Activated` is received):**
     1. Uses `GetAssociatedEquipmentInstance()` to find the root `ULyraEquipmentInstance`.
-    2. If found, iterates through its configured `FloatStatModifications` array.
-    3. For each entry, calls `EquipmentInstance->ModifyTagAttribute(Tag, ModificationValue, ModOp)`.
-    4. **Crucially, it stores the `FFloatStatModification` struct returned by `ModifyTagAttribute`** (which contains the `OldValue`) internally within the ability instance.
+    2. If found, iterates through its configured `Modifications` array.&#x20;
+    3. For each entry, calls `EquipmentInstance->ModifyTagAttribute(Tag, Modifier, ModOp)`.&#x20;
+    4. **Crucially, it stores the `FFloatStatModification` struct returned by `ModifyTagAttribute`** into its `AppliedModifications` array. The returned struct carries a `Handle` identifying the modifier that was applied, which is what makes it reversible later.
   * **On Removal (Ability `EndAbility`):**
     1. Uses `GetAssociatedEquipmentInstance()` again.
-    2. If found, iterates through its internally stored `FFloatStatModification` handles (from the grant phase).
-    3. For each stored handle, calls `EquipmentInstance->ReverseTagAttributeModification(StoredModInfo)`, which uses the `OldValue` to correctly revert the change.
+    2. If found, iterates through its internally stored `AppliedModifications` array (from the grant phase).&#x20;
+    3. For each stored receipt, calls `EquipmentInstance->ReverseTagAttributeModification(StoredModInfo)`. The equipment instance removes that specific modifier and recomputes the attribute from its base value, so any modifiers other attachments have applied to the same tag keep their exact contribution.
 *   **Use Case Example:**
 
     * An `ID_Attachment_VerticalGrip` is configured (via its entry in the rifle's `CompatibleAttachments`) to grant an `ULyraAbilitySet` containing `GA_Grip_RecoilReduction` (a subclass of `GA_EquipmentAttributeModifier`).
-    * `GA_Grip_RecoilReduction` has `FloatStatModifications` configured to: `Tag=Weapon.Stat.RecoilVertical, ModificationValue=0.8, ModOp=Multiply`.
-    * When the grip is attached to a held rifle, the ability activates, finds the rifle's `ULyraEquipmentInstance`, and multiplies its `Weapon.Stat.RecoilVertical` attribute by 0.8.
-    * When the grip is removed, the ability ends, and the modification is reversed, restoring the original recoil value.
+    * &#x20;`GA_Grip_RecoilReduction` has `Modifications` configured to: `Tag=Lyra.RangeWeapon.Gun.Stat.VerticalRecoil, Modifier=0.8, ModOp=Multiply`.&#x20;
+    * When the grip is attached to a held rifle, the ability activates, finds the rifle's `ULyraEquipmentInstance`, and multiplies its `Lyra.RangeWeapon.Gun.Stat.VerticalRecoil` attribute by 0.8.&#x20;
+    * When the grip is removed, the ability ends and its modifier is dropped, so the recoil attribute recomputes without it.
 
     <figure><img src="../../../../.gitbook/assets/image (16) (1) (1) (1).png" alt="" width="563"><figcaption><p>Subclassed <code>GA_EquipmentAttributeModifier</code> modifying equipment tag attributes</p></figcaption></figure>
 
