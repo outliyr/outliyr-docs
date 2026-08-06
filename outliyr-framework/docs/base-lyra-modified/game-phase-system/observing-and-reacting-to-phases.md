@@ -33,6 +33,8 @@ The `ULyraGamePhaseSubsystem` provides functions to register callback delegates 
 
     <figure><img src="../../.gitbook/assets/image (131).png" alt=""><figcaption><p><code>B_Scoring_Headquarters</code> binds the end of the Headquarters Captured phase to a script that revives dead players after the objective is secured.</p></figcaption></figure>
 
+Both functions work on clients as well as the server. On the server they are driven directly by the phase ability starting and ending. On a client they are driven by the replicated phase tag changing, which the subsystem starts watching once the experience has finished loading on that client. Observers registered before that point are not lost, but their immediate execution is deferred until the watch begins.
+
 ### Understanding `EPhaseTagMatchType`
 
 The `MatchType` parameter is crucial for controlling how broadly your observer reacts:
@@ -55,8 +57,8 @@ While observer delegates are preferred, you can directly check if a phase is cur
 
 <figure><img src="../../.gitbook/assets/image (129).png" alt=""><figcaption><p>Example of preventing the player from respawning if they captured the control point</p></figcaption></figure>
 
-* **Functionality:** `IsPhaseActive(PhaseTag)` checks if _any_ currently active phase tag in the `ActivePhaseMap` matches the provided `PhaseTag` using `MatchesTag` (which inherently handles parent/child relationships, similar to `PartialMatch`).
-* **Use Case:** Useful for one-off checks within conditional logic or when initializing state based on the phase _at that specific moment_.
+* **Functionality:** `IsPhaseActive(PhaseTag)` checks whether _any_ currently active phase matches the provided `PhaseTag`, handling parent and child relationships the same way `PartialMatch` does. On the server it reads the authoritative `ActivePhaseMap`. On a client it reads the phase tag that the running phase mirrors onto the game state's ability system component, so the answer is the same on both ends once replication has caught up.
+* **Use Case:** Useful for one-off checks within conditional logic or when initializing state based on the phase _at that specific moment_. Because it works on clients, it is also how client-only logic such as a UI ability gates itself on the current phase.
 * **Caution:** Avoid excessive polling. Relying on the `WhenPhase...` delegates for reactive behavior is generally more efficient and robust.
 
 By utilizing the observer pattern provided by `ULyraGamePhaseSubsystem`, your various game systems can cleanly and efficiently respond to the evolving state of the game session, leading to more modular, maintainable, and reactive gameplay logic.
