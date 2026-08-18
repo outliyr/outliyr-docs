@@ -6,6 +6,33 @@ All notable changes to the Outliyr Framework.
 
 ***
 
+### v1.1.2 (18 August 2026)
+
+#### Fixed
+
+* Perk stat effects never reached the gunsmith preview. The preview rig granted perks before equipping the weapon, and an on-spawn ability activates as soon as it is granted, so every perk took its reading from a rig carrying nothing and changed no numbers the panel could show. Perks are now granted after the weapon, which is the order used at spawn.
+
+#### Changed
+
+* The debug loadout answers before the player's selection rather than after it, so assigning one overrides as intended. It exists only in editor builds, so a packaged game ignores it however it was left, and each grant that uses it is logged.
+* Client loadout submissions are bounded before the server processes them. Sanitization decides what a submission may grant, but it runs over whatever arrives, so a submission describing far more entries than any rule set offers is now refused rather than allocated and walked in full.
+* An attachment dropped because another one blocks its slot is reported like every other kind of drop, so a loadout that comes back altered always leaves a trace.
+
+***
+
+### v1.1.1 (18 August 2026)
+
+#### Fixed
+
+* Weapon stat modifiers computed from zero, so attachments and perks could not change vertical or horizontal recoil. An equipment instance whose attributes arrived through property copy began with entries its lookup map knew nothing about, so adding an attribute appended a second entry under the same tag. Queries take the first match, which was the copied one, and its base value had never been set. Adding an attribute now searches the array those queries use, initializes an entry already carrying the tag, and drops duplicates left by an earlier desync, which repairs affected content on load rather than requiring it to be authored again.
+* The ACOG static mesh rendered far too small in the loadout.
+
+{% hint style="warning" %}
+This affected gameplay, not only the gunsmith's stat panel. Recoil modifiers were being discarded in a match as well. The gunsmith was simply the first feature to display the value and make it visible.
+{% endhint %}
+
+***
+
 ## v1.1 (18 August 2026)
 
 Built on Unreal Engine 5.8. 473 commits since v1.0.
