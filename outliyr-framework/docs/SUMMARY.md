@@ -332,9 +332,11 @@
   * [Setup and Integration](core-modules/squad-play/setup-and-integration.md)
   * [Extending](core-modules/squad-play/extending.md)
 * [Loadout](core-modules/loadout/README.md)
-  * [How It Works](core-modules/loadout/how-it-works.md)
-  * [setup and integration](core-modules/loadout/setup-and-integration.md)
-  * [gunsmith viewmodels](core-modules/loadout/gunsmith-viewmodels.md)
+  * [Data Model](core-modules/loadout/data-model.md)
+  * [Granting Loadouts](core-modules/loadout/granting-loadouts.md)
+  * [The Gunsmith](core-modules/loadout/the-gunsmith.md)
+  * [Setup and Integration](core-modules/loadout/setup-and-integration.md)
+  * [Extending](core-modules/loadout/extending.md)
 
 ## Game Modes
 

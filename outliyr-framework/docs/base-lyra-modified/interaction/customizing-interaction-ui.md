@@ -25,7 +25,7 @@ This widget appears at a 3D world location (typically above the object or a spec
 ### The Role of `ULyraIndicatorManagerComponent`
 
 The UI prompts are not spawned directly by the interaction system. Instead, they are managed by a shared component:\
-&#xNAN;**`ULyraIndicatorManagerComponent`**.
+**`ULyraIndicatorManagerComponent`**.
 
 This system handles:
 
@@ -36,7 +36,7 @@ This system handles:
 {% hint style="info" %}
 For a deeper understanding of how this overlay system works, refer to the dedicated page:\
 [**Lyra Indicator System**](../ui/lyra-indicator-system/)\
-&#xNAN;_(I recommend reading that page before attempting to customize the interaction prompt widgets, then returning here.)_
+_(I recommend reading that page before attempting to customize the interaction prompt widgets, then returning here.)_
 {% endhint %}
 
 ### Data Passed to the Widget
