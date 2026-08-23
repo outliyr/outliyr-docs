@@ -47,6 +47,8 @@ The HUD declares **extension points**, tagged placeholders. Your Game Feature re
 * **When to use:** **interchangeable per-mode widgets** without subclassing the HUD.
 * **Example:** Domination's scoring panel and Capture-the-Flag's flag-status panel can both target the same extension point in the base HUD, neither mode needs its own HUD subclass.
 
+Extension points are not confined to the gameplay HUD. The pause menu hosts one tagged `HUD.Slot.GameMenu` and the front-end main menu hosts one tagged `HUD.Slot.MainMenu`, so a game feature can add a menu entry the same way it adds a HUD element, without the menu referencing the feature.
+
 <figure><img src="../../.gitbook/assets/image (294).png" alt=""><figcaption></figcaption></figure>
 
 {% hint style="warning" %}
