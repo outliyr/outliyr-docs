@@ -34,7 +34,7 @@ Filters applied after dependency expansion. A package reaches the final "precach
 | `bScanMaterials`      | `true`  | Include every `UMaterialInterface` derivative (`UMaterial`, `UMaterialInstanceConstant`).                                                     |
 | `bScanStaticMeshes`   | `true`  | Include every `UStaticMesh`. Submitted with `FLocalVertexFactory`.                                                                            |
 | `bScanSkeletalMeshes` | `true`  | Include every `USkeletalMesh`. Skeletal mesh components still rely on runtime proxy-creation precache for their full vertex factory coverage. |
-| `bScanNiagaraSystems` | `true`  | Include every `UNiagaraSystem`. Required for the Niagara side of the optional [Spawn-Preheat](spawn-preheat.md) phase.                        |
+| `bScanNiagaraSystems` | `true`  | so emitter materials are reached by the scan.                                                                                                 |
 
 ## Performance
 
@@ -61,18 +61,14 @@ Controls the skip-on-match logic. See [Signature Caching](signature-caching.md) 
 | ----------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PostWarmupHoldSeconds` | `0.0`   | Extra seconds to keep the loading screen visible after warmup completes. Useful for absorbing texture streaming at the transition point between loading screen and front-end menu. |
 
-## Preheat
+## Timeouts and priority
 
-The opt-in Spawn-Preheat phase. See [Spawn-Preheat](spawn-preheat.md).
-
-| Setting                      | Default | Purpose                                                                                                                                                                                                                                                                                                  |
-| ---------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bEnableNiagaraSpawnPreheat` | `false` | Enables the Niagara side of the Preheat phase. Covers GPU-sim compute PSOs that material-level precache cannot reach.                                                                                                                                                                                    |
-| `bEnableMeshSpawnPreheat`    | `false` | Enables the static and skeletal mesh side of the Preheat phase. Lets the engine's native component precache path fire with correct vertex factory context, covering Nanite, instanced, and skin variants that a hardcoded vertex factory list would miss.                                                |
-| `MaxConcurrentPreheats`      | `8`     | Caps the number of preheat components alive at once across all types. Bounds memory pressure and per-frame GPU cost.                                                                                                                                                                                     |
-| `FramesPerPreheat`           | `3`     | Frames each preheated Niagara component is allowed to tick before being destroyed. Mesh components always retire after one frame since engine-native precache fires on registration.                                                                                                                     |
-| `PreheatTimeoutSeconds`      | `10.0`  | Hard cap on total time spent in the Preheat phase. If the queues are not drained within the window, remaining entries are skipped and a warning logged.                                                                                                                                                  |
-| `PreheatSettleDelaySeconds`  | `5.0`   | Seconds to wait after the Loading phase completes before starting Preheat. Lets in-flight material precache requests drain so component registrations do not collide with them. Sized for mesh preheat on projects with many materials; lower to 2 seconds if mesh preheat is off and boot time matters. |
+| Setting                              | Default | Purpose                                                                                                                                                                                      |
+| ------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PrecacheDrainTimeoutSeconds`        | `120.0` | Ceiling on the Draining phase. Reaching it finishes the warmup and logs a warning rather than holding the loading screen on a driver that has stopped making progress.                       |
+| `LoadPhaseTimeoutSeconds`            | `300.0` | Ceiling on the Loading phase. Reaching it abandons any batches still outstanding and moves to Draining.                                                                                      |
+| `bBoostPrecachePriorityDuringWarmup` | `true`  | Raises every precache request to the highest priority while the warmup runs. Boot has the machine to itself, so there is nothing to yield to.                                                |
+| `bValidateEngineCVars`               | `true`  | Logs a warning when a console variable the warmup depends on is missing or set to a value that weakens coverage. These variables are read-only and can only be set from `DefaultEngine.ini`. |
 
 ## Advanced
 
@@ -84,14 +80,18 @@ The opt-in Spawn-Preheat phase. See [Spawn-Preheat](spawn-preheat.md).
 
 ## CVar relationship
 
-The plugin drives Unreal's PSO Precache system but does not configure every related CVar. The following `r.PSOPrecache.*` values must be enabled for the runtime precache path to function; the framework sets them in `Config/DefaultEngine.ini` under `[ConsoleVariables]`.
+The plugin drives Unreal's PSO Precache system but does not configure it. Every variable below is read-only, which means the engine only accepts a value read from configuration at startup, so the framework sets them in `Config/DefaultEngine.ini`. The plugin reads them back and warns when one is missing or weakened; the master switch `r.PSOPrecaching` is the only one it sets itself.
 
-| CVar                                      | Value | Purpose                                                                                                                                                                      |
-| ----------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `r.PSOPrecache.Enabled`                   | `1`   | Master switch for UE's PSO Precache system. Without this, `UMaterialInterface::PrecachePSOs` is a no-op in editor and degrades in packaged builds.                           |
-| `r.PSOPrecache.GlobalComputeShaders`      | `1`   | Allows global compute shader precache.                                                                                                                                       |
-| `r.PSOPrecache.Resources`                 | `1`   | Enables resource-level precache collection.                                                                                                                                  |
-| `r.PSOPrecache.ProxyCreationWhenPSOReady` | `1`   | Defers rendering a newly created primitive until its PSO is ready. Converts the worst-case stutter into a one-frame invisible spawn for any PSO that slipped through warmup. |
+| CVar                                             | Value | Purpose                                                                                                                                                                                                        |
+| ------------------------------------------------ | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `r.PSOPrecaching`                                | `1`   | Master switch for the engine's PSO precache system.                                                                                                                                                            |
+| `r.PSOPrecache.Components`                       | `1`   | Gathers component pipeline states as assets load, with the vertex factory context each component actually uses. This is what covers skinned, Nanite, instanced, landscape, and water factories.                |
+| `r.PSOPrecache.GlobalShaders`                    | `1`   | Allows global shader precache.                                                                                                                                                                                 |
+| `r.PSOPrecache.Resources`                        | `1`   | Enables resource-level precache collection.                                                                                                                                                                    |
+| `r.PSOPrecache.ProxyCreationStrategy`            | `1`   | Delays a new primitive's proxy until its pipeline state is ready, so a gap in coverage becomes a late spawn rather than a stall. Set `2` to draw a fallback material instead, which never stalls but does pop. |
+| `r.PSOPrecache.ParticlePrecachingTime`           | `3`   | Precaches particle systems at asset load as well as at component creation.                                                                                                                                     |
+| `r.PSOPrecache.UseBackgroundThreadForCollection` | `1`   | Moves precache data collection off the game thread.                                                                                                                                                            |
+| `r.PSOPrecache.KeepInMemoryUntilUsed`            | `1`   | On NVIDIA and Qualcomm, keeps precached pipeline states resident until first use so the driver does not rebuild them at the moment they are needed. Bounded by the `KeepInMemory*MaxNum` variables.            |
 
 These CVars are independent of the plugin's settings; they are engine-level switches the framework enables once at the project level.
 

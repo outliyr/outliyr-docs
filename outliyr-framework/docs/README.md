@@ -90,7 +90,7 @@ A complete inventory of what ships with Outliyr.
 * Substantially reduces first-play shader hitches (muzzle flash, hit effects, death animations) by warming PSOs under the loading screen
 * Auto-scans `/Game/`, every plugin, and every Game Feature, no manual precache list to maintain
 * Signature-based skip on repeat boots when build and hardware are unchanged
-* Optional preheat phase covers GPU-simulation Niagara, skinned mesh variants, Nanite / instancing PSOs
+* Holds the loading screen until submitted pipeline states have finished compiling, not merely been requested
 * Loading-screen progress bar via delegate hooks
 
 [**See PSO Warmup Documentation**](core-modules/pso-warmup/)

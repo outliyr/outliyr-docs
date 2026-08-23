@@ -29,13 +29,13 @@ If `bSkipIfSignatureMatches` is enabled, the plugin hashes the scanned package l
 {% step %}
 #### Loading
 
-Streams the filtered asset list in memory-bounded batches via `FStreamableManager`, submits `PrecachePSOs` on each material and mesh, and releases the streamable handles between batches so peak memory stays bounded.
+Streams the filtered asset list in memory-bounded batches via `FStreamableManager` and submits `PrecachePSOs` on each material and mesh. A batch is held until its submissions retire, because releasing a material also releases the pipeline states unique to it.
 {% endstep %}
 
 {% step %}
-#### Preheating _(optional)_
+#### Draining
 
-Spawns scanned niagara systems and mesh components invisibly far from the camera, lets them register, and destroys them. Registration fires the engine's native precache path with correct vertex factory context, covering GPU-simulation compute PSOs for niagara, skin VFs for skeletal meshes, and Nanite or instancing variants for static meshes that material-level precache cannot reach. See [Spawn-Preheat](spawn-preheat.md) for the full explanation.
+Waits on the completion events returned by each `PrecachePSOs` submission, together with the engine's count of active precache requests, before allowing the run to finish. Submitting a pipeline state is not the same as compiling one, and without this phase the loading screen would drop while the RHI was still working. `PrecacheDrainTimeoutSeconds` bounds the wait so a stalled driver cannot hold boot open indefinitely.
 {% endstep %}
 
 {% step %}
@@ -49,8 +49,8 @@ The `CommonLoadingScreen` plugin stays visible throughout because the subsystem 
 
 ### Key Components Intro
 
-* **`UPSOWarmupSubsystem`:** The central orchestrator. Lives as a `UGameInstanceSubsystem`, hooks `PostLoadMapWithWorld`, and drives the phase state machine. Exposes `OnProgressUpdated`, `OnPhaseChanged`, and `OnWarmupComplete` delegates for UI binding, plus `StartWarmup`, `AddWarmupSeedMap`, and `RegisterPreheatSystem` Blueprint-callable functions for explicit control.
-* **`UPSOWarmupSettings`:** Project-wide configuration under Project Settings -> Outliyr -> PSO Warmup. Controls scan scope, batch sizes, time-slice budget, signature behaviour, and the opt-in preheat phase. See [Configuration](configuration.md).
+* **`UPSOWarmupSubsystem`:** The central orchestrator. Lives as a `UGameInstanceSubsystem`, hooks `PostLoadMapWithWorld`, and drives the phase state machine. Exposes `OnProgressUpdated`, `OnPhaseChanged`, and `OnWarmupComplete` delegates for UI binding, plus `StartWarmup`, `AddWarmupSeedMap`, and `AddWarmupRoot` Blueprint-callable functions for explicit control.
+* **`UPSOWarmupSettings`:** Project-wide configuration under Project Settings -> Outliyr -> PSO Warmup. Controls scan scope, batch sizes, time-slice budget, timeouts, and signature behaviour. See [Configuration](configuration.md).
 * **`FPSOWarmupScanner`:** Internal asset-discovery component. Builds the root set, forces registry indexing, expands dependencies, filters to precache-eligible classes.
 * **Signature cache:** A persisted fingerprint under `[PSOWarmup]` in `GameUserSettings.ini`. Read on boot to decide whether warmup can be skipped; written on successful completion. See [Signature Caching](signature-caching.md).
 
@@ -67,7 +67,7 @@ Sub->OnPhaseChanged.AddDynamic(this, &UMyLoadingWidget::HandlePhaseChanged);
 Sub->OnWarmupComplete.AddDynamic(this, &UMyLoadingWidget::HandleComplete);
 ```
 
-The `OnPhaseChanged` delegate broadcasts a phase name, `Scanning`, `Loading`, `Preheating`, or `Done`, suitable for switching a status text label. `OnProgressUpdated` broadcasts at roughly 30Hz during active work and carries `(fraction, compiledCount, totalCount)` for progress bars and counters.
+The `OnPhaseChanged` delegate broadcasts a phase name, `Scanning`, `Loading`, `Draining`, or `Done`, suitable for switching a status text label. `OnProgressUpdated` broadcasts at roughly 30Hz during active work and carries `(fraction, compiledCount, totalCount)` for progress bars and counters.
 
 ### Invalidation
 
