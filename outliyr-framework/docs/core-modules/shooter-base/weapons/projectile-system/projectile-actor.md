@@ -7,20 +7,21 @@
 `AProjectileBase` is designed to be:
 
 * **Networked**: Supports replication with custom logic for client-side prediction and synchronization
-* **Movement-driven**: Relies on `UProjectileMovementComponent` for physics simulation after the bridge phase
+* **Movement-driven**: Relies on `UPredictiveProjectileMovementComponent` for physics simulation across the whole flight
 * **Prediction-aware**: Distinguishes between fake and real projectiles for latency hiding
 * **Trajectory-aware**: Incorporates the converging path system for visually intuitive aiming
 * **Extensible**: Abstract base class, create Blueprint or C++ subclasses to define specific behaviors
 
 #### Core Components
 
-**`ProjectileMovement` (`UProjectileMovementComponent*`)**
+**`ProjectileMovement` (`UPredictiveProjectileMovementComponent*`)**
 
-The standard UE component for projectile physics (velocity, gravity, bouncing, collision response). `AProjectileBase` manages this component:
+A `UProjectileMovementComponent` subclass that adds the bridge phase to the standard projectile physics of velocity, gravity, bouncing, and collision response. `AProjectileBase` manages this component:
 
-* Disables its tick during the bridge phase
-* Re-enables it after the merge point is reached
+* Hands it the solved bridge acceleration and duration at launch
 * Configure `InitialSpeed`, `MaxSpeed`, `bShouldBounce`, `ProjectileGravityScale` on this component in your subclasses
+
+Movement is swept for the whole flight, including the bridge phase, so impacts register from the first frame.
 
 #### Authority vs Fake Projectiles
 
@@ -67,32 +68,29 @@ void AMyProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent,
 {% step %}
 #### `BeginPlay()`
 
-* Initializes velocity based on `InitialSpeed` set during spawning
-* If bridge phase is needed (`!bHasMerged`), disables `ProjectileMovementComponent` tick
-* Sets up catchup logic if running as simulated proxy
+* Hands the bridge acceleration and duration to the movement component and seeds its starting velocity
 * Registers `InitialReplicationTick` on server if needed
+
+On a client the replicated bridge state arrives before play begins, so the launch state is applied once and the earlier caller wins.
 {% endstep %}
 
 {% step %}
-#### `Tick()`
+#### Bridge Phase
 
 During the bridge phase (`!bHasMerged`):
 
-* Advances `TimeInBridge` by delta time
-* Calculates position using kinematic equation: `P(t) = P₀ + V₀t + ½at²`
-* Updates actor location via `SetStateFromTimeInBridge()`
-* When `TimeInBridge >= BridgeDuration`, triggers transition to normal phase
+* The movement component reports the bridge acceleration from `ComputeAcceleration()` in place of gravity
+* The maximum speed clamp is suspended, since the solved velocity is what carries the projectile to the join point
+* Movement is swept, so collision, bouncing, and impact events apply
 {% endstep %}
 
 {% step %}
-#### `Transition to Normal Phase`
+#### Transition to Normal Phase
 
-When the bridge completes:
-
-* Position and velocity snap to the final bridge state (which matches the True Path)
-* `UProjectileMovementComponent` is re-enabled and activated
-* Component velocity is set to the final bridge velocity
-* `bHasMerged = true`
+* A tick that crosses the end of the bridge is split so each part accelerates under its own phase
+* The projectile arrives at the join point carrying the join point's velocity
+* Gravity and the maximum speed clamp resume
+* An impact during the bridge also ends it
 {% endstep %}
 {% endstepper %}
 
@@ -188,15 +186,7 @@ Uses half the round-trip time as an approximation. Clamped by `MaxLatency` (conf
 
 #### **`CatchupTick(float DeltaTime)`**
 
-Simulates the projectile forward by `CatchupDelta`:
-
-* If still on bridge path (`!bHasMerged`):
-  * Advances `TimeInBridge`
-  * Recalculates position along the bridge curve
-  * If catchup pushes past merge point, snaps to merge and applies remaining time to physics
-* If already merged (`bHasMerged`):
-  * Calls `ProjectileMovement->TickComponent()` with the catchup delta
-  * Standard physics simulation advances the projectile
+Simulates the projectile forward by `CatchupDelta` with a single call to `ProjectileMovement->TickComponent()`. The movement component splits that delta across the bridge phase and normal ballistics on its own, and sweeps either way, so the catch-up respects collision no matter how far it reaches.
 
 This ensures projectiles on other clients appear at approximately their current server position.
 

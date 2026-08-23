@@ -215,7 +215,7 @@ The rocket starts at the muzzle but curves toward the camera's aim line, joining
        ◆ Muzzle
 ```
 
-The rocket travels along a bridge trajectory for `PathJoinTime` seconds (default 0.15s), then continues straight along the camera's aim line.
+The rocket travels along a bridge trajectory for `PathJoinTime` seconds (default 0.15s), then continues along the camera's aim line. Collision applies for the whole flight, bridge included.
 
 #### The Kinematic Solution
 
@@ -223,22 +223,29 @@ Solve for acceleration so the rocket reaches the camera's trajectory in exactly 
 
 ```plaintext
 CalculateProjectileLaunchParams():
-    // Where we want to end up (on camera's line)
-    MergePoint = CameraLine.GetPointAtDistance(MergeDistance)
+    // Shorten the curve so it never converges behind a nearby surface
+    JoinTime = PathJoinTime
+    if AimResult.bBlockingHit:
+        DistanceToHit = Dot(AimResult.ImpactPoint - CameraLocation, CameraDirection)
+        JoinTime = Min(JoinTime, DistanceToHit / ProjectileSpeed)
+
+    // Where we want to end up, on the camera's line at JoinTime
+    MergePoint = CameraLocation + (CameraDirection * ProjectileSpeed * JoinTime)
+                 + (0.5 * Gravity * JoinTime * JoinTime)
 
     // Displacement from muzzle to merge point
     Displacement = MergePoint - MuzzleLocation
 
     // Final velocity (along camera line)
-    FinalVelocity = CameraDirection * ProjectileSpeed
+    FinalVelocity = (CameraDirection * ProjectileSpeed) + (Gravity * JoinTime)
 
     // Solve kinematic equation for initial velocity:
     // Displacement = (v_initial + v_final) / 2 * time
     // v_initial = (2 * Displacement / time) - v_final
-    InitialVelocity = (2 * Displacement / PathJoinTime) - FinalVelocity
+    InitialVelocity = (2 * Displacement / JoinTime) - FinalVelocity
 
     // Acceleration during bridge
-    BridgeAcceleration = (FinalVelocity - InitialVelocity) / PathJoinTime
+    BridgeAcceleration = (FinalVelocity - InitialVelocity) / JoinTime
 
     return {
         InitialVelocity: InitialVelocity,
@@ -384,7 +391,7 @@ ServerProjectiles.MarkItemDirty(NewProjectile)
 
 #### Aiming Modes
 
-* ConvergingPath (default): Rocket curves from muzzle to camera line. Use for third-person or weapons with significant muzzle offset.
+* `ConvergingPath` (default): Rocket curves from muzzle to camera line. Use for third-person or weapons with significant muzzle offset.
 * Direct: Rocket fires straight from muzzle toward target. Use for first-person with minimal offset.
 
 #### Interpolation Timing
@@ -421,7 +428,7 @@ OnRangedWeaponTargetDataReady(TargetData):
 
 The ability spawns `AProjectileBase` actors. Subclass this for custom behavior:
 
-* Override `SetStateFromTimeInBridge()` for custom bridge trajectories
+* Subclass `UPredictiveProjectileMovementComponent` and override `ComputeAcceleration()` for custom bridge trajectories
 * Add visual effects that differ between fake/real
 * Implement detonation or proximity triggers
 
@@ -447,13 +454,13 @@ AMyProjectile::BeginPlay():
 **Key Properties**:
 
 * `MaxLatency` - Delay spawn threshold (200ms)
-* `AimingMode` - Direct or ConvergingPath
+* `AimingMode` - Direct or `ConvergingPath`
 * `PathJoinTime` - Bridge duration (0.15s)
 
 **Related Systems**:
 
 * [Predictive Projectile System](../projectile-system/) - `AProjectileBase` details
-* [Converging Path System](/broken/pages/k4nx6XgdNAaxTRWww1eh) - Merge point math
+* [Converging Path System](../projectile-system/converging-path-system.md) - Merge point math
 
 **Key Concepts**:
 

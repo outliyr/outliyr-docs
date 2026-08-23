@@ -30,12 +30,14 @@ The system creates a two-part journey for the projectile that guarantees it ends
 #### Bridge Path
 
 For a short, defined duration (`PathJoinTime`), the projectile follows a custom, constant-acceleration curve. This curve is mathematically solved to start at the weapon's muzzle and end by perfectly matching the position and velocity of the True Path at the end of the duration.
+
+The curve is driven by `UPredictiveProjectileMovementComponent`, which reports the solved acceleration in place of gravity while the curve runs. Movement is swept throughout, so a projectile that meets geometry during the curve collides with it.
 {% endstep %}
 
 {% step %}
 #### True Path
 
-After the Bridge Path is complete, the projectile's movement is handed over to the standard `UProjectileMovementComponent`. Because its position and velocity now perfectly match the True Path, it continues along this ideal trajectory for the rest of its flight as if it had been fired from the camera all along.
+After the Bridge Path is complete, gravity and the maximum speed clamp resume. Because the projectile's position and velocity now perfectly match the True Path, it continues along this ideal trajectory for the rest of its flight as if it had been fired from the camera all along.
 {% endstep %}
 {% endstepper %}
 
@@ -89,9 +91,21 @@ V_initial = (2 * Displacement / PathJoinTime) - V_join
 Acceleration = (V_join - V_initial) / PathJoinTime
 ```
 
+#### **Clamping the join point**
+
+When the aim trace hits something close by, the join point is pulled back to that surface so the curve never converges on a target behind it. Firing flush against a wall shortens the curve to nothing, and the projectile launches straight from the muzzle along the sightline.
+
+```cpp
+if (AimResult.bBlockingHit && InitialSpeed > KINDA_SMALL_NUMBER)
+{
+    const float DistanceToHit = FVector::DotProduct(AimResult.ImpactPoint - CameraLocation, AimDir);
+    JoinTime = FMath::Min(JoinTime, FMath::Max(0.f, DistanceToHit) / InitialSpeed);
+}
+```
+
 #### `SetStateFromTimeInBridge()`
 
-`AProjectileBase` uses this function to calculate position at any time during the bridge:
+`AProjectileBase` uses this function to place the projectile at a point along the curve without simulating the flight in between. Client-side prediction uses it to resynchronise a predicted projectile with the authoritative one:
 
 ```cpp
 void AProjectileBase::SetStateFromTimeInBridge(float Time)
@@ -122,26 +136,23 @@ void AProjectileBase::SetStateFromTimeInBridge(float Time)
 {% step %}
 #### Phase 2: Bridge (Manual Movement)
 
-* `AProjectileBase::BeginPlay()` checks if `BridgeDuration > 0`
-* Disables `UProjectileMovementComponent` tick
-* `Actor::Tick()` manually updates position each frame using kinematic equation
-* `SetStateFromTimeInBridge()` calculates and sets position
+* `AProjectileBase::BeginPlay()` hands the solved acceleration and duration to `UPredictiveProjectileMovementComponent`
+* The component reports that acceleration from `ComputeAcceleration()` for the length of the curve
+* Movement is swept, so collision, bouncing, and impact events apply from the first frame
 {% endstep %}
 
 {% step %}
 #### Phase 3: Transition
 
-* When `TimeInBridge >= BridgeDuration`, transition occurs
-* Position and velocity snap to final bridge state (= Join Point)
-* `UProjectileMovementComponent` is re-enabled
-* Component velocity set to final bridge velocity
+* A tick that crosses the end of the curve is split so each part accelerates under its own phase
+* The projectile arrives at the Join Point carrying the Join Point's velocity
+* An impact during the curve also ends it, since the solve no longer describes where the projectile is going
 {% endstep %}
 
 {% step %}
 #### Phase 4: True Path (Standard Movement)
 
-* `UProjectileMovementComponent` takes over all movement
-* Standard gravity, drag, and collision apply
+* Gravity and the maximum speed clamp resume
 * Projectile travels along the camera's intended arc
 {% endstep %}
 {% endstepper %}
