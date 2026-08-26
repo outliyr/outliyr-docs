@@ -110,7 +110,7 @@ The action set enables the `Loadout` and `ShooterBase` plugins, publishes `RS_Gu
 {% step %}
 **Verify**
 
-Open and close the gunsmith ten times, then look for `LoadoutPreviewRig` actors far below the level. There should be at most one. A climbing count means the editing session is not being ended when the screen closes.
+Open and close the gunsmith ten times, then run `obj list class=LoadoutPreviewRig` in the console. There should be one while the gunsmith is open and none once it is closed. A climbing count means the editing session is not being ended when the screen closes.
 {% endstep %}
 {% endstepper %}
 
