@@ -96,9 +96,16 @@ Everything the front end needs travels in one action set, `LAS_Gunsmith_FrontEnd
 {% step %}
 **Add the action set**
 
-Open your front-end experience, `B_LyraFrontEnd_Experience` in the shipped project, and add `LAS_Gunsmith_FrontEnd` to its `ActionSets`. (You might need to make `LyraCore` dependent on `GunSmith` so `LAS_Gunsmith_FrontEnd`  appears in the dropdown).
+Open your front-end experience, `B_LyraFrontEnd_Experience` in the shipped project, and add `LAS_Gunsmith_FrontEnd` to its `ActionSets`.
 
 The action set enables the `Loadout` and `ShooterBase` plugins, publishes `RS_Gunsmith_Default` as the active rule set, injects the gunsmith button into the main menu, and adds the icon generator component to the player controller. Nothing else in the front end changes, and the action set is the only reference your project holds into the plugin.
+
+{% hint style="info" %}
+The dropdown looks empty until you turn on **Show Plugin Content** in its view options. Every action set in the project lives in a plugin, so that picker offers nothing at all until then.
+
+&#x20;\
+If this still doesn't work then you would need to make `LyraCore` dependent on `GunSmith` so `LAS_Gunsmith_FrontEnd`  appears in the dropdown
+{% endhint %}
 {% endstep %}
 
 {% step %}
