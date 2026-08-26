@@ -2,7 +2,7 @@
 
 The plugin has two independent opt-in surfaces. A **front-end experience** enables it so players can open the gunsmith and edit builds. **Game modes** enable it so players spawn with their selection. Either works without the other: a game with one fixed mode might skip the front end and consume presets only, while a menu-only build can offer the full editor before any mode consumes it.
 
-Because the plugin is `ExplicitlyLoaded`, nothing in it exists at runtime until an experience lists it in `GameFeaturesToEnable`. Modes that never opt in are untouched.
+Because the plugin is `ExplicitlyLoaded`, none of its actions run until an experience lists it in `GameFeaturesToEnable`. Modes that never opt in are untouched.
 
 {% hint style="success" %}
 Two worked examples ship with the framework. **`B_Gunsmith_Experience`** with `L_GunsmithArmory` and `RS_Gunsmith_Default` is the front-end editor; **`B_TeamDeathmatch_Loadout`** with `RS_TeamDeathmatch` is a mode that consumes loadouts. Copy whichever matches what you are building.
@@ -78,13 +78,67 @@ Gear entries targeting the inventory need a `ULyraInventoryManagerComponent` on 
 
 ## Enabling the Gunsmith in the Front End
 
-The front-end experience needs the same `GameFeaturesToEnable` entry, a `UGameFeatureAction_ConfigureLoadout` with the rule set the editor should offer, and a `GameFeatureAction_AddWidgets` adding `WBP_GunsmithScreen`. It does **not** need the consumer component, because nothing spawns with loadouts in a menu.
+There are two ways to reach the editor, and they differ in more than presentation.
 
-Add a `B_ItemIconGeneratorComponent` to the player controller if you want rendered weapon icons in the browser and slot rows. Everything degrades gracefully to authored icons without it.
+The **armory route** is what `DA_Gunsmith` ships: a user-facing experience pairing `B_Gunsmith_Experience` with its own map, `L_GunsmithArmory`. Selecting it from the experience list hosts a session and travels, so the editor arrives on a purpose-built bench with its own lighting and a full screen to itself. The cost is a loading screen on the way in, and no route back to the menu that is not another travel.
 
-### Content availability and preview parity
+The **in-menu route** hosts the same screen inside the front-end experience. A button injected into the main menu opens it, and back closes it, with no travel in either direction. That is the shape most shooters use.
 
-The gunsmith can only offer weapons whose item definitions are loaded, so the front-end experience must list the content plugins those weapons live in. This has a useful side effect: fragment injection runs per enabled plugin when an experience loads, so listing a mode's plugin in the front-end experience also applies that mode's fragment injectors there. The preview rig then sees the same modified item definitions the mode will use, and stats match exactly.
+What is not available is a third option: an experience cannot be exchanged while a world is running, because the experience manager loads one per world and unloads it only when that world ends. Hosting the widget in the world that is already open is the mechanism rather than a workaround.
+
+Neither route needs the consumer component, because nothing spawns with loadouts in a menu.
+
+#### The In-Menu Route
+
+Everything the front end needs travels in one action set, `LAS_Gunsmith_FrontEnd`, so opting in is a single field.
+
+{% stepper %}
+{% step %}
+**Add the action set**
+
+Open your front-end experience, `B_LyraFrontEnd_Experience` in the shipped project, and add `LAS_Gunsmith_FrontEnd` to its `ActionSets`. (You might need to make `LyraCore` dependent on `GunSmith` so `LAS_Gunsmith_FrontEnd`  appears in the dropdown).
+
+The action set enables the `Loadout` and `ShooterBase` plugins, publishes `RS_Gunsmith_Default` as the active rule set, injects the gunsmith button into the main menu, and adds the icon generator component to the player controller. Nothing else in the front end changes, and the action set is the only reference your project holds into the plugin.
+{% endstep %}
+
+{% step %}
+**Retire the armory tile**
+
+`DA_Gunsmith` still appears in the experience list, which leaves players two routes to the same editor with different ways out of it. Set `bShowInFrontEnd` to false on it unless offering both is deliberate.
+{% endstep %}
+
+{% step %}
+**Verify**
+
+Open and close the gunsmith ten times, then look for `LoadoutPreviewRig` actors far below the level. There should be at most one. A climbing count means the editing session is not being ended when the screen closes.
+{% endstep %}
+{% endstepper %}
+
+{% hint style="warning" %}
+The preview rig spawns into whatever world hosts the screen, well below the level, and equips real weapons whose cosmetic actors spawn alongside it. `L_LyraFrontEnd` has nothing at that depth. A custom front-end map with geometry or a volume reaching down there will notice.
+{% endhint %}
+
+#### Using a Different Rule Set
+
+The rule set is a per-experience decision. A front end offering something other than `RS_Gunsmith_Default` duplicates `LAS_Gunsmith_FrontEnd` into its own content, repoints the `UGameFeatureAction_ConfigureLoadout` inside the copy, and adds that to `ActionSets` in place of the original.
+
+#### Building Your Own Menu Entry
+
+A front end that is not `W_LyraFrontEnd` supplies its own hole for the button. Host a `UUIExtensionPointWidget` tagged `HUD.Slot.MainMenu` wherever entries belong, and the shipped action set fills it without knowing anything about your menu. This is the same mechanism `HUD.Slot.GameMenu` uses for the pause menu.
+
+Closing is the part worth stating, because it needs less than people expect. Tick `Is Back Handler` on your screen and write nothing else. A back press then deactivates the widget, which pops it off the layer, because deactivating is what `UCommonActivatableWidget` already does when it handles a back action. `W_ExperienceSelectionScreen` is the shipped example: the flag is set and there is no back graph anywhere in it.
+
+Subclassing `WBP_GunsmithScreen` is the one case that needs more. It implements `BP_OnHandleBackAction` to open the game menu, which is what the armory wants, since nothing sits beneath the screen there and leaving is a travel. A child inherits that, so a child hosted in a menu overrides `BP_OnHandleBackAction` and returns **false**, which hands the press back to the default behaviour and pops the screen. `WBP_GunsmithScreen_InMenu` already does this.
+
+#### Content Availability and Preview Parity
+
+The plugins ship registered rather than dormant, so their content is mounted and their modules loaded from startup, and a weapon's item definition resolves whether or not an experience names its plugin. What listing a plugin in `GameFeaturesToEnable` does is run that plugin's actions and its fragment injectors.
+
+Injectors are the reason to list a mode's plugin in a front-end experience. Fragment injection runs per enabled plugin when an experience loads, so listing a mode's plugin there applies that mode's injectors to the menu as well. The preview rig then sees the same modified item definitions the mode will use, and stats match exactly.
+
+{% hint style="warning" %}
+A plugin's actions apply wherever it is enabled, the main menu included, so read its GameFeatureData `Actions` array before listing it in a front-end experience. ShooterBase is safe: a gameplay cue path, a data registry, a client-only game state component that never ticks, and one ability set granted to the player state and never activated. An action that adds widgets, registers input mapping contexts, or swaps the pawn or HUD class is not, because all three take effect over your menu.
+{% endhint %}
 
 The one inherent limit: two modes whose injectors modify the same item in conflicting ways cannot both be represented by a single front end at once. The preview is exact for whatever plugin set the front-end experience enables, and the consume-time sanitizer cleans up any legality drift when the player actually spawns.
 
@@ -112,3 +166,4 @@ A checklist after wiring a mode:
 * [ ] Hand-edit a saved build to include an illegal attachment: the spawn strips it, the rest of the loadout still grants, and `LogLoadout` names what was dropped and why.
 * [ ] Run a **dedicated server** with a client: the client spawns with its own selection on the very first life, not the preset.
 * [ ] Die and respawn after switching loadouts in the picker: the new selection applies, and perks do not stack across lives.
+* [ ] Open and close the in-menu gunsmith ten times: the number of `LoadoutPreviewRig` actors below the level does not climb.

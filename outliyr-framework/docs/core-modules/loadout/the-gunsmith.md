@@ -134,6 +134,8 @@ No stat panel appears at all when the rule set has no `StatDisplayConfig`; both 
 
 The view models carry no design opinions, so a completely different editor is a matter of binding to them.
 
+Where that editor is opened from is a separate decision, covered in [Setup and Integration](setup-and-integration.md): a screen reached from the main menu rather than its own map has to close itself correctly and ask for menu input explicitly.
+
 {% stepper %}
 {% step %}
 #### Create and initialize
