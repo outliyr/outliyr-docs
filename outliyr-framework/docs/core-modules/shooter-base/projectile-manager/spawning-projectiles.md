@@ -11,19 +11,27 @@ ShooterBase provides `GA_Weapon_Fire_BulletDrop`, a Blueprint ability that handl
 ```plaintext
 UGameplayAbility_RangedWeapon_Projectile (C++ base):
     StartRangedWeaponTargeting():
-        // Perform local traces with spread applied
-        FoundHits = TraceBulletsInCartridge(FiringInput)
+        // Seeded spread, one trace and one hit per bullet
+        ShotIndex = WeaponState.AllocateLocalShotIndex()
+        FoundHits = PerformLocalTargeting(ShotIndex, out ShotGeometry)
 
-        // Package into TargetData with timing info
+        // Package into TargetData with timing info and the shot geometry
         for each hit in FoundHits:
             SingleTargetHit.HitResult = hit
             SingleTargetHit.Timestamp = ServerTime - (Ping / 2)
+            SingleTargetHit.ShotGeometry = ShotGeometry
+            SingleTargetHit.BulletIndex = hit.BulletIndex
             TargetData.Add(SingleTargetHit)
 
         // Notify via callback
         OnTargetDataReadyCallback(TargetData)
 
     OnTargetDataReadyCallback():
+        if server and fired by a remote client:
+            // Check the shot geometry, keep one entry per bullet,
+            // and aim each one along the direction rebuilt from the seeded spread
+            TargetData = BuildServerProjectileTargetData(TargetData)
+
         if CommitAbility():  // Deduct ammo, etc.
             AddSpread()  // Update weapon state
             OnRangedWeaponTargetDataReady(TargetData)  // Blueprint event!

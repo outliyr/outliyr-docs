@@ -2,7 +2,7 @@
 
 Hitscan weapons provide instant hit detection, when a player fires, the result is determined immediately. The challenge is validating these hits fairly across a network where clients and servers are 50–150ms apart.
 
-This page covers the trust-but-verify architecture, lag compensation integration, and the penetration/ricochet system.
+This page covers the trust-but-verify architecture, lag compensation integration, how the server rebuilds each shot, and the penetration/ricochet system.
 
 ***
 
@@ -122,16 +122,17 @@ Below is the firing flow presented as sequential steps (client and server behavi
 
 Client - StartRangedWeaponTargeting():
 
-* Calculate spread:
-  * `SpreadAngle = Weapon.GetCalculatedSpreadAngle()`
-  * `SpreadMultiplier = Weapon.GetCalculatedSpreadAngleMultiplier()`
-  * `ActualSpread = SpreadAngle * SpreadMultiplier`
+* Take the next shot index from the controller's weapon state component:
+  * `ShotIndex = WeaponState.AllocateLocalShotIndex()`
+* Calculate the spread once for the cartridge:
+  * `SpreadHalfAngle = Weapon.GetCalculatedSpreadAngle() * Weapon.GetCalculatedSpreadAngleMultiplier() / 2`
+* Round the aim origin and direction to the precision they are sent at, so the server rebuilds exactly the lines the client traces
 * Perform local traces (one per bullet):
-  * For each bullet in `BulletsPerCartridge`:
-    * `Direction = VRandConeNormalDistribution(AimDir, ActualSpread, Exponent)`
-    * `Hit = DoSingleBulletTrace(Start, Direction * MaxRange)`
-* Package result with timestamp:
-  * `TargetData.Add(Hit, CartridgeID, Timestamp)`
+  * For each `BulletIndex` in `BulletsPerCartridge`:
+    * `Direction = ComputeSeededSpreadDirection(AimDir, SpreadHalfAngle, Exponent, ShotIndex, BulletIndex)`
+    * `Hit = DoSingleBulletTrace(Start, Start + Direction * MaxRange)`
+* Package each hit with the shot geometry and its bullet index:
+  * `TargetData.Add(Hit, CartridgeID, Timestamp, ShotGeometry, BulletIndex)`
 * Continue to callback:
   * `OnTargetDataReadyCallback(TargetData)`
 {% endstep %}
@@ -159,8 +160,11 @@ Server - OnTargetDataReadyCallback():
 
 Server - PerformServerSideValidation():
 
-* For each Hit in `TargetData`:
-  * `LagCompManager.RewindLineTrace(Start, End, Hit.Timestamp, OnComplete: CompareWithClientHit)`
+* Check the shot geometry, see [Server Validation](hitscan.md#server-validation). A refused shot still spends its ammo, but none of its hits deal damage.
+* Group the hits by bullet index, refusing any index beyond the weapon's `BulletsPerCartridge`
+* For each bullet:
+  * Rebuild its line from the shot geometry: `Direction = ComputeSeededSpreadDirection(AimDir, SpreadHalfAngle, Exponent, ShotIndex, BulletIndex)`
+  * `LagCompManager.RewindLineTrace(Origin, Origin + Direction * MaxRange, Timestamp, OnComplete: CompareWithClientHits)`
 {% endstep %}
 
 {% step %}
@@ -168,11 +172,11 @@ Server - PerformServerSideValidation():
 
 Server - OnRewindTraceComplete():
 
-* Compare server result with client claim:
-  * If `ServerHit.Actor == ClientHit.Actor`:
-    * Accept hit → `ProcessValidatedHit(ClientHit)`
-  * Else:
-    * Replace with server's hit (or miss) → `ProcessValidatedHit(ServerHit)`
+* If the rebuilt line hit nothing, refuse every hit the bullet claimed
+* Compare the bullet's first claim with the first thing the line hit:
+  * Same actor and physical material: accept it, using the server's hit result
+  * Otherwise: refuse it. The client is told the hit was replaced, so its hit marker is removed.
+* Each further claim on the same bullet must name a different actor the rebuilt line also passed through, or it is refused. One bullet can't count as several hits on the same target.
 {% endstep %}
 {% endstepper %}
 
@@ -262,8 +266,9 @@ Each physical material can have penetration rules:
 | Property                     | Default | Description                                              |
 | ---------------------------- | ------- | -------------------------------------------------------- |
 | `MaxPenetrationDepth`        | 20cm    | How far the bullet travels through the material          |
+| `PenetrationDepthMultiplierRange` | 0.9 to 1.1 | Random multiplier applied to `MaxPenetrationDepth` per hit |
+| `MaxTotalWallDepth`          | 0       | Cap on the total wall depth one bullet may cross, 0 for no cap |
 | `MaxPenetrationAngle`        | 25°     | Maximum angle from perpendicular that allows penetration |
-| `MinimumPenetrationVelocity` | 1000    | Speed threshold below which penetration fails            |
 | `MinRicochetAngle`           | 60°     | Minimum grazing angle for ricochet eligibility           |
 | `RicochetProbability`        | 0.5     | Chance of ricochet when angle qualifies (50%)            |
 | `MaxRicochetBounces`         | 0       | Max bounces per material (0 = disabled)                  |
@@ -309,17 +314,21 @@ For instant-hit weapons, the trace should originate from where the bullet actual
 
 #### Spread Calculation
 
-Spread uses a normal distribution within a cone:
+Spread uses a normal distribution within a cone, drawn from a random stream seeded by the shot index and the bullet index:
 
 ```plaintext
-Direction = VRandConeNormalDistribution(
+Direction = ComputeSeededSpreadDirection(
     AimDirection,
     SpreadAngle / 2,      // Half-angle of the cone
-    SpreadExponent        // Clustering (higher = tighter center)
+    SpreadExponent,       // Clustering (higher = tighter center)
+    ShotIndex,            // Counts up with every shot this controller fires
+    BulletIndex           // Which pellet of the cartridge
 )
 ```
 
 The exponent controls how shots cluster toward the center. Higher values = more shots near the center, fewer at the edges.
+
+Because the seed comes from the shot and bullet index, the same shot produces the same pellet directions on the client and the server. That is what lets the server rebuild every bullet's line itself instead of trusting the one the client traced.
 
 ***
 
@@ -367,37 +376,92 @@ Materials NOT in the map block all penetration. You don't need to explicitly con
 
 ### Server Validation
 
-The server validates the entire penetration sequence, not just individual hits.
+The client reports where the shot started, where it was aimed and how wide its spread was. The server checks that report, then rebuilds every bullet's line from it rather than tracing the lines the client sent.
 
-#### Per-Segment Grouping
+#### Shot Geometry
 
-When a bullet penetrates multiple surfaces, the server groups all hits with the same segment key (start position, end position, timestamp). One rewind trace validates all hits in that segment.
+Every hit carries the shot geometry of the cartridge it came from: the shot index, the aim origin, the aim direction and the spread the client used. Before tracing anything, the server checks that:
 
-```plaintext
-ClientHits = [
-    Hit1: { Actor: Enemy, Segment: (A→B) },
-    Hit2: { Actor: Wall,  Segment: (A→B) },  // Same segment
-    Hit3: { Actor: Enemy2, Segment: (B→C) }  // Different segment
-]
+* every hit in the shot carries the same geometry
+* every value is finite
+* the shot index is newer than any it has seen from this controller, and skips no more than `MaxSkippedShotIndices` shots, which defaults to 4
+* `IsShotGeometryPlausible` accepts it
 
-// Server performs 2 rewind traces:
-//   Segment (A→B): validates Hit1 and Hit2
-//   Segment (B→C): validates Hit3
-```
+A shot that fails any of these is refused whole. Skipped indices happen legitimately when the server refuses to activate a shot the client fired. Each skip allowed is one more spread pattern a client could choose between, so keep `MaxSkippedShotIndices` small.
 
-#### Tolerance Check
+Once the geometry is accepted, the server works out each bullet's direction from the shot index and bullet index. A client can't send pellet directions of its own choosing, and one bullet can't be reported as several hits on the same target.
 
-The server compares each client hit against the rewound result:
-
-```plaintext
-IsHitWithinTolerance(ClientHit, ServerHit):
-    return ClientHit.Actor == ServerHit.Actor
-           AND ClientHit.PhysicalMaterial == ServerHit.PhysicalMaterial
-```
-
-{% hint style="warning" %}
-**Current Implementation**: The validation checks actor and material only, not impact position proximity. Additionally, spread seed validation is not yet implemented, the server trusts the client's spread direction rather than recalculating it.
+{% hint style="info" %}
+The origin and aim are taken as the client reports them. How far a shot may start from the pawn, or how far its aim may differ from the server's view of the player, depends on your game's cameras, vehicles and movement. If your game has limits it can enforce, override `IsShotGeometryPlausible`.
 {% endhint %}
+
+<details>
+
+<summary>Example: limiting how far a shot may start from the pawn</summary>
+
+```cpp
+// MyHitscanAbility.h
+virtual bool IsShotGeometryPlausible(const FLyraShotGeometry& ShotGeometry) const override;
+
+// MyHitscanAbility.cpp
+bool UMyHitscanAbility::IsShotGeometryPlausible(const FLyraShotGeometry& ShotGeometry) const
+{
+	// A first person game with no vehicles always fires from close to the pawn
+	const APawn* Pawn = Cast<APawn>(GetAvatarActorFromActorInfo());
+	return Pawn && FVector::Dist(Pawn->GetActorLocation(), ShotGeometry.AimOrigin) < 150.0;
+}
+```
+
+</details>
+
+#### Penetration Paths
+
+For a penetrating bullet, the server traces the first segment along the rebuilt line. Every later segment has to follow from the one before it under that surface's settings:
+
+* A penetration exits no deeper than `MaxPenetrationDepth` allows at the top of `PenetrationDepthMultiplierRange`, along the direction the bullet entered, and bends by no more than `MaxExitSpreadAngle`
+* A ricochet starts at the impact, heads along the reflected direction within `MaxExitSpreadAngle`, and happens no more than `MaxRicochetBounces` times
+* A surface with no entry in `PenetrationSettings` stops the bullet
+* The path stays within `MaxPenetrations` and the weapon's range
+
+Positions travel over the network rounded to the centimetre, so each check allows a little room for that rounding.
+
+Each segment is then traced against the rewound world, and its hit must match the server's hit by actor and physical material. When a segment is refused, every segment after it is refused too, since the bullet never passed through or bounced off that surface.
+
+***
+
+### Diagnosing Refused Shots
+
+When a shot shows a hit marker but deals no damage, the server most likely refused it. Every refusal is written to the `LogShotValidation` category with the shooter, the shot index, the pellet and the reason. The category writes at Verbose, so it stays silent until you raise it on the server. It is stripped from Shipping builds along with other logging, and clients never run these checks, so players never see it.
+
+During honest play this log should stay empty. A line that appears while nobody is cheating points at a real problem, such as a hitbox using a different physical material on the server than on the client.
+
+<details>
+
+<summary>Turning it on, and what the lines look like</summary>
+
+Raise the category with any of these:
+
+* In the server console: `Log LogShotValidation Verbose`
+* On the server's command line: `-LogCmds="LogShotValidation Verbose"`
+* Permanently, in `DefaultEngine.ini`:
+
+```ini
+[Core.Log]
+LogShotValidation=Verbose
+```
+
+Example lines:
+
+```plaintext
+GA_Weapon_Fire_Rifle_C_0 refused shot 12 pellet 0 from Kamsi because the rebuilt line hit BP_Enemy_C_1 on PM_Head, but the client claimed BP_Enemy_C_1 on PM_Chest
+GA_Weapon_Fire_Shotgun_C_0 refused shot 40 pellet 3 from Kamsi because the rebuilt line hit nothing, but the client claimed BP_Enemy_C_1
+GA_Weapon_Fire_Rifle_C_0 refused shot 13 from Kamsi because its shot index was replayed or skipped more than 4 shots
+GA_Weapon_Fire_Sniper_C_0 refused shot 7 pellet 0 from Kamsi because segment 1 exits 150cm into PM_Concrete, deeper than its 113cm
+```
+
+A shot that arrives with no shot geometry at all is a setup mistake rather than a misbehaving client, so it also logs a Warning once per ability, even with the category at its default level.
+
+</details>
 
 ***
 
@@ -420,6 +484,54 @@ OnRangedWeaponTargetDataReady(TargetData):
         SpawnTracer(MuzzleLocation, Hit.ImpactPoint)
 ```
 
+#### Custom Targeting
+
+The server refuses any shot that doesn't carry shot geometry, so targeting code you write has to produce it. The built-in targeting does this through the `PerformLocalTargeting` overload that takes a shot index. If you override `TraceBulletsInCartridge`, draw each bullet's direction with `ComputeSeededSpreadDirection` from the spread and shot index in the firing input, and tag each hit with its bullet index. Otherwise the server rebuilds lines your client never traced, and refuses the hits.
+
+<details>
+
+<summary>Example: a custom cartridge trace that the server can rebuild</summary>
+
+```cpp
+void UMyHitscanAbility::TraceBulletsInCartridge(const FRangedWeaponFiringInput& InputData, TArray<FHitResult>& OutHits)
+{
+	ULyraRangedWeaponInstance* Weapon = InputData.WeaponData;
+	const float HalfAngle = FMath::DegreesToRadians(InputData.SpreadHalfAngleDegrees);
+
+	for (int32 BulletIndex = 0; BulletIndex < Weapon->GetBulletsPerCartridge(); ++BulletIndex)
+	{
+		const FVector Direction = ComputeSeededSpreadDirection(InputData.AimDir, HalfAngle, Weapon->GetSpreadExponent(), InputData.ShotIndex, BulletIndex);
+
+		FHitResult Hit = TraceMyBullet(InputData.StartTrace, Direction);
+
+		// MyItem carries the bullet index into the target data
+		Hit.MyItem = BulletIndex;
+		OutHits.Add(Hit);
+	}
+}
+```
+
+If you replace `StartRangedWeaponTargeting` as well, take a shot index from the controller's `ULyraWeaponStateComponent` with `AllocateLocalShotIndex`, pass it to `PerformLocalTargeting`, and copy the returned `FLyraShotGeometry` and each hit's bullet index into the target data:
+
+```cpp
+const int32 ShotIndex = WeaponStateComponent->AllocateLocalShotIndex();
+
+TArray<FHitResult> FoundHits;
+FLyraShotGeometry ShotGeometry;
+PerformLocalTargeting(FoundHits, ShotIndex, ShotGeometry);
+
+for (const FHitResult& FoundHit : FoundHits)
+{
+	FLyraGameplayAbilityTargetData_SingleTargetHit* NewTargetData = new FLyraGameplayAbilityTargetData_SingleTargetHit();
+	NewTargetData->HitResult = FoundHit;
+	NewTargetData->ShotGeometry = ShotGeometry;
+	NewTargetData->BulletIndex = FoundHit.MyItem;
+	TargetData.Add(NewTargetData);
+}
+```
+
+</details>
+
 #### When to Subclass
 
 Use `GA_Weapon_Fire_Hitscan` (Blueprint) when:
@@ -431,7 +543,7 @@ Use `GA_Weapon_Fire_Hitscan` (Blueprint) when:
 Subclass `UGameplayAbility_HitScanPenetration` (C++) when:
 
 * You need custom targeting logic (lock-on, beam weapons)
-* You need to modify validation beyond material checks
+* You want game-specific limits on where a shot may start or aim, through `IsShotGeometryPlausible`
 * You're building fundamentally different firing patterns
 
 ***
@@ -447,10 +559,16 @@ Subclass `UGameplayAbility_HitScanPenetration` (C++) when:
 * `PenetrationSettings` - Map of physical material → penetration rules
 * `BulletTraceSweepRadius` - 0 for line trace, >0 for sphere sweep
 * `MaxDamageRange` - Maximum trace distance
+* `MaxSkippedShotIndices` - How many shot indices a client may skip between accepted shots
 
 **Key Events**:
 
 * `OnRangedWeaponTargetDataReady` - BlueprintImplementableEvent for cosmetics
+* `IsShotGeometryPlausible` - C++ override for game-specific limits on a shot's origin, aim and spread
+
+**Diagnostics**:
+
+* `LogShotValidation` - Why the server refused a shot, at Verbose
 
 **Related Systems**:
 

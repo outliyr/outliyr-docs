@@ -65,6 +65,15 @@ This is the most complex feature of this component, handling the confirmation lo
 * `ActuallyUpdateDamageInstigatedTime()`: Resets the `LastWeaponDamageScreenLocations` array if significant time has passed since the last update, then records the current world time in `LastWeaponDamageInstigatedTime`.
 * `GetTimeSinceLastHitNotification() const`: Returns `WorldTime - LastWeaponDamageInstigatedTime`.
 
+### Shot Indices
+
+Every hitscan and projectile shot carries a shot index, which seeds its spread pattern and lets the server tell a new shot from a replayed one. The component keeps both sides of that count for its controller.
+
+* `AllocateLocalShotIndex()`: Returns the index for the next cartridge the local player fires. Indices only ever increase.
+* `ConsumeRemoteShotIndex(ShotIndex, MaxSkippedShots)`: Called on the server for each shot the owning client reports. It accepts an index that is newer than every index seen so far and skips no more than `MaxSkippedShots`. An index that skips too far is refused but still recorded, so a client that falls out of step loses one shot rather than every shot after it.
+
+See [Hitscan](../../core-modules/shooter-base/weapons/shooting-gameplay-abilities/hitscan.md#server-validation) for how the firing abilities use it.
+
 ### Weapon Ticking
 
 * `TickComponent(...)`: The component's tick function.

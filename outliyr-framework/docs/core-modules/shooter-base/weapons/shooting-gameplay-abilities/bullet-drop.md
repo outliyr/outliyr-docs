@@ -73,7 +73,7 @@ sequenceDiagram
 
 #### What the Blueprint Does
 
-In the `OnRangedWeaponTargetDataReady` event:
+The target data holds exactly one entry per bullet, each aimed along that bullet's direction from the seeded spread. On the server, the ability has already replaced each entry's line with the one it rebuilt, so the Blueprint fires one projectile per entry. In the `OnRangedWeaponTargetDataReady` event:
 
 ```plaintext
 OnRangedWeaponTargetDataReady(TargetData):
@@ -274,7 +274,7 @@ Impact effects are handled automatically via the Projectile Manager's batched Ga
 
 #### Custom Ability Subclass
 
-For advanced customization, subclass `UGameplayAbility_RangedWeapon_Projectile` in C++. Note that this ability does **not** perform server-side validation, it relies on the Projectile Manager's collision system.
+For advanced customization, subclass `UGameplayAbility_RangedWeapon_Projectile` in C++. What each bullet hits is decided by the Projectile Manager's lag-compensated simulation on the server, not by the ability. The ability decides what gets fired: before the Blueprint event runs on the server, it checks the shot geometry the client sent, keeps one entry per bullet, and points each entry along the direction it rebuilt from the seeded spread, the same way [hitscan](hitscan.md#server-validation) does. A subclass that builds its own target data has to fill the shot geometry in the same way, or the server refuses the shot and nothing spawns.
 
 ***
 
