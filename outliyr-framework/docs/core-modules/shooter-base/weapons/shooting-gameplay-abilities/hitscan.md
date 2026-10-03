@@ -453,10 +453,10 @@ LogShotValidation=Verbose
 Example lines:
 
 ```plaintext
-GA_Weapon_Fire_Rifle_C_0 refused shot 12 pellet 0 from Kamsi because the rebuilt line hit BP_Enemy_C_1 on PM_Head, but the client claimed BP_Enemy_C_1 on PM_Chest
-GA_Weapon_Fire_Shotgun_C_0 refused shot 40 pellet 3 from Kamsi because the rebuilt line hit nothing, but the client claimed BP_Enemy_C_1
-GA_Weapon_Fire_Rifle_C_0 refused shot 13 from Kamsi because its shot index was replayed or skipped more than 4 shots
-GA_Weapon_Fire_Sniper_C_0 refused shot 7 pellet 0 from Kamsi because segment 1 exits 150cm into PM_Concrete, deeper than its 113cm
+GA_Weapon_Fire_Rifle_C_0 refused shot 12 pellet 0 from Client 1 because the rebuilt line hit BP_Enemy_C_1 on PM_Head, but the client claimed BP_Enemy_C_1 on PM_Chest
+GA_Weapon_Fire_Shotgun_C_0 refused shot 40 pellet 3 from Client 1 because the rebuilt line hit nothing, but the client claimed BP_Enemy_C_1
+GA_Weapon_Fire_Rifle_C_0 refused shot 13 from Client 1 because its shot index was replayed or skipped more than 4 shots
+GA_Weapon_Fire_Sniper_C_0 refused shot 7 pellet 0 from Client 1 because segment 1 exits 150cm into PM_Concrete, deeper than its 113cm
 ```
 
 A shot that arrives with no shot geometry at all is a setup mistake rather than a misbehaving client, so it also logs a Warning once per ability, even with the category at its default level.
