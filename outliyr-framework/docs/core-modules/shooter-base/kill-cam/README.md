@@ -2,6 +2,8 @@
 
 Dying without knowing how is one of the most frustrating moments in a shooter. The kill cam replays the last seconds before a player's death through the eyes of the player who killed them: their camera, their aim, the hit markers they saw. It plays while the match carries on, so the victim is back in the action the moment it ends.
 
+<figure><img src="../../../.gitbook/assets/killcam-playing.png" alt="A kill cam playing through the killer's eyes"><figcaption><p>A kill cam through the killer's eyes, with their weapon, their aim and the damage they dealt, and the victim marked</p></figcaption></figure>
+
 The kill cam is built on [Visual Replay](../../visual-replay/), which records every player's view of the match all the time and plays the past back inside the live world. On top of it, the kill cam decides whose recording to show, gets that recording from the killer's machine safely, and presents it.
 
 ***

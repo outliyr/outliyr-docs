@@ -111,6 +111,8 @@ Kill cam anomalies are listed on the kill cam's own [Debugging](../shooter-base/
 
 `Replay.Debug.Draw 1` draws problems in the world while a replay runs: shells without a puppet in red, and the world origin when something is stranded there. `Replay.Debug.Draw 2` also labels every puppet and shell, with a line from each shell to the puppet it follows.
 
+<figure><img src="../../.gitbook/assets/replay-debug-draw.png" alt="Replay.Debug.Draw 2 labelling puppets and shells during a kill cam"><figcaption><p>Replay.Debug.Draw 2 during a kill cam, with every puppet and shell labelled and the world origin marked in red</p></figcaption></figure>
+
 ***
 
 ## Other Commands

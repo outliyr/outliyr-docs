@@ -28,6 +28,8 @@ Open the experience the kill cam should run in, such as `B_TeamDeathmatch`.
 #### Add the action set
 
 In **Action Sets**, add `LAS_ShooterBase_Death_Killcam`, or the variant for the mode (see below).
+
+<figure><img src="../../../.gitbook/assets/b-teamdeathmatch-action-sets.png" alt="The action sets of B_TeamDeathmatch"><figcaption><p>B_TeamDeathmatch lists the kill cam action set alongside its other action sets</p></figcaption></figure>
 {% endstep %}
 {% endstepper %}
 
@@ -44,6 +46,8 @@ The action set adds:
 | `GA_Respawn` | Granted to players | Respawns the player |
 | `AbilitySet_Killcam` with `InputData_Killcam` | Granted to players | `GA_Skip_Killcam`, bound to `InputTag.Ability.SkipKillcam` through `IA_Skip_Killcam` |
 
+<figure><img src="../../../.gitbook/assets/las-shooterbase-death-killcam.png" alt="The actions of LAS_ShooterBase_Death_Killcam"><figcaption><p>LAS_ShooterBase_Death_Killcam adds the components, grants the abilities and binds the skip input</p></figcaption></figure>
+
 ### Mode variants
 
 Four modes ship their own copy of the action set with their own death ability, for death flows that differ from the base, such as rounds without respawns:
@@ -56,6 +60,22 @@ Four modes ship their own copy of the action set with their own death ability, f
 | `LAS_ShooterBase_Death_Killcam_SearchAndDestroy` | `GA_Killcam_Death_SearchAndDestroy` | SearchAndDestroy |
 
 A new mode with its own death flow follows the same pattern: duplicate the action set into the mode's plugin, create the mode's death ability, swap it in, and add the new action set to the mode's experience. The death ability's one obligation is to broadcast the kill cam start message once the after-death seconds have passed, as the timing rules below explain.
+
+The shipped death ability is the flow to copy. Once the after-death seconds have passed, it takes one of two paths. While the playing phase runs, or in a mode without game phases, it adds the kill cam layout to the HUD and broadcasts the start message. Once the playing phase has ended, such as at the end of a round, it broadcasts the start message without the layout, and if no kill cam can play it waits out the window and ends.
+
+{% tabs %}
+{% tab title="Wait for the after-death seconds" %}
+<figure><img src="../../../.gitbook/assets/ga-killcam-death-wait.png" alt="GA_Killcam_Death waiting for the after-death seconds"><figcaption><p>Wait for the after-death seconds, then listen for the stop message and add the skip input</p></figcaption></figure>
+{% endtab %}
+
+{% tab title="After the playing phase" %}
+<figure><img src="../../../.gitbook/assets/ga-killcam-death-round-over.png" alt="GA_Killcam_Death once the playing phase has ended"><figcaption><p>Once the playing phase has ended, start the kill cam without its layout, or wait out the window when none can play</p></figcaption></figure>
+{% endtab %}
+
+{% tab title="Add the layout and start" %}
+<figure><img src="../../../.gitbook/assets/ga-killcam-death-start.png" alt="GA_Killcam_Death adding the layout and starting the kill cam"><figcaption><p>Add the kill cam layout to the HUD, then broadcast the start message</p></figcaption></figure>
+{% endtab %}
+{% endtabs %}
 
 ***
 

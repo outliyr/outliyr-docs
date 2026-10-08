@@ -74,7 +74,21 @@ The shipped objective markers follow one pattern that works live and in a kill c
 * **Colours follow the viewer.** Markers observe the viewer's team rather than the local player's, so during a kill cam they show the killer's side.
 * **Markers clean up when they unbind.** A marker cancels the team observers it started when its indicator unbinds. An indicator set to go when its component does is removed the moment its actor ends play, so a shell's marker is gone before the viewer switches back from the killer.
 
-The control point, capture the flag, and search and destroy markers all work this way.
+The control point, capture the flag, and search and destroy markers all work this way. Here is the control point's:
+
+{% tabs %}
+{% tab title="Begin play" %}
+<figure><img src="../../../.gitbook/assets/controlpoint-beginplay.png" alt="B_ControlPoint begin play"><figcaption><p>Once the experience is ready, the point starts following the viewer's team and adds its marker</p></figcaption></figure>
+{% endtab %}
+
+{% tab title="Add the marker" %}
+<figure><img src="../../../.gitbook/assets/controlpoint-initialize-objective-marker.png" alt="B_ControlPoint adding its objective marker"><figcaption><p>The marker waits a tick, retries with a Delay until the indicator manager exists, then adds the indicator</p></figcaption></figure>
+{% endtab %}
+
+{% tab title="Follow the viewer's team" %}
+<figure><img src="../../../.gitbook/assets/controlpoint-listen-for-team-change.png" alt="B_ControlPoint observing the viewer's team"><figcaption><p>ObserveViewerTeam keeps the point's colours on the viewer's side</p></figcaption></figure>
+{% endtab %}
+{% endtabs %}
 
 ***
 

@@ -86,6 +86,8 @@ The replay sound class must not be one of the silenced classes.
 
 The kill cam can wait at three points: for the killer's clip to arrive, for its stand-ins to be prepared, and for more of the clip while playing. Each time waiting starts or stops, the manager broadcasts `ShooterGame.KillCam.Message.Waiting` with a `FKillcamWaitingMessage`, which holds the victim's player state and whether it is waiting. The kill cam layout listens for it, shows its waiting screen, and pauses its countdown, so time spent waiting doesn't count against the kill cam.
 
+<figure><img src="../../../.gitbook/assets/killcam-waiting-static.png" alt="The kill cam layout showing static while it waits"><figcaption><p>The layout's waiting screen, static over the replay until the kill cam is ready</p></figcaption></figure>
+
 ***
 
 ## Ending
