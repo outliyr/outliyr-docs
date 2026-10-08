@@ -32,7 +32,7 @@ If you only need a Blueprint-callable function that reads per-instance data, you
 {% endhint %}
 
 {% hint style="success" %}
-Still unsure? Jump to the [instance-data comparison](creating-custom-fragments.md#choose-and-define-instance-data-optional).
+Still unsure? Jump to the [instance-data comparison](creating-custom-fragments.md#choose-instance-data-optional).
 {% endhint %}
 
 ***
@@ -181,6 +181,6 @@ Runtime fragments can opt into persistence through `BlueprintNativeEvent` method
 
 The `RuntimeFragments` array on `ULyraInventoryItemInstance` is `TArray<TObjectPtr<UTransientRuntimeFragment>>` and is replicated. For the UObject instances and their internal properties to replicate correctly:
 
-* The owning component (`ULyraInventoryManagerComponent`, `ULyraEquipmentManagerComponent`, etc.) must implement `ReplicateSubobjects` and add these fragments via `AddReplicatedSubObject`. The provided components already handle this.
+* The item registers its runtime fragments on the registered subobject list of the container holding it, alongside itself, so they reach the same clients. The provided containers already do this, and [Item Replication](../item-replication.md) explains how.
 * Internal replication follows standard UObject rules, implement `GetLifetimeReplicatedProps`, use `DOREPLIFETIME`, handle `OnRep` functions.
-* If your runtime fragment owns _other_ UObjects that need replicating, override `ReplicateSubobjects` within your fragment class to handle those nested sub-objects.
+* If your runtime fragment owns _other_ UObjects that need replicating, override `RegisterNestedSubObjectReplication` and register them on the container it is given, as the attachment fragment does.

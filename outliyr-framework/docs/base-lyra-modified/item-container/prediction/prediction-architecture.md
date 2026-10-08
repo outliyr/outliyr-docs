@@ -235,7 +235,6 @@ Clear mapping between container types and prediction types.
 | **Authority**       | `IsAuthority`                                                          | Route operations correctly                                                      |
 | **Direct Ops**      | `DirectAddEntry`, `DirectRemoveEntry`, `DirectChangeEntry`             | Server-side array mutations                                                     |
 | **Slot**            | `PayloadToSlotStruct`                                                  | Build the slot descriptor written onto the item's CurrentSlot                   |
-| **Replication**     | `TearOffReplicatedSubObject`                                           | Tear off a single sub-object; the runtime calls this for fragments and the item |
 | **Stamping**        | `GetPredictionStampMutable`, `MarkEntryDirty`                          | Access prediction stamp                                                         |
 | **Optional**        | `TransferPredictionState`, `PreparePredictedPayload`                   | Hooks for containers that move state from the overlay onto the confirmed entry  |
 

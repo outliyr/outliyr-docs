@@ -290,11 +290,7 @@ Each container handles item destruction differently:
 virtual void DestroyItem(ULyraInventoryItemInstance* Item);
 ```
 
-The default implementation marks the item for garbage collection, but containers override this to handle:
-
-* Replication teardown
-* Spawned actor cleanup
-* Attachment detachment
+The default implementation prepares the item for destruction, which ends its replication and destroys its copies on clients, then begins destroying it. A container with teardown of its own, such as spawned actor cleanup or attachment detachment, overrides it and calls the default afterwards. [Item Replication](../../items/item-replication.md#destroying-an-item) covers what clients see.
 
 **Important:** Remove the item from the container first, then call `DestroyItem`.
 

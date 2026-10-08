@@ -62,6 +62,20 @@ You might wonder: _"Do I need to refresh my icons or text when an item moves?"_
 
 **No.** Because the ViewModels are bound to the **Item Instance ID** (a unique GUID) rather than a slot index, the data connection remains solid. The polymorphic slot descriptors inside the window are updated via the `OnSourceReparented` event, but the user sees zero flicker or interruption.
 
+### Moving to Another Actor
+
+Moving the Backpack into the Chest also moves it to another actor, so every client's copy of the Backpack is destroyed, and clients that can read the Chest receive it as a new copy with the same Item Instance ID ([Item Replication](../../../items/item-replication.md#moving-an-item)). The old copy going and the new one arriving can happen in either order, and the window must not close just because the old copy went, since the item lives on.
+
+When the old copy's replication ends, the UI Manager **holds** the Backpack window rather than closing it, provided the server is tracking the player's view of the Backpack. A held window ends in exactly one way:
+
+| What happens next                                                   | Result                                    |
+| ------------------------------------------------------------------- | ----------------------------------------- |
+| The new copy arrives in its slot                                    | The window follows it and reparents       |
+| The server reports the view unreachable, such as a Chest the player can't read | The window closes                |
+| The actor the old copy came from ends play                          | The window closes with it                 |
+
+News from a copy that another copy of the same item has already replaced is ignored, so the window follows the new copy whichever arrives first. A window the server isn't tracking closes as soon as the old copy ends, which is why the player controller needs the [client component](../item-container-ui-manager/lifecycle-and-security.md#views-the-server-tracks).
+
 ### Hierarchy Visualization
 
 ```mermaid

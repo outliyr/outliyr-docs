@@ -64,7 +64,7 @@ The failure mode to recognize is a reconstructed pose that comes out collapsed o
 {% endhint %}
 
 {% hint style="warning" %}
-**A trait reads live state that reconstruction cannot see.** If most of the body reconstructs wrong while one isolated part is correct, suspect a trait whose input is computed from live external state at evaluation time, for example a motion-matching trajectory generated from the live movement component each tick. The clean reconstruction instance has no such live state, so it produces a different pose. The fix is to feed that input from captured state instead; this is covered in detail under [the world-query hazard](/broken/pages/46eab4240b811aad1ba3b915b8924aac39a77e41#the-world-query-hazard).
+**A trait reads live state that reconstruction cannot see.** If most of the body reconstructs wrong while one isolated part is correct, suspect a trait whose input is computed from live external state at evaluation time, for example a motion-matching trajectory generated from the live movement component each tick. The clean reconstruction instance has no such live state, so it produces a different pose. The fix is to feed that input from captured state instead; this is covered in detail under [the world-query hazard](supported-traits-and-extension.md#the-world-query-hazard).
 {% endhint %}
 
 {% hint style="info" %}

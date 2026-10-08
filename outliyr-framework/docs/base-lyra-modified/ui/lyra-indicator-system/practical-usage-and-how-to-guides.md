@@ -121,7 +121,7 @@ When the indicator should disappear:
 Descriptor->UnregisterIndicator();
 ```
 
-If `bAutoRemoveWhenIndicatorComponentIsNull` was set to `true`, the indicator removes itself automatically when the target component or actor is destroyed.
+If `bAutoRemoveWhenIndicatorComponentIsNull` was set to `true`, the indicator is removed automatically as soon as the target component's actor ends play, or when the component itself is destroyed.
 {% endstep %}
 {% endstepper %}
 

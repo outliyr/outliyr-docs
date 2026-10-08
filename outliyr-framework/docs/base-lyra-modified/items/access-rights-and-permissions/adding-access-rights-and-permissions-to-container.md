@@ -17,7 +17,7 @@ Use these **four** code edits to bolt the permission system onto any container w
 _Inside the class that owns items and requires an access rights and permissions (inventory, equipment, stash, crafting…)_
 
 ```cpp
-#include "PermissionComponentHelpers.h"
+#include "ItemContainers/LyraItemPermissionComponent.h"
 
 // Make sure the interface is added "public IItemPermissionOwner"
 class UMyComponent : public UActorComponent, public IItemPermissionOwner
@@ -29,6 +29,9 @@ public:
 	{
 		return PermissionComponent;
 	}
+
+	/* Registers the permission component for replication, see step 4 */
+	virtual void ReadyForReplication() override;
 
 	/* Instantiate on the *runtime* component, never on the CDO */
 	virtual void InitializeComponent() override
@@ -70,19 +73,19 @@ UMyComponent::UMyComponent(const FObjectInitializer& ObjectInitializer)
 	/* necessary for the "InitializeComponents" to be called creating the
 	* Creating and assigning the PermissionComponent to a variable.
 	*/
-	bWantsInitializeComponent = true
-	// neccessary to allow ReplicateSubObjects to be called
-	bReplicateUsingRegisteredSubObjectList = false;
+	bWantsInitializeComponent = true;
+	// subobjects replicate through the registered list, which Iris requires
+	bReplicateUsingRegisteredSubObjectList = true;
 }
 ```
 
 * Set the component to replicate
 * Make the component initialize
-* Replicate the sub object list using the component
+* Replicate subobjects through the registered subobject list
 
 ***
 
-#### 2. `GetLifetimeReplicatedProps`&#x20;
+#### 3. `GetLifetimeReplicatedProps`&#x20;
 
 ```cpp
 UMyComponent::GetLifetimeReplicatedProps(
@@ -99,35 +102,33 @@ UMyComponent::GetLifetimeReplicatedProps(
 
 ***
 
-#### **3. `ReplicateSubobjects`**
+#### **4. `ReadyForReplication`**
 
 ```cpp
-bool UMyComponent::ReplicateSubobjects(
-        UActorChannel* Ch, FOutBunch* B, FReplicationFlags* F)
+void UMyComponent::ReadyForReplication()
 {
-	// replicate any existing sub-objects first (items, runtime fragments, …)
-	bool WroteSomething = Super::ReplicateSubobjects(Ch, B, F);
+	Super::ReadyForReplication();
 
-	// add the permission component
-	WroteSomething |= (PermissionComponent && 
-		Channel->ReplicateSubobject(PermissionComponent, *Bunch, *RepFlags));
-
-	return WroteSomething;
+	// register the permission component once the component can replicate
+	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && IsValid(PermissionComponent))
+	{
+		AddReplicatedSubObject(PermissionComponent);
+	}
 }
 ```
 
-* **Manual call** tells the channel to treat `PermissionComp` as a networked child object. This is necessary because the **PermissionComponent** is a **UObject**
+* Registers `PermissionComponent` as a replicated subobject of the component. This is necessary because the **PermissionComponent** is a **UObject**.
+* Items need nothing here. Each registers itself as it is added, and joins the container's net condition group when the container starts at `NoAccess`, as [Item Replication](../item-replication.md) explains.
 
 {% hint style="warning" %}
-Make sure the component’s `bReplicateUsingRegisteredSubObjectList` is **set to `false`**.\
-Or `ReplicateSubobject` will not be called.
+Keep `bReplicateUsingRegisteredSubObjectList` **true**. Iris replicates subobjects only through the registered list, so a `ReplicateSubobjects` override is never used.
 {% endhint %}
 
 ***
 
 ### Why no Blueprint-only version?
 
-`ReplicateSubobjects()` is **not exposed** to Blueprints, so a pure-BP container cannot add the permission component _and_ replicate it correctly.\
+`AddReplicatedSubObject()` and `ReadyForReplication()` are **not exposed** to Blueprints, so a pure-BP container cannot add the permission component _and_ replicate it correctly.\
 If you need Blueprint workflows, create a minimal C++ parent class that implements the four steps above, then derive your Blueprint container from it.
 
 ***
@@ -141,7 +142,7 @@ Instead onteract through the functions defined on **IItemPermissionOwner**.
 * **Authority safety** — mutating functions are tagged `BlueprintAuthorityOnly`; they simply do nothing when called on a non-authoritative client.
 * **Identical API** in C++ and Blueprints — write gameplay code once, use it everywhere.
 
-With these three edits and the interface calls in place, your container now inherits the full Access-Rights & Permissions pipeline: server-side authority, fast-array replication, and gameplay-message notifications, all without touching its original item logic.
+With these four edits and the interface calls in place, your container now inherits the full Access-Rights & Permissions pipeline: server-side authority, fast-array replication, and gameplay-message notifications, all without touching its original item logic.
 
 ***
 
@@ -151,7 +152,8 @@ With these three edits and the interface calls in place, your container now inhe
 | ------------------------------------------ | -------------------------------------------- | ----------------------------------------------- |
 | **DefaultAccessRight / DefaultPermission** | normal `UPROPERTY(ReplicatedUsing)`          | value changes on the server                     |
 | **Per-player overrides**                   | Fast-Array inside `UItemPermissionComponent` | only the entry that changed                     |
-| **The component itself**                   | your `ReplicateSubobjects` helper            | once on spawn + if a property inside it dirties |
+| **The component itself**                   | registered subobject, added in `ReadyForReplication` | once the container can replicate + if a property inside it dirties |
+| **The container's items**                  | registered subobjects, registered by each item | to every connection, or only to readers when the container starts at `NoAccess` |
 
 When the array callbacks fire on the client the component broadcasts:
 
@@ -171,9 +173,9 @@ Widgets and gameplay scripts subscribe to those tags to open/close or enable/dis
 * [ ] Ensure that the `UObject` is instantiated and `PermissionOwner` is set at runtime, preferably before `BeginPlay`. In this guide, the object is initialized in `InitializeComponent`, which is a suitable place as it runs during runtime and not on the class default object (CDO).
 * [ ] Set `SetIsReplicatedByDefault(true)` in constructor
 * [ ] Set `bWantsInitializeComponent = true` in the constructor
-* [ ] Set `bReplicateUsingRegisteredSubObjectList = false` in the constructor
+* [ ] Set `bReplicateUsingRegisteredSubObjectList = true` in the constructor
 * [ ] Make sure `PermissionComponent` is replicating in `GetLifetimeReplicatedProps`
-* [ ] Replicate  `PermissionComponent` in **`ReplicateSubobjects`** functio&#x6E;**.**
+* [ ] Register `PermissionComponent` with `AddReplicatedSubObject` in **`ReadyForReplication`**
 * [ ] Use the **interface**, not the raw pointer to `PermissionComponent`
 
 Follow these steps and your container is now fully governed by the Access-Rights & Permissions system while keeping all of its original item replication logic untouched.

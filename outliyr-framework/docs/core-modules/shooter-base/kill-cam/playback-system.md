@@ -1,425 +1,93 @@
-# Playback System
+# Playback and Presentation
 
-With data recorded and transferred, the final step is playing it back. This page covers the mechanics of triggering playback, world switching, time scrubbing, and view control.
-
-***
-
-### Triggering Playback
-
-Kill Cam playback doesn't start automatically at death. External game logic controls when it begins, allowing for:
-
-* Death animations to complete
-* Score displays to show
-* Custom timing per game mode
-
-#### The Start Message
-
-Playback begins when the `ShooterGame.KillCam.Message.Start` message is broadcast locally on the victim's client:
-
-```cpp
-USTRUCT(BlueprintType)
-struct FLyraKillCamMessage
-{
-    UPROPERTY(BlueprintReadWrite)
-    TObjectPtr<APlayerState> KilledPlayerState;
-
-    UPROPERTY(BlueprintReadWrite)
-    TObjectPtr<APlayerState> KillerPlayerState;
-
-    // How many seconds before death to start playback
-    UPROPERTY(BlueprintReadWrite)
-    float KillCamStartTime = 7.0f;
-
-    // Total playback duration
-    UPROPERTY(BlueprintReadWrite)
-    float KillCamFullDuration = 7.0f;
-};
-```
-
-Typical trigger pattern:
-
-{% stepper %}
-{% step %}
-#### Server detects player death
-
-Server-side logic determines that a player has died and prepares any game-mode-specific behavior (scores, animations).
-{% endstep %}
-
-{% step %}
-#### Server sends Client RPC to victim's controller
-
-A Client RPC is invoked on the victim's PlayerController to notify the client.
-{% endstep %}
-
-{% step %}
-#### RPC broadcasts the Start message locally
-
-The RPC triggers a local broadcast of `ShooterGame.KillCam.Message.Start` (see payload above).
-{% endstep %}
-
-{% step %}
-#### `UKillcamManager` receives and processes
-
-The manager receives the Start message and begins the startup flow for playback.
-{% endstep %}
-{% endstepper %}
-
-### Manager Receives Start
-
-```cpp
-void UKillcamManager::OnKillCamStartMessage(
-    FGameplayTag Channel,
-    const FLyraKillCamMessage& Payload)
-{
-    // Store timing parameters on the playback instance
-    KillcamPlayback->KillCamStartTime = Payload.KillCamStartTime;
-    KillcamPlayback->KillCamDuration = Payload.KillCamFullDuration;
-
-    // Pass killer's overlay data to playback
-    KillcamPlayback->SetKillerAimTrack(BuiltAimTrack);
-    KillcamPlayback->SetKillerHitTrack(BuiltHitTrack);
-    KillcamPlayback->SetKillerCameraTrack(BuiltCameraTrack);
-
-    // Initiate playback
-    KillcamPlayback->KillcamStart(
-        FOnKillcamStartComplete::CreateUObject(
-            this, &UKillcamManager::OnKillcamStarted));
-}
-```
+Once the kill cam knows which recording to play, it has to turn a replay into a kill cam. That means following the killer, showing the match from the killer's side, using the killer's camera, aim and hit markers, keeping the replay's sound apart from the live game's, and telling the UI when it is waiting. This page covers that presentation layer, from the moment the replay starts to the moment it ends.
 
 ***
 
-### Starting Playback
+## The Replay
 
-The `KillcamStart` function orchestrates the complex startup sequence.
+`UKillcamReplay` owns the kill cam's [Visual Replay session](../../visual-replay/sessions.md) on the victim's machine. It starts the session with the chosen recording, a preparation budget of `Killcam.PrepareBudgetMs` (4 ms per frame), the kill cam's sound settings, and the session set to hold its last frame rather than stop by itself. The manager, not the replay, decides when the kill cam is over.
 
-#### Pre-flight Checks
+When every stand-in holds its starting state, the replay finds the **stand-ins of the victim's and the killer's player states** and hands them to the camera ability by sending `GameplayEvent.Killcam` to the viewer's ability system. That event is the boundary between the C++ replay and the Blueprint presentation:
 
-```plaintext
-IsPlaybackAllowed():
-    Return false if:
-        - Already playing a kill cam
-        - Running in Play-In-Editor mode (duplication only works in Standalone)
-        - Duplicate world doesn't exist
-        - Not enough replay data for the requested rewind time
-        - No valid cached killer information
+| Event field | Holds |
+| --- | --- |
+| `EventTag` | `GameplayEvent.Killcam` |
+| `Instigator` | The victim's stand-in player state, or the live one if it has no stand-in |
+| `Target` | The killer's stand-in player state, or the live one if it has no stand-in |
+| `EventMagnitude` | The kill cam's duration in seconds |
 
-    Return true if all checks pass
-```
-
-#### The Startup Sequence
-
-{% stepper %}
-{% step %}
-Stop recording (switching to playback mode)
-{% endstep %}
-
-{% step %}
-Mark as playing
-{% endstep %}
-
-{% step %}
-Activate duplicate world:
-
-* Set duplicate collection visible
-* Add duplicate levels to world
-{% endstep %}
-
-{% step %}
-Start replay playback with options:
-
-* Use in-memory streaming
-* Reuse duplicated levels (`LevelPrefixOverride=1`)
-{% endstep %}
-
-{% step %}
-Assign `DemoNetDriver` to duplicate collection
-{% endstep %}
-
-{% step %}
-Scrub to start time:
-
-* Target = death time - rewind amount
-* On completion: proceed to show kill cam
-{% endstep %}
-{% endstepper %}
+`GA_Killcam_Camera` is triggered by this event. Anything that replaces the camera ability needs only these four fields.
 
 ***
 
-### Time Scrubbing
+## Seeing the Match from the Killer's Side
 
-The replay starts at the beginning of the recorded buffer, but we need to jump to a specific moment, typically 7 seconds before death. Note, 7 seconds is the default time set, this can be changed to whatever you see fit.
+The camera ability spawns a kill cam spectator and has it spectate the killer's stand-in. Spectating a player tells the team subsystem who the **current viewer** is, so for the length of the kill cam every system that colours or marks things "for the viewer" does so for the killer:
 
-#### Calculating Start Time
+* the killer's team shows as the friendly team;
+* the victim shows as an enemy;
+* objective markers and nameplates show the killer's side of the match at that moment.
 
-```cpp
-float TargetTime = CachedHeroDeathDemoTime - KillCamStartTime;
-```
-
-Where:
-
-* `CachedHeroDeathDemoTime`: The replay timestamp when death occurred
-* `KillCamStartTime`: How far back to rewind (default 7.0 seconds)
-
-#### The GotoTime Operation
-
-```plaintext
-KillcamGoToTime(targetTime, callback):
-    Get DemoNetDriver for playback
-
-    Preserve important actors during scrub:
-        - Add victim's NetGUID to non-queued list
-        - Add killer's NetGUID to non-queued list
-        (This prevents them from being destroyed as "stale")
-
-    Cache target time for potential restart
-
-    Call async GotoTimeInSeconds operation
-    (This processes replay stream to target time)
-```
-
-#### Completion Callback
-
-```plaintext
-OnKillcamInitialGoToTimeComplete(success, callback):
-    If scrub succeeded:
-        Proceed to show kill cam to user
-
-    Else (scrub failed):
-        Log error
-        Stop the demo
-        Mark as not playing
-        Execute callback with failure
-```
+The replay's shells run their own logic, so a marker on a replayed objective is the shell's marker, showing what the objective was then. The live objective's marker is hidden while it has a stand-in. [Team Visuals](../../../base-lyra-modified/team/team-visuals.md) covers the viewer system, and [Making Game Modes Killcam-Ready](killcam-ready-game-modes.md) covers what a game mode needs for its objectives to show correctly.
 
 ***
 
-### Switching the View
+## The Camera
 
-Once the replay is positioned correctly, the player's view must switch to the duplicate world.
+The kill cam can show the killer's view in two ways.
 
-#### World Visibility Toggle
+* **Copied camera mode**, the default. The spectator uses the killer's camera mode, such as third person or first person, applied to the killer's replayed pawn and aim. This works with any recording, including the victim's own.
+* **Recorded view.** The camera shows exactly where the killer's camera was, frame by frame, with its field of view, and the killer's pawn is drawn the way the killer saw themselves: first-person arms shown, the parts hidden from its owner hidden. This needs a recorded camera, which the killer's clip carries and the victim's own recording doesn't.
 
-```plaintext
-ShowKillcamToUser():
-    Hide the live game world:
-        - Find DynamicSourceLevels collection
-        - Set visibility to false
+| `Killcam.RecordedView` | `bPreferRecordedView` on the manager | Result |
+| --- | --- | --- |
+| `-1` (default) | `false` (default) | Copied camera mode |
+| `-1` | `true` | Recorded view, when the recording has a camera |
+| `0` | any | Copied camera mode |
+| `1` | any | Recorded view, when the recording has a camera |
 
-    The duplicate world is already visible from startup
-    Actors' render states update automatically
+When the recorded view can't be used because there is no recorded camera, the kill cam falls back to the copied camera mode.
 
-    Set up the view target to follow the killer
-```
+<details>
 
-#### Finding Actors in the Duplicate World
+<summary>In code: the camera choice</summary>
 
-The cached NetGUIDs are used to find the corresponding actors in the duplicate world:
+`UKillcamManager` picks the camera mode for the replay from the console variable and `bPreferRecordedView`. `UKillcamReplay::HandleStandInsReady` then uses the recorded view only if the session has a camera and the killer's pawn is known, in which case it calls `UVisualReplaySession::SetOwnerView` with the killer's pawn. `UKillcamRecordedViewCameraMode` is the camera mode that reads the session's recorded camera, and `RecordedViewCameraMode` on the manager can swap in another.
 
-```plaintext
-SetViewTargetToKillingActor():
-    Start polling for actor availability:
-        - Check every 100ms
-        - Give up after 3 seconds
-
-CheckActorAvailability():
-    Try to resolve NetGUIDs to actual actors:
-        - Look up victim player state by cached GUID
-        - Look up killer player state by cached GUID
-
-    If both actors found:
-        Proceed with kill cam
-
-    Else if timeout exceeded:
-        Proceed with what we have (partial data)
-
-    Else:
-        Timer will call again
-```
-
-{% hint style="info" %}
-Pooling is ncecessary because of timing conditions that prevent the player state from being immediately available which causes issues. This seems to be nature of the using the `InMemoryReplayNetworkStreamer`.
-{% endhint %}
-
-#### The Killcam Gameplay Event
-
-When actors are found, a gameplay event triggers the actual camera switch:
-
-```plaintext
-ProceedWithKillcam(victim, killer):
-    Build gameplay event payload:
-        - Instigator = killer actor
-        - Target = victim actor
-        - EventMagnitude = kill cam duration
-
-    Find victim's AbilitySystemComponent
-    Trigger gameplay event: GameplayEvent.Killcam
-
-    Execute startup complete callback with success
-```
-
-The `GA_Killcam_Camera` ability responds to this event and sets the view target. This handles spawning the `TeammateSpectator` from the spectator system. It spawns widgets and also ensures to follow the killer and handle pawn switching as the killer's pawn isn't guaranteed to be present during the entire killcam sequence e.g. they died, respawned, then immediately killed the victim.
+</details>
 
 ***
 
-### Playback Components
+## The Killer's Aim, Camera Modes and Hit Markers
 
-While the replay handles world state (actor positions, animations), the overlay data components provide the killer's perspective details.
+Three track playbacks run on the killer's stand-in player state, each playing one of the killer's tracks on the replay's clock.
 
-#### `UKillcamAimPlayback`
+* **Aim** gives the session the killer's exact recorded aim as the view of whichever pawn the killer's player state names at that moment, since a killer can have more than one pawn during a window. Past the end of the track, the view this machine recorded for the pawn takes over, so the view keeps following the pawn.
+* **Camera** re-broadcasts the killer's camera mode and aiming-down-sights changes on the spectator's message channels, owned by the killer's stand-in, so the spectator camera and the HUD follow them. A kill cam without the killer's camera track still announces one: the killer's default camera mode, or the recorded view mode.
+* **Hit markers** show the killer's hit markers on the viewer's HUD as the replay reaches each one.
 
-Interpolates between recorded aim samples to provide smooth crosshair movement:
-
-```plaintext
-AimPlayback Tick(deltaTime):
-    Advance playback time
-
-    Find bracketing samples for current time:
-        - Lower sample (before current time)
-        - Upper sample (after current time)
-        - Alpha (interpolation factor 0-1)
-
-    Interpolate rotation between samples
-    Interpolate location between samples
-
-    Apply interpolated aim to view target or camera
-```
-
-#### `UKillcamHitMarkerPlayback`
-
-Displays hit markers at the correct moments during playback:
-
-```plaintext
-HitMarkerPlayback Tick(deltaTime):
-    Advance playback time
-
-    For each pending hit marker sample:
-        If sample time <= current time:
-            Display hit marker with:
-                - World location
-                - Hit zone
-                - Success indicator
-            Move to next sample
-        Else:
-            Break (remaining samples are in the future)
-```
-
-#### `UKillcamCameraPlayback`
-
-Applies camera mode and ADS state changes:
-
-```plaintext
-CameraPlayback Tick(deltaTime):
-    Advance playback time
-
-    For each pending camera event:
-        If event time <= current time:
-            If camera mode changed:
-                Apply new camera mode
-                Update current mode
-
-            If ADS state changed:
-                Apply new ADS state
-                Update current ADS flag
-
-            Move to next event
-        Else:
-            Break (remaining events are in the future)
-```
+All three map replay time to track time the same way: the session's time, less where the track starts, plus a **latency offset**. When the kill cam plays the killer's own recording, the tracks and the clip share one timeline and the offset is zero. When it plays the victim's own recording, the victim saw the killer late, so the killer's tracks run ahead of what the victim recorded. The offset of the two players' one-way latencies lines them up again, and is updated if the aim track arrives after the replay has started.
 
 ***
 
-### Ending Playback
+## Sound
 
-Playback ends either naturally (duration expires) or when skipped.
+While a kill cam plays, the live game is silenced and the replay is heard.
 
-#### The Stop Message
+* Every sound the replay makes plays in `SC_Killcam`, the manager's `ReplaySoundClass`.
+* A sound mix silences the live classes listed in `SilencedLiveSoundClasses`, by default `SFX` and `Overall`. Only those exact classes are silenced, not their child classes, so music, interface sounds and voice chat with classes of their own carry on.
 
-```
-ShooterGame.KillCam.Message.Stop
-```
-
-Sent by:
-
-* Game logic when `KillCamFullDuration` expires
-* `GA_Skip_Killcam` ability when player presses skip
-
-#### Manager Receives Stop
-
-```plaintext
-OnKillCamEndMessage(Payload):
-    Call KillcamStop with completion callback
-    (On complete: restart recording for next life)
-```
-
-#### The Cleanup Sequence
-
-{% stepper %}
-{% step %}
-Destroy replay actors (non-startup actors in duplicate levels)
-{% endstep %}
-
-{% step %}
-Destroy the DemoNetDriver
-{% endstep %}
-
-{% step %}
-Hide duplicate world:
-
-* Find DynamicDuplicatedLevels collection
-* Set visibility to false
-{% endstep %}
-
-{% step %}
-Show live game world:
-
-* Find DynamicSourceLevels collection
-* Set visibility to true
-{% endstep %}
-
-{% step %}
-Remove duplicate levels from world
-{% endstep %}
-
-{% step %}
-Optional garbage collection (if CVar enabled)
-{% endstep %}
-
-{% step %}
-Mark as stopped and disabled
-{% endstep %}
-
-{% step %}
-Execute completion callback
-{% endstep %}
-{% endstepper %}
-
-#### Restarting Recording
-
-After playback stops, recording must resume for the player's next life:
-
-```plaintext
-OnKillcamStoppedAndReadyToRecord():
-    Reinitialize recording for next potential death
-```
-
-{% hint style="info" %}
-Another limitation of the engine, is that two demo net drivers cannot be active at the same time. So when you are watching a killcam replay you cannot record the source world at the same time. This is why there is a condition requiring a minimal amount of recording data to be there.
-{% endhint %}
+The replay sound class must not be one of the silenced classes.
 
 ***
 
-### Seamless Travel Handling
+## Waiting
 
-If a map transition occurs during kill cam, the system handles it gracefully:
-
-```plaintext
-OnSeamlessTravelStart(world, levelName):
-    If currently playing kill cam:
-        Mark as seamless traveling
-        Abort playback cleanly via KillcamStop
-```
-
-The system subscribes to the `OnSeamlessTravelStart` world delegate during setup to receive these notifications.
+The kill cam can wait at three points: for the killer's clip to arrive, for its stand-ins to be prepared, and for more of the clip while playing. Each time waiting starts or stops, the manager broadcasts `ShooterGame.KillCam.Message.Waiting` with a `FKillcamWaitingMessage`, which holds the victim's player state and whether it is waiting. The kill cam layout listens for it, shows its waiting screen, and pauses its countdown, so time spent waiting doesn't count against the kill cam.
 
 ***
+
+## Ending
+
+A kill cam ends when the replay reaches the end of the window, when the buffering timeout passes, when the player skips, or when the player dies again. Each way ends with `ShooterGame.KillCam.Message.Stop`, carrying the victim's and killer's player states in a `FLyraKillCamMessage`. The manager broadcasts it, except for a skip, where the skip ability broadcasts it and the manager reacts. The UI, the abilities and anything else that reacts to the kill cam listen for it. The session stops, the live match reappears, and the transfer is cancelled, as [Getting the Killer's Recording](data-transfer-and-networking.md) describes.

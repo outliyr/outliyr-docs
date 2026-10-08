@@ -1,288 +1,133 @@
-# Architecture Overview
+# How a Kill Cam Plays
 
-Before diving into individual systems, it's essential to understand how all the pieces of the Kill Cam fit together. This page provides the mental model you need to understand the system's design and troubleshoot issues effectively.
+A kill cam shows the victim the last seconds before their death, seen the way the killer saw them, while the match carries on around them. Four parties take part: the killer's machine, the server, the victim's machine, and the replay running on the victim's machine. This page follows one kill from start to finish, then lays the window out on a timeline and lists which piece does what.
 
-***
-
-### The Big Picture
-
-The Kill Cam system spans multiple machines and involves careful coordination between client and server:
-
-```mermaid
-flowchart TB
-    subgraph KILLER["Killer's Client"]
-        direction TB
-        subgraph Recording["Continuous Recording"]
-            AimRec["UKillcamAimRecorder<br/>(60Hz samples)"]
-            HitRec["UKillcamHitMarkerRecorder<br/>(event-based)"]
-            CamRec["UKillcamCameraRecorder<br/>(state changes)"]
-        end
-        Death["Death Occurs<br/>Data Captured"]
-        AimRec --> Death
-        HitRec --> Death
-        CamRec --> Death
-    end
-
-    subgraph SERVER["Server"]
-        Relay["UKillcamEventRelay<br/>(GameplayMessageProcessor)"]
-    end
-
-    subgraph VICTIM["Victim's Client"]
-        direction TB
-        Manager["UKillcamManager<br/>(Controller Component)"]
-        Playback["UKillcamPlayback<br/>(Core Engine)"]
-        subgraph Worlds["The Two Worlds"]
-            Source["DynamicSourceLevels<br/>(Live Game)"]
-            Duplicate["DynamicDuplicatedLevels<br/>(Kill Cam Playback)"]
-        end
-        Manager --> Playback
-        Playback --> Worlds
-    end
-
-    Death -->|"ServerSend* RPCs"| Relay
-    Relay -->|"ClientReceive* RPCs"| Manager
-```
+The replay itself is a [Visual Replay](../../visual-replay/) session. This section covers what the kill cam adds on top: deciding whose recording to play, getting it from the killer safely, and presenting it.
 
 ***
 
-### Component Roles
+## Before Anyone Dies
 
-#### Engine Level: `ULyraGameEngine`
+Every player's machine is recording its own view of the match all the time, so the moment a kill happens the material for its replay already exists.
 
-The foundation of the entire system. Located in `Source/LyraGame/System/`, this custom engine class overrides `Experimental_ShouldPreDuplicateMap` to enable world duplication at startup. Without this modification, kill cam is impossible.
-
-#### Server Side: `UKillcamEventRelay`
-
-A `UGameplayMessageProcessor` living in the ShooterBase plugin that listens for elimination messages and coordinates data transfer between killer and victim. The server acts purely as a trusted relay, it doesn't store or process replay data, just routes the killer's recorded data to the victim's client.
-
-#### Client Side - Recording
-
-Three components run on every player's controller, continuously buffering the last \~15 seconds of data:
-
-* `UKillcamAimRecorder` continuously samples the player's aim direction at a configurable rate (default 60Hz). This captures the exact crosshair position the player sees.
-* `UKillcamHitMarkerRecorder` records hit marker events as they happen, position, hit zone, and whether it was a successful hit. Event-based, not continuous.
-* `UKillcamCameraRecorder` tracks camera mode changes and ADS (aim down sights) state transitions. Only records when state actually changes.
-
-When a player gets a kill, all this data is already captured and ready to send.
-
-#### Client Side - Coordination
-
-* `UKillcamManager` is the conductor of the orchestra. This controller component (client only) orchestrates the entire kill cam flow, receiving killer data, handling start/stop messages, and managing the playback instance.
-* `UKillcamPlayback` is the core engine. Owned by the Manager, this `UObject` handles the heavy lifting: world switching, replay streaming via `DemoNetDriver`, time scrubbing, and cleanup.
-
-#### Client Side - Playback
-
-During playback, specialized components render the killer's perspective:
-
-* `UKillcamAimPlayback` interpolates between recorded aim samples to provide smooth crosshair movement that matches what the killer saw.
-* `UKillcamHitMarkerPlayback` displays hit markers at their correct timestamps during the replay.
-* `UKillcamCameraPlayback` applies camera mode and ADS transitions to match the killer's camera state.
-
-#### Gameplay Abilities
-
-The system hooks into Lyra's ability system through four key abilities:
-
-* `GA_Killcam_Death` activates on the death gameplay event. It initiates the kill cam flow and shows the skip UI.
-* **G`A_Killcam_Camera`** handles pawn tracking and UI indicators during playback. It keeps track of the killer's pawn (which may not be immediately available or might change during playback), creates the victim indicator (the "you" marker), and spawns the spectator pawn.
-* `GA_Skip_Killcam` handles the skip input, allowing players to end playback early.
-* `GA_Respawn` / `GA_Manual_Respawn` controls respawn timing after kill cam completes.
+* **The recording.** `UKillcamManager` sits on each player's controller. On the local player's machine it sets the Visual Replay recorder's clock to server time and asks the recorder to keep running. Every machine therefore holds the last `Replay.WindowSeconds` (10 by default) of what it drew, stamped with times that line up across machines.
+* **The killer's own tracks.** Three small recorders on the controller keep 15 seconds of the player's aim, camera mode and aiming-down-sights changes, and the hit markers they were shown. For a bot they run on the server.
+* **The server's listener.** `UKillcamEventRelay` on the game state listens for eliminations, on the server only.
 
 ***
 
-### The Two Worlds Concept
-
-The most important architectural decision in this system is the dual-world approach. Understanding this is key to understanding everything else.
-
-#### Why Two Worlds?
-
-Playing a replay in the live game world would cause serious problems:
-
-* Actor Conflicts — Replay actors showing past positions would coexist with live actors at current positions, creating visual chaos and confusion.
-* Physics Interference — Replay projectiles might collide with live players, replay explosions could trigger live damage calculations.
-* State Corruption — Replay events like "pickup weapon" or "open door" could affect live game state.
-* Visual Chaos — Two copies of every character visible simultaneously, both moving independently.
-
-### The Solution: Complete Isolation
-
-Instead, the engine pre-creates a complete duplicate of the world:
-
-```mermaid
-flowchart TB
-    subgraph UWorld["Game World (UWorld)"]
-        subgraph Source["DynamicSourceLevels"]
-            SL["All levels for the live game"]
-            SV["Visibility: ON normally, OFF during kill cam"]
-        end
-        subgraph Duplicate["DynamicDuplicatedLevels"]
-            DL["Exact copy of all levels"]
-            DV["Visibility: OFF normally, ON during kill cam"]
-        end
-    end
-```
-
-During kill cam, the system simply toggles visibility. The steps are:
-
-{% stepper %}
-{% step %}
-#### Toggle source invisible
-
-Source levels become invisible (but continue simulating in the background).
-{% endstep %}
-
-{% step %}
-#### Make duplicate visible
-
-Duplicate levels become visible.
-{% endstep %}
-
-{% step %}
-#### Play replay in duplicate
-
-Replay plays back in the duplicate world.
-{% endstep %}
-
-{% step %}
-#### Switch player's view
-
-The player's view switches to watch the duplicate.
-{% endstep %}
-
-{% step %}
-#### After playback, toggle back
-
-After playback, visibility toggles back to show the live source world again.
-{% endstep %}
-{% endstepper %}
-
-Since only one world is ever visible at a time, there's complete isolation between them.
-
-***
-
-## Data Flow Timeline
-
-Here's what happens from the moment of death to respawn:
+## One Kill, End to End
 
 ```mermaid
 sequenceDiagram
-    participant K as Killer Client
+    participant K as Killer's machine
     participant S as Server
-    participant V as Victim Client
-
-    Note over S: Phase 1: Death Detection
-    S->>S: Elimination occurs (authoritative)
-    S->>S: Broadcast Lyra.Elimination.Message
-    S->>S: UKillcamEventRelay receives
-
-    Note over K,V: Phase 2: Data Capture (~0-100ms)
-    S->>K: ClientRequestKillcamData
-    K->>K: Gather data from recorders
-    K->>S: ServerSendAimTrack
-    K->>S: ServerSendHitTrack
-    K->>S: ServerSendCameraTrack
-    S->>V: ClientReceiveAimTrack
-    S->>V: ClientReceiveHitTrack
-    S->>V: ClientReceiveCameraTrack
-
-    Note over V: Phase 3: Cache Data (~100-200ms)
-    V->>V: Store killer's tracks
-    V->>V: Cache NetGUIDs & death time
-
-    Note over V: Phase 4: Trigger (game-controlled)
-    V->>V: Receive Start message
-    V->>S: ServerRequestFinalKillcamData
-    S->>K: ClientBuildFinalKillcamData
-    K->>S: Send precise window
-    S->>V: Forward final data
-
-    Note over V: Phase 5: Playback
-    V->>V: Stop recording
-    V->>V: Activate duplicate world
-    V->>V: Start replay playback
-    V->>V: Scrub to death time - 7s
-    V->>V: Switch view to duplicate
-
-    Note over V: Phase 6: Viewing (7s default)
-    V->>V: Replay plays
-    V->>V: Overlay components active
-    V->>V: Player can skip
-
-    Note over V: Phase 7: Cleanup
-    V->>V: Stop message received
-    V->>V: Destroy replay actors
-    V->>V: Toggle visibility back
-    V->>V: Restart recording
-    V->>V: Trigger respawn
+    participant V as Victim's machine
+    participant R as Victim's replay
+    S->>S: Elimination: record the kill
+    S->>K: Ask for the killer's recording of the window
+    K->>S: Clip slices, oldest first, and aim, camera and hit tracks
+    S->>V: Relayed only from the recorded killer
+    Note over V: Death ability waits for the after-death seconds, then asks to start
+    V->>S: Ask for what came after the death
+    S->>K: Send the after-death part
+    V->>R: Start once the window's opening has arrived
+    K->>S: After-death part
+    S->>V: Relayed
+    V->>R: Joins the running replay
+    R-->>V: Window end, skip or a new death
+    V->>S: Cancel the transfer
+    S->>K: Stop sending
 ```
 
-***
+{% stepper %}
+{% step %}
+#### The server records the kill
 
-### Design Decisions & Trade-offs
+When an elimination names a killing player and a victim with a player controller, the relay writes a **kill record** on the victim's server-side manager: who the killer was, the server time of the death, and an id for the clip that will describe it. Everything the killer sends later is checked against this record. The relay then asks the killer's machine for its recording of the window, telling it where the window starts.
 
-#### Why Client-Side Recording?
+A bot killer has no machine of its own to ask. The server gathers the bot's tracks itself and sends them straight to the victim.
+{% endstep %}
 
-Each client records its own aim/camera/hit data, rather than the server recording everyone.
+{% step %}
+#### The victim notes its death
 
-Why this works better:
+The victim's machine notes the local time of the death and whether a player made the kill. It also tells the recorder to keep its history back to the window's start for a while, so the replay's opening isn't trimmed away while the kill cam gets ready.
+{% endstep %}
 
-* The server doesn't need to receive 60Hz aim updates from every player (bandwidth).
-* Clients have perfect knowledge of their exact local view (accuracy).
-* Recording overhead is distributed across clients, not centralized (scalability).
+{% step %}
+#### The killer sends its recording
 
-The trade-off: Requires RPC coordination to transfer data after kills occur.
+The killer's machine cuts its recording of the window into slices of 1.5 seconds and sends them oldest first. Each slice is a perspective clip of the killer, the victim as the killer saw them, and up to four other characters that were on the killer's screen. Encoding runs off the game thread, and sending is paced so the clip never crowds out the game's own traffic. The aim, camera and hit tracks go alongside.
 
-#### Why In-Memory Replay Streaming?
+The server relays each piece to the victim only if it comes from the recorded killer for the recorded kill. The victim reassembles and decodes each slice as it completes. [Getting the Killer's Recording](data-transfer-and-networking.md) covers the transport and the checks.
+{% endstep %}
 
-The system uses `InMemoryNetworkReplayStreaming` instead of disk-based replays.
+{% step %}
+#### The kill cam is asked to start
 
-Why this works better:
+The death ability waits for the window's after-death seconds, so the killer has had time to record them, then broadcasts the kill cam start message. The manager then asks the server for the part recorded after the death. The server forwards the request to the killer, which sends it as one final part along with its tracks trimmed to the window.
+{% endstep %}
 
-* No disk I/O means instant scrubbing and playback (speed).
-* No replay files to manage or clean up (simplicity).
-* Critical for near-instant kill cam activation (low latency).
+{% step %}
+#### The start decision
 
-The trade-off: Limited history, bounded by memory buffer size.
+The kill cam begins as soon as the first second of the window has arrived from the killer. If it hasn't, the manager broadcasts a waiting message, which the kill cam UI shows, and waits up to `Killcam.PerspectiveClipWaitSeconds` (3 seconds), checking again as each part arrives. If time runs out it plays the victim's own recording instead.
 
-#### Why Visibility Toggling?
+Whichever recording the kill cam starts with, it keeps. Switching part way through would make everything jump to where the other machine saw it. A kill by a bot, or a death the victim caused themselves, has no clip to wait for and starts straight from the victim's own recording.
+{% endstep %}
 
-The system completely hides one world while showing the other.
+{% step %}
+#### Playing
 
-Why this works well:
+`UKillcamReplay` starts a Visual Replay session with the chosen recording. Bringing the stand-ins up is spread over several frames and shown as waiting. When they are ready, it finds the killer's and the victim's stand-in player states and sends `GameplayEvent.Killcam` to the viewer's ability system, which starts the kill cam camera ability. The camera follows the killer's stand-in, and team colours and markers take the killer's side. [Playback and Presentation](playback-system.md) covers this part.
 
-* Complete isolation between worlds with minimal complexity.
-* No edge cases with dynamic actor spawning.
-* Seamless transitions, just toggle visibility.
+Later slices and the after-death part join the running replay as they arrive. If playback catches up with what has arrived, it waits for more, again showing the waiting message, for up to `Killcam.BufferingTimeoutSeconds` (3 seconds) before ending.
+{% endstep %}
 
-The trade-off: Source world continues simulating while hidden.
+{% step %}
+#### Ending
 
-***
-
-### Key Files
-
-All Kill Cam files live in `Plugins/GameFeatures/ShooterBase/Source/ShooterBaseRuntime/.../Game/Killcam/`
-
-Core System:
-
-* `KillcamPlayback.h/.cpp` — The core playback engine
-* `KillcamManager.h/.cpp` — Client-side coordinator
-* `KillcamEventRelay.h/.cpp` — Server-side data relay
-* `LyraGameEngine.h/.cpp` — World duplication enablement (in `Source/LyraGame/System/`)
-
-Recording:
-
-* `KillcamAimRecorder.h/.cpp` — Aim data recording
-* `KillcamHitMarkerRecorder.h/.cpp` — Hit marker recording
-* `KillcamCameraRecorder.h/.cpp` — Camera state recording
-
-Playback:
-
-* `KillcamAimPlayback.h/.cpp` — Aim data playback
-* `KillcamHitMarkerPlayback.h/.cpp` — Hit marker playback
-* `KillcamCameraPlayback.h/.cpp` — Camera state playback
-
-Data Structures:
-
-* `KillcamAimTypes.h` — Aim track structures
-* `KillcamHitMarkerTypes.h` — Hit marker structures
-* `KillcamCameraTypes.h` — Camera track structures
+The kill cam ends when the replay reaches the end of the window, when the player skips, or when the player dies again. The manager tells the server the clip is no longer wanted, the server drops anything still queued and tells the killer to stop sending, the recorder's history is released, and the live match reappears.
+{% endstep %}
+{% endstepper %}
 
 ***
+
+## The Window
+
+The window is two settings on `UKillcamManager`: `KillcamSecondsBeforeDeath` (8) and `KillcamSecondsAfterDeath` (3). They are config properties, so a game can change them per project. Blueprints read them through `GetKillcamTiming`, which also gives sensible defaults for a controller without a manager, such as a bot's.
+
+```
+           |<------------------- 8 s before the death ------------------->|<-- 3 s after -->|
+   clip    window                                                       death         window
+   start   start                                                          |             end
+     |--------|========|========|========|========|========|========|=====|================|
+     0.25 s     slice 0  slice 1  ...  1.5 s slices, sent oldest first     |  after-death part
+     early   |<- 1 s ->|                                                   |  sent at start
+             must arrive before playback begins
+```
+
+* **The clip starts 0.25 seconds before the window**, so it still covers the window's first frame when the victim's clock or its estimate of the death differs slightly from the server's.
+* **The first second of the window must have arrived** before playback begins (`Killcam.PerspectiveClipStartLeadSeconds`). The rest streams in ahead of playback.
+* **The after-death part** is sent once the kill cam is about to start, because until then the killer hasn't recorded it.
+
+[Setup and Integration](setup-and-integration.md) covers how these settings relate to the recorder's own history length.
+
+***
+
+## Who Does What
+
+All C++ lives under `Plugins/GameFeatures/ShooterBase/Source/ShooterBaseRuntime`, in the `Game/Killcam` folders, about 4.9k lines.
+
+| Piece | Runs on | Does | Files |
+| --- | --- | --- | --- |
+| `UKillcamManager` | Every player's controller, on their machine and on the server | The kill cam's lifecycle: the kill record, the start decision, the transfer and its RPCs, waiting and buffering | `KillcamManager`, with `_PerspectiveClip` and `_Tracks` parts and `KillcamManagerPrivate.h` for shared limits |
+| `UKillcamEventRelay` | The game state, server only | Turns each elimination into a kill record and a request to the killer | `KillcamEventRelay` |
+| Aim, camera and hit marker recorders | Controllers | Keep 15 seconds of the player's aim, camera mode and hit markers | `KillcamAimRecorder`, `KillcamCameraRecorder`, `KillcamHitMarkerRecorder`, with their `Types` headers |
+| `UKillcamReplay` | The victim's machine, while playing | Owns the Visual Replay session, finds the stand-ins, starts the camera ability, runs the track playbacks | `KillcamReplay` |
+| Track playbacks | The replay | Play the killer's aim, camera and hit markers on the replay's clock | `KillcamTrackPlayback` and its aim, camera and hit marker subclasses |
+| `UKillcamRecordedViewCameraMode` | The viewer's camera | Shows the killer's recorded camera exactly | `KillcamRecordedViewCameraMode` |
+| Kill cam debug facts | Any machine | Add kill cam facts and anomalies to the Visual Replay debug suite | `KillcamDebug` |
+
+The Blueprint side is the death, camera and skip abilities (`GA_Killcam_Death`, `GA_Killcam_Camera`, `GA_Skip_Killcam`), the kill cam layout widget (`W_KillcamLayout`) and the spectator the camera ability spawns (`B_KillcamSpectator`). The action set `LAS_ShooterBase_Death_Killcam` adds all of it to an experience. The Lyra-specific replay support, such as gameplay cues and the gameplay message filter, lives in the separate `LyraReplay` module described in [Integrating a Game](../../visual-replay/integrating-a-game.md).

@@ -62,6 +62,8 @@ Spectator sees the same zoom/FOV as the player.
 
 Camera modes define their view parameters (FOV, offset, blend time) internally. When both pawns activate the same mode class, they use identical settings. The spectator's camera component computes the view relative to the **target pawn** (the spectated player's pawn), so the result matches.
 
+The direction the view faces comes from the spectated player as well. A pawn that isn't locally controlled looks where its player state's replicated view rotation says, which the server keeps up to date from each player's view and each bot's control rotation. The Lyra camera modes and the True First Person camera mode both read it, so the spectator's camera turns as the player aims. In a replay, the stand-in player states are given the view their pawns recorded, as [Integrating a Game](../../visual-replay/integrating-a-game.md#every-sessions-options) describes.
+
 ***
 
 ### UI Updates via Messages

@@ -274,11 +274,3 @@ When a client receives the replicated data, `OnRep_RepData()` fires. If the expe
 This is why late joiners work seamlessly. A client that connects after the server has fully loaded the experience simply receives the replicated `ExperienceId` and bootstraps itself through the entire pipeline. The `CallOrRegister` pattern means any system on that client that depends on the experience will either get the immediate callback (if it initializes after loading) or the queued callback (if it initializes before loading). No special "late join" code path is needed.
 
 The `InstanceSerial` field handles a subtler case: if the server were to transition to a new experience without a full map travel, the serial lets the client detect that the experience changed even if the ID happens to be the same asset. The `OnRep` checks both the ID and the serial before deciding whether to restart the loading pipeline.
-
-<details>
-
-<summary>Duplicate world handling</summary>
-
-In standalone mode (primarily for the replay system), Unreal can create “dynamic duplicated levels”. The experience manager detects this via `ELevelCollectionType::DynamicDuplicatedLevels` and short-circuits both `IsExperienceLoaded()` (always returns true for duplicated levels) and `StartExperienceLoad()` (skips loading entirely). This prevents duplicated worlds from running a redundant loading pipeline when they share an already-loaded state.
-
-</details>

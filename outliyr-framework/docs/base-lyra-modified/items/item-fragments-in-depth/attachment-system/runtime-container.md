@@ -308,42 +308,26 @@ The full `ILyraItemContainerInterface` implementation:
 
 ## Replication
 
-#### Why the Fragment Overrides `ReplicateSubobjects`
+#### Fitted Items Follow Their Host
 
-The attachment runtime fragment owns `UObjects` (the attached item instances) that need to replicate. Unlike Actor properties, `UObjects` don't replicate automatically.
-
-The fragment overrides `ReplicateSubobjects` to handle this:
+The attachment runtime fragment owns UObjects, the attached item instances, which must reach the same clients as the item they are fitted to. Whenever the host item registers on a container, it calls `RegisterNestedSubObjectReplication` on its runtime fragments, and the attachment fragment registers each attached item on that same container. Each attached item does the same for its own attachments, so a whole tree of attachments follows its root item wherever it goes.
 
 ```cpp
-bool UTransientRuntimeFragment_Attachment::ReplicateSubobjects(UActorChannel* Channel,
-    FOutBunch* Bunch, FReplicationFlags* RepFlags)
+void UTransientRuntimeFragment_Attachment::RegisterNestedSubObjectReplication(UObject* Container)
 {
-    bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-
-    for (FAppliedAttachmentEntry& Entry : AttachmentList.Entries)
+    for (FAppliedAttachmentEntry& Entry : AttachmentArray.Attachments)
     {
-        if (Entry.ItemInstance)
+        if (ULyraInventoryItemInstance* Item = Entry.ItemInstance)
         {
-            // Replicate the attached item
-            bWroteSomething |= Channel->ReplicateSubobject(Entry.ItemInstance, *Bunch, *RepFlags);
-
-            // Recursively replicate any fragments on the attached item
-            // (including nested attachment containers)
-            for (UTransientRuntimeFragment* Fragment : Entry.ItemInstance->GetRuntimeFragments())
-            {
-                bWroteSomething |= Channel->ReplicateSubobject(Fragment, *Bunch, *RepFlags);
-            }
+            Item->RegisterSubObjectReplication(Container);
         }
     }
-    return bWroteSomething;
 }
 ```
 
-This is called by the owning inventory/equipment manager's `ReplicateSubobjects`, the parent component replicates this fragment, and then this fragment replicates its owned objects.
+#### One Registration per Item
 
-#### Avoiding Double-Replication
-
-The same item might be reachable through multiple paths (inventory references, equipment references, attachment references). The replication system uses tracking to ensure each UObject is only replicated once per frame.
+The same item might be reachable through several paths (inventory references, equipment references, attachment references), but it is registered on exactly one container at a time: the one holding it, or for a fitted item, the one holding its host. [Item Replication](../../item-replication.md) covers how the registration moves with the item.
 
 #### Reconciliation
 

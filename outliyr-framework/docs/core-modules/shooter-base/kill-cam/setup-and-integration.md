@@ -1,225 +1,128 @@
 # Setup and Integration
 
-This page provides a practical guide to enabling Kill Cam in your game experiences. The system is designed to integrate cleanly with Lyra's Experience framework.
-
-<figure><img src="../../../.gitbook/assets/image (217).png" alt=""><figcaption><p>Blueprint killcam logic in ShooterBase</p></figcaption></figure>
+This page covers turning the kill cam on for an experience, what that adds, the settings that shape it, and how to test it. A shooter experience that already includes the kill cam action set needs nothing more.
 
 ***
 
-### Prerequisites
+## What the Kill Cam Needs
 
-#### Engine Configuration
+The kill cam lives in ShooterBase and depends on two other pieces, both already wired into the project:
 
-The Kill Cam requires a custom `UGameEngine` class that enables world duplication. This must be configured in your project's `Config/DefaultEngine.ini`:
+* **The Visual Replay plugin**, which ShooterBase lists as a plugin dependency. It records and plays the replays.
+* **The LyraReplay module**, in `Source/LyraReplay`, which connects Lyra's cues, effects, indicators and messages to Visual Replay. It is listed in the project file and in the Game, Client, Server and Editor targets. [Integrating a Game](../../visual-replay/integrating-a-game.md) covers what it does.
 
-```ini
-[/Script/Engine.Engine]
-GameEngineClass=/Script/LyraGame.LyraGameEngine
-```
-
-**For Unreal Engine 5.5 and later**, add this additional section:
-
-```ini
-[ConsoleVariables]
-s.World.CreateStaticLevelCollection=1
-```
-
-{% hint style="danger" %}
-**Without this configuration, Kill Cam will not function.** World duplication only occurs when the engine is properly configured and the game runs in Standalone mode.
-{% endhint %}
-
-#### Verify Engine Class
-
-The `ULyraGameEngine` class must override the experimental duplication function:
-
-```cpp
-// LyraGameEngine.h
-UCLASS()
-class ULyraGameEngine : public UGameEngine
-{
-    GENERATED_BODY()
-
-protected:
-    virtual bool Experimental_ShouldPreDuplicateMap(
-        const FName MapName) const override;
-};
-
-// LyraGameEngine.cpp
-bool ULyraGameEngine::Experimental_ShouldPreDuplicateMap(
-    const FName MapName) const
-{
-    return true;  // Enable for all maps
-}
-```
+No engine configuration or custom game engine class is involved, and the kill cam works in Play In Editor as well as in standalone games.
 
 ***
 
-### Quick Integration: Action Sets
-
-The simplest way to add Kill Cam is through the provided Action Set.
+## Adding the Kill Cam to an Experience
 
 {% stepper %}
 {% step %}
-#### Open Your Experience Definition
+#### Open the experience definition
 
-Navigate to your Experience Definition asset (e.g., `B_Experience_TeamDeathmatch`).
+Open the experience the kill cam should run in, such as `B_TeamDeathmatch`.
 {% endstep %}
 
 {% step %}
-#### Add the Kill Cam Action Set
+#### Add the action set
 
-In the Details panel:
-
-* Find the **Action Sets** array
-* Click the **+** button to add a new entry
-* Select `LAS_ShooterBase_Death_Killcam`
-
-The Action Set handles all component and ability setup automatically.
+In **Action Sets**, add `LAS_ShooterBase_Death_Killcam`, or the variant for the mode (see below).
 {% endstep %}
 {% endstepper %}
 
-***
+The action set adds:
 
-### What the Action Set Adds
+| What | Where | Does |
+| --- | --- | --- |
+| `UKillcamManager` | Controllers | Runs the kill cam for its player, on the player's machine and its server copy |
+| `UKillcamAimRecorder`, `UKillcamCameraRecorder`, `UKillcamHitMarkerRecorder` | Controllers | Keep the player's aim, camera modes and hit markers, on the server for bots |
+| `UKillcamEventRelay` | Game state | Turns eliminations into kill records on the server |
+| `UEliminationFeedRelay` | Game state | Relays eliminations to the elimination feed |
+| `GA_Killcam_Death` | Granted to players | On death, waits for the window's after-death seconds, then adds the kill cam layout to the HUD and asks for the kill cam |
+| `GA_Killcam_Camera` | Granted to players | Started by `GameplayEvent.Killcam`; follows the killer's stand-in through a spectator, marks the victim with an indicator, and tells the layout who the killer and victim are and how long the kill cam lasts |
+| `GA_Respawn` | Granted to players | Respawns the player |
+| `AbilitySet_Killcam` with `InputData_Killcam` | Granted to players | `GA_Skip_Killcam`, bound to `InputTag.Ability.SkipKillcam` through `IA_Skip_Killcam` |
 
-When `LAS_ShooterBase_Death_Killcam` activates, it adds several pieces:
+### Mode variants
 
-#### Components
+Four modes ship their own copy of the action set with their own death ability, for death flows that differ from the base, such as rounds without respawns:
 
-| Component                   | Added To         | Net Mode        | Purpose                            |
-| --------------------------- | ---------------- | --------------- | ---------------------------------- |
-| `UKillcamManager`           | PlayerController | Client Only     | Orchestrates kill cam flow         |
-| `UKillcamAimRecorder`       | PlayerController | Client Only     | Records aim data                   |
-| `UKillcamHitMarkerRecorder` | PlayerController | Client Only     | Records hit markers                |
-| `UKillcamCameraRecorder`    | PlayerController | Client Only     | Records camera state               |
-| `USpectatorDataProxy`       | PlayerState      | Client & Server | Replicates spectator-relevant data |
+| Action set | Death ability | Plugin |
+| --- | --- | --- |
+| `LAS_ShooterBase_Death_Killcam_Arena` | `GA_Killcam_Death_Arena` | Arena |
+| `LAS_ShooterBase_Death_Killcam_Headquarters` | `GA_Killcam_Death_Headquarters` | Headquarters |
+| `LAS_ShooterBase_Death_Killcam_PropHunt` | `GA_Killcam_Death_PropHunt` | PropHunt |
+| `LAS_ShooterBase_Death_Killcam_SearchAndDestroy` | `GA_Killcam_Death_SearchAndDestroy` | SearchAndDestroy |
 
-#### Gameplay Abilities
-
-| Ability             | Granted To        | Purpose                                         |
-| ------------------- | ----------------- | ----------------------------------------------- |
-| `GA_Killcam_Death`  | PlayerState (ASC) | Handles death event, initiates kill cam         |
-| `GA_Killcam_Camera` | PlayerState (ASC) | Pawn tracking, victim indicator, spectator pawn |
-| `GA_Skip_Killcam`   | PlayerState (ASC) | Handles skip input                              |
-| `GA_Manual_Respawn` | PlayerState (ASC) | Controls respawn timing                         |
-
-#### Input Bindings
-
-The Action Set includes input configuration for the skip action, typically mapped to a common "interact" or "skip" input.
+A new mode with its own death flow follows the same pattern: duplicate the action set into the mode's plugin, create the mode's death ability, swap it in, and add the new action set to the mode's experience. The death ability's one obligation is to broadcast the kill cam start message once the after-death seconds have passed, as the timing rules below explain.
 
 ***
 
-### Game Mode Variants
+## Settings
 
-Different game modes may need different kill cam behavior. The framework provides variant Action Sets:
+### On the kill cam manager
 
-<table><thead><tr><th width="412.5333251953125">Action Set</th><th>Game Mode</th></tr></thead><tbody><tr><td><code>LAS_ShooterBase_Death_Killcam</code></td><td>Base shooter modes</td></tr><tr><td><code>LAS_ShooterBase_Death_Killcam_Arena</code></td><td>Arena/Duel</td></tr><tr><td><code>LAS_ShooterBase_Death_Killcam_Headquarters</code></td><td>Objective modes</td></tr><tr><td><code>LAS_ShooterBase_Death_Killcam_PropHunt</code></td><td>PropHunt</td></tr><tr><td><code>LAS_ShooterBase_Death_Killcam_SearchAndDestroy</code></td><td>Search &#x26; Destroy</td></tr></tbody></table>
+| Setting | Default | Controls |
+| --- | --- | --- |
+| `KillcamSecondsBeforeDeath` | 8 | How much of the window comes before the death. Config. |
+| `KillcamSecondsAfterDeath` | 3 | How much comes after it. Config. |
+| `bPreferRecordedView` | false | Show the killer's recorded camera rather than copying their camera mode, when the recording has a camera. |
+| `RecordedViewCameraMode` | `UKillcamRecordedViewCameraMode` | The camera mode used for the recorded view. |
+| `ReplaySoundClass` | `SC_Killcam` | The class every replayed sound plays in. Config. |
+| `SilencedLiveSoundClasses` | `SFX`, `Overall` | Live sound classes silenced while a kill cam plays, without their child classes. Config. |
 
-These variants typically use different `GA_Killcam_Death` implementations that handle mode-specific logic.
+The config settings live in `DefaultGame.ini` under `[/Script/ShooterBaseRuntime.KillcamManager]`. Blueprints read the window through `GetKillcamTiming`.
 
-{% stepper %}
-{% step %}
-#### Duplicate Action Set
+The three recorders each keep `MaxRecordLengthSeconds` (15) of history, and the aim recorder samples at up to `MaxSampleRateHz` (60).
 
-Duplicate `LAS_ShooterBase_Death_Killcam`.
-{% endstep %}
+### Console variables
 
-{% step %}
-#### Create Custom Ability
+| Variable | Default | Controls |
+| --- | --- | --- |
+| `Killcam.PerspectiveClipWaitSeconds` | 3 | How long to wait for the killer's clip before playing the victim's own recording |
+| `Killcam.PerspectiveClipStartLeadSeconds` | 1 | How much of the window must have arrived before playback starts |
+| `Killcam.BufferingTimeoutSeconds` | 3 | How long playback may wait for more of the clip before the kill cam ends |
+| `Killcam.PerspectiveClipBytesPerSecond` | 131072 | Byte budget per connection for sending clips; 0 sends as fast as the connection drains |
+| `Killcam.PerspectiveClipSliceSeconds` | 1.5 | Length of each slice of the clip before the death |
+| `Killcam.PerspectiveClipPieceBytes` | 8192 | Size of each piece a slice is sent in, from 256 to 8192 |
+| `Killcam.PerspectiveClipExtraCharacters` | 4 | How many other on-screen characters the killer's clip carries |
+| `Killcam.PerspectiveClipRotationBits` | 12 | Precision of bone rotations in the clip, from 8 to 16 bits |
+| `Killcam.PerspectiveClipKeyToleranceDegrees` | 0.25 | How far a dropped bone rotation sample may be from what blending reproduces |
+| `Killcam.PerspectiveClipKeyToleranceUnits` | 0.03 | The same for translations and scales |
+| `Killcam.RecordedView` | -1 | `1` forces the recorded view, `0` forces the copied camera mode, `-1` leaves it to `bPreferRecordedView` |
+| `Killcam.PrepareBudgetMs` | 4 | Milliseconds per frame spent bringing up the replay's stand-ins |
 
-Create custom `GA_Killcam_Death_YourMode` ability.
-{% endstep %}
-
-{% step %}
-#### Swap Ability
-
-Replace the death ability reference in your Action Set.
-{% endstep %}
-
-{% step %}
-#### Add to Experience
-
-Add your Action Set to your Experience Definition.
-{% endstep %}
-{% endstepper %}
+The Visual Replay recorder has settings of its own, listed on Visual Replay's [Debugging](../../visual-replay/debugging.md) page.
 
 ***
 
-### Testing
+## Timing Rules
 
-{% hint style="danger" %}
-**Kill Cam only works in Standalone mode.** PIE (Play In Editor) does not trigger world duplication.
+The window and the recorder have to agree, or the kill cam loses part of its window.
+
+{% hint style="warning" %}
+**The opening must still be recorded at the moment of death.** The recorder keeps `Replay.WindowSeconds` (10) of history, and the kill cam needs the window's start plus a one-second margin. `KillcamSecondsBeforeDeath` plus one second must therefore fit inside `Replay.WindowSeconds`. With the default window of 10 seconds, the before-death time can be at most 9 seconds; raise `Replay.WindowSeconds` to go longer.
 {% endhint %}
 
-#### Testing Steps
-
-1. Launch in Standalone Mode
-   * Use the Launch button targeting "Standalone Game"
-   * Or command line: `UnrealEditor.exe YourProject.uproject -game`
-2. Set Up Multiplayer Test
-   * Kill cam requires killer and victim to be different players
-   * Use `-server` + client instances, or dedicated server
-3. Trigger a Kill
-   * Have one player kill another
-   * Victim should see kill cam after death
-
-#### Common Testing Issues
-
-| Issue                                                    | Cause                          | Solution                             |
-| -------------------------------------------------------- | ------------------------------ | ------------------------------------ |
-| Kill cam never plays / normal death widget plays instead | Running in PIE                 | Use Standalone mode                  |
-| Black screen during kill cam                             | Duplicate world not created    | Verify engine config                 |
-| Camera doesn't follow killer                             | Actor not found in duplicate   | Check NetGUID caching                |
-| No aim overlay                                           | Data transfer failed           | Check network/RPC logs               |
-| Immediate return to live game                            | Playback allowed check failing | Check `IsPlaybackAllowed` conditions |
-
-#### Debug Logging
-
-Enable kill cam logging by using the `LogKillcam` category with Verbose level.
-
-***
-
-### Integration Checklist
-
-Use this checklist when integrating Kill Cam:
-
-* [ ] `DefaultEngine.ini` has `GameEngineClass=/Script/LyraGame.LyraGameEngine`
-* [ ] UE 5.5+: `s.World.CreateStaticLevelCollection=1` CVar set
-* [ ] Experience Definition includes Kill Cam Action Set
-* [ ] Client death triggers `ShooterGame.KillCam.Message.Start` on death
-* [ ] Client triggers `ShooterGame.KillCam.Message.Stop` when done
-* [ ] Testing performed in Standalone mode (not PIE)
-* [ ] Multiplayer testing with separate killer/victim
-
-***
-
-### Timing Configuration
-
-The default timing values work well for most shooters:
-
-```cpp
-float KillCamStartTime = 7.0f;   // How far back to rewind
-float KillCamFullDuration = 7.0f; // Total playback length
-```
-
-#### Adjusting Timing
-
-Shorter duration (faster paced):
-
-```cpp
-Message.KillCamStartTime = 4.0f;
-Message.KillCamFullDuration = 4.0f;
-```
-
-Longer duration (dramatic deaths):
-
-```cpp
-Message.KillCamStartTime = 10.0f;
-Message.KillCamFullDuration = 10.0f;
-```
-
-{% hint style="info" %}
-The replay buffer must be large enough to support your `KillCamStartTime`. The default 15-second buffer supports up to 15 seconds of rewind.
+{% hint style="warning" %}
+**The kill cam must start after the after-death seconds have passed.** The killer only sends the part recorded after the death once the kill cam starts. A death ability that starts the kill cam earlier than `KillcamSecondsAfterDeath` after the death gets a shorter after-death part, and the kill cam ends early. The shipped death abilities wait exactly that long through `GetKillcamTiming`.
 {% endhint %}
 
 ***
+
+## Testing
+
+The kill cam needs a killer and a victim on different machines, so test with at least two players. In Play In Editor, set the number of players to two or more with a client net mode, have one player kill the other, and the victim's kill cam plays after the death delay. A bot killer works too, playing the victim's own recording with the bot's tracks.
+
+To see what the kill cam decided and why, turn on the debug suite before the kill with `Replay.Debug all`. Each replay writes a report, and [Debugging](debugging.md) explains how to read it for kill cam problems.
+
+***
+
+## Checklist
+
+* [ ] The experience includes `LAS_ShooterBase_Death_Killcam` or a mode variant.
+* [ ] A custom death ability broadcasts the start message only after `KillcamSecondsAfterDeath`.
+* [ ] `KillcamSecondsBeforeDeath` plus one second fits inside `Replay.WindowSeconds`.
+* [ ] The mode's objectives replay correctly ([Making Game Modes Killcam-Ready](killcam-ready-game-modes.md)).
+* [ ] A kill cam has been watched with two players, and its report shows no anomalies.

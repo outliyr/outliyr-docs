@@ -74,19 +74,19 @@ Victim's client spawns `ATeammateSpectator` locally
 {% step %}
 #### Killcam: Data source is replay
 
-Killer's data comes from replay recording, not live replication.
+The killer is a stand-in in the kill cam's replay, so its data comes from the recording, not live replication.
 {% endstep %}
 
 {% step %}
-#### Killcam: Pass killer pawn directly
+#### Killcam: Pass the killer's stand-in directly
 
-Killcam passes killer's pawn directly to spectator.
+The kill cam passes the killer's stand-in player state straight to the spectator, which also makes it the current viewer for team colours and markers.
 {% endstep %}
 
 {% step %}
 #### Killcam: Camera mode from playback component
 
-Camera mode comes from `KillcamCameraPlayback` component, not Container.
+Camera mode comes from the `UKillcamCameraPlayback` component, not Container.
 {% endstep %}
 
 {% step %}

@@ -1,562 +1,108 @@
-# Customization and Extension
+# Extending the Kill Cam
 
-The Kill Cam system is designed with clear boundaries between what's safe to modify and what should remain untouched. This page guides you through extending the system without breaking its core functionality.
-
-***
-
-### Safe Extension Points
-
-These areas are designed for customization and won't destabilize the system:
-
-{% stepper %}
-{% step %}
-### Gameplay Abilities
-
-The safest way to customize Kill Cam behavior is through the Gameplay Abilities. These are designed to be overridden or replaced.
-
-#### `GA_Killcam_Death`
-
-Controls what happens when the player dies:
-
-```plaintext
-Custom Death Ability (extends LyraGameplayAbility):
-
-ActivateAbility():
-    Show custom death UI (if desired)
-
-    Set up delay timer before starting kill cam
-    (Allows death animations to play, score to display, etc.)
-
-    On timer complete: call StartKillcam()
-
-StartKillcam():
-    Create kill cam message with:
-        - Custom rewind time
-        - Custom duration
-
-    Broadcast start message via GameplayMessageSubsystem
-    Tag: ShooterGame.KillCam.Message.Start
-```
-
-#### **`GA_Killcam_Camera`**
-
-Handles pawn tracking and UI indicators during playback. Note that camera modes are controlled by the **UKillcamCameraPlayback** component, not this ability.
-
-```plaintext
-Custom Pawn Tracking Ability (extends LyraGameplayAbility):
-
-ActivateAbility(EventData):
-    Get killer and victim identifiers from event data
-
-    Begin pawn tracking:
-        - The killer's pawn may not exist immediately in the duplicate world
-        - Listen for pawn change events
-        - Handle cases where killer's pawn changes during playback
-
-    Create victim indicator:
-        - Spawn the "you" marker widget attached to victim's pawn
-        - Position indicator above victim's head
-        - Configure visibility and styling
-
-    Spawn teammate spectators:
-        - Create spectator actors to watch relevant pawns
-        - Used for team-based visibility during playback
-```
-
-#### `GA_Skip_Killcam`
-
-Handles the skip action:
-
-```plaintext
-Custom Skip Ability (extends LyraGameplayAbility):
-
-ActivateAbility():
-    If using hold-to-skip mechanic:
-        Start hold progress UI
-        Return (don't skip immediately)
-        (On hold complete: broadcast stop message)
-
-    Otherwise (instant skip):
-        Broadcast stop message via GameplayMessageSubsystem
-        Tag: ShooterGame.KillCam.Message.Stop
-
-        Trigger respawn flow
-```
-{% endstep %}
-
-{% step %}
-### Timing Parameters
-
-Adjust the kill cam duration and rewind time via the start message:
-
-```cpp
-FLyraKillCamMessage Message;
-Message.KillCamStartTime = 5.0f;     // Rewind 5 seconds (default: 7.0)
-Message.KillCamFullDuration = 5.0f;  // Play for 5 seconds (default: 7.0)
-```
-
-**Common Timing Patterns:**
-
-| Style      | Start Time | Duration | Use Case                |
-| ---------- | ---------- | -------- | ----------------------- |
-| Quick      | 3.0        | 3.0      | Fast-paced arena        |
-| Standard   | 7.0        | 7.0      | Most shooters           |
-| Dramatic   | 10.0       | 10.0     | Tactical games          |
-| Final Kill | 7.0        | 10.0     | Match-ending highlights |
-{% endstep %}
-
-{% step %}
-### UI Overlays
-
-Add custom UI during kill cam through the camera ability or dedicated UI widgets:
-
-```plaintext
-In Death Ability - ActivateAbility():
-    Create and configure overlay widget:
-        - Set killer info (name, level, etc.)
-        - Set weapon used
-        - Set any other kill details
-    Add widget to viewport
-
-In Death Ability - EndAbility():
-    Remove overlay widget from viewport
-    Clear widget reference
-    
-In Camera Ability - ActivateAbility():
-    Spawn Victim indicator widget
-
-In Death Ability - EndAbility():
-    Remove victim indicator
-    Clear widget reference
-```
-{% endstep %}
-
-{% step %}
-### Input Bindings
-
-Customize the skip input in your Input Config:
-
-```cpp
-// In your InputConfig data asset
-{
-    InputTag: "InputTag.Killcam.Skip",
-    InputAction: IA_SkipKillcam,
-    AbilityTags: "Ability.Killcam.Skip"
-}
-```
-
-Or use different inputs for different platforms:
-
-```cpp
-// Controller
-InputTag.Killcam.Skip -> Gamepad_FaceButton_Bottom (A/X)
-
-// Keyboard
-InputTag.Killcam.Skip -> SpaceBar
-```
-{% endstep %}
-{% endstepper %}
+The kill cam has a few clear seams: its settings, its Blueprint abilities and UI, its gameplay messages, and its tracks. This page covers each, from the cheapest change to the most involved, and says plainly where an extension has to go into the kill cam's own C++.
 
 ***
 
-### Creating Custom Recorder Components
+## Tuning
 
-If you need to capture additional data during gameplay, follow the existing recorder pattern.
-
-{% stepper %}
-{% step %}
-#### Define Data Structures
-
-```cpp
-// MyCustomTypes.h
-
-// Raw format - full precision for local storage
-USTRUCT()
-struct FMyCustomSampleRaw
-{
-    GENERATED_BODY()
-
-    UPROPERTY()
-    float ServerTime = 0.f;
-
-    UPROPERTY()
-    FVector CustomData;
-
-    UPROPERTY()
-    bool bCustomFlag = false;
-};
-
-// Playback format - time-normalized
-USTRUCT()
-struct FMyCustomSamplePlayback
-{
-    GENERATED_BODY()
-
-    UPROPERTY()
-    float Time = 0.f;  // Normalized to window
-
-    UPROPERTY()
-    FVector CustomData;
-
-    UPROPERTY()
-    bool bCustomFlag = false;
-};
-
-USTRUCT()
-struct FMyCustomTrackPlayback
-{
-    GENERATED_BODY()
-
-    UPROPERTY()
-    TArray<FMyCustomSamplePlayback> Samples;
-
-    UPROPERTY()
-    float WindowSeconds = 0.f;
-};
-```
-{% endstep %}
-
-{% step %}
-#### Create the Recorder Component
-
-```cpp
-// MyCustomRecorder.h
-UCLASS()
-class UMyCustomRecorder : public UActorComponent
-{
-    GENERATED_BODY()
-
-public:
-    UPROPERTY(EditDefaultsOnly, Category="Killcam")
-    float MaxRecordLengthSeconds = 15.f;
-
-    const TArray<FMyCustomSampleRaw>& GetSamples() const { return Samples; }
-
-protected:
-    virtual void TickComponent(float DeltaTime, ...) override
-    {
-        // Continuous sampling (like aim recorder)
-        RecordCurrentState();
-        TrimOldSamples();
-    }
-
-    // Or event-based sampling (like hit marker recorder)
-    void OnCustomEvent(const FMyEvent& Event)
-    {
-        FMyCustomSampleRaw Sample;
-        Sample.ServerTime = GetWorld()->GetTimeSeconds();
-        Sample.CustomData = Event.Data;
-        Samples.Add(Sample);
-    }
-
-private:
-    UPROPERTY()
-    TArray<FMyCustomSampleRaw> Samples;
-};
-```
-{% endstep %}
-
-{% step %}
-#### Create the Playback Component
-
-```cpp
-// MyCustomPlayback.h
-UCLASS()
-class UMyCustomPlayback : public UActorComponent
-{
-    GENERATED_BODY()
-
-public:
-    void Initialize(const FMyCustomTrackPlayback& InTrack)
-    {
-        Track = InTrack;
-        CurrentTime = 0.f;
-        NextSampleIndex = 0;
-    }
-
-protected:
-    virtual void TickComponent(float DeltaTime, ...) override
-    {
-        CurrentTime += DeltaTime;
-
-        // Process samples up to current time
-        while (NextSampleIndex < Track.Samples.Num())
-        {
-            const FMyCustomSamplePlayback& Sample =
-                Track.Samples[NextSampleIndex];
-
-            if (Sample.Time <= CurrentTime)
-            {
-                ApplyCustomData(Sample);
-                NextSampleIndex++;
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-
-private:
-    FMyCustomTrackPlayback Track;
-    float CurrentTime = 0.f;
-    int32 NextSampleIndex = 0;
-};
-```
-{% endstep %}
-
-{% step %}
-#### Integrate with Data Transfer
-
-Add RPCs to `UKillcamManager` for your custom data:
-
-```cpp
-// In UKillcamManager
-
-UFUNCTION(Server, Reliable)
-void ServerSendMyCustomTrack(
-    APlayerState* VictimPS,
-    const FMyCustomTrackRaw& Track);
-
-UFUNCTION(Client, Reliable)
-void ClientReceiveMyCustomTrack(
-    const FMyCustomTrackRaw& Track);
-```
-{% endstep %}
-{% endstepper %}
+Most changes need no code. The window's length, the camera choice, the sound classes, how long to wait for the killer's clip and how it is paced are all settings, listed on [Setup and Integration](setup-and-integration.md#settings). Keep the [timing rules](setup-and-integration.md#timing-rules) in mind when changing the window.
 
 ***
 
-### Creating Custom Playback Components
+## Replacing the Camera or the UI
 
-For data that needs special rendering or behavior during playback:
+The presentation is Blueprint, and the C++ talks to it through a small, fixed surface. Anything that replaces part of it only needs to honour that surface.
 
-#### Pattern: Event-Based Playback
+* **The camera ability** is started by `GameplayEvent.Killcam`, which carries the victim's stand-in as `Instigator`, the killer's stand-in as `Target` and the duration as `EventMagnitude` ([Playback and Presentation](playback-system.md#the-replay)). A replacement should spectate the killer's stand-in, which is what makes the match show from the killer's side, and end on the stop message.
+* **The UI** can follow the kill cam through three gameplay messages:
+  * `ShooterGame.KillCam.Message.Start` and `ShooterGame.KillCam.Message.Stop`, each carrying an `FLyraKillCamMessage` with the victim's and the killer's player states;
+  * `ShooterGame.KillCam.Message.Waiting`, carrying an `FKillcamWaitingMessage` with the victim and whether the kill cam is waiting.
 
-```cpp
-UCLASS()
-class UKillcamEffectPlayback : public UActorComponent
-{
-public:
-    void Initialize(const FEffectTrackPlayback& InTrack);
+  The shipped layout is added to the HUD by the death ability, and learns the killer, the victim and the duration from the camera ability through `ShooterGame.KillCam.Message.KillerPlayerReady`, `KilledPlayerReady` and `SetDuration`, which only the Blueprints use. A countdown should pause while waiting, as the shipped layout does. `GetKillcamTiming` also gives the duration.
+* **The death flow** belongs to the death ability. A mode with a different flow ships its own death ability in its own copy of the action set ([mode variants](setup-and-integration.md#mode-variants)). Its one obligation is to broadcast the start message once the after-death seconds have passed.
 
-protected:
-    virtual void TickComponent(float DeltaTime, ...) override
-    {
-        CurrentTime += DeltaTime;
-
-        // Trigger effects at correct times
-        while (NextEffectIndex < Track.Effects.Num())
-        {
-            const FEffectEvent& Effect = Track.Effects[NextEffectIndex];
-
-            if (Effect.Time <= CurrentTime)
-            {
-                SpawnEffect(Effect);
-                NextEffectIndex++;
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-
-private:
-    void SpawnEffect(const FEffectEvent& Effect)
-    {
-        // Spawn VFX at recorded location
-        UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-            GetWorld(),
-            Effect.EffectSystem,
-            Effect.Location,
-            Effect.Rotation);
-    }
-};
-```
-
-#### Pattern: Interpolated Playback
-
-```cpp
-UCLASS()
-class UKillcamSmoothDataPlayback : public UActorComponent
-{
-protected:
-    virtual void TickComponent(float DeltaTime, ...) override
-    {
-        CurrentTime += DeltaTime;
-
-        // Find bracketing samples
-        int32 LowerIdx = 0;
-        int32 UpperIdx = 0;
-        float Alpha = 0.f;
-
-        FindBracketingSamples(CurrentTime, LowerIdx, UpperIdx, Alpha);
-
-        // Interpolate between samples
-        const FSmoothSample& Lower = Track.Samples[LowerIdx];
-        const FSmoothSample& Upper = Track.Samples[UpperIdx];
-
-        FVector InterpolatedValue = FMath::Lerp(
-            Lower.Value,
-            Upper.Value,
-            Alpha);
-
-        ApplyInterpolatedValue(InterpolatedValue);
-    }
-};
-```
+Other systems can listen to the same messages to react to a kill cam, for example to hide a minimap or mute an announcer while one plays.
 
 ***
 
-### Modifying Camera Behavior
+## Showing the Recorded View
 
-Camera behavior during kill cam is controlled by the **`UKillcamCameraPlayback`** component, which uses the recorded camera state from the killer.
-
-#### How Camera Playback Works
-
-The camera playback component receives recorded data about the killer's camera state (camera mode, ADS status, etc.) and applies it during playback:
-
-```plaintext
-CameraPlayback Tick(deltaTime):
-    Get current playback time
-    Find appropriate camera sample for this time
-
-    If camera mode changed:
-        Push/pop camera modes to match killer's state
-
-    If ADS state changed:
-        Trigger ADS transition (or exit)
-
-    Apply camera state to view
-```
-
-#### Customizing Camera Playback
-
-To modify camera behavior, extend **`UKillcamCameraPlayback`**:
-
-```cpp
-UCLASS()
-class UMyKillcamCameraPlayback : public UKillcamCameraPlayback
-{
-    GENERATED_BODY()
-
-public:
-    // Override to use your custom camera modes
-    virtual TSubclassOf<ULyraCameraMode> GetCameraModeForTag(
-        FGameplayTag CameraModeTag) const override;
-
-    // Override to customize ADS behavior
-    virtual void HandleADSStateChange(bool bIsADS) override;
-
-protected:
-    UPROPERTY(EditDefaultsOnly, Category = "Camera")
-    TSubclassOf<ULyraCameraMode> KillcamFirstPersonMode;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Camera")
-    TSubclassOf<ULyraCameraMode> KillcamThirdPersonMode;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Camera")
-    TSubclassOf<ULyraCameraMode> KillcamADSMode;
-};
-```
-
-#### Camera Mode Mapping
-
-The camera playback component maps recorded camera mode tags to actual camera modes. Override `GetCameraModeForTag` to use your own camera modes:
-
-```cpp
-TSubclassOf<ULyraCameraMode> UMyKillcamCameraPlayback::GetCameraModeForTag(
-    FGameplayTag CameraModeTag) const
-{
-    // Map recorded tags to your custom camera modes
-    if (CameraModeTag.MatchesTag(TAG_Camera_FirstPerson))
-    {
-        return KillcamFirstPersonMode;
-    }
-
-    if (CameraModeTag.MatchesTag(TAG_Camera_ThirdPerson))
-    {
-        return KillcamThirdPersonMode;
-    }
-
-    if (CameraModeTag.MatchesTag(TAG_Camera_ADS))
-    {
-        return KillcamADSMode;
-    }
-
-    // Fall back to parent implementation
-    return Super::GetCameraModeForTag(CameraModeTag);
-}
-```
-
-#### Custom ADS Handling
-
-Override ADS behavior to add custom effects like scope overlays:
-
-```cpp
-void UMyKillcamCameraPlayback::HandleADSStateChange(bool bIsADS)
-{
-    Super::HandleADSStateChange(bIsADS);
-
-    // Add custom scope overlay when entering ADS
-    if (bIsADS)
-    {
-        if (APlayerController* PC = GetOwningPlayerController())
-        {
-            // Show scope overlay widget
-            if (ScopeOverlayClass)
-            {
-                ScopeOverlayWidget = CreateWidget<UUserWidget>(PC, ScopeOverlayClass);
-                ScopeOverlayWidget->AddToViewport();
-            }
-        }
-    }
-    else
-    {
-        // Remove scope overlay when exiting ADS
-        if (ScopeOverlayWidget)
-        {
-            ScopeOverlayWidget->RemoveFromParent();
-            ScopeOverlayWidget = nullptr;
-        }
-    }
-}
-```
+To make every kill cam show the killer's exact recorded camera, turn on `bPreferRecordedView` on the manager, or set `Killcam.RecordedView 1` to try it. To change how the recorded view is shown, such as adding a blend or an overlay, subclass `UKillcamRecordedViewCameraMode` and set it as the manager's `RecordedViewCameraMode`. The camera mode reads the session's recorded camera, which the killer's clip carries.
 
 ***
 
-### What NOT to Modify
+## Adding a Custom Track
 
-{% hint style="danger" %}
-These areas interact with complex engine systems. Modifications here carry high risk of crashes, networking issues, or unpredictable behavior.
+The killer's aim, camera modes and hit markers are tracks: something the killer's machine records all the time, sends with its clip, and the victim plays on the replay's clock. A game can add its own, such as a weapon's heat or a scope's zoom level that the camera should follow.
+
+{% hint style="warning" %}
+This is the most involved extension, and it goes into the kill cam's own C++. Each track kind has its own pair of RPCs on `UKillcamManager`, its own storage there, and its own place in the replay. Every track also counts against the server's per-kill limits of 8 tracks and 4096 samples each.
 {% endhint %}
 
-#### `UKillcamPlayback` Core Logic
+{% stepper %}
+{% step %}
+#### Record it
 
-Avoid modifying:
+Add a recorder component to controllers, like the three shipped recorders, keeping a few seconds of samples stamped with the recorder's time. Bots' recorders run on the server.
+{% endstep %}
 
-* `KillcamStart_Internal` / `KillcamStop` flow
-* World visibility toggling logic
-* `UDemoNetDriver` interactions
-* Level collection management
-* GotoTimeInSeconds handling
+{% step %}
+#### Give it a network form
 
-#### World Duplication Mechanics
+Define the raw samples, a compact network struct with conversions both ways, and the playback form with times counted from the track's start. The shipped types headers, such as `KillcamHitMarkerTypes.h`, show the pattern. Cap sample counts when reading from the network.
+{% endstep %}
 
-Do not change:
+{% step %}
+#### Send and relay it
 
-* `ULyraGameEngine::Experimental_ShouldPreDuplicateMap`
-* Level collection type handling
-* Duplicate world creation/destruction
+Add a server RPC the killer calls and a client RPC the server calls on the victim, both on `UKillcamManager`. The server side passes `AcceptTrackFromKiller` before relaying. Send the track alongside the others, both up to the death and in the after-death request, and from the event relay for bots.
+{% endstep %}
 
-#### Replay System Internals
+{% step %}
+#### Play it
 
-Leave these alone:
+Subclass `UKillcamTrackPlayback`, and have `UKillcamReplay` create it on the killer's stand-in alongside the others.
+{% endstep %}
+{% endstepper %}
 
-* `StartRecordingReplay` / `StopRecordingReplay` calls
-* `PlayReplay` options (except timing)
-* NetGUID preservation logic
-* DemoNetDriver assignment to collections
+The playback is the part with a reusable base. The replay sets its clock, and `GetPlaybackTime` gives seconds into the track, in step with the replay through pauses, speed changes and seeks, with the latency offset applied.
+
+```cpp
+UCLASS()
+class UMyKillcamHeatPlayback : public UKillcamTrackPlayback
+{
+    GENERATED_BODY()
+
+public:
+    void Init(const FMyHeatTrackPlayback& InTrack) { Track = InTrack; }
+
+protected:
+    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override
+    {
+        Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+        // Seconds into the track, wherever the replay is.
+        const float Time = GetPlaybackTime();
+
+        // Find the sample at Time and present it, for example on the killer's stand-in that owns this component.
+    }
+
+private:
+    FMyHeatTrackPlayback Track;
+};
+```
+
+`UKillcamHitMarkerPlayback` is the smallest shipped example: it shows each hit marker once as playback reaches it, and accepts a longer track while playing without repeating the ones already shown.
 
 ***
+
+## Adding Debug Facts
+
+The kill cam reports its decisions to the Visual Replay debug suite, so they appear in each replay's report next to everything the replay did. A game's own kill cam additions can do the same through the `Game` category:
+
+```cpp
+VISUALREPLAY_DEBUG_FACT(this, Game, TEXT("HeatTrackStarted"), FVisualReplayDebugSubject(KillerStandIn), TEXT("samples=%d"), Track.Samples.Num());
+```
+
+The macro costs one check when the category is off and compiles away in Shipping builds. `VISUALREPLAY_DEBUG_ANOMALY` records a fact that points at something wrong, which the report lists first. [Debugging](debugging.md) covers reading the report.

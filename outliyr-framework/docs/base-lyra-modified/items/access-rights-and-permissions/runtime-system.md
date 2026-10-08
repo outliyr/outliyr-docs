@@ -32,11 +32,9 @@ _Some gameplay rule fires:_\
 {% endstep %}
 
 {% step %}
-**UObject replication pass (same frame)**
+**Fast-array delta replicates**
 
-The container’s `ReplicateSubobjects` is executed for every connection.\
-For connections **other** than `TargetPC` nothing is written, because the fast-array diff is empty.\
-For the TargetPC channel the delta is serialized into the network bunch.
+Only the changed entry is serialized. When the container filters its items, the server also moves the player's connection into or out of the container's net condition group, so a player granted `ReadOnly` starts receiving the items and one set back to `NoAccess` stops. [Item Replication](../item-replication.md#who-receives-an-item) covers the group.
 {% endstep %}
 
 {% step %}

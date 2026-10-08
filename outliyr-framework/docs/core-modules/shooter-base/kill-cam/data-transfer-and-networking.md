@@ -1,490 +1,108 @@
-# Data Transfer and Networking
+# Getting the Killer's Recording
 
-When a player dies, their Kill Cam needs data from the killer's perspective, but that data exists on the killer's client. This page details the complete RPC flow that transfers recorded data from killer to victim via the server.
+The victim's machine already has a recording of the kill: its own. But that recording shows the killer the way the victim saw them, which isn't how the killer saw the moment. Remote players are drawn a little late and smoothed, their aim arrives coarsely, and the victim never saw the killer's first-person view at all. The killer's own machine has all of that, so the kill cam asks it for its recording. This page covers how that recording travels from the killer to the victim, how the server keeps it honest, and what happens when it is late or never comes.
 
-***
-
-### Why Transfer is Needed
-
-The Kill Cam faces a fundamental networking challenge:
-
-```
-┌─────────────────────┐          ┌─────────────────────┐
-│    KILLER CLIENT    │          │    VICTIM CLIENT    │
-│                     │          │                     │
-│  Has: Aim data      │          │  Needs: Aim data    │
-│       Hit markers   │    ???   │        Hit markers  │
-│       Camera state  │ ───────► │        Camera state │
-│                     │          │                     │
-│  (Locally recorded) │          │  (For playback)     │
-└─────────────────────┘          └─────────────────────┘
-```
-
-The victim's client needs the killer's recorded perspective data, but:
-
-* Clients can't directly communicate (no P2P)
-* The server doesn't record this data (bandwidth/CPU)
-* Data must transfer quickly for responsive Kill Cam
-
-Solution: The server acts as a trusted relay, routing data from killer to victim.
+What a recording contains, and how it is encoded, is covered by Visual Replay's [Perspective Clips](../../visual-replay/perspective-clips.md). This page is about the trip.
 
 ***
 
-### The Server Relay: `UKillcamEventRelay`
+## Slices, Oldest First
 
-The `UKillcamEventRelay` is a `UGameplayMessageProcessor` that runs on the server. It listens for elimination messages and orchestrates data transfer.
+As soon as the server asks, the killer's machine builds its recording of the window up to the death and sends it in **slices** of `Killcam.PerspectiveClipSliceSeconds` (1.5 seconds), oldest first, starting 0.25 seconds before the window. Slices let the kill cam begin as soon as the opening of the window has arrived, while the rest streams in ahead of playback, rather than waiting for one large clip.
 
-### How It Starts
+Each slice is a perspective clip whose subjects are the killer's pawn and the victim's pawn, plus up to `Killcam.PerspectiveClipExtraCharacters` (4) other characters that were on the killer's screen for a good part of the window. It is encoded on a worker thread, so building it costs the killer's frame almost nothing, and cut into pieces of at most `Killcam.PerspectiveClipPieceBytes` (8 KB).
+
+The part recorded **after** the death can't exist yet when the kill happens. It is requested once the victim's kill cam is about to start, and goes out as one final part, numbered 255 so it always sorts after the slices.
+
+A clip is identified by the server time of the death in whole milliseconds. The victim's own estimate of its death can trail the server's, so ids within two seconds of each other count as the same kill. Two kills of one victim are always further apart than that.
+
+***
+
+## Pacing
+
+A clip is far larger than anything else the game sends, so sending it all at once would delay everything else on the connection, including movement. Pieces go out on a byte budget of `Killcam.PerspectiveClipBytesPerSecond` (128 KB per second). The budget allows a quarter of a second's worth at once, and always at least the next piece, so no piece is ever too big to send.
+
+On the legacy net driver, a piece also waits while the connection has more than 48 reliable messages waiting to be acknowledged, well short of the point where the engine would close the connection. Iris has no actor channels to inspect, so there the byte budget alone keeps the queue short.
+
+Pacing applies on both hops: from the killer's machine to the server, and from the server to the victim. A listen server's own local player never touches the network and isn't paced.
+
+***
+
+## What the Server Checks
+
+The server relays every piece and track, which makes it the place to stop a client sending another player data it was never asked for. Everything is checked against the **kill record** the server wrote when the elimination happened. Here is the check every clip piece passes before it is relayed:
 
 ```cpp
-void UKillcamEventRelay::StartListening()
+// Only the killer the server recorded may send a victim pieces, only of that kill's clip, only well formed ones, and
+// only up to a byte budget, so no client can send another player data it was never asked for.
+UKillcamManager* VictimMgr = KillCamManager::FindManagerOf(VictimPS);
+const FServerKillRecord* Kill = VictimMgr ? &VictimMgr->ServerKill : nullptr;
+if (!Kill || Kill->bCancelled || Kill->Killer.Get() != GetPlayerState<APlayerState>() || Chunk.ClipId != Kill->ClipId
+    || !KillCamManager::IsWellFormedPiece(Chunk) || Kill->BytesRelayed + Chunk.Bytes.Num() > KillCamManager::MaxRelayedBytesPerKill)
 {
-    // Subscribe to elimination messages
-    UGameplayMessageSubsystem& MessageSubsystem =
-        UGameplayMessageSubsystem::Get(GetWorld());
-
-    MessageSubsystem.RegisterListener(
-        TAG_Lyra_Elimination_Message,
-        this,
-        &UKillcamEventRelay::OnEliminationMessage);
+    return nullptr;
 }
+return VictimMgr;
 ```
 
-### Handling Eliminations
+Tracks go through the same kind of check: only from the recorded killer, a bounded number per kill, and a bounded size each. The server also stamps each track with *its own* time of death before relaying it, so a killer can't shift the victim's timeline. The request for the after-death part is honoured once per kill, with the killer, the death time and the window all taken from the record, never from what the victim asks for.
 
-When an elimination occurs:
+| Limit | Value |
+| --- | --- |
+| Bytes in one piece | 8 KB |
+| Pieces in one part | 4096 |
+| Subjects named by a part | 16 |
+| Clip bytes relayed for one kill | 8 MB |
+| Tracks relayed for one kill | 8 |
+| Samples in one track | 4096 |
 
-```plaintext
-OnEliminationMessage(Payload):
-    Extract victim and killer PlayerStates from payload
-    Record death server time
+The limits are generous. A normal kill uses a small fraction of each, so they only ever stop a client that is misbehaving. They are compile-time constants in `KillcamManagerPrivate.h`.
 
-    If killer is a human player:
-        HandleHumanKiller(victim, killer, deathTime)
-    Else (AI killer):
-        HandleAIKiller(victim, killer, deathTime)
-```
+<details>
+
+<summary>In code: the server side</summary>
+
+`UKillcamEventRelay::OnEliminationMessage` writes the record through `UKillcamManager::NoteServerKill`. Pieces pass `AcceptPieceFromKiller` and tracks pass `AcceptTrackFromKiller`, both on the killer's server-side manager. `ServerRequestFinalKillcamData` takes no parameters: the server reads everything from the record. The aim track's network serializer also refuses an oversized sample count before allocating anything, so a malformed track can't make the server allocate memory. The tests under `ShooterBase.Killcam.Security` cover each check.
+
+</details>
 
 ***
 
-### Human Killer Flow
+## Receiving and Assembling
 
-When the killer is a human player, data must be requested from their client.
+The victim's machine collects pieces until a part is complete, then decodes it on a worker thread. A piece of a newer kill replaces whatever was being assembled, and pieces of an older kill are ignored.
 
-#### Step 1: Server Requests Data from Killer
+Parts can finish decoding in any order, so they join in recording order, from the first, only as far as they run on without a gap. A slice that overtook the one before it waits for that one. Once a kill cam is playing, each newly joined part is appended to the running replay.
 
-```cpp
-void UKillcamEventRelay::HandleHumanKiller(
-    APlayerState* VictimPS,
-    APlayerState* KillerPS,
-    float DeathServerTime) const
-{
-    APlayerController* KillerPC = Cast<APlayerController>(
-        KillerPS->GetOwningController());
-
-    if (UKillcamManager* KillerManager =
-        KillerPC->FindComponentByClass<UKillcamManager>())
-    {
-        // Client RPC: Tell killer's client to send their recorded data
-        KillerManager->ClientRequestKillcamData(VictimPS, DeathServerTime);
-    }
-}
-```
-
-#### Step 2: Killer's Client Gathers Data
-
-On the killer's client, `ClientRequestKillcamData` collects data from all recorders:
-
-```plaintext
-ClientRequestKillcamData(victim, deathTime):
-    Find all recorder components on this controller
-
-    For aim recorder:
-        Get raw samples from buffer
-        Convert to network-optimized format (compressed)
-        Send to server: ServerSendKillcamAimTrack(victim, netTrack)
-
-    For hit marker recorder:
-        Get raw samples from buffer
-        Send to server: ServerSendKillcamHitTrack(victim, hitTrack)
-
-    For camera recorder:
-        Get recorded events
-        Send to server: ServerSendKillcamCameraTrack(victim, cameraTrack)
-```
-
-#### Step 3: Killer Sends to Server
-
-Each track type has its own Server RPC:
-
-```cpp
-// Aim data
-UFUNCTION(Server, Reliable)
-void ServerSendKillcamAimTrack(
-    APlayerState* VictimPS,
-    const FKillcamAimTrackNet& NetTrack);
-
-// Hit marker data
-UFUNCTION(Server, Reliable)
-void ServerSendKillcamHitTrack(
-    APlayerState* VictimPS,
-    const FKillcamHitMarkerTrackRaw& Track);
-
-// Camera data
-UFUNCTION(Server, Reliable)
-void ServerSendKillcamCameraTrack(
-    APlayerState* VictimPS,
-    const FKillcamCameraTrackRaw& Track);
-```
-
-#### Step 4: Server Forwards to Victim
-
-The server doesn't process the data, it simply forwards to the victim:
-
-```cpp
-void UKillcamEventRelay::SendNetTrackToVictim(
-    const FKillcamAimTrackNet& NetTrack,
-    APlayerState* VictimPS) const
-{
-    APlayerController* VictimPC = Cast<APlayerController>(
-        VictimPS->GetOwningController());
-
-    if (UKillcamManager* VictimManager =
-        VictimPC->FindComponentByClass<UKillcamManager>())
-    {
-        // Client RPC: Forward data to victim's client
-        VictimManager->ClientReceiveKillcamAimTrack(NetTrack);
-    }
-}
-```
-
-#### Step 5: Victim Caches Data
-
-The victim's client receives and stores the data:
-
-```cpp
-void UKillcamManager::ClientReceiveKillcamAimTrack_Implementation(
-    const FKillcamAimTrackNet& NetTrack)
-{
-    // Convert from network format back to raw format
-    LastReceivedAimTrack = KillcamAimTypes::BuildRawTrackFromNet(NetTrack);
-}
-
-void UKillcamManager::ClientReceiveKillcamHitTrack_Implementation(
-    const FKillcamHitMarkerTrackRaw& Track)
-{
-    LastReceivedHitTrack = Track;
-}
-
-void UKillcamManager::ClientReceiveKillcamCameraTrack_Implementation(
-    const FKillcamCameraTrackRaw& Track)
-{
-    LastReceivedCameraTrack = Track;
-}
-```
+The time of the death the kill cam uses comes, in order of preference, from the killer's tracks (stamped by the server), then from the clip's id, then from the victim's own clock.
 
 ***
 
-### AI Killer Flow
+## Late, Missing or Skipped
 
-When the killer is an AI, the flow is simpler, the server has direct access to the AI's components:
-
-```plaintext
-HandleAIKiller(victim, killer, deathTime):
-    Get AI's controller (runs on server, so direct access)
-
-    For each recorder component on AI:
-        Extract samples directly from buffer
-        Build track window for the time range
-        Convert to network format
-        Send directly to victim (skip killer client RPCs)
-```
-
-The AI case skips the killer client RPCs entirely, data goes directly from server to victim.
+* **Waiting at the start.** The kill cam begins once the first second of the window has arrived. Until then it shows the waiting message, for up to `Killcam.PerspectiveClipWaitSeconds` (3 seconds). If the clip still isn't there, it plays the victim's own recording instead and keeps it to the end. The debug suite records this as `KillcamFellBackToOwnRecording`.
+* **Waiting while playing.** If playback catches up with what has arrived, the replay holds and the waiting message shows again, for up to `Killcam.BufferingTimeoutSeconds` (3 seconds) before the kill cam ends.
+* **History.** The victim's recorder holds its history back to just before the window, for 20 seconds after the death and again for 20 seconds plus the kill cam's length once it starts, so the opening isn't trimmed away while the kill cam waits. Only the manager that took the hold releases it, which matters on a listen server, where the host's manager and the server-side copies share one recorder.
+* **Skipping and ending.** When the kill cam ends for any reason, the victim tells the server the clip is no longer wanted. The server drops pieces still queued for the victim and tells the killer to stop. The killer remembers its last few cancelled clips, so a late request for the after-death part of one of them is ignored.
 
 ***
 
-### Final Data Request
+## The Killer's Tracks
 
-The initial data transfer happens immediately after death. But the Kill Cam doesn't start immediately, there's typically a delay. During this time, more actions may occur that should be included.
+Alongside the clip, the killer sends three small tracks from its own recorders:
 
-#### Why a Second Request?
+* **aim**: its control rotation at up to 60 samples per second;
+* **camera**: its camera mode and aiming-down-sights changes;
+* **hit markers**: the hits it was shown.
 
-```
-Timeline:
-─────────────────────────────────────────────────────────►
-    │                    │                    │
-  Death             Initial Data           Kill Cam
-  Event             Transfer               Starts
-    │                    │                    │
-    │◄──── 100ms ────────►│                    │
-    │                    │◄──── 500ms ────────►│
-                         │                    │
-              Data transferred        More events may
-              at this point           have occurred!
-```
+They cover the recorders' full 15 seconds before the death, and later the window after it.
 
-To get the most complete picture, the system requests final data when Kill Cam actually starts.
-
-#### Final Data Request Flow
-
-When the Kill Cam Start message arrives:
-
-```cpp
-void UKillcamManager::OnKillCamStartMessage(
-    FGameplayTag Channel,
-    const FLyraKillCamMessage& Payload)
-{
-    // Store timing parameters
-    PendingStartTime = Payload.KillCamStartTime;
-    PendingDuration = Payload.KillCamFullDuration;
-
-    // Request final, complete data from killer
-    ServerRequestFinalKillcamData(
-        Payload.KillerPlayerState,
-        Payload.KilledPlayerState,
-        /* DeathServerTime from cache */,
-        Payload.KillCamFullDuration);
-}
-```
-
-The server forwards this request to the killer:
-
-```cpp
-UFUNCTION(Server, Reliable)
-void ServerRequestFinalKillcamData(
-    APlayerState* KillerPS,
-    APlayerState* VictimPS,
-    float DeathServerTime,
-    float KillCamFullDuration);
-```
-
-#### Killer Builds Final Window
-
-The killer's client builds a precise data window:
-
-```plaintext
-ClientBuildFinalKillcamData(victim, deathTime, duration):
-    Calculate exact playback window:
-        windowStart = deathTime - duration
-        windowEnd = deathTime
-
-    For each track type (aim, hit markers, camera):
-        Filter samples to only those within the window
-        Normalize timestamps relative to window start
-        Build playback-ready track structure
-
-    Send final windowed data back to server
-    (Server forwards to victim)
-```
-
-#### Seamless Data Integration During Playback
-
-An important detail: the final data is **not guaranteed to arrive before the kill cam starts playing**. The system handles this gracefully through seamless data integration.
-
-When the victim's client receives final data, the playback components automatically incorporate it, even if playback is already in progress. Here's why this works reliably:
-
-```plaintext
-Timeline (typical case):
-─────────────────────────────────────────────────────────────────────►
-    │                │                    │              │
-  Death          Initial Data         Killcam       Final Data
-  Event          Arrives              Starts         Arrives
-    │                │                    │              │
-    │◄── 100ms ─────►│                    │              │
-                     │◄──── 200ms ───────►│◄── 50ms ────►│
-```
-
-In practice:
-
-* **Initial data arrives quickly** (within \~100ms of death)
-* **Kill cam starts after a brief delay** (player sees death animation, server triggers start message)
-* **Final data typically arrives shortly after playback begins**
-
-The playback components are designed to use whatever data is available:
-
-1. Playback starts with the initial data set
-2. When final data arrives, it seamlessly replaces/extends the initial data
-3. Since the initial data covers the same time window (just with slightly less complete coverage), there's no jarring transition
-
-**Why this rarely causes issues:**
-
-* Initial data provides several seconds of buffer
-* Final data usually arrives within the first 100-200ms of playback
-* Even in high-latency scenarios, the initial data alone is typically enough to cover most of the kill cam duration
-
-**Edge case handling:**
-
-* If final data never arrives (killer disconnected), initial data is used entirely
-* If initial data is insufficient and final data is late, the playback may end early but won't crash
+The tracks travel separately because they are useful even without a clip. A bot has no machine to record a clip on, but the server records its tracks. When the kill cam falls back to the victim's own recording, the killer's exact aim still comes from its track. Camera modes and hit markers are never part of a clip at all. [Playback and Presentation](playback-system.md) covers how they play.
 
 ***
 
-***
+## Bots and Self-Kills
 
-### Complete RPC Diagram
-
-```mermaid
-sequenceDiagram
-    participant K as KILLER CLIENT
-    participant S as SERVER
-    participant V as VICTIM CLIENT
-
-    V->>S: Elimination Message
-
-    S->>K: ClientRequest KillcamData
-    K->>S: ServerSend AimTrack
-    K->>S: ServerSend HitTrack
-    K->>S: ServerSend CameraTrack
-
-    S->>V: ClientReceive AimTrack
-    S->>V: ClientReceive HitTrack
-    S->>V: ClientReceive CameraTrack
-
-    Note over K,V: ... time passes ...
-
-    V->>S: Kill Cam Start Message
-    V->>S: ServerRequest FinalKillcamData
-
-    S->>K: ClientBuild FinalKillcamData
-    K->>S: ServerSend FinalAimTrack
-    K->>S: ServerSend FinalHitTrack
-    K->>S: ServerSend FinalCameraTrack
-
-    S->>V: ClientReceive Final Tracks
-    S->>V: Playback Integrates Tracks
-
-```
-
-***
-
-### Data Structures
-
-#### Track Types
-
-Each data type has three struct variants:
-
-| Suffix     | Purpose                       | Used By                |
-| ---------- | ----------------------------- | ---------------------- |
-| `Raw`      | Full precision, local storage | Recorders, local cache |
-| `Net`      | Bandwidth-optimized           | Network transfer       |
-| `Playback` | Time-normalized for playback  | Playback components    |
-
-#### Aim Track Structures
-
-```cpp
-// Raw: Full precision for local storage
-struct FKillcamAimTrackRaw
-{
-    TArray<FKillcamAimSampleRaw> Samples;
-    float DeathServerTime;
-    float EndServerTime;
-};
-
-// Net: Compressed for network transfer
-struct FKillcamAimTrackNet
-{
-    float DeathServerTime;
-    float MaxRecordLengthSeconds;
-    TArray<FKillcamAimSampleNet> Samples;  // Compressed samples
-};
-
-// Playback: Time-normalized for smooth interpolation
-struct FKillcamAimTrackPlayback
-{
-    TArray<FKillcamAimSamplePlayback> Samples;
-    float WindowSeconds;  // Total duration
-};
-```
-
-#### BuildTrackForWindow Functions
-
-These functions convert cached raw data into playback-ready format:
-
-```cpp
-void UKillcamManager::BuildAimTrackForWindow(
-    const FKillcamAimTrackRaw& Raw,
-    float KillCamStartTime,
-    float KillCamFullDuration,
-    FKillcamAimTrackPlayback& Out)
-{
-    Out.WindowSeconds = KillCamFullDuration;
-    Out.Samples.Reset();
-
-    float WindowStart = Raw.DeathServerTime - KillCamStartTime;
-    float WindowEnd = Raw.DeathServerTime;
-
-    for (const FKillcamAimSampleRaw& Sample : Raw.Samples)
-    {
-        // Only include samples within our window
-        if (Sample.ServerTime >= WindowStart &&
-            Sample.ServerTime <= WindowEnd)
-        {
-            FKillcamAimSamplePlayback PlaybackSample;
-
-            // Normalize time to [0, WindowDuration]
-            PlaybackSample.Time = Sample.ServerTime - WindowStart;
-            PlaybackSample.ViewRotation = Sample.ViewRotation;
-            PlaybackSample.ViewLocation = Sample.ViewLocation;
-
-            Out.Samples.Add(PlaybackSample);
-        }
-    }
-}
-```
-
-***
-
-### Network Optimization
-
-#### Bandwidth Considerations
-
-At 60Hz aim sampling over 7 seconds:
-
-* 420 samples per kill cam
-* Raw format: 420 × 28 bytes = \~12KB
-* Net format: 420 × \~14 bytes = \~6KB (50% savings)
-
-#### Compression Techniques
-
-* Time Compression: Store time as normalized offset from death time, scaled to int16 range (4-byte float -> 2-byte int).
-* Rotation Compression: Use Unreal's `CompressAxisToShort` (maps rotation axis to 16-bit integer).
-* Location Quantization: Use `FVector_NetQuantize10` (1 decimal place precision).
-
-#### Reliable vs Unreliable
-
-All Kill Cam RPCs use `Reliable`:
-
-* Data loss would cause incomplete Kill Cam
-* Latency is acceptable (not frame-critical)
-* Retransmission is preferred over data gaps
-
-***
-
-### Error Handling
-
-#### Missing Killer
-
-If the killer disconnects before data transfer completes:
-
-* Victim's client will have partial or no data
-* `IsPlaybackAllowed()` check may fail
-* Kill Cam simply won't play (fails gracefully)
-
-#### Network Delays
-
-The two-phase approach (initial + final request) handles delays:
-
-* Initial transfer gives rough data quickly
-* Final request ensures complete, precise window
-* If final request fails, initial data is still usable
-
-#### Data Validation
-
-Receivers validate incoming data:
-
-* Array bounds checking
-* Time range validation
-* Null pointer guards on PlayerState references
-
-***
+* **A bot killer** has no clip. The server gathers the bot's tracks itself and sends them to the victim, and the kill cam starts straight from the victim's own recording, with the bot's tracks on top. The after-death tracks are still requested. Past the end of the bot's aim track, the view the victim's machine recorded for the bot's pawn takes over.
+* **A death the victim caused** has no other machine to ask. The kill cam plays the victim's own recording with the victim's own camera.
+* **A death with no killing player**, such as a fall, has no kill cam.

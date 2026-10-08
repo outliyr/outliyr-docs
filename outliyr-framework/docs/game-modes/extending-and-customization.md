@@ -94,7 +94,7 @@ Create a `ULyraExperienceDefinition` in `Content/Experiences/`:
 
 * **Game Features To Enable** — your plugin and `ShooterBase`
 * **Default Pawn Data** — the pawn data from the previous step
-* **Action Sets** — action sets for features you want (kill cam, accolades, spectating)
+* **Action Sets** — action sets for features you want (kill cam, accolades, spectating). A mode with objectives should also read [Making Game Modes Killcam-Ready](../core-modules/shooter-base/kill-cam/killcam-ready-game-modes.md), so its objectives show their recorded state in kill cams.
 * **Actions** — game feature actions for components, UI, and other systems
 
 See [Game Framework & Experiences](../base-lyra-modified/gameframework-and-experience/) for the full breakdown.

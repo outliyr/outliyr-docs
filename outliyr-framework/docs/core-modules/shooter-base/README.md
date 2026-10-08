@@ -18,7 +18,7 @@ This plugin bridges the gap by offering a rich feature set designed for performa
   * Utilize a foundational GameState component for tracking team and individual scores, automatically handling common events like eliminations and assists via Gameplay Messages and Tag-based stat tracking. It's designed for easy subclassing to implement unique game mode rules and win conditions.
 * **Immersive Spectator & Killcam System:**
   * Offer players a modern **Spectator System** that accurately replicates the viewed player's UI (weapon, ammo, quickbar) and camera perspective, using a data proxy system for efficient replication.
-  * Includes a sophisticated **Killcam** feature, allowing players to review their demise from their opponent's viewpoint. This leverages Unreal Engine's Replay System and an **experimental World Duplication** feature for accurate playback (Note: Killcam has specific operational requirements, including Standalone mode).
+  * Includes a **Killcam** that replays a player's last seconds through their killer's eyes while the match carries on. It is built on the [Visual Replay](../visual-replay/) plugin, which records every player's view of the match and plays the past back inside the live world, and it uses the killer's own recording sent from their machine.
 * **Dynamic Accolade System:**
   * Provide instant, data-driven visual and auditory feedback to players for notable in-game achievements (multi-kills, killstreaks, assists). This system uses Gameplay Messages for event detection, server-side processors for logic, and a flexible UMG host widget for client-side display.
 
@@ -47,7 +47,7 @@ Unlike [**TetrisInventory**](../tetris-inventory/) where a sequential reading is
 * **Aim Assist:** Discover the configurable input modifier system designed to help players (especially with gamepads) keep their reticle on or near targets through subtle pull and slowdown mechanics.
 * **GameState Scoring System:** Understand the foundational component for tracking scores (team and individual) and implementing game mode rules based on common events like eliminations and assists.
 * **Influence Spawn System:** Explore the intelligent spawning system that considers game state (teammates, enemies, Line of Sight) to provide safer and more strategic spawn locations.
-* **Killcam System:** Delve into the system that allows players to witness their elimination from their opponent's perspective, leveraging Unreal Engine's replay and world duplication features.
+* **Killcam System:** Delve into the system that lets players watch their elimination from their opponent's perspective, how it gets the killer's own recording, and how to make game modes replay correctly.
 * **Projectile Manager:** Learn about the high-performance system for simulating large numbers of fast-moving, trace-based projectiles (e.g., bullets) efficiently on a background thread with lag-compensated collision.
 * **Spectator System:** Discover how to implement an immersive, first-person spectating experience that mirrors the viewed player's UI and camera state, for both live spectating and killcam playback.
 * **Weapons:** Explore the advanced weapon functionalities, including a compositional design, predictive recoil, diverse projectile types (hitscan, simulated bullet drop), and robust hit registration for modern shooter gameplay

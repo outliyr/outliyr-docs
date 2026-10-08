@@ -79,30 +79,33 @@ graph TB
     class PlayerInv,BackpackInv,PouchInv container;
 ```
 
-**Upward traversal:** Starting from any child inventory, call `GetOwningContainerItem()` to get the item that _is_ this container, then read that item's `CurrentSlot` to resolve which inventory it currently lives in. Repeat until you reach an inventory with no `OwningContainerItem`, that's the root.
+**Upward traversal:** Starting from any child inventory, call `GetOwningContainerItem()` to get the item that _is_ this container, then read that item's `CurrentSlot` to resolve which container it currently lives in. Repeat until you reach a container that no item owns, that's the root. The walk goes through any kind of container, so a backpack worn in equipment, or a pouch attached to a vest, still finds its root.
 
-The key insight is that the parent chain is **always resolved dynamically** from the item's current slot, not stored as an explicit pointer. When a backpack moves from one inventory to another, no ownership update is needed, the item's slot reference already points to its new location, and `GetParentInventoryFromOwner()` resolves correctly from that.
+The key insight is that the parent chain is **always resolved dynamically** from the item's current slot, not stored as an explicit pointer. When a backpack moves from one inventory to another, no ownership update is needed, the item's slot reference already points to its new location, and `GetParentContainer()` resolves correctly from that.
 
 #### Key Functions for Traversal
 
-| Function                        | Returns                                       | Use Case                                           |
-| ------------------------------- | --------------------------------------------- | -------------------------------------------------- |
-| `GetOwningContainerItem()`      | The item instance that spawned this inventory | Finding which item "is" this container             |
-| `GetParentInventoryFromOwner()` | The inventory containing the owning item      | Walking one level up the chain                     |
-| `GetBaseInventory()`            | The root inventory (no owning item)           | Finding the player's main inventory from any depth |
+| Function                   | Returns                                                     | Use Case                                           |
+| -------------------------- | ----------------------------------------------------------- | -------------------------------------------------- |
+| `GetOwningContainerItem()` | The item instance that spawned this inventory               | Finding which item "is" this container             |
+| `GetParentContainer()`     | The container holding the owning item, of any kind          | Walking one level up the chain                     |
+| `GetRootContainer()`       | The container at the top of the chain, which no item owns   | Finding where the whole hierarchy lives            |
 
-`GetBaseInventory()` walks up the chain by repeatedly calling `GetParentInventoryFromOwner()` until it reaches an inventory with no `OwningContainerItem`, that's the root. This is useful for permission checks that need to reach the player controller, or for UI that needs to identify which player owns a deeply nested item.
+`GetRootContainer()` keeps following each container's owning item until it reaches a container that no item owns, such as a player's inventory, a stash or a player's equipment. A child inventory answers permission checks with the root's permissions, and its items replicate to the players the root allows, so a backpack's contents are readable by whoever can read the place the backpack sits.
 
 #### Circular Reference Prevention
 
 Before placing a container item into another inventory, the system checks whether doing so would create a circular reference, a backpack inside itself, or a pouch inside a bag that's inside the pouch.
 
 ```cpp
-// Checks if TargetInventory exists anywhere in this inventory's parent chain
-bool IsInParentInventory(ULyraTetrisInventoryManagerComponent* TargetInventory);
+// True when adding the item to the target container would put a container inside itself or one of its descendants
+static bool UItemContainerFunctionLibrary::WouldCreateCircularReference(
+    ULyraInventoryItemInstance* ItemToCheck,
+    TScriptInterface<ILyraItemContainerInterface> TargetContainer,
+    APlayerController* PC);
 ```
 
-This traverses upward from the destination inventory and returns `true` if the source inventory appears anywhere in the chain. The transaction system calls this automatically to prevent impossible configurations.
+This walks up the ownership chain from the target container. The container fragment calls it whenever a container item is about to be added anywhere, and rejects the move with `Lyra.Item.Reject.Nesting.Cycle`, so impossible configurations never happen.
 
 ***
 

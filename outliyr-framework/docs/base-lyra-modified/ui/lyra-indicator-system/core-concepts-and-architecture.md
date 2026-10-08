@@ -97,7 +97,7 @@ All indicators are sorted by depth (distance from camera) and then by `Priority`
 {% step %}
 **Removal**
 
-When `UnregisterIndicator()` is called on the descriptor (or the manager's `RemoveIndicator`), the canvas calls `UnbindIndicator` on the widget, returns it to the pool, and removes it from the layout. Indicators with `bAutoRemoveWhenIndicatorComponentIsNull` clean up automatically if their target becomes invalid.
+When `UnregisterIndicator()` is called on the descriptor (or the manager's `RemoveIndicator`), the canvas calls `UnbindIndicator` on the widget, returns it to the pool, and removes it from the layout. Indicators with `bAutoRemoveWhenIndicatorComponentIsNull` are removed by the manager the moment their component's actor ends play, so nothing later in that frame, such as the indicator's widget reacting to a change of viewer, reaches an actor on its way out. The canvas also removes them if their component becomes invalid some other way.
 {% endstep %}
 {% endstepper %}
 

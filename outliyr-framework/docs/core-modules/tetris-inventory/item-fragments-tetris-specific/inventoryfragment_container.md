@@ -150,12 +150,9 @@ When a player drags an item onto a item with a container fragment in the grid:
 
 ***
 
-### Self-Addition Prevention (`CanAddItemToInventory`)
+### Self-Addition Prevention (`CanAddItemToContainer`)
 
-When a container item is about to be placed into an inventory, this override runs two checks:
-
-1. **Direct self-reference** - Is the target inventory this container's own `ChildInventory`? If yes, deny.
-2. **Descendant check** - Is the target inventory a descendant of this container's `ChildInventory`? Uses `DestinationInventory->IsInParentInventory(MyChildInventory)` to walk up the chain. If yes, deny.
+When a container item is about to be placed into any container, this override asks `UItemContainerFunctionLibrary::WouldCreateCircularReference` whether the target is the item's own `ChildInventory` or sits anywhere inside it, walking up the target's ownership chain. If so, the add is rejected with `Lyra.Item.Reject.Nesting.Cycle`. Combining an item into a container item checks for the same cycle.
 
 This prevents paradoxes like placing a backpack inside a pouch that is already inside that backpack.
 
@@ -190,23 +187,17 @@ This architecture means containers work seamlessly with the [Reconcilation](../.
 
 <summary><strong>DestroyTransientFragment</strong></summary>
 
-When a container item is destroyed, this override tells the `GlobalInventoryManager` to destroy the associated `ChildInventory` component. It also broadcasts `ClientCloseInventoryWindow` to force-close any UI windows that were displaying the child inventory's contents.
+When a container item is destroyed, this override empties the `ChildInventory`, destroying the items inside it, then destroys the child inventory component itself.
 
 </details>
 
 <details>
 
-<summary><strong>AddedToInventory</strong></summary>
+<summary><strong>AddedToContainer</strong></summary>
 
-When the container item is placed into a parent inventory, this sets `ChildInventory->ParentInventory` to the new parent. It also cascades the `AddedToInventory` call to every item inside the child inventory, so they can update their own state.
+Each time the container item lands in a container of any kind, the server records the item on the `ChildInventory` again, since the item may have taken a new id, such as after being split off or dropped. It then registers everything inside the child inventory, and inside any containers nested in it, for replication again, so the contents reach whoever can read the item's new place ([Item Replication](../../../base-lyra-modified/items/item-replication.md#containers-inside-containers)).
 
-</details>
-
-<details>
-
-<summary><strong>RemovedFromInventory</strong></summary>
-
-When the container item is removed from an inventory, this clears `ChildInventory->ParentInventory` (if removed from its current parent). It cascades the `RemovedFromInventory` call to all items inside the child inventory.
+Removal needs no override. The parent chain is resolved from the item's current slot, so there is nothing to clear when the item leaves a container.
 
 </details>
 

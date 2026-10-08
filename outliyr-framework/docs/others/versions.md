@@ -6,6 +6,68 @@ All notable changes to the Outliyr Framework.
 
 ***
 
+### v1.2
+
+Built on Unreal Engine 5.8.
+
+The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording what each machine drew and the replicated state of every replicated actor, and plays the recent past back inside the live world. With the demo net driver gone, Iris replication is switched on, and items replicate through the registered subobject list. Everything below is covered by automation tests.
+
+#### Breaking changes and upgrade notes
+
+* **The kill cam no longer duplicates the world or records through a demo net driver.** A project that copied the old kill cam setup can remove `s.World.CreateStaticLevelCollection=1`, `demo.RecordHz` and `demo.RecordHzWhenNotRelevant` from `DefaultEngine.ini`. `ULyraGameEngine` no longer overrides `Experimental_ShouldPreDuplicateMap`; the `GameEngine` entry itself stays.
+* **`UKillcamPlayback` and `UKillcamManager::IsInKillCamWorld` were removed**, along with `ALyraPlayerState::GetOverrideViewRotation`. Code that asked whether an actor belongs to the kill cam asks Visual Replay instead, as [Telling Replay Code Apart](../core-modules/visual-replay/replay-friendly-gameplay-code.md#telling-replay-code-apart) describes.
+* **A new LyraReplay module** in `Source/LyraReplay` connects Lyra to Visual Replay. It is listed in the project file and in the Game, Client, Server and Editor targets, so a project merging those files by hand needs all five entries.
+* **GameplayMessageRouter gained a `BroadcastFilter`**, a static gate every broadcast passes through. LyraReplay binds it so messages from replay stand-ins never reach live listeners. A project that swaps the plugin for Epic's copy needs to carry the change over.
+* **Iris is on**, with `net.Iris.UseIrisReplication=1`. Item instances, their fragments, equipment instances and fitted attachments replicate only through the registered subobject list. A custom container or runtime fragment that overrode `ReplicateSubobjects` registers instead, as [Item Replication](../base-lyra-modified/items/item-replication.md#writing-a-container) describes. `UTransientRuntimeFragment::ReplicateSubobjects` and `TearOffReplicatedSubobjects` are replaced by `RegisterNestedSubObjectReplication`, and container prediction traits no longer define `TearOffReplicatedSubObject`.
+* **Cameras read a remote pawn's view from its player state.** For a pawn that isn't locally controlled, the Lyra camera modes and the True First Person camera mode take the view rotation from `ALyraPlayerState::GetReplicatedViewRotation`. A camera mode of your own that should look where a spectated player looks does the same.
+* **Player controllers need a `ULyraItemContainerClientComponent`** for container windows to follow their items and close when out of reach. `LAS_TetrisInventory_StandardComponents` adds it; another experience that shows shared container windows adds it itself.
+
+#### New: Visual Replay (experimental)
+
+* Records what each machine drew, every Movable mesh, pose, material, visibility, effect, decal and light, and the replicated state of every replicated actor, for a window of recent history. Recording runs only on request, and never on a dedicated server.
+* Plays a window back inside the live world for one viewer while the match carries on. Puppets reproduce exactly what was drawn, and shells, real instances of the recorded classes, run their own logic from the recorded state so markers, team colours and attached effects behave.
+* Gameplay cues, context effects and game events are recorded on the replay timeline, with a lead-in that brings lingering effects into place as a window opens and catch-up for effects first shown partway through their life.
+* Perspective clips carry another machine's recording of chosen actors, compactly encoded and decoded without trusting the sender, and can stream into a replay that is already playing.
+* Seeking, pausing, speed, buffering that eases playback rather than stopping it, and a replay sound class with the live mix silenced.
+* A debug suite of recorded facts with reports, anomalies, viewport drawing and console commands, compiled out of Shipping, plus a frame cost benchmark.
+
+#### Kill cam
+
+* Rebuilt on Visual Replay. It plays in Play In Editor and standalone, for a listen server's host, and under Iris.
+* The victim watches the killer's own recording, streamed from the killer's machine a slice at a time. The server relays only pieces that match its own record of the kill, within fixed limits, and the victim's own recording plays if the killer's doesn't arrive in time.
+* The kill cam starts as soon as the opening of its window has arrived, behind static while its stand-ins are prepared over several frames.
+* The killer's aim, camera and hit markers play with the replay, and the killer's exact recorded camera can be shown instead of the copied camera mode.
+* Team colours, markers and the HUD show the match from the killer's side.
+* No kill cam plays without a killing player, and a bot's kill plays the victim's own recording with the bot's tracks.
+* Objectives show their recorded state: control points, the planted bomb, flags, the payload and their markers.
+
+#### Networking and items
+
+* Iris replication is switched on.
+* Items register on the container holding them, and containers that start with no access filter their items through net condition groups.
+* Destroying an item destroys its copies on clients, so a collected pickup is released. Moving an item to another actor destroys its old copies, and clients that can read the new container receive it as a new copy.
+* A predicted move across actors, such as equipping from the inventory on the controller onto the pawn, confirms when the item's new copy arrives.
+* Container windows follow their item to another actor.
+* A Tetris child container takes its root from whatever container holds it, of any kind, and its contents replicate to whoever can read that root.
+
+#### Teams, UI and gameplay
+
+* `ObserveViewerTeam` fires without a team until the local player state is known, then follows the viewer, so team colours resolve on clients whose player state arrives before their player controller.
+* An indicator set to go with its component is removed the moment the component's actor ends play.
+* Objective markers and nameplates stop their observers when they are unbound, so pooled widgets no longer pile up listeners.
+* A control point applies `bStartsActive` on the server only, so clients and late joiners show the replicated state.
+* A planted bomb stays where it was planted and keeps its planter named as the last carrier.
+* A number pop component makes a new effect when the one it held is gone.
+* Generated weapon icons draw from their alpha in the elimination feed, the death footer and the kill cam.
+
+#### Testing
+
+* Visual Replay's automation suite, grouped by area.
+* Each game mode's kill cam tests live in that mode's own test module, so removing a mode never breaks another plugin's tests.
+* Network tests for item moves and pickups, access filtering, predicted equips across actors, window rebinding and the viewer's team.
+
+***
+
 ### v1.1.2 (18 August 2026)
 
 #### Fixed

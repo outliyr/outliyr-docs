@@ -91,10 +91,6 @@ void UEliminationFeedRelay::OnEliminationMessage(FGameplayTag Channel, const FLy
     APlayerState* InstigatorPS = ULyraVerbMessageHelpers::GetPlayerStateFromObject(Payload.Instigator);
     APlayerState* TargetPS = ULyraVerbMessageHelpers::GetPlayerStateFromObject(Payload.Target);
 
-    // Ignore if generated during killcam playback
-    if(UKillcamManager::IsInKillCamWorld(InstigatorPS ? InstigatorPS->GetPawn() : nullptr)) // Added null check
-        return;
-
     // Update the local player's grudge tracking
     UpdateEliminationGrudge(InstigatorPS, TargetPS);
 
@@ -113,7 +109,7 @@ void UEliminationFeedRelay::OnEliminationMessage(FGameplayTag Channel, const FLy
 ```
 
 * **Team Context:** Uses `ULyraTeamSubsystem` to determine the team IDs of the attacker and attackee based on their PlayerStates/Pawns.
-* **Killcam Check:** Ignores messages generated within the Killcam system to prevent duplicate feed entries.
+* **Replays add nothing:** A kill cam replays eliminations on stand-ins inside the replay's sandbox scope, where Lyra's gameplay message filter drops broadcasts, so a replayed elimination never reaches the relay or adds a second feed entry. See [Integrating a Game](../../visual-replay/integrating-a-game.md#keeping-shells-messages-out-of-the-live-game).
 * **Grudge Update:** Calls `UpdateEliminationGrudge` to update the local player's personal kill/death stats against other players involved in this elimination.
 * **Construct `FEliminationFeedMessage`:** Creates the specific structure containing formatted player names, team IDs, and relevant tags needed by the UI feed widget.
 * **Local Broadcast:** Broadcasts this `EliminationFeedMessage` structure on the _local_ `GameplayMessageSubsystem` using the `TAG_Lyra_Notification_KillFeed` (`Lyra.AddNotification.KillFeed`) channel. This message is _not_ networked further; it's purely for the local client's UI.

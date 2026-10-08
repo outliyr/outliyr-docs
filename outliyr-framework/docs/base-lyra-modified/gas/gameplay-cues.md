@@ -24,6 +24,10 @@ Cues can be implemented as Blueprints (static handlers for one-shot events, acto
 
 Either way, the cue receives context about what caused it, the instigator, target, hit location, and the [custom effect context](gameplay-effects.md#the-custom-effect-context) with weapon source info.
 
+{% hint style="info" %}
+**Cues replay in kill cams without extra work.** The cue manager announces every cue it handles through `OnGameplayCueHandling` and `OnGameplayCueHandled`, and [Visual Replay](../../core-modules/visual-replay/) records each one and plays it again on the stand-in of the actor it played on. A cue that only presents replays correctly. Cues from just before a replay's window are played again as it opens, so a cue with one-off feedback that shouldn't burst out at that moment checks `UVisualReplayPlayback::IsPlayingLeadIn`, as [The Lead-in](../../core-modules/visual-replay/events-and-cosmetics.md#the-lead-in) explains. [Integrating a Game](../../core-modules/visual-replay/integrating-a-game.md#gameplay-cues-and-context-effects) describes how cues are recorded and played.
+{% endhint %}
+
 ***
 
 ## The Custom Cue Manager

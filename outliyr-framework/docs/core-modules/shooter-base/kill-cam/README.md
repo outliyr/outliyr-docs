@@ -1,164 +1,49 @@
 # Kill Cam
 
-The Kill Cam transforms one of the most frustrating moments in multiplayer gaming, dying without understanding why, into a valuable and often entertaining experience. Instead of leaving players confused about how they were eliminated, the system replays the final moments from their killer's perspective, revealing positioning, tactics, and skill that led to the kill.
+Dying without knowing how is one of the most frustrating moments in a shooter. The kill cam replays the last seconds before a player's death through the eyes of the player who killed them: their camera, their aim, the hit markers they saw. It plays while the match carries on, so the victim is back in the action the moment it ends.
 
-### Why Kill Cam Matters
-
-A well-implemented kill cam serves multiple purposes that improve your game:
-
-* **Reduces Frustration**: Understanding _how_ you died makes death feel less arbitrary and more fair
-* **Creates Learning Moments**: Players can observe enemy tactics, positioning, and aim patterns
-* **Showcases Skill**: Impressive kills become memorable highlights rather than anonymous deaths
-* **Builds Anticipation**: The brief pause before respawn creates natural tension and pacing
-* **Validates Hit Registration**: Players can verify that kills were legitimate, building trust in game systems
-
-### The Core Concept
-
-At a high level, the Kill Cam system works through a clever combination of continuous recording and world duplication:
-
-```mermaid
-flowchart LR
-    A[Continuous Recording] --> B[Death Detected]
-    B --> C[Data Transfer]
-    C --> D[World Switch]
-    D --> E[Playback]
-    E --> F[Restore]
-
-```
-
-{% stepper %}
-{% step %}
-#### Record
-
-Each client continuously records recent gameplay into an in-memory replay buffer.
-{% endstep %}
-
-{% step %}
-#### Capture
-
-When a player dies, the killer's perspective data (aim, camera, hit markers) is captured.
-{% endstep %}
-
-{% step %}
-#### Transfer
-
-This data is relayed through the server to the victim's client.
-{% endstep %}
-
-{% step %}
-#### Duplicate World
-
-An invisible, pre-created copy of the game world becomes active.
-{% endstep %}
-
-{% step %}
-#### Playback
-
-The replay plays in this isolated world while overlay data shows the killer's view.
-{% endstep %}
-
-{% step %}
-#### Restore
-
-After playback, the view returns to the live game and recording resumes.
-{% endstep %}
-{% endstepper %}
-
-The key innovation is the **world duplication approach**, rather than trying to replay within the live game (which would cause conflicts), the system plays back in a completely isolated copy of the world. This ensures the kill cam never interferes with ongoing gameplay.
+The kill cam is built on [Visual Replay](../../visual-replay/), which records every player's view of the match all the time and plays the past back inside the live world. On top of it, the kill cam decides whose recording to show, gets that recording from the killer's machine safely, and presents it.
 
 ***
 
-## <mark style="color:red;">**Critical Limitations**</mark>
+### Where the Picture Comes From
 
-<mark style="color:red;">**Read these carefully before using or modifying the Kill Cam system.**</mark>
+The victim's own machine has a recording of the kill, but it shows the killer the way the victim saw them: slightly late, smoothed, and never from the killer's first-person view. So when a kill happens, the server asks the **killer's machine** for its own recording of the window and relays it to the victim, checking every piece against its own record of the kill. The kill cam starts as soon as the opening of the window has arrived, and the rest streams in while it plays. If the killer's recording doesn't arrive in time, the kill cam plays the victim's own recording instead.
 
-<details>
+A dedicated server records nothing itself; it only keeps the record of each kill and relays.
 
-<summary><strong>Standalone Mode ONLY</strong></summary>
+### Limits
 
-The Kill Cam system **will not function** in Play-In-Editor (PIE) mode. It **only works** when running as a Standalone executable:
-
-* Launch via command line with `-game`
-* Use the "Launch" button targeting Standalone Game
-* Run a packaged build
-
-This limitation exists because the system relies on world duplication, which the engine only performs during standalone startup. <mark style="color:red;">**This is an unreal engine limitation**</mark>.
-
-</details>
-
-<details>
-
-<summary><strong>Experimental Engine API</strong></summary>
-
-This system depends on `Experimental_ShouldPreDuplicateMap`, an experimental Unreal Engine feature. This API:
-
-* May change in future engine versions
-* Could be deprecated or removed by Epic
-* Might behave differently across engine updates
-
-If upgrading to a new UE version, test kill cam functionality early in your validation process.
-
-</details>
-
-<details>
-
-<summary><strong>Standalone / Listen Server Host Limitation</strong></summary>
-
-Players hosting a listen server **cannot use the kill cam**. When a client enters kill cam mode, its network driver temporarily switches to replay mode. For a listen server host, this would disconnect all connected clients.
-
-Standalone clients can use the killcam but gameplay cues won't show in the killcam. This is because the killcam records replicated data. GAS gameplay cues aren't detected in standalone game.
-
-The system automatically disables kill cam for non clients to preserve game integrity.
-
-</details>
-
-<details>
-
-<summary><strong>Modification Risk</strong></summary>
-
-The core playback logic in `UKillcamPlayback` interacts with complex engine systems:
-
-* Replay streaming and `UDemoNetDriver`
-* World context and level collection management
-* Actor spawning across worlds
-
-**Modifying `UKillcamPlayback` directly is strongly discouraged** unless you deeply understand these systems. Instead, customize through:
-
-* Gameplay Abilities (safe to modify)
-* Action Set configuration
-* Timing parameters
-* UI overlays
-
-</details>
+* **No kill cam without a killing player.** A fall or a world hazard has none.
+* **A bot's kill plays the victim's own recording,** with the bot's aim and camera tracks gathered by the server. A bot has no machine to record a clip on.
+* **The window is bounded by the recorder's history.** The time before the death, plus a second, must fit inside `Replay.WindowSeconds`.
 
 ***
 
-### System Components
+### The Pieces
 
-| Component                | Role                                                               |
-| ------------------------ | ------------------------------------------------------------------ |
-| **`ULyraGameEngine`**    | Enables world duplication via `Experimental_ShouldPreDuplicateMap` |
-| **`UKillcamManager`**    | Client-side coordinator that orchestrates the entire kill cam flow |
-| **`UKillcamPlayback`**   | Core engine handling world switching, replay playback, and cleanup |
-| **`UKillcamEventRelay`** | Server-side relay that routes killer data to victims               |
-| **Recorder Components**  | Capture aim, hit markers, and camera state on each player          |
-| **Playback Components**  | Render the killer's perspective data during playback               |
-| **Gameplay Abilities**   | Handle death, camera control, skip input, and respawn              |
+| C++ | Blueprint and assets |
+| --- | --- |
+| `UKillcamManager` on each controller runs the kill cam: the kill record, the start decision, the transfer | `GA_Killcam_Death` asks for the kill cam once the after-death seconds have passed |
+| `UKillcamEventRelay` on the game state turns eliminations into kill records | `GA_Killcam_Camera` follows the killer's stand-in through a spectator |
+| Aim, camera and hit marker recorders keep the killer's own tracks | `GA_Skip_Killcam` lets the player skip |
+| `UKillcamReplay` owns the Visual Replay session and its track playbacks | `W_KillcamLayout` shows the kill cam UI and its waiting screen |
+| `UKillcamRecordedViewCameraMode` shows the killer's exact recorded camera | `LAS_ShooterBase_Death_Killcam` adds everything to an experience |
 
-***
+### Reading Paths
+
+* **Tuning or debugging the kill cam:** [How a Kill Cam Plays](architecture-overview.md), the settings in [Setup and Integration](setup-and-integration.md#settings), then [Debugging](debugging.md) and Visual Replay's [Debugging](../../visual-replay/debugging.md). From there, by symptom: [Getting the Killer's Recording](data-transfer-and-networking.md), [Playback and Presentation](playback-system.md), or Visual Replay's [Sessions](../../visual-replay/sessions.md) for buffering.
+* **Making a game mode work in kill cams:** [Making Game Modes Killcam-Ready](killcam-ready-game-modes.md), the rules it links to on Visual Replay's [Writing Replay-Friendly Gameplay Code](../../visual-replay/replay-friendly-gameplay-code.md), then [Setup and Integration](setup-and-integration.md).
+* **Changing what the kill cam shows:** [Playback and Presentation](playback-system.md), then [Extending the Kill Cam](customization-and-extension.md).
 
 ### Documentation Guide
 
-This documentation is organized to help you understand the system progressively:
-
-| Page                                                                                    | What You'll Learn                                                             |
-| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| [Architecture Overview](architecture-overview.md)                                       | The big picture, how all components connect and data flows through the system |
-| [World Duplication Deep Dive](world-duplication-deep-dive.md)                           | The engine-level magic that makes isolated playback possible                  |
-| [Recording System](recording-system.md)                                                 | How gameplay data is continuously captured for potential kill cam use         |
-| [Data Transfer & Networking](data-transfer-and-networking.md)                           | How killer data moves from killer → server → victim                           |
-| [Playback System](playback-system.md)                                                   | The mechanics of world switching, time scrubbing, and view control            |
-| [Setup & Integration](../accolades/setup-and-integration.md)                            | Practical guide to enabling kill cam in your experiences                      |
-| [Customization & Extension](../gamestate-scoring-system/customization-and-extension.md) | Safe ways to modify behavior and add new features                             |
-
-***
+| Page | Content |
+| --- | --- |
+| [How a Kill Cam Plays](architecture-overview.md) | One kill from start to finish, the window, and which piece does what |
+| [Getting the Killer's Recording](data-transfer-and-networking.md) | Slices, pacing, the server's checks, receiving, waiting and cancelling |
+| [Playback and Presentation](playback-system.md) | The replay, the killer's side, the camera, the tracks, sound, waiting and ending |
+| [Setup and Integration](setup-and-integration.md) | Adding the kill cam to an experience, every setting, the timing rules and testing |
+| [Making Game Modes Killcam-Ready](killcam-ready-game-modes.md) | How objectives appear in a kill cam, the shipped cases, a checklist and shell tests |
+| [Extending the Kill Cam](customization-and-extension.md) | Replacing the camera or UI, the recorded view, custom tracks and debug facts |
+| [Debugging](debugging.md) | Reading a kill cam's report, its anomalies and troubleshooting by symptom |

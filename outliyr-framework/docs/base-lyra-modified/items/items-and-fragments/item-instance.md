@@ -46,7 +46,7 @@ Understanding when items are created, where they live, and when they're destroye
 │                                                                          │
 │  DESTRUCTION                                                             │
 │  ───────────                                                             │
-│  Explicit: Container calls DestroyItemInstance()                         │
+│  Explicit: Container calls DestroyItem()                                 │
 │      │                                                                   │
 │      ├── DestroyTransientFragment called on each fragment                │
 │      └── Item removed from container                                     │
@@ -92,7 +92,7 @@ flowchart TD
     D --> E{"Destroyed?"}
 
     subgraph Destruction
-        E -->|Explicit| E1["Container calls DestroyItemInstance()"]
+        E -->|Explicit| E1["Container calls DestroyItem()"]
         E1 --> E2["DestroyTransientFragment called on each fragment"]
         E2 --> E3["Item removed from container"]
 
@@ -145,7 +145,7 @@ Explicit destruction (consuming an item, deleting from inventory):
 ItemSubsystem->DestroyItem(ItemInstance);
 ```
 
-This triggers `DestroyTransientFragment` on each fragment for cleanup.
+This triggers `DestroyTransientFragment` on each fragment for cleanup, and ends the item's replication so its copies on clients are destroyed too.
 
 Implicit destruction happens when the owning container is destroyed (actor death, level transition) via standard garbage collection.
 
@@ -357,12 +357,14 @@ Items replicate as **subobjects** of their container:
 bool IsSupportedForNetworking() override { return true; }
 ```
 
-The owning component (`ULyraInventoryManagerComponent`, `ULyraEquipmentManagerComponent`) handles subobject replication. This means:
+Each item registers itself on the registered subobject list of the container holding it, so:
 
 * `ItemDef` replicates (so clients know the item type)
 * `StatTags` replicate (so clients see stack counts)
 * `TransientFragments` replicate (so clients have struct data)
 * `RuntimeFragments` replicate as subobjects (so clients have UObject state)
 * `CurrentSlot` replicates (so clients know where items are)
+
+[Item Replication](../item-replication.md) covers who receives an item and what clients see when it moves or is destroyed.
 
 ***

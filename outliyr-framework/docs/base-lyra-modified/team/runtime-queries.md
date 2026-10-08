@@ -160,10 +160,15 @@ The subsystem tracks who the local player is currently observing. During normal 
 * `SetCurrentViewer(PlayerState)` updates the viewed player. Passing `nullptr` resets it to the local player state.
 * `GetCurrentViewer()` returns the current viewer. Falls back to the local player state if no viewer has been explicitly set.
 * `IsViewingSelf()` returns `true` when the effective viewer is the local player.
+* `NotifyLocalPlayerStateChanged()` announces the local player state as the new viewer, unless another viewer has been chosen. The player state calls it when it initializes on its own client.
 
 This drives perspective color resolution. When perspective mode is enabled, `GetEffectiveTeamDisplayAsset()` needs to know the viewer's team to decide whether any given team should appear as ally or enemy. When the viewer changes (e.g., the player starts spectating a teammate), the display assets need to be re-evaluated.
 
-The `OnViewerChanged` delegate fires whenever the viewer changes. The `UAsyncAction_ObserveViewerTeam` async action listens to this delegate and also tracks the viewer's own team changes. It fires once immediately with the current state, then again whenever the viewer switches or the viewer's team changes. This is the recommended way for UI widgets to stay in sync with perspective-dependent team colors.
+The `OnViewerChanged` delegate fires whenever the viewer changes, including when a client first learns its own player state. That arrival matters because a client's player state, pawns and objectives often reach it before its own player controller, so UI and markers can start before there is a local player state to ask. Anything that waits on the viewer should listen to this delegate rather than read the viewer once.
+
+The `UAsyncAction_ObserveViewerTeam` async action listens to this delegate and also tracks the viewer's own team changes. It fires as soon as it starts, without a team if there is no viewer yet, then again whenever the viewer switches or the viewer's team changes. This is the recommended way for UI widgets to stay in sync with perspective-dependent team colors.
+
+The spectator sets the current viewer to the player it is watching, and the kill cam's spectator sets it to the killer's stand-in player state, so perspective colors follow whoever is on screen.
 
 <figure><img src="../../.gitbook/assets/image (41).png" alt=""><figcaption></figcaption></figure>
 

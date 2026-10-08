@@ -140,17 +140,23 @@ The canvas manages a `FUserWidgetPool` to efficiently reuse UMG widget instances
 
 ## `FIndicatorProjection` — The Math
 
-A struct with a single static `Project` method that converts 3D world positions to 2D screen coordinates. `SActorCanvas` calls this for every visible 3D indicator each frame.
+A struct whose `Project` method converts 3D world positions to 2D screen coordinates. `SActorCanvas` calls this for every visible 3D indicator each frame, and skips the indicator for that frame when it returns `false`.
 
 ```cpp
-static void Project(
-    const UIndicatorDescriptor& Descriptor,
-    const FSceneViewProjectionData& ViewData,
+bool Project(
+    const UIndicatorDescriptor& IndicatorDescriptor,
+    const FSceneViewProjectionData& InProjectionData,
     const FVector2f& ScreenSize,
     FVector& OutScreenPositionWithDepth);
 ```
 
 The output `Z` component is depth (distance from camera), used for sorting. The method handles all projection modes listed above, including behind-camera detection, points behind the camera are pushed to screen edges to prevent them from appearing inverted in the center.
+
+Before projecting an indicator attached to a component, `Project` asks the static `FIndicatorProjection::OwnerFilter` whether the component's owner should have its indicators drawn. Unbound, every indicator draws.
+
+{% hint style="info" %}
+**Replays bind the owner filter.** While a replay stands in for a live actor, LyraReplay's filter skips that actor's indicators, so only its stand-in's marker shows the recorded past. The filter holds one function, so binding another replaces the replay's. [Integrating a Game](../../../core-modules/visual-replay/integrating-a-game.md#indicators) covers it.
+{% endhint %}
 
 ***
 

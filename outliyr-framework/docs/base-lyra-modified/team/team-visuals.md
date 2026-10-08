@@ -79,6 +79,8 @@ This is the most common observer and the one you will reach for first. This obse
 
 The `OnViewerTeamChanged` delegate provides three parameters: `bTeamSet`, `ObservedPS` (the `APlayerState` being observed), and `TeamId`.
 
+A client often builds its UI before its own player state has arrived. Until it does, there is no viewer, so the observer fires once with `bTeamSet` false and no player state, and fires again with the team once the local player state arrives. Treat `bTeamSet` false as "not known yet". From then on it follows every change of viewer, such as starting to spectate or a kill cam taking the killer's side, and every team change of the current viewer. On a dedicated server, which has no viewer, it ends without firing.
+
 Use this for spectator UI that needs to update when switching between observed players, the spectator HUD, team-colored overlays during killcam, or commentary systems that need to know whose perspective is active.
 
 <figure><img src="../../.gitbook/assets/image (42).png" alt=""><figcaption></figcaption></figure>

@@ -279,47 +279,19 @@ Inventory uses multiple replication mechanisms:
 
 **FastArray for Entries** The inventory list (`FLyraInventoryList`) extends `FFastArraySerializer`. When entries change, only the delta replicates - not the entire inventory.
 
-**Why ReplicateSubobjects Matters**
+**Item Instances as Subobjects**
 
-Unlike Actor properties, UObjects don't replicate automatically. When you mark a `UPROPERTY` as `Replicated` on an Actor, Unreal handles it. But `ULyraInventoryItemInstance` is a UObject owned by the component, not the Actor - it won't replicate unless you explicitly tell the engine to do so.
-
-This is what `ReplicateSubobjects` does. The Inventory Manager overrides it to register each item instance with the replication system:
-
-```cpp
-bool ULyraInventoryManagerComponent::ReplicateSubobjects(UActorChannel* Channel,
-    FOutBunch* Bunch, FReplicationFlags* RepFlags)
-{
-    bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-
-    for (FLyraInventoryEntry& Entry : InventoryList.Entries)
-    {
-        if (Entry.Instance)
-        {
-            // Register the item instance for replication
-            bWroteSomething |= Channel->ReplicateSubobject(Entry.Instance, *Bunch, *RepFlags);
-
-            // Also replicate any runtime fragments on the item
-            for (UTransientRuntimeFragment* Fragment : Entry.Instance->GetRuntimeFragments())
-            {
-                bWroteSomething |= Channel->ReplicateSubobject(Fragment, *Bunch, *RepFlags);
-            }
-        }
-    }
-    return bWroteSomething;
-}
-```
-
-Without this, clients would receive the FastArray entries (slot indices, GUIDs) but the actual item instances would be null - the UObject data wouldn't exist on the client.
+A UObject owned by a component doesn't replicate until it is registered with the replication system. Without that, clients would receive the FastArray entries (slot indices, GUIDs) but the item instances would be null. Each item registers itself and its runtime fragments on the inventory's registered subobject list as it is added, and the inventory registers its permission component once it is ready to replicate. An inventory starts at `NoAccess` and grants its owning player access, so only that player receives its items. [Item Replication](../items/item-replication.md) covers who receives an item and what clients see when it moves to another actor.
 
 **What Replicates vs Local-Only**
 
-| Data                 | Replicates | Notes                          |
-| -------------------- | ---------- | ------------------------------ |
-| Inventory entries    | Yes        | Via FastArray delta            |
-| Item instances       | Yes        | Via `ReplicateSubobjects`      |
-| Runtime fragments    | Yes        | Also via `ReplicateSubobjects` |
-| Prediction overlays  | **No**     | Local to owning client         |
-| Permission component | Yes        | Separate replication           |
+| Data                 | Replicates | Notes                                         |
+| -------------------- | ---------- | --------------------------------------------- |
+| Inventory entries    | Yes        | Via FastArray delta                           |
+| Item instances       | Yes        | Registered subobjects, filtered by access     |
+| Runtime fragments    | Yes        | Registered alongside their item               |
+| Prediction overlays  | **No**     | Local to owning client                        |
+| Permission component | Yes        | Registered subobject of the inventory         |
 
 **Why UObjects Instead of Actors?**
 
@@ -331,7 +303,7 @@ Items are UObjects (subobject replication) rather than Actors because:
 
 **For Custom Runtime Fragments**
 
-If you create a runtime fragment that owns other UObjects (like the attachment system does), you must also override `ReplicateSubobjects` on your fragment to replicate those nested objects.
+If you create a runtime fragment that owns other replicated UObjects (like the attachment system does), override `RegisterNestedSubObjectReplication` on your fragment and register those objects on the container it is given.
 
 </details>
 

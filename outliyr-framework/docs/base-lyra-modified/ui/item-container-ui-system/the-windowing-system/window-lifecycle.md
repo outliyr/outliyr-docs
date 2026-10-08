@@ -164,8 +164,9 @@ The UI Manager monitors lifecycle events and closes windows automatically:
 | Event                        | Result                           |
 | ---------------------------- | -------------------------------- |
 | **Item destroyed**           | Windows tracking that item close |
-| **Item moved**               | Windows may reparent or close    |
+| **Item moved**               | Windows reparent, wait for the item's new copy on another actor, or close |
 | **Container access revoked** | Windows for that container close |
+| **Server invalidates a view** | Windows on that view close      |
 | **Player moves away**        | External container windows close |
 
 ```mermaid

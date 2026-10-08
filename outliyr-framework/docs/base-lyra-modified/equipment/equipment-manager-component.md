@@ -356,51 +356,19 @@ Equipment uses a multi-layered replication strategy:
 
 **FastArray for Entries** The equipment list uses `FFastArraySerializer` for delta replication - only changed entries sync. This provides callbacks (`PostReplicatedAdd`, `PostReplicatedChange`, `PostReplicatedRemove`) that integrate with prediction.
 
-**Why ReplicateSubobjects Matters**
+**Instances as Subobjects**
 
-Unlike Actor properties, `UObjects` don't replicate automatically. `ULyraEquipmentInstance` is a `UObject` owned by the component - it won't replicate unless explicitly registered with the replication system.
+`ULyraEquipmentInstance` is a UObject owned by the component, so it replicates only once registered. The equipment prediction traits register each equipment instance on the manager's registered subobject list as its entry is added, and the item behind it, the instigator, registers itself and its runtime fragments, fitted attachments included, as it is equipped. Without them, clients would receive the FastArray entries (slot tags, held state) but the equipment instances would be null.
 
-The Equipment Manager overrides `ReplicateSubobjects` to handle this:
-
-```cpp
-bool ULyraEquipmentManagerComponent::ReplicateSubobjects(UActorChannel* Channel,
-    FOutBunch* Bunch, FReplicationFlags* RepFlags)
-{
-    bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-
-    for (FLyraAppliedEquipmentEntry& Entry : EquipmentList.Entries)
-    {
-        if (Entry.Instance)
-        {
-            // Replicate the equipment instance
-            bWroteSomething |= Channel->ReplicateSubobject(Entry.Instance, *Bunch, *RepFlags);
-        }
-
-        if (Entry.Instigator)
-        {
-            // Replicate the backing inventory item
-            bWroteSomething |= Channel->ReplicateSubobject(Entry.Instigator, *Bunch, *RepFlags);
-
-            // And its runtime fragments (attachments, etc.)
-            for (UTransientRuntimeFragment* Fragment : Entry.Instigator->GetRuntimeFragments())
-            {
-                bWroteSomething |= Channel->ReplicateSubobject(Fragment, *Bunch, *RepFlags);
-            }
-        }
-    }
-    return bWroteSomething;
-}
-```
-
-Without this, clients would receive the FastArray entries (slot tags, held state) but the actual equipment instances would be null.
+The equipment manager starts at `ReadOnly`, so everyone sees what a player has equipped. Equipping usually moves an item from the inventory on the controller to the equipment on the pawn, another actor, which [Item Replication](../items/item-replication.md#moving-an-item) explains.
 
 **What Replicates vs Local-Only**
 
 | Data                  | Replicates | Notes                                   |
 | --------------------- | ---------- | --------------------------------------- |
 | Equipment entries     | Yes        | Via FastArray                           |
-| Equipment Instance    | Yes        | Via `ReplicateSubobjects`               |
-| Instigator (Item)     | Yes        | Via `ReplicateSubobjects`               |
+| Equipment Instance    | Yes        | Registered subobject                    |
+| Instigator (Item)     | Yes        | Registered subobject, with its fragments |
 | SpawnedActors array   | Yes        | Server-authoritative actors             |
 | PredictedActors array | **No**     | Local to owning client                  |
 | GrantedHandles        | **No**     | Abilities granted locally per authority |

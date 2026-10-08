@@ -145,6 +145,8 @@ The UI Manager handles this via `HandleItemReparenting`:
 
 If the Chest is closed later, the Backpack (and its inspection window) will correctly close with it.
 
+The Chest is another actor, so the Backpack reaches the client as a new copy, and its windows are held until that copy arrives, as [Dynamic Window Reparenting](../the-windowing-system/dynamic-window-reparenting.md#moving-to-another-actor) explains.
+
 ***
 
 ## Session Best Practices

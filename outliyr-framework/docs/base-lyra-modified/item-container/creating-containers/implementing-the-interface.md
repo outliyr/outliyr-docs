@@ -652,7 +652,7 @@ Use this checklist when implementing any custom container.
 * [ ] `ForEachItem` visits every item exactly once
 * [ ] Items added via `AddItemToSlot` appear in `GetItemInSlot`
 * [ ] Items removed via `RemoveItemFromSlot` no longer appear
-* [ ] Replication works in multiplayer (if applicable)
+* [ ] Replication works in multiplayer (if applicable), with items registered as [Item Replication](../../items/item-replication.md#writing-a-container) describes
 * [ ] Transaction system can move items to/from your container
 
 ***

@@ -177,6 +177,8 @@ function ClassifyRemovalPhase(Guid):
 
 This works because the client recorded a removal overlay when it predicted the removal. If the server removes the same GUID, that confirms the prediction.
 
+"Did we predict removing this GUID" is read from the overlay's op history as well as its composed state. The view is only composed when something reads it, so a removal can replicate before the overlay was last composed, and the op history still shows the predicted removal. Supersession detection reads it the same way, so a confirmed removal is never taken for the server overriding the prediction.
+
 ***
 
 ## Side Effect Implementation
@@ -347,6 +349,14 @@ For moves between containers (e.g., Inventory → Equipment):
 | Destination (Equipment) | Add overlay     | Stamp check: "Is this our prediction key?"          |
 
 Each container classifies its own delta independently. The transaction system ensures atomicity, both succeed or both fail, preventing orphaned overlays.
+
+**Moves across actors.** The inventory lives on the controller and the equipment on the pawn, so an equip is also a move between actors. The two halves of the server's result replicate separately, each with its own actor, and the item reaches the pawn as a new copy, because its old copies are destroyed when it changes actor ([Item Replication](../../../items/item-replication.md#moving-an-item)). Three things keep the prediction resolving:
+
+* The inventory's removal matches the removal the client predicted, read from the op history as above, so it confirms rather than invalidating the transaction.
+* The new copy registers in the item subsystem under the item's GUID, taking the entry over from the copy being destroyed, so lookups by GUID find it.
+* Key catch-up reaches the new copy, which takes over the slot the client predicted in the equipment.
+
+The `Lyra.ItemContainers.Network.PredictedEquipAcrossActors` test covers this case.
 
 </details>
 

@@ -84,6 +84,7 @@ The bomb is a carried objective. At the start of each round the bomb spawner giv
 <summary>Bomb actors and abilities</summary>
 
 * `ABomb` (Blueprint `B_Bomb`) holds the carrier, the carrier's player state, the offense team id, and whether it is planted, all replicated. It attaches to a socket on the carrier, drops to the world when the carrier dies, and is picked up through a sphere overlap. It broadcasts spawned, dropped, and destroyed messages.
+* Planting is settled on the server. The bomb is given no owner, its collision is turned off and it is shown, and because whether an actor is hidden replicates, it stays visible where it was planted on every machine. The planter stays named as the bomb's last carrier, which the bomb marker, the bomb sites and the bots' site service all read, and a planted bomb is never dropped or picked up. [Making Game Modes Killcam-Ready](../../core-modules/shooter-base/kill-cam/killcam-ready-game-modes.md#the-planted-bomb) explains why the server shows it.
 * `ABombSite` (`B_BombSite`) marks a valid plant location and is initialized each round with the active bomb and offense team. Planting at one site deactivates the others.
 * `ABombSpawner` (`B_BombSpawner`) spawns and destroys the round's bomb for the offense team.
 * `GA_Plant_Bomb` and `GA_Defuse_Bomb` are the player abilities that drive the `PlantBomb` and `DefuseBomb` events on the scoring component.

@@ -298,7 +298,7 @@ At first glance this looks like a lot, but most trait methods are simple adapter
 
 #### **Required Trait Methods**
 
-<table><thead><tr><th width="176.27276611328125">Category</th><th width="279.5455322265625">Methods</th><th>Purpose</th></tr></thead><tbody><tr><td><strong>Types</strong></td><td>Type aliases for <code>TOwner</code>, <code>FPayload</code>, <code>FServerEntry</code>, <code>FViewEntry</code></td><td>Let runtime know your types</td></tr><tr><td><strong>GUID</strong></td><td><code>GetGuid</code>, <code>GetGuidFromServerEntry</code></td><td>Extract stable identifier</td></tr><tr><td><strong>Server Access</strong></td><td><code>GetServerEntries</code></td><td>Read the server array (the runtime owns mutable lookups itself)</td></tr><tr><td><strong>View Conversion</strong></td><td><code>PayloadToViewEntry</code>, <code>ServerEntryToViewEntry</code>, <code>ServerEntryToPayload</code></td><td>Build unified view</td></tr><tr><td><strong>Item Access</strong></td><td><code>GetInventoryItemFromPayload</code>, <code>GetInventoryItemFromServerEntry</code></td><td>Get item instances</td></tr><tr><td><strong>Authority</strong></td><td><code>IsAuthority</code></td><td>Route operations correctly</td></tr><tr><td><strong>Direct Operations</strong></td><td><code>DirectAddEntry</code>, <code>DirectRemoveEntry</code>, <code>DirectChangeEntry</code></td><td>Server-side array mutations</td></tr><tr><td><strong>Replication</strong></td><td><code>TearOffReplicatedSubObject</code></td><td>Clear a single sub-object's NetGUID on removal; the runtime calls this for each runtime fragment and the item itself</td></tr><tr><td><strong>Slot</strong></td><td><code>PayloadToSlotStruct</code></td><td>Build the slot descriptor the runtime writes onto the item's CurrentSlot</td></tr><tr><td><strong>Stamping</strong></td><td><code>GetPredictionStampMutable</code>, <code>MarkEntryDirty</code></td><td>Access prediction stamp</td></tr><tr><td><strong>Optional</strong></td><td><code>TransferPredictionState</code>, <code>PreparePredictedPayload</code></td><td>Hooks for containers that spawn actors, hold ability handles, or otherwise need to move state from the predicted overlay onto the confirmed server entry. Omit when there is nothing to transfer.</td></tr></tbody></table>
+<table><thead><tr><th width="176.27276611328125">Category</th><th width="279.5455322265625">Methods</th><th>Purpose</th></tr></thead><tbody><tr><td><strong>Types</strong></td><td>Type aliases for <code>TOwner</code>, <code>FPayload</code>, <code>FServerEntry</code>, <code>FViewEntry</code></td><td>Let runtime know your types</td></tr><tr><td><strong>GUID</strong></td><td><code>GetGuid</code>, <code>GetGuidFromServerEntry</code></td><td>Extract stable identifier</td></tr><tr><td><strong>Server Access</strong></td><td><code>GetServerEntries</code></td><td>Read the server array (the runtime owns mutable lookups itself)</td></tr><tr><td><strong>View Conversion</strong></td><td><code>PayloadToViewEntry</code>, <code>ServerEntryToViewEntry</code>, <code>ServerEntryToPayload</code></td><td>Build unified view</td></tr><tr><td><strong>Item Access</strong></td><td><code>GetInventoryItemFromPayload</code>, <code>GetInventoryItemFromServerEntry</code></td><td>Get item instances</td></tr><tr><td><strong>Authority</strong></td><td><code>IsAuthority</code></td><td>Route operations correctly</td></tr><tr><td><strong>Direct Operations</strong></td><td><code>DirectAddEntry</code>, <code>DirectRemoveEntry</code>, <code>DirectChangeEntry</code></td><td>Server-side array mutations</td></tr><tr><td><strong>Slot</strong></td><td><code>PayloadToSlotStruct</code></td><td>Build the slot descriptor the runtime writes onto the item's CurrentSlot</td></tr><tr><td><strong>Stamping</strong></td><td><code>GetPredictionStampMutable</code>, <code>MarkEntryDirty</code></td><td>Access prediction stamp</td></tr><tr><td><strong>Optional</strong></td><td><code>TransferPredictionState</code>, <code>PreparePredictedPayload</code></td><td>Hooks for containers that spawn actors, hold ability handles, or otherwise need to move state from the predicted overlay onto the confirmed server entry. Omit when there is nothing to transfer.</td></tr></tbody></table>
 
 #### Traits Implementation
 
@@ -420,16 +420,6 @@ struct FMyContainerTraits
         SlotData.Container = Owner;
         SlotData.SlotIndex = Payload.SlotIndex;
         return FInstancedStruct::Make(SlotData);
-    }
-
-    // ===== Replication TearOff =====
-
-    static void TearOffReplicatedSubObject(TOwner* Owner, UObject* SubObject)
-    {
-        if (Owner && SubObject)
-        {
-            Owner->TearOffReplicatedSubObjectOnRemotePeers(SubObject);
-        }
     }
 
     // ===== Prediction Stamp Access =====

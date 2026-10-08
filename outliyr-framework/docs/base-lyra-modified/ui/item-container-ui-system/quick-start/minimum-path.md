@@ -88,6 +88,10 @@ ULyraInventoryViewModel* InventoryVM = Cast<ULyraInventoryViewModel>(
 
 For widgets with their own open/close lifetime, create a child session on construct and close that session on destruct. Do not manually release ViewModels; they are owned by sessions.
 
+## In Multiplayer
+
+Give the player controller a `ULyraItemContainerClientComponent`, which `LAS_TetrisInventory_StandardComponents` adds. It lets the server close a window the moment its container leaves the player's reach, and keep a window open when its item moves to another actor. [Lifecycle & Security](../item-container-ui-manager/lifecycle-and-security.md#views-the-server-tracks) explains what it does.
+
 ## What Is Optional
 
 These systems are powerful but not required for a simple inventory panel:

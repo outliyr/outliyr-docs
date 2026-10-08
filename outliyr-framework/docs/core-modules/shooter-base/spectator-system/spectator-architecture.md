@@ -57,7 +57,7 @@ The gatekeeper. Attached to every PlayerState, it answers "Who's watching me?"
 Responsibilities:
 
 * Maintains `SubscribedSpectators` list, controllers currently authorized to receive data
-* Filters replication via `ReplicateSubobjects()`, only sends data to subscribers
+* Replicates its data container only to subscribers, through a net condition group
 * Listens for state changes (quickbar on server, camera mode on client)
 * Relays client state to server via RPCs
 
@@ -155,18 +155,23 @@ Examples: Camera mode, ADS toggle
 
 ### The Replication Filter
 
-The proxy controls what gets sent to whom via `ReplicateSubobjects()`:
+The proxy registers its `USpectatorDataContainer` as a replicated subobject in a net condition group of its own, then adds each spectator's connection to that group as it subscribes and removes it as it unsubscribes:
 
 ```plaintext
-ReplicateSubobjects(Channel, Bunch, RepFlags):
-    if IsSpectatorSubscribed(Channel.Viewer):
-        ReplicateSubobject(SpectatorData, ...)
+OnExperienceLoaded (server):
+    AddReplicatedSubObject(SpectatorData, COND_NetGroup)
+    register SpectatorData in the proxy's group
 
-        for each ItemInstance in SpectatorData.QuickBarSlots:
-            ReplicateSubobject(ItemInstance, ...)
+SetSpectatorSubscribed(Spectator, bSubscribed):
+    if bSubscribed:
+        Spectator.IncludeInNetConditionGroup(group)
+    else:
+        Spectator.RemoveFromNetConditionGroup(group)
 ```
 
-This is where the bandwidth savings come from. The container only replicate itself and items to actual spectators.
+The quickbar entries the container lists are the player's own items, which already replicate through their inventory and equipment.
+
+This is where the bandwidth savings come from. The container only replicates to actual spectators.
 
 ***
 
@@ -182,11 +187,11 @@ Example: Killcam
 
 The [Kill Cam system](../kill-cam/) reuses `ATeammateSpectator` but bypasses the Proxy/Container entirely:
 
-1. Killcam has recorded killer data from the replay system
-2. It spawns `ATeammateSpectator` locally on the victim's client
-3. It passes the killer's pawn directly to `SpectatePlayerState`
-4. Camera data comes from killcam playback, not live replication
+1. The kill cam replays the last seconds through [Visual Replay](../../visual-replay/), which brings up stand-ins for the killer and the victim
+2. Its camera ability spawns `ATeammateSpectator` locally on the victim's client
+3. It passes the killer's stand-in player state to `SpectatePlayerState`, which also makes it the team subsystem's current viewer, so the match shows from the killer's side
+4. Camera mode and aiming data come from the kill cam's camera playback, not live replication
 
-This is possible because the spectator pawn doesn't care _where_ its data comes from, it just needs a target pawn and camera mode information.
+This is possible because the spectator pawn doesn't care _where_ its data comes from, it just needs a target player and camera mode information.
 
 ***

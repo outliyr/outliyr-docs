@@ -32,24 +32,19 @@ flowchart TD
     B -->|No| D["Use container's<br/>DefaultAccessRight"]
     C --> E{"Right >= ReadOnly?"}
     D --> E
-    E -->|No| F["Skip all replication<br/>for this connection"]
+    E -->|No| F["Block all interactions<br/>Items not sent if the container<br/>starts at NoAccess"]
     E -->|Yes| G{"Right == ReadWrite?"}
     G -->|No| H["Replicate data<br/>Block all interactions"]
     G -->|Yes| I["Replicate data<br/>Check Permissions bitmask"]
 ```
 
-Inside `ReplicateSubobjects`, the check is straightforward:
-
-```cpp
-if (Rights < EItemContainerAccessRights::ReadOnly)
-    return; // skip every item sub-object for this connection
-```
+On the server, the same resolution decides which connections receive the container's items. A container whose default is `NoAccess` keeps its items in a net condition group, and a player's connection is in the group while their right is `ReadOnly` or better. [Item Replication](../item-replication.md#who-receives-an-item) covers it.
 
 Gameplay abilities and UI checks also gate on access rights, `FAbilityData_SourceItem::GetSourceItem` returns `nullptr` if the player doesn't meet the required level, short-circuiting the ability.
 
 ### Impact on Bandwidth
 
-The difference between `NoAccess` and `ReadOnly` is whether the server sends item data over the network at all.
+For a container whose default is `NoAccess`, the difference between `NoAccess` and `ReadOnly` is whether the server sends item data to a player at all. A container that starts readable sends its items to every connection, and access rights only gate interaction.
 
 | Right         | Permission Component replicated? | Inventory sub-objects replicated? | Typical use                          |
 | ------------- | -------------------------------- | --------------------------------- | ------------------------------------ |
@@ -57,7 +52,7 @@ The difference between `NoAccess` and `ReadOnly` is whether the server sends ite
 | **ReadOnly**  | Yes                              | Yes                               | Loot preview, spectator screen       |
 | **ReadWrite** | Yes                              | Yes                               | Local player inventory, team storage |
 
-A remote player with NoAccess won't even have the `ULyraInventoryItemInstance` objects in their `SubobjectRepKey` table, a measurable saving on saturated servers.
+A remote player without access never receives the container's item instances, a measurable saving on saturated servers.
 
 ***
 

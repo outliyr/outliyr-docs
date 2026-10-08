@@ -79,7 +79,7 @@ void DestroyItem(ULyraInventoryItemInstance* Item);
 * **Purpose:** Properly destroys an item with full cleanup.
 * **Process:**
   1. Removes the item from the GUID map.
-  2. Calls `PrepareForDestruction()` on the item (cleans up fragments).
+  2. Calls `PrepareForDestruction()` on the item, which ends its replication, destroys its copies on clients and cleans up its fragments.
   3. Calls `ConditionalBeginDestroy()` for proper UObject cleanup.
 
 ### `RegisterItem / UnregisterItem`

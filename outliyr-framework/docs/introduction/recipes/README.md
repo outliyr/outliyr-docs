@@ -11,11 +11,12 @@ You can edit, subclass, replace, or duplicate any asset in this framework. There
 {% endhint %}
 
 {% hint style="warning" %}
-**A few systems reward extra reading first.** The **Projectile Manager**, **Lag Compensation**, and **Kill Cam** are tightly coupled to networking, replication, and threading. Their docs explain the constraints in detail, read those before you modify the systems themselves. _Linking_ a weapon to the projectile manager is routine; rewriting the projectile thread internals is the deep end.
+**A few systems reward extra reading first.** The **Projectile Manager**, **Lag Compensation**, **Visual Replay**, and **Kill Cam** are tightly coupled to networking, replication, and threading. Their docs explain the constraints in detail, read those before you modify the systems themselves. _Linking_ a weapon to the projectile manager is routine; rewriting the projectile thread internals is the deep end.
 
 * [Projectile Manager](../../core-modules/shooter-base/projectile-manager/)
 * [Lag Compensation](../../core-modules/lag-compensation/)
-* [Kill Cam](../../core-modules/shooter-base/kill-cam/)
+* [Visual Replay](../../core-modules/visual-replay/)
+* [Kill Cam](../../core-modules/shooter-base/kill-cam/), and [Making Game Modes Killcam-Ready](../../core-modules/shooter-base/kill-cam/killcam-ready-game-modes.md) before building a mode with objectives
 {% endhint %}
 
 ***

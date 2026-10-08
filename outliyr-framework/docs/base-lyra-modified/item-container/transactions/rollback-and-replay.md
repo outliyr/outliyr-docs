@@ -34,6 +34,8 @@ The predicting client sent a transaction. The server processed it, rejected it, 
 
 Another client or the server itself changed a slot the predicting client had a pending prediction on. Replication arrives. The prediction runtime detects that the authoritative state diverges from the predicted overlay for that GUID and broadcasts an invalidation footprint to any listening transaction ability. The same classification walk runs, but the trigger is foreign drift rather than an explicit rejection.
 
+A replicated delta that matches the client's own prediction is never supersession. An add or change carrying one of the overlay's prediction keys confirms it, and a removal confirms it when the overlay ends with a predicted removal, which matters for a move to another actor, where the removal can replicate before the overlay is next composed. [Phase Classification](../prediction/reconciliation/phase-classification.md#removal-classification-guid-matching) covers how removals are matched.
+
 Supersession is not a substitute for server validation. The server's own rejection of the predicting client's transaction will arrive separately and runs the rejection cascade. Supersession only fires earlier when foreign replication moves first, eliminating the bookkeeping window where the predicted overlay and the authoritative state silently disagree.
 
 ```mermaid
@@ -238,7 +240,7 @@ The required body of a custom `CollectFootprint`:
 
 The most common mistake is recording item GUIDs without touching the container set. The transaction ability subscribes to authoritative supersession on the containers the footprint touched, so an op that records only item GUIDs cannot be proactively invalidated when its container's state changes.
 
-For the container-side contract (`CollectPredictableContainerHelpers` and the supersession delegate exposed through the helper) see [Adding Prediction](../creating-containers/adding-prediction.md).
+A container needs nothing extra to take part. A container built on the GUID-keyed runtime detects supersession itself, and the helper it returns from `CollectPredictableContainerHelpers` exposes the runtime's delegate through `OnAuthoritativeInvalidation()`, which the transaction ability subscribes to on every container the footprint touched. [Adding Prediction](../creating-containers/adding-prediction.md) covers the helper.
 
 ***
 

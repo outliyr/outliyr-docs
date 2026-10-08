@@ -46,6 +46,10 @@ This framework is **layered**, meaning each level **depends only on the layers b
 Core Modules depend on the Gameplay Maps only to showcase their functionality through demo levels. If you remove these demo levels from the Core Modules, the dependency on Gameplay Maps is removed entirely.
 {% endhint %}
 
+{% hint style="info" %}
+**Visual Replay sits beside the layers.** It is a standalone plugin that knows nothing of Lyra. The LyraReplay module in `Source/LyraReplay` connects it to Base Lyra, and the kill cam in Shooter Base depends on both. Base Lyra itself never depends on Visual Replay. [Integrating a Game](../core-modules/visual-replay/integrating-a-game.md#who-depends-on-whom) shows how the pieces connect.
+{% endhint %}
+
 {% tabs %}
 {% tab title="Diagram" %}
 ```mermaid
