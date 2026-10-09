@@ -48,10 +48,13 @@ To try a replay without writing any code, run `Replay.Test 5` in the console. It
 
 Preparing a replay can be heavy: a busy match may have dozens of puppets and shells, and the [lead-in](events-and-cosmetics.md#the-lead-in) can repeat a hundred or more events. With a `PrepareBudgetMs` above zero, the session does this a little at a time, within that many milliseconds a frame and always at least one piece of work a frame, in this order:
 
-1. the puppets;
-2. the shells of actors present as the window opens;
-3. the lead-in;
-4. the shells of actors that appear later in the window, such as a player who respawns partway through.
+1. the window, copied out of the recording, its look first and its replicated state on a later frame;
+2. the puppets;
+3. the shells of actors present as the window opens;
+4. the lead-in;
+5. the shells of actors that appear later in the window, such as a player who respawns partway through.
+
+`Start` itself only checks that the window holds anything, so the frame the replay is started in stays light. A recording that forgets its history while the replay prepares, as it does when its clock is replaced, first hands over whatever of the window the session has not copied yet.
 
 Nothing of the replay shows while it prepares. Puppets stay hidden, shells are hidden as they are spawned, what the lead-in brings back is hidden and holds still, and the live world stays on screen. When everything is ready, the session shows the puppets and what the lead-in brought back, hides what they replace, applies the first update, calls `OnStandInsReady` and broadcasts `OnPrepared`, so the frame the replay first shows in does little more than switch what the viewer sees. `IsPreparing` tells a game the session is still building, which the kill cam shows as waiting.
 
