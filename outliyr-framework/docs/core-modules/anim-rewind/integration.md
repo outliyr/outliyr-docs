@@ -74,7 +74,7 @@ A broken rewind shows up in one of two ways. Either the character has **no rewou
 {% hint style="info" %}
 The provider and the rewind component both expose development-only debug draws: the provider draws the reconstructed hitbox shapes and the component draws the reconstructed skeleton for a given number of seconds ago. Drawing them together is the fastest way to see whether a bad rewind is the pose or the hitbox mapping. There is also a log that dumps the captured inputs and a side-by-side of captured versus reconstructed state for a past tick.
 
-Lag compensation's own debug draws work on a rewound character too. `lyra.LC.Debug.DrawCollisions 1` draws the rewound hitboxes of every character a validated shot hit, as the server saw them at the moment the shooter fired. The drawing appears in the server's view, so on a listen server look at the host's window.
+Lag compensation's own debug draws work on a rewound character too. `lyra.LC.Debug.DrawCollisions 1` draws the rewound hitboxes of every character a validated shot hit, as the server saw them at the moment the shooter fired. The drawing is made in the server's world. In Play In Editor the engine also copies server debug drawing into every client window, so a client sees it over its own view; a standalone or packaged client never shows it.
 {% endhint %}
 
 <figure><img src="../../.gitbook/assets/anim-rewind-registered-hit.png" alt="A shot hitting a dancing dummy, with its rewound hitboxes drawn in green"><figcaption><p>A registered hit with <code>lyra.LC.Debug.DrawCollisions 1</code>. The green hitboxes are the dummy's pose when the shot was fired, which the live mesh has already moved on from</p></figcaption></figure>
