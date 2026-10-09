@@ -172,7 +172,7 @@ Systems that need everything else to be ready first. UI overlays, analytics, or 
 
 All three delegates are **cleared after broadcasting**, they are strictly one-shot. This is intentional: the experience loads once per world, so there is no reason to keep subscribers around.
 
-Blueprints doesn't use any of the three delegate teirs instead it handles this using the `WaitForExperienceReady` node. This lets you ensure that subsequent code will only run once/if the experience is ready.
+Blueprints doesn't use any of the three delegate teirs instead it handles this using the `WaitForExperienceReady` node. This lets you ensure that subsequent code will only run once/if the experience is ready. The node ends without firing if what started it is gone, or its world is cleaned up, before the experience loads.
 
 <figure><img src="../../.gitbook/assets/image (47).png" alt=""><figcaption></figcaption></figure>
 

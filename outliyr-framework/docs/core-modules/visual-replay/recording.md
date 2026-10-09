@@ -33,6 +33,8 @@ Recorded time never runs backwards. Small corrections to the clock are ridden ou
 
 The recorder never scans the world every frame. Actors are offered to it when recording starts (every actor in the world, once), when they spawn, when a streamed level adds them, and every half second for actors already being tracked, to pick up meshes added later. A newly offered actor is also checked every frame for its first second, which catches meshes and effects set up in BeginPlay or on the first network update.
 
+A mesh found at a later look, such as one on a component the actor adds after it spawned, is recorded from the previous look at its actor, since an event recorded in between may already refer to it. Until its first recorded sample its mirror stands where that sample places it but stays hidden, since whether it was drawn before is unknown.
+
 A component is recorded when it is a **static or skeletal mesh with Movable mobility** and a mesh assigned. Static-mobility geometry, such as most of a level, is never recorded. It never moves, so the live world already shows it correctly during a replay. Every recorded component of one actor is grouped together, and the group becomes that actor's puppet on playback.
 
 ### What each mesh records
@@ -44,6 +46,8 @@ A component is recorded when it is a **static or skeletal mesh with Movable mobi
 | Aim | Every frame, on the parts that place a pawn | The pawn's base aim rotation, which a replay uses to show where a pawn was looking. |
 | Offsets | Only while a part moves away from its usual place | For example a ragdoll whose mesh separates from its capsule. |
 | Materials | `Replay.MaterialSampleRateHz` (30), stored only on change | The material asset, or a dynamic instance's parent with its scalar and vector parameters, plus custom primitive data. Texture parameters aren't recorded. |
+
+A skeletal mesh set to keep animating while it isn't drawn skips working out its pose off screen, so it would leave nothing to record. The recorder asks such a mesh to work its pose out on its next tick, `Replay.UnseenPoseRateHz` times a second and for at most `Replay.UnseenPosesPerFrame` meshes a frame, so a character this machine never drew still records its animation, at that lower rate. A mesh set any other way doesn't animate off screen and is left as it is.
 
 Poses are the bulk of the memory, so by default they are stored compactly: every bone rotation packed into six bytes, and only the translations and scales that differ from the track's first pose. `Replay.ExactPoses` keeps full precision for about four times the memory.
 
@@ -60,6 +64,8 @@ The look explains how things appeared, but not what they were. The state recorde
 ### What is recorded
 
 For each replicated actor, the recorder takes the actor, its replicated components, and the subobjects its replicated properties refer to that a client could also have received. On each of them it records the **replicated properties**: those marked for replication, sampled at `Replay.StateSampleRateHz` (30 per second). A value is stored only when it changes. Each sample first compares against a copy of the last value, and only exports to text when the value may have changed.
+
+A subobject that becomes reachable between two samples, or a component replication adds after the actor spawned, is found only at the next look, yet an event recorded in between may already refer to it. It is recorded from the previous look at whatever it was found through, never from before that was itself recorded, and never further back than the longest regular gap between looks.
 
 Two extra facts are kept per actor:
 
@@ -117,6 +123,8 @@ A replay that will start later, such as a kill cam waiting for the killer's clip
 | `Replay.MaterialSampleRateHz` | 30 | How often materials are checked for changes |
 | `Replay.RescanIntervalSeconds` | 0.5 | How often tracked actors are rescanned for new meshes |
 | `Replay.ExactPoses` | off | Full-precision poses, for about four times the memory |
+| `Replay.UnseenPoseRateHz` | 10 | How many times a second an animated mesh this machine isn't drawing works out its pose for the recording |
+| `Replay.UnseenPosesPerFrame` | 4 | The most such meshes asked to work out their pose in one frame |
 | `Replay.LeadInSeconds` | 20 | How much longer events are kept than the rest |
 
 `Replay.Stat` prints what the recorder is holding and what it costs per frame. [Debugging](debugging.md) has the complete settings reference.

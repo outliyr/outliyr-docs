@@ -21,15 +21,20 @@ The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording 
 * **Iris is on**, with `net.Iris.UseIrisReplication=1`. Item instances, their fragments, equipment instances and fitted attachments replicate only through the registered subobject list. A custom container or runtime fragment that overrode `ReplicateSubobjects` registers instead, as [Item Replication](../base-lyra-modified/items/item-replication.md#writing-a-container) describes. `UTransientRuntimeFragment::ReplicateSubobjects` and `TearOffReplicatedSubobjects` are replaced by `RegisterNestedSubObjectReplication`, and container prediction traits no longer define `TearOffReplicatedSubObject`.
 * **Cameras read a remote pawn's view from its player state.** For a pawn that isn't locally controlled, the Lyra camera modes and the True First Person camera mode take the view rotation from `ALyraPlayerState::GetReplicatedViewRotation`. A camera mode of your own that should look where a spectated player looks does the same.
 * **Player controllers need a `ULyraItemContainerClientComponent`** for container windows to follow their items and close when out of reach. `LAS_TetrisInventory_StandardComponents` adds it; another experience that shows shared container windows adds it itself.
+* **Async actions end with the life they were started for, through a new AsyncActionLifetime plugin.** Every async action of the framework derives from its `ULifetimeAsyncAction`, including GameplayMessageRouter's `ListenForGameplayMessages` and CommonGame's `CreateWidgetAsync`, `PushContentToLayerForPlayer` and confirmation nodes. Both plugins now list AsyncActionLifetime as a dependency, so a project that swaps either for Epic's copy needs to carry the change over. An async action of your own that waits on the game derives from it too, as [Async Action Lifetime](../core-modules/async-action-lifetime.md#writing-your-own) describes.
+* **Running a listening node again replaces its earlier run.** When the same object runs the same team observer, item query or gameplay message listener node again, with the same inputs and the same event bound, the earlier run ends. A Blueprint that relied on two runs of one node delivering the same event twice now receives it once, and a run with other inputs, such as another channel, team or agent, listens alongside.
+* **The confirmation nodes and `WaitForExperienceReady` can be cancelled**, and they end without answering once what started them is gone. The experience waiter also ends if its world is cleaned up before the experience loads.
 
 #### New: Visual Replay (experimental)
 
 * Records what each machine drew, every Movable mesh, pose, material, visibility, effect, decal and light, and the replicated state of every replicated actor, for a window of recent history. Recording runs only on request, and never on a dedicated server.
 * Plays a window back inside the live world for one viewer while the match carries on. Puppets reproduce exactly what was drawn, and shells, real instances of the recorded classes, run their own logic from the recorded state so markers, team colours and attached effects behave.
+* A skeletal mesh that keeps animating while this machine isn't drawing it works out its pose for the recording now and then, `Replay.UnseenPoseRateHz` times a second, so a character this machine never drew still replays its animation.
+* Actors kept for reuse, such as recycled gameplay cue actors, are borrowed rather than owned, through pools a game registers with `VisualReplay::RegisterActorPool`.
 * Gameplay cues, context effects and game events are recorded on the replay timeline, with a lead-in that brings lingering effects into place as a window opens and catch-up for effects first shown partway through their life.
 * Perspective clips carry another machine's recording of chosen actors, compactly encoded and decoded without trusting the sender, and can stream into a replay that is already playing.
 * Seeking, pausing, speed, buffering that eases playback rather than stopping it, and a replay sound class with the live mix silenced.
-* A debug suite of recorded facts with reports, anomalies, viewport drawing and console commands, compiled out of Shipping, plus a frame cost benchmark.
+* A debug suite of recorded facts with reports, anomalies, viewport drawing and console commands, compiled out of Shipping, plus a frame cost benchmark. Every replay checks as it stops that it put the live game back and left nothing of its own behind.
 
 #### Kill cam
 
@@ -46,9 +51,16 @@ The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording 
 * Iris replication is switched on.
 * Items register on the container holding them, and containers that start with no access filter their items through net condition groups.
 * Destroying an item destroys its copies on clients, so a collected pickup is released. Moving an item to another actor destroys its old copies, and clients that can read the new container receive it as a new copy.
+* A client lets go of the item copies left in a world it travels out of, so seamless travel never keeps the previous match's world in memory.
 * A predicted move across actors, such as equipping from the inventory on the controller onto the pawn, confirms when the item's new copy arrives.
 * Container windows follow their item to another actor.
 * A Tetris child container takes its root from whatever container holds it, of any kind, and its contents replicate to whoever can read that root.
+
+#### Async actions
+
+* An async action ends once anything it is tied to is gone: an actor or anything inside one the moment the actor is destroyed or leaves play, a world once it is cleaned up, and any other object, such as a widget, once garbage collection removes it. An actor that seamless travel carries into the next match keeps its actions running there.
+* The team observers, item queries, experience waiter and gameplay message listeners no longer stay registered with the game instance after what they were started for is gone, so their count no longer grows with every respawn and every cue a match plays.
+* Team observers that listen to a world's team subsystem, and the experience waiter, end with that world. Gameplay messages travel through the game instance, so a listener started by a widget kept across travel goes on listening in the next match.
 
 #### Teams, UI and gameplay
 
@@ -58,13 +70,14 @@ The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording 
 * A control point applies `bStartsActive` on the server only, so clients and late joiners show the replicated state.
 * A planted bomb stays where it was planted and keeps its planter named as the last carrier.
 * A number pop component makes a new effect when the one it held is gone.
-* Generated weapon icons draw from their alpha in the elimination feed, the death footer and the kill cam.
+* Generated weapon icons draw from their alpha in the elimination feed, the death footer and the kill cam, and the weapon icon and its glow in the death UI are drawn at the right size.
 
 #### Testing
 
 * Visual Replay's automation suite, grouped by area.
 * Each game mode's kill cam tests live in that mode's own test module, so removing a mode never breaks another plugin's tests.
 * Network tests for item moves and pickups, access filtering, predicted equips across actors, window rebinding and the viewer's team.
+* AsyncActionLifetime's own tests, and tests that each of the framework's async actions ends with what it is tied to and replaces its earlier run.
 
 ***
 

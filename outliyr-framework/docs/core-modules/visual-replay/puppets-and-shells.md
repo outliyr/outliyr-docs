@@ -43,7 +43,7 @@ The recorded values arrive the way replication would deliver them, with a few ru
 * **Rep notifies run after all the values are in place,** are given the old value, and only fire when a value actually changed. A fresh shell holds its class defaults, so a recorded value equal to the default notifies nothing, just as on a client.
 * **Structs and fast arrays arrive like replication.** A struct takes only its replicated fields, or its whole value when it has its own network serializer. A fast array goes through its registered handler, so item callbacks fire.
 
-A shell's subobjects and components are matched by their path inside the actor, and ones created at runtime are recreated under the stand-in of their original owner.
+A shell's subobjects and components are matched by their path inside the actor, and ones created at runtime are recreated under the stand-in of their original owner. They are brought up outermost first, so one made inside another, such as a fragment inside an item, always finds its outer's stand-in in place.
 
 ### When a shell begins play
 
@@ -73,11 +73,11 @@ When an actor has both a puppet and a shell, the puppet draws the meshes and the
                                           └─────────────────────────────────────┘
 ```
 
-* The shell's meshes are matched to the mirrors drawing the same mesh asset. They stay hidden, because the puppet already draws them, but each update they move to exactly where their mirror is, and skeletal ones take the mirror's pose. Anything the shell attaches to a socket, such as a muzzle flash, therefore appears exactly where the puppet draws it.
+* Each of the shell's meshes follows the mirror drawn from the same component of the recorded actor, preferring the one whose recording covers the present. The meshes stay hidden, because the puppet already draws them, but each update they move to exactly where their mirror is, and skeletal ones take the mirror's pose. A shell mesh whose own code swaps in another mesh, or whose mirror's recording ends, finds its mirror again, so it follows whatever draws it now. Anything the shell attaches to a socket, such as a muzzle flash, therefore appears exactly where the puppet draws it.
 * A shell's skeletal meshes keep ticking under the replayed pose, so montages they play advance by themselves and their notifies fire once, as on a client.
 * The shell itself is shown so whatever it spawns or attaches appears, and is hidden whenever the recorded actor was hidden. Its own code may change its hidden flag during an update, but the recording has the last word, so an objective that was inactive and hidden stays hidden along with its effects and lights.
 
-A shell whose actor had no recorded mesh, such as an actor whose meshes are all Static, has no puppet. It is placed where the live actor is, or at the world origin if that actor is gone, starts hidden and follows nothing, so only its own code can show it. The debug suite flags it as `ShellWithoutPuppet`, because it is often a sign that an actor's look wasn't recorded.
+A shell whose actor has no puppet in the window follows nothing. If the actor's meshes stopped being recorded before the window, such as a pickup collected earlier, the shell stands where the recording last placed the actor. If they were never recorded, such as an actor whose meshes are all Static, it is placed where the live actor is, or at the world origin if that actor is gone, and starts hidden, so only its own code can show it. The debug suite flags that second case as `ShellWithoutPuppet`, because it is often a sign that an actor's look wasn't recorded.
 
 ***
 

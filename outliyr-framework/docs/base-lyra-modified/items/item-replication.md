@@ -74,6 +74,8 @@ Destroying an item ends its replication on the container it is registered on and
 
 A client's copy stops replicating for three reasons: the item was destroyed, it moved to an actor this client can't read, or its actor stopped being relevant. The client can't tell which, so it treats them alike. Before the copy is destroyed, its slot is reset to the null slot and the move message is marked as the end of replication, so windows and other logic bound to the item release it. `HasReplicationEnded` answers whether this machine's copy is on its way out.
 
+An item lives in the world rather than in the actor holding it, and a client keeps every copy it received until the server ends it. Seamless travel can carry an actor the server hasn't destroyed yet into the next world while the items it holds stay behind, so as a client's world is cleaned up, its replication system lets go of the item copies left in it, and the old world is released.
+
 ***
 
 ## Writing a Container

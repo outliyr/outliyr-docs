@@ -118,7 +118,7 @@ Declare the query as a `UPROPERTY()` to prevent garbage collection. Call `StopLi
 
 <figure><img src="../../.gitbook/assets/image (66).png" alt="" width="380"><figcaption></figcaption></figure>
 
-The `QueryInventoryAsync` node wraps `ULyraInventoryQuery` for Blueprint use. It manages the underlying C++ query's lifecycle automatically and adds a convenient `TotalCount` output that sums the `Lyra.Inventory.Item.Count` stat tag across all matching items.
+The `QueryInventoryAsync` node wraps `ULyraInventoryQuery` for Blueprint use. It manages the underlying C++ query's lifecycle automatically and adds a convenient `TotalCount` output that sums the `Lyra.Inventory.Item.Count` stat tag across all matching items. The node ends once what started it or the inventory it watches is gone, and running it again for the same items replaces its earlier run, as [Async Action Lifetime](../../core-modules/async-action-lifetime.md) describes.
 
 | Output Pin          | When It Fires                                  | Data                    |
 | ------------------- | ---------------------------------------------- | ----------------------- |

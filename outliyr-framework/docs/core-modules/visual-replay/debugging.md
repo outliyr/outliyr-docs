@@ -85,9 +85,20 @@ Subjects keep their name and class after they are destroyed, so a story still re
 | `AttachedEffectHasNoPuppet` | An effect on a moving part couldn't play, because the part had no mirror and its actor no puppet | Whether the part it was attached to is recorded |
 | `DecalHasNoMirror`, `LightHasNoMirror` | The same for a decal or a light | As above |
 | `EffectNearOrigin` | An effect started near the world origin | An effect that lost what it was attached to |
+| `ChildNotStoodIn` | A recorded subobject or component of a shell couldn't be made, so the replay leaves it out | Whether what it lives in was recorded with the same actor |
 | `HistoryCleared` | The recording clock stepped back by more than a window, so history was cleared | What the game set as the recorder's clock |
+| `LiveNotRestored` | A stopped replay left part of the live game changed: an actor or component still hidden from the viewer, a light still off, a sound still muted, or the live audio still lowered | The `what`; whatever changed that object during the replay |
+| `ReplayLeftBehind` | Something the replay made is still in the world or still playing after it stopped | The subject's story, for what spawned it |
 
 Kill cam anomalies are listed on the kill cam's own [Debugging](../shooter-base/kill-cam/debugging.md) page.
+
+***
+
+## Checking That a Replay Put Everything Back
+
+A replay that leaves the live game changed when it ends, such as a wall still hidden or a sound still muted, is a bug however faithful it looked. So every replay checks, as it stops, that it put back everything it changed and that nothing it made is left: every actor and component it hid is visible to the viewer again, every light it switched off is on, every sound it muted has its old volume, the live audio is no longer lowered, and none of its puppets, shells, spawned actors, effects or sounds remain in the world or still play.
+
+Each problem is a `LiveNotRestored` or `ReplayLeftBehind` anomaly, and also an error in the log. The check runs in every build but Shipping whether or not the suite's categories are on, so any automation test that plays a replay fails if the replay leaks. A clean stop records a `Restored` fact. The tests under `VisualReplay.Restoration` stop replays at awkward moments, while preparing, paused, right after seeking back, at the end and after the viewer has gone, and check each stop.
 
 ***
 
@@ -152,6 +163,8 @@ A game adds facts about its own use of replays to the same reports, in the `Game
 | `Replay.StateSampleRateHz` | 30 | How often replicated state is sampled |
 | `Replay.MaterialSampleRateHz` | 30 | How often materials are checked for changes |
 | `Replay.RescanIntervalSeconds` | 0.5 | How often tracked actors are rescanned for new meshes |
+| `Replay.UnseenPoseRateHz` | 10 | How many times a second an animated mesh this machine isn't drawing works out its pose for the recording |
+| `Replay.UnseenPosesPerFrame` | 4 | The most such meshes asked to work out their pose in one frame |
 | `Replay.ExactPoses` | off | Full-precision poses, for about four times the memory |
 | `Replay.LeadInSeconds` | 20 | How much longer events are kept, for the lead-in |
 | `Replay.LeadInTickSeconds` | 0.05 | The step effects are simulated in between lead-in events |

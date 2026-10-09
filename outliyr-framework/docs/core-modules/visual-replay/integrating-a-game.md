@@ -12,6 +12,7 @@ Visual Replay knows nothing about any particular game. It records meshes and rep
 | Replay a moment my code produces, such as a cue or an impact | `RecordEvent`, `RegisterEventPlayer` and `RemapToStandIns` | [Events and Cosmetics](events-and-cosmetics.md) |
 | Have replays hide the live effects my code spawned | `BeginCosmeticCapture`, `EndCosmeticCapture` and `RecordCosmetics` | [Events and Cosmetics](events-and-cosmetics.md) |
 | Give shells my fast arrays' callbacks | `VisualReplay::RegisterFastArray` | [Recording](recording.md) |
+| Let replays borrow actors my code keeps for reuse | `VisualReplay::RegisterActorPool` | [Events and Cosmetics](events-and-cosmetics.md#pooled-actors) |
 | Keep a struct type out of recordings | `FVisualReplayStateRecorder::AddExcludedPropertyStruct` | [Recording](recording.md) |
 | Keep a class out of every replay | `FVisualReplayStateRecorder::AddGloballyExcludedClass` | [Recording](recording.md) |
 | Record state my actors keep outside properties | `FVisualReplayStateRecorder::RegisterStateExtra` | [Recording](recording.md) |
@@ -97,6 +98,8 @@ An ability system's granted abilities and active effects are left out of recordi
 ### Gameplay cues and context effects
 
 Cues are recorded around the moment the cue manager handles them, with a cosmetic capture open so the live effects they spawn can be hidden during a replay. They are replayed by calling the cue manager directly on the target's stand-in, never through an ability system, which on a listen server would multicast to every client. Before playing, a cue's parameters are remapped: the component an effect attaches to becomes the mirror drawing that component, which shares its skeleton and sockets, and the effect context and hit result are copied and pointed at stand-ins.
+
+The cue manager keeps the actors of cues it recycles, so LyraReplay registers them as an actor pool, and a replay hands back any it took rather than destroying one the manager still lists.
 
 Context effects, such as footsteps, are recorded as the actual sounds and Niagara systems that played, because the effect libraries that chose them belong to the live actor. They replay attached to the mirror of the part they played on.
 

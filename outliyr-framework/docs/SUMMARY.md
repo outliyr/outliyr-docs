@@ -301,6 +301,7 @@
     * [Tetris Grid Clump](core-modules/tetris-inventory/tetris-inventory-ui/tetris-grid-clump.md)
     * [Tetris Grid Input Handler](core-modules/tetris-inventory/tetris-inventory-ui/tetris-grid-input-handler.md)
 * [True First Person](core-modules/true-first-person.md)
+* [Async Action Lifetime](core-modules/async-action-lifetime.md)
 * [Control Point Core](core-modules/control-point-core/README.md)
   * [Capture Model](core-modules/control-point-core/capture-model.md)
   * [Setup and Integration](core-modules/control-point-core/setup-and-integration.md)

@@ -39,7 +39,10 @@ The killer's three tracks arrived, but the clip didn't come within the wait, so 
 | `KillerHasNoStandIn` | The killer's player state wasn't recorded in the window, so the camera has no stand-in to follow | Whether the killer was in the match for the whole window, for example joining just before the kill |
 | `KillcamCameraFollowsNothing` | The viewer's camera has no target actor | The camera ability: whether its spectator found the killer's stand-in pawn |
 | `KillcamCameraAtOrigin` | The camera settled at the world origin | Usually a target that never got placed; check `ShellWithoutPuppet` for the killer's pawn |
-| `KillcamWeaponInterfaceReadsLive` | The weapon UI is reading a live object that has a stand-in | UI that cached a live weapon or pawn; it should resolve through the viewed player each time |
+| `KillcamWeaponInterfaceReadsLive` | While the view shows the replay, the weapon UI is reading a live object that has a stand-in | UI that cached a live weapon or pawn; it should resolve through the viewed player each time |
+| `KillcamNotRestored` | A frame after the kill cam ended, something of the player's view still followed the replay: the team viewer last announced was a stand-in, the camera or a spectator the player owns follows a replay object, or the manager still plays, waits for the killer's clip or holds history | The `what`; for the viewer, whether the camera ability ended on the stop message and its spectator handed the viewer back |
+
+The kill cam runs this check a frame after its stop message, once every listener has had it, in every build but Shipping. Like the replay's own [restoration check](../../visual-replay/debugging.md#checking-that-a-replay-put-everything-back), each problem is also an error in the log, so a test that ends a kill cam fails if the view is left on the replay.
 
 The kill cam also records two statistics: `Killcam.DeathToStartSeconds`, the time from the death to the kill cam starting, and `Killcam.FellBackToOwnRecording`, which is 1 for each kill cam that played the victim's own recording. They appear under the report's statistics.
 

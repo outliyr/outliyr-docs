@@ -65,7 +65,7 @@ Three things in that pair matter for any event a game records.
 * **References in the payload are remapped.** A recorded payload points at live objects: the instigator, the effect causer, the component an effect attaches to. `RemapToStandIns` walks the payload and points every reference at its stand-in, including references to objects that have since been destroyed. A reference that can't be remapped and still points at the live match is flagged by the debug suite as `LiveReferenceKept`.
 * **Playing stays local.** The player runs on one machine for one viewer, so it must not go through anything that replicates. The cue example calls the cue manager directly for that reason.
 
-Events are recorded only while recording, never from inside the sandbox scope, so a replay never records itself. An event on a channel with no registered player is skipped silently. Events are kept longer than the rest of the history, for the lead-in described below.
+Events are recorded only while recording, never from inside the sandbox scope, so a replay never records itself. An event on a channel with no registered player is skipped silently. An event about an actor no replay can stand in for, one with neither recorded state nor recorded meshes, isn't recorded either, and the debug suite notes it as `EventSkipped`. `CanReplayEventsOn` answers the question in advance, so a game can record the cosmetics of such an event with `bReplayedByEvent` set to `false` and have the playback draw them, as LyraReplay does for cues. Events are kept longer than the rest of the history, for the lead-in described below.
 
 <details>
 
@@ -98,7 +98,21 @@ Recorder->RecordEvent(Channel, Target, Payload, Spawned);
 | `true` (default) | Replaying the event spawns these again | Notes them as the event's, and drops any track it had for them, since the event will recreate them |
 | `false` | The event isn't replayed, or replaying it doesn't recreate these | Records the effects and decals among them as tracks from now on, marked as spawned by an event the replay doesn't repeat, so the playback draws them |
 
-Captures nest, and only see objects *created* while they are open. A pooled effect handed out again by its pool isn't created, so a capture doesn't see it.
+Captures nest, and only see objects *created* while they are open. A pooled effect handed out again by its pool isn't created, so as each event plays the playback also notes which Niagara and Cascade pool components went from free to handed out, and treats those as the event's own.
+
+### Pooled actors
+
+Some actors are kept for reuse, such as the actors of gameplay cues the cue manager recycles. A replay borrows such an actor rather than owning it. It leaves the actor's speed, collision and meshes as they are, since the live game may take the actor back at any moment, and when it is done it hands the actor back to its pool while it still holds it, and leaves it alone once the pool has it back.
+
+A game registers each of its pools with `VisualReplay::RegisterActorPool`, giving `Keeps`, which says whether an actor is one of the pool's, and `Return`, which hands one back as finishing with it would.
+
+<details>
+
+<summary>In code: pooled actors</summary>
+
+`FVisualReplayActorPool` and the registration functions live in `VisualReplayActorPool.h`. `IsLentByPool` tells whether a registered pool keeps an actor, `IsStillHeldByReplay` whether the replay still holds one, and `ReleaseReplayActor` removes an actor the replay is done with, handing it back to its pool or destroying it. LyraReplay registers the cue manager's recycled cue actors as a pool.
+
+</details>
 
 ***
 

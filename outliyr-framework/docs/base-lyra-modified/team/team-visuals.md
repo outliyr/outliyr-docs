@@ -71,7 +71,7 @@ During team creation (`BeginPlay`), the component registers these assets with th
 
 ## Reacting to Team Changes
 
-Polling for team state every frame is wasteful and fragile. The framework provides three async actions for event-driven updates. Each one fires once immediately on creation with the current state, so you never need to manually query the initial value, just bind your logic and the first callback gives you the starting point.
+Polling for team state every frame is wasteful and fragile. The framework provides three async actions for event-driven updates. Each one fires once immediately on creation with the current state, so you never need to manually query the initial value, just bind your logic and the first callback gives you the starting point. Each one ends by itself once what started it or what it watches is gone, and running the same node again replaces its earlier run, as [Async Action Lifetime](../../core-modules/async-action-lifetime.md) describes.
 
 ### ObserveViewerTeam
 

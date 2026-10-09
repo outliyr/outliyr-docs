@@ -121,10 +121,11 @@ Every sound the replay makes plays in the session's `ReplaySoundClass`: sounds f
 
 `Stop` ends a session at any time, including while it is still preparing. It:
 
-1. finishes the debug report for the session;
-2. shows the live world again, restoring only what the session hid;
-3. destroys the shells and anything they spawned;
-4. destroys the puppets and the replay's own effects, decals and lights, sending pooled effects back to their pool rather than destroying them;
-5. broadcasts `OnStopped`.
+1. shows the live world again, restoring only what the session hid;
+2. destroys the shells and anything they spawned;
+3. destroys the puppets and the replay's own effects, decals and lights, sending pooled effects back to their pool rather than destroying them, and stops every sound the stand-ins started;
+4. removes any actor the replay made that still stands, such as one a stand-in spawned as it ended play, handing one a pool lends back to its pool while the replay still holds it;
+5. checks that it put everything back and finishes the debug report, in every build but Shipping;
+6. broadcasts `OnStopped`.
 
-A session stopped while preparing destroys only what it had built so far.
+A session stopped while preparing destroys only what it had built so far. While another replay runs in the same world, step 4 removes only what appeared as this one ended, since the rest may be the other replay's. [Debugging](debugging.md#checking-that-a-replay-put-everything-back) covers the check.

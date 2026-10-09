@@ -111,6 +111,7 @@ The window is two settings on `UKillcamManager`: `KillcamSecondsBeforeDeath` (8)
 * **The clip starts 0.25 seconds before the window**, so it still covers the window's first frame when the victim's clock or its estimate of the death differs slightly from the server's.
 * **The first second of the window must have arrived** before playback begins (`Killcam.PerspectiveClipStartLeadSeconds`). The rest streams in ahead of playback.
 * **The after-death part** is sent once the kill cam is about to start, because until then the killer hasn't recorded it.
+* **The window opens where the killer is first recorded.** The kill cam follows the killer, so when the killer spawned or arrived partway into the window, it opens where both their pawn and their player state were first recorded, and the kill cam plays for that shorter span. A pawn the killer took up after the kill leaves the window as it is.
 
 [Setup and Integration](setup-and-integration.md) covers how these settings relate to the recorder's own history length.
 
