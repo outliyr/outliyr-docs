@@ -66,7 +66,7 @@ These terms mean the same thing on every page in this section.
 | **Pose driver** | A hidden component holding the replayed pose of a skeletal mesh. The visible skeletal mirror follows it, so anything asking the puppet for a bone or socket finds the recorded pose. |
 | **Shell** | A real copy of a recorded replicated actor, of its own class, brought up the way a client receives an actor and run from the recorded values. |
 | **Stand-in** | Whatever represents a recorded object in the replay: a shell, an object inside a shell, or a puppet. Events and recorded references are pointed at stand-ins. |
-| **Lead-in** | Events from just before the window, repeated when the replay opens, so effects that were already playing are on screen from the first frame. |
+| **Lead-in** | Events from just before the window that still showed something as it opened, repeated while the replay prepares, so effects that were already playing are on screen from the first frame. |
 | **Sandbox scope** | Marks code running for the replay. Inside it nothing is recorded, actors spawned stay local, and game systems can tell they are dealing with replay code. |
 
 ***
@@ -135,7 +135,7 @@ The tests in `Plugins/VisualReplay/Source/VisualReplayTests` are the most precis
 
 <summary>A reading order for the code</summary>
 
-The spine of a replay is the session. Follow `UVisualReplaySession::Start` into `PrepareUntil` (puppets and shells brought up a few at a time), then `FinishStart` (puppets shown, live actors hidden, lead-in played), then `Tick` and `ApplyTime` for every frame after.
+The spine of a replay is the session. Follow `UVisualReplaySession::Start` into `PrepareUntil` (puppets, shells, the lead-in and the shells of later actors, a little at a time), then `FinishStart` (puppets and the lead-in shown, live actors hidden), then `Tick` and `ApplyTime` for every frame after. `Stop` hands what the replay made to `UVisualReplayDisposal`, which removes it over the frames that follow.
 
 From `ApplyTime`, branch into `UVisualReplayShellSet::SetTime` for the shells and `UVisualReplayPlayback::PlaceAt` for the puppets. For the recording side, start at `UVisualReplaySubsystem::RegisterActor` and `RecordFrame`.
 

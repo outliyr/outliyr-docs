@@ -12,7 +12,7 @@ A session is one replay. It cuts a window out of the recording, brings up the wi
 * `Speed` and `bStopAtEnd` control playback. By default a session plays at real time and stops itself at the window's end.
 * `PerspectiveClip` is another machine's recording to play instead of this machine's own for its subjects. `bUseLocalCamera` instead exposes this machine's own camera as the replay's camera.
 * `ReplaySoundClass` and `LiveAudioMix` separate the replay's sound from the live game's.
-* `PrepareBudgetMs` spreads preparation over several frames.
+* `PrepareBudgetMs` spreads preparing the replay over several frames, and removing it over the frames after it stops.
 * `OnStandInsReady` and `OnTimeApplied` are the game's hooks: once when every stand-in holds its starting state, and after every update.
 
 This is how the kill cam starts its session, shortened:
@@ -46,9 +46,18 @@ To try a replay without writing any code, run `Replay.Test 5` in the console. It
 
 ## Preparing
 
-Bringing up puppets and shells can be heavy: a busy match may have dozens of each. With a `PrepareBudgetMs` above zero, the session builds them a few per frame within that many milliseconds, always at least one per frame. Puppets are built first, then shells.
+Preparing a replay can be heavy: a busy match may have dozens of puppets and shells, and the [lead-in](events-and-cosmetics.md#the-lead-in) can repeat a hundred or more events. With a `PrepareBudgetMs` above zero, the session does this a little at a time, within that many milliseconds a frame and always at least one piece of work a frame, in this order:
 
-Nothing of the replay shows while it prepares. Puppets stay hidden, shells are hidden as they are spawned, and the live world stays on screen. When everything is ready, the session shows the puppets, hides what they replace, plays the [lead-in](events-and-cosmetics.md), applies the first update, calls `OnStandInsReady` and broadcasts `OnPrepared`. `IsPreparing` tells a game the session is still building, which the kill cam shows as waiting.
+1. the puppets;
+2. the shells of actors present as the window opens;
+3. the lead-in;
+4. the shells of actors that appear later in the window, such as a player who respawns partway through.
+
+Nothing of the replay shows while it prepares. Puppets stay hidden, shells are hidden as they are spawned, what the lead-in brings back is hidden and holds still, and the live world stays on screen. When everything is ready, the session shows the puppets and what the lead-in brought back, hides what they replace, applies the first update, calls `OnStandInsReady` and broadcasts `OnPrepared`, so the frame the replay first shows in does little more than switch what the viewer sees. `IsPreparing` tells a game the session is still building, which the kill cam shows as waiting.
+
+A shell made for an actor that appears later stays hidden and stands in for nothing until the replay reaches its actor. That moment then only places the shell and applies its state.
+
+The work is the same whatever the budget. A larger budget finishes it in fewer frames, each of them longer, so the replay appears sooner while those frames run slower.
 
 With a budget of zero, everything happens inside `Start`, including `OnStandInsReady` and `OnPrepared`. Bind delegates before calling `Start` if the budget may be zero.
 
@@ -122,10 +131,37 @@ Every sound the replay makes plays in the session's `ReplaySoundClass`: sounds f
 `Stop` ends a session at any time, including while it is still preparing. It:
 
 1. shows the live world again, restoring only what the session hid;
-2. destroys the shells and anything they spawned;
-3. destroys the puppets and the replay's own effects, decals and lights, sending pooled effects back to their pool rather than destroying them, and stops every sound the stand-ins started;
-4. removes any actor the replay made that still stands, such as one a stand-in spawned as it ended play, handing one a pool lends back to its pool while the replay still holds it;
+2. hands the shells and anything they spawned to the [removal queue](#the-removal-queue);
+3. hands the puppets over the same way, removes the replay's own effects, decals and lights, sending pooled effects back to their pool rather than destroying them, and stops every sound the stand-ins started;
+4. hands over any actor the replay made that still stands, such as one a stand-in spawned that neither had gathered, giving one a pool lends back to its pool while the replay still holds it;
 5. checks that it put everything back and finishes the debug report, in every build but Shipping;
 6. broadcasts `OnStopped`.
 
-A session stopped while preparing destroys only what it had built so far. While another replay runs in the same world, step 4 removes only what appeared as this one ended, since the rest may be the other replay's. [Debugging](debugging.md#checking-that-a-replay-put-everything-back) covers the check.
+The frame a replay stops in only switches the view back. Its actors are hidden at once and removed over the frames after.
+
+A session stopped while preparing hands over only what it had built so far. While another replay runs in the same world, step 4 hands over only what appeared as this one ended, since the rest may be the other replay's. [Debugging](debugging.md#checking-that-a-replay-put-everything-back) covers the check.
+
+### The Removal Queue
+
+`UVisualReplayDisposal` is a world subsystem that removes the actors replays are done with, `Replay.DisposeBudgetMs` (2) milliseconds a frame, oldest first. While an actor waits its turn it is hidden and does nothing on its own: it doesn't tick, collide or run timers, and its sounds are stopped. A shell retired during a replay goes the same way.
+
+* **Whatever removing an actor spawns waits its turn after it.** An exploding projectile that spawns its blast as it ends play leaves nothing behind, however long the chain.
+* **An actor a pool lends goes straight back to its pool,** since the pool may hand it to the live game.
+* **A session with a budget of zero empties the queue as it stops,** so everything is gone when `Stop` returns.
+* **The queue empties as soon as its world starts a seamless travel.** A client carries every actor it does not own into the next world, and the replay's actors are such actors.
+
+For a few frames after a replay, code that walks the world's actors can still meet its actors waiting their turn. `UVisualReplayShellSet::IsStandIn` and `VisualReplay::IsReplayActor` still recognise them, and `UVisualReplayDisposal::IsWaiting` says whether one is waiting to be removed.
+
+<details>
+
+<summary>In code: handing an actor to the removal queue</summary>
+
+An actor a game spawns for a replay, and wants gone with it, goes through the same queue:
+
+```cpp
+UVisualReplayDisposal::Dispose(*Actor);   // hidden and inert now, removed within the frame budget
+```
+
+`DisposeUntil(DeadlineSeconds)` removes what waits until a deadline passes, and `CallWhenEmpty` runs a callback once nothing is left waiting.
+
+</details>

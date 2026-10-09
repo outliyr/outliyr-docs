@@ -6,7 +6,7 @@ Once the kill cam knows which recording to play, it has to turn a replay into a 
 
 ## The Replay
 
-`UKillcamReplay` owns the kill cam's [Visual Replay session](../../visual-replay/sessions.md) on the victim's machine. It starts the session with the chosen recording, a preparation budget of `Killcam.PrepareBudgetMs` (4 ms per frame), the kill cam's sound settings, and the session set to hold its last frame rather than stop by itself. The manager, not the replay, decides when the kill cam is over.
+`UKillcamReplay` owns the kill cam's [Visual Replay session](../../visual-replay/sessions.md) on the victim's machine. It starts the session with the chosen recording, a preparation budget of `Killcam.PrepareBudgetMs` (8 ms per frame), the kill cam's sound settings, and the session set to hold its last frame rather than stop by itself. The manager, not the replay, decides when the kill cam is over.
 
 When every stand-in holds its starting state, the replay finds the **stand-ins of the victim's and the killer's player states** and hands them to the camera ability by sending `GameplayEvent.Killcam` to the viewer's ability system. That event is the boundary between the C++ replay and the Blueprint presentation:
 

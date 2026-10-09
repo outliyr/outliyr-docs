@@ -80,7 +80,7 @@ Whichever recording the kill cam starts with, it keeps. Switching part way throu
 {% step %}
 #### Playing
 
-`UKillcamReplay` starts a Visual Replay session with the chosen recording. Bringing the stand-ins up is spread over several frames and shown as waiting. When they are ready, it finds the killer's and the victim's stand-in player states and sends `GameplayEvent.Killcam` to the viewer's ability system, which starts the kill cam camera ability. The camera follows the killer's stand-in, and team colours and markers take the killer's side. [Playback and Presentation](playback-system.md) covers this part.
+`UKillcamReplay` starts a Visual Replay session with the chosen recording. Preparing it, its stand-ins and the effects still showing from just before the window, is spread over several frames and shown as waiting. When they are ready, it finds the killer's and the victim's stand-in player states and sends `GameplayEvent.Killcam` to the viewer's ability system, which starts the kill cam camera ability. The camera follows the killer's stand-in, and team colours and markers take the killer's side. [Playback and Presentation](playback-system.md) covers this part.
 
 Later slices and the after-death part join the running replay as they arrive. If playback catches up with what has arrived, it waits for more, again showing the waiting message, for up to `Killcam.BufferingTimeoutSeconds` (3 seconds) before ending.
 {% endstep %}
@@ -88,7 +88,7 @@ Later slices and the after-death part join the running replay as they arrive. If
 {% step %}
 #### Ending
 
-The kill cam ends when the replay reaches the end of the window, when the player skips, or when the player dies again. The manager tells the server the clip is no longer wanted, the server drops anything still queued and tells the killer to stop sending, the recorder's history is released, and the live match reappears.
+The kill cam ends when the replay reaches the end of the window, when the player skips, or when the player dies again. The manager tells the server the clip is no longer wanted, the server drops anything still queued and tells the killer to stop sending, the recorder's history is released, and the live match reappears in that frame. The replay's stand-ins are removed over the frames after.
 {% endstep %}
 {% endstepper %}
 

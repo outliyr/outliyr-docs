@@ -54,7 +54,7 @@ Anomalies
 Replay as a whole
   [Replay] t=88.200 machine=ListenServer category=Network what=KillerTrackReceived subject=none class=none track=aim samples=634
   [Replay] t=91.235 machine=ListenServer category=Window what=WindowOpened subject=none class=none start=80.200 end=91.200 tracks=67 state_objects=222 events=60 ...
-  [Replay] t=91.235 machine=ListenServer category=Window what=PreparationStarted subject=none class=none budget_ms=4.00
+  [Replay] t=91.235 machine=ListenServer category=Window what=PreparationStarted subject=none class=none budget_ms=8.00
   ...
 
 Stories
@@ -66,6 +66,17 @@ Statistics during this replay
   Playback.FrameMs last=0.7204 avg=0.8175 min=0.5712 max=3.7061 samples=386
   Recorder.VisualFrameMs last=0.1126 avg=0.0993 min=0.0497 max=1.0765 samples=386
 ```
+
+With the `Stats` category on, each replay also records what it cost:
+
+| Statistic | Measures |
+| --- | --- |
+| `Playback.PrepareSliceMs` | Each frame spent preparing |
+| `Playback.PrepareSeconds` | How long preparing took, from `Start` until the replay shows |
+| `Playback.StartFrameMs` | The frame the replay first shows in |
+| `Playback.FrameMs` | Every frame of playback after that |
+| `Playback.StopMs` | The frame the replay stops in, leaving out the restoration check |
+| `Playback.LeadInEvents`, `Playback.LeadInMs` | How many events the lead-in repeated, and the time spent on them across every frame |
 
 Subjects keep their name and class after they are destroyed, so a story still reads correctly for an actor that died halfway through the window. Facts about destroyed objects are kept for `Replay.Debug.RetentionSeconds` (60).
 
@@ -96,7 +107,7 @@ Kill cam anomalies are listed on the kill cam's own [Debugging](../shooter-base/
 
 ## Checking That a Replay Put Everything Back
 
-A replay that leaves the live game changed when it ends, such as a wall still hidden or a sound still muted, is a bug however faithful it looked. So every replay checks, as it stops, that it put back everything it changed and that nothing it made is left: every actor and component it hid is visible to the viewer again, every light it switched off is on, every sound it muted has its old volume, the live audio is no longer lowered, and none of its puppets, shells, spawned actors, effects or sounds remain in the world or still play.
+A replay that leaves the live game changed when it ends, such as a wall still hidden or a sound still muted, is a bug however faithful it looked. So every replay checks, as it stops, that it put back everything it changed and that nothing it made is left: every actor and component it hid is visible to the viewer again, every light it switched off is on, every sound it muted has its old volume, the live audio is no longer lowered, and none of its puppets, shells, spawned actors, effects or sounds remain in the world or still play. Actors waiting their turn in the [removal queue](sessions.md#the-removal-queue) count as gone, since they are hidden, do nothing, and are certain to be removed.
 
 Each problem is a `LiveNotRestored` or `ReplayLeftBehind` anomaly, and also an error in the log. The check runs in every build but Shipping whether or not the suite's categories are on, so any automation test that plays a replay fails if the replay leaks. A clean stop records a `Restored` fact. The tests under `VisualReplay.Restoration` stop replays at awkward moments, while preparing, paused, right after seeking back, at the end and after the viewer has gone, and check each stop.
 
@@ -115,6 +126,7 @@ Each problem is a `LiveNotRestored` or `ReplayLeftBehind` anomaly, and also an e
 | The log warns that a class logs errors as its stand-in comes up | The class registers with live systems as it begins play | Exclude it with `AddGloballyExcludedClass`, or make it replay-aware |
 | An effect restarts when the window opens | A Cascade effect, which can't be simulated forward | `EffectShownPartway` facts; Niagara effects catch up |
 | The replay stalls or slows | It is waiting for more of a perspective clip | `BufferingStarted` and `BufferingEnded` facts; [Sessions](sessions.md) |
+| The game hitches as a replay starts or stops | The session was started without a frame budget, so it prepares and removes everything in one frame | `Playback.StartFrameMs` and `Playback.StopMs`; `PrepareBudgetMs` in [Sessions](sessions.md#preparing) |
 
 ***
 
@@ -171,6 +183,7 @@ A game adds facts about its own use of replays to the same reports, in the `Game
 | `Replay.EffectCatchUpSeconds` | 5 | The most an effect shown partway through is simulated forward |
 | `Replay.EasedLeadSeconds` | 1 | How close to the end of what has arrived playback starts to slow |
 | `Replay.EasedMinSpeed` | 0.85 | The slowest playback eases to, as a fraction of normal speed |
+| `Replay.DisposeBudgetMs` | 2 | Milliseconds a frame spent removing the actors replays are done with |
 | `Replay.Debug.Draw` | 0 | Drawing problems and labels in the viewport |
 | `Replay.Debug.RetentionSeconds` | 60 | How long facts about destroyed objects are kept |
 

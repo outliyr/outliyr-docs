@@ -31,16 +31,18 @@ The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording 
 * Plays a window back inside the live world for one viewer while the match carries on. Puppets reproduce exactly what was drawn, and shells, real instances of the recorded classes, run their own logic from the recorded state so markers, team colours and attached effects behave.
 * A skeletal mesh that keeps animating while this machine isn't drawing it works out its pose for the recording now and then, `Replay.UnseenPoseRateHz` times a second, so a character this machine never drew still replays its animation.
 * Actors kept for reuse, such as recycled gameplay cue actors, are borrowed rather than owned, through pools a game registers with `VisualReplay::RegisterActorPool`.
-* Gameplay cues, context effects and game events are recorded on the replay timeline, with a lead-in that brings lingering effects into place as a window opens and catch-up for effects first shown partway through their life.
+* Gameplay cues, context effects and game events are recorded on the replay timeline. A lead-in repeats the events from just before a window that still showed something as it opened, so lingering effects are in place from the first frame, and effects first shown partway through their life are caught up.
+* A replay is prepared a little each frame within a budget: its puppets, the shells of what is there as the window opens, the lead-in, and the shells of actors that appear later. Nothing of it shows until it is ready, so the frame it appears in only switches what the viewer sees, and an actor appearing partway through costs only placing its shell.
+* Stopping a replay shows the live world again in that frame. What the replay made goes to a removal queue, `UVisualReplayDisposal`, which hides it at once and removes it `Replay.DisposeBudgetMs` milliseconds a frame, 2 by default, and empties as soon as its world starts a seamless travel.
 * Perspective clips carry another machine's recording of chosen actors, compactly encoded and decoded without trusting the sender, and can stream into a replay that is already playing.
 * Seeking, pausing, speed, buffering that eases playback rather than stopping it, and a replay sound class with the live mix silenced.
-* A debug suite of recorded facts with reports, anomalies, viewport drawing and console commands, compiled out of Shipping, plus a frame cost benchmark. Every replay checks as it stops that it put the live game back and left nothing of its own behind.
+* A debug suite of recorded facts with reports, anomalies, viewport drawing and console commands, compiled out of Shipping, plus a frame cost benchmark and statistics for what preparing, starting, playing and stopping each replay cost. Every replay checks as it stops that it put the live game back and left nothing of its own behind.
 
 #### Kill cam
 
 * Rebuilt on Visual Replay. It plays in Play In Editor and standalone, for a listen server's host, and under Iris.
 * The victim watches the killer's own recording, streamed from the killer's machine a slice at a time. The server relays only pieces that match its own record of the kill, within fixed limits, and the victim's own recording plays if the killer's doesn't arrive in time.
-* The kill cam starts as soon as the opening of its window has arrived, behind static while its stand-ins are prepared over several frames.
+* The kill cam starts as soon as the opening of its window has arrived, behind static while it is prepared, `Killcam.PrepareBudgetMs` milliseconds a frame, 8 by default. The frames it starts and ends in do little more than switch what the player sees, with the work spread over the frames before and after.
 * The killer's aim, camera and hit markers play with the replay, and the killer's exact recorded camera can be shown instead of the copied camera mode.
 * Team colours, markers and the HUD show the match from the killer's side.
 * No kill cam plays without a killing player, and a bot's kill plays the victim's own recording with the bot's tracks.

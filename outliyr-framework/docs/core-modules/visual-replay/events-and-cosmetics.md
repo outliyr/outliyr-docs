@@ -120,7 +120,15 @@ A game registers each of its pools with `VisualReplay::RegisterActorPool`, givin
 
 A window rarely opens on a quiet moment. A smoke grenade thrown four seconds before the window is still smoking, and a fire started earlier is still burning. If the replay only played events from inside the window, those effects would be missing.
 
-So events are kept for `Replay.LeadInSeconds` (20) longer than the rest of the history, and when a replay opens it plays the events from that stretch before its window, the **lead-in**, once its stand-ins are up. Between lead-in events, running Niagara effects are simulated forward, decal fades and actor lifespans are aged by how long before the window they appeared, sounds are stopped, and anything drawn for a player's own view is removed. The replay opens with lingering effects already in place.
+So events are kept for `Replay.LeadInSeconds` (20) longer than the rest of the history, and a replay repeats the events from that stretch before its window that still showed something as the window opened. These are the **lead-in**. The recorder notes when the last thing each event spawned stopped showing, so a shot whose muzzle flash was long over is left out, while the one whose scorch mark is still on the wall is repeated. A sound never counts, since the replay doesn't play it again from back then.
+
+The lead-in is repeated while the replay [prepares](sessions.md#preparing), once its stand-ins are up, a few events a frame like the rest of preparing. What it brings back is hidden and holds still until the replay begins:
+
+* each Niagara effect is simulated forward up to the next event on the same actor, which can change or end it, and finally up to the window's start;
+* decal fades and actor lifespans start running when the replay begins, aged by how long before the window they appeared;
+* sounds are stopped, and anything drawn for a player's own view is removed.
+
+The replay opens with lingering effects already in place.
 
 A lead-in event whose actor has no stand-in at the window's start is skipped. Presentation that should only react to a live moment, such as damage numbers, can check `UVisualReplayPlayback::IsPlayingLeadIn` and skip itself while the lead-in runs.
 
