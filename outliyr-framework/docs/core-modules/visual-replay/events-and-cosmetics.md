@@ -122,6 +122,8 @@ A window rarely opens on a quiet moment. A smoke grenade thrown four seconds bef
 
 So events are kept for `Replay.LeadInSeconds` (20) longer than the rest of the history, and a replay repeats the events from that stretch before its window that still showed something as the window opened. These are the **lead-in**. The recorder notes when the last thing each event spawned stopped showing, so a shot whose muzzle flash was long over is left out, while the one whose scorch mark is still on the wall is repeated. A sound never counts, since the replay doesn't play it again from back then.
 
+An event that showed nothing of its own is repeated too while an earlier event on the same actor still shows something, since it may have added to it. A weapon that keeps one decal system for its impacts spawns it with its first shot, and each later shot only plays a sound and adds its marks to that system, so every one of those shots is repeated to put its marks back.
+
 The lead-in is repeated while the replay [prepares](sessions.md#preparing), once its stand-ins are up, a few events a frame like the rest of preparing. What it brings back is hidden and holds still until the replay begins:
 
 * each Niagara effect is simulated forward up to the next event on the same actor, which can change or end it, and finally up to the window's start;
