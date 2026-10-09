@@ -34,25 +34,27 @@ The order of the capturer list is load-bearing. Where two captured traits share 
 
 ## Adding a capturer
 
-A consuming project supports its own stateful trait by adding a capturer. The pattern is the same for every trait in the table above.
+Supporting another stateful trait means adding a capturer to the plugin. The capturers and their registry live in the AnimRewindRuntime module's private source, so a new one is added there, alongside the existing ones. The pattern is the same for every trait in the table above.
 
 {% stepper %}
 {% step %}
 ### Define a snapshot struct
 
-Declare a `USTRUCT` holding exactly the trait's cross-tick state, nothing recomputable. This is what a captured frame stores for the trait.
+Declare a `USTRUCT` deriving from `FAnimRewindTraitSnapshot` that holds exactly the trait's cross-tick state, nothing recomputable. This is what a captured frame stores for the trait. The base records where the trait's stack sits in the graph, so a restore only ever writes a snapshot back onto the stack it was taken from.
 {% endstep %}
 
 {% step %}
 ### Implement capture and restore
 
-Write a capture function that reads the trait's instance data off the stack into the snapshot, and a restore function that writes the snapshot back onto a matching stack. Both share the fixed signatures the registry expects, so they can be held as plain function pointers.
+Write a capture function that finds the trait's instance data on the stack and fills a snapshot created with `AddSnapshot`, which stamps it with the stack it describes. Write a restore function that writes the snapshot back. The restore pass pairs each snapshot with its stack and checks its type before calling the function, and hands it a restore context that carries the execution context, which a trait that allocates child instances needs. Both functions share the fixed signatures the registry expects, so they can be held as plain function pointers.
 {% endstep %}
 
 {% step %}
 ### Register in the ordered list
 
-Add an entry, the capture and restore functions, the snapshot struct, and a debug name, to the ordered capturer list, placed correctly relative to any structural trait it shares a stack with.
+Add an entry to the ordered capturer list: the capture and restore functions, the snapshot struct, a debug name, and whether the snapshot can be sent over the network. Place it correctly relative to any structural trait it shares a stack with.
+
+A snapshot can be sent only when all of its state lives in `UPROPERTY` fields. Network sync serializes snapshots through the property system, so a snapshot that keeps native members outside it would arrive on clients with those members empty. Mark such a snapshot as not sendable and it stays off [network sync anchors](how-it-works.md#network-sync).
 {% endstep %}
 
 {% step %}
@@ -61,6 +63,70 @@ Add an entry, the capture and restore functions, the snapshot struct, and a debu
 Exercise the trait through the audit (below) and confirm it reconstructs deterministically before relying on it.
 {% endstep %}
 {% endstepper %}
+
+<details>
+
+<summary>A complete capturer: the steering trait</summary>
+
+The snapshot holds the spring accumulator that carries between ticks, plus what the correction resolves against.
+
+```cpp
+USTRUCT()
+struct FAnimRewindSteeringSnapshot : public FAnimRewindTraitSnapshot
+{
+    GENERATED_BODY()
+
+    UPROPERTY()
+    FQuat TargetOrientation = FQuat::Identity;
+
+    UPROPERTY()
+    FVector AngularVelocity = FVector::ZeroVector;
+
+    UPROPERTY()
+    FTransform RootBoneTransform = FTransform::Identity;
+
+    UPROPERTY()
+    float CurrentAnimAssetTime = 0.0f;
+};
+```
+
+Capture copies the instance data into a snapshot made by `AddSnapshot`, and restore copies it back.
+
+```cpp
+void Capture(const FTraitStackBinding& Stack, int32 TraversalIndex, TArray<FInstancedStruct>& OutTraitSnapshots)
+{
+    if (FSteeringTrait::FInstanceData* Steering = FindInstance<FSteeringTrait>(Stack))
+    {
+        FAnimRewindSteeringSnapshot& Snapshot = AddSnapshot<FAnimRewindSteeringSnapshot>(OutTraitSnapshots, Stack, TraversalIndex);
+        Snapshot.TargetOrientation = Steering->TargetOrientation;
+        Snapshot.AngularVelocity = Steering->AngularVelocity;
+        Snapshot.RootBoneTransform = Steering->RootBoneTransform;
+        Snapshot.CurrentAnimAssetTime = Steering->CurrentAnimAssetTime;
+    }
+}
+
+void Restore(FRestoreContext& Context, const FTraitStackBinding& Stack, const FInstancedStruct& SnapshotStruct)
+{
+    if (const FAnimRewindSteeringSnapshot* Snapshot = SnapshotStruct.GetPtr<FAnimRewindSteeringSnapshot>())
+    {
+        if (FSteeringTrait::FInstanceData* Steering = FindInstance<FSteeringTrait>(Stack))
+        {
+            Steering->TargetOrientation = Snapshot->TargetOrientation;
+            Steering->AngularVelocity = Snapshot->AngularVelocity;
+            Steering->RootBoneTransform = Snapshot->RootBoneTransform;
+            Steering->CurrentAnimAssetTime = Snapshot->CurrentAnimAssetTime;
+        }
+    }
+}
+```
+
+Every field is a `UPROPERTY`, so the registry entry marks the snapshot as sendable with its last argument.
+
+```cpp
+{ &Steering::Capture, &Steering::Restore, FAnimRewindSteeringSnapshot::StaticStruct(), TEXT("Steering"), true },
+```
+
+</details>
 
 {% hint style="danger" %}
 Capturing a trait whose state has no public accessor means reading the trait's instance-data layout from engine-internal headers. Those layouts are not a stable interface, so a capturer written against them is **engine-version fragile** and may need revisiting on an engine upgrade. This is inherent to the approach, not a defect, but it is why every capturer should be re-validated after an engine update.

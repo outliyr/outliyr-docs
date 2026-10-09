@@ -22,7 +22,7 @@ This node is what makes capture possible. Without it, nothing registers the runn
 {% step %}
 ### Add the rewind component
 
-Add `UAnimRewindComponent` to the character. It owns the capture ring buffer and the headless evaluator. By default it targets the owning character's mesh; the rewind window and sim step are configurable on the component.
+Add `UAnimRewindComponent` to the character. It owns the capture ring buffer and the headless evaluator. Poses are reconstructed on the skeleton of **Rewind Skeletal Mesh**; left empty, it uses the mesh of the actor's first skeletal mesh component. The rewind window and sim step are configurable on the component.
 
 <figure><img src="../../.gitbook/assets/image (342).png" alt=""><figcaption></figcaption></figure>
 {% endstep %}
@@ -30,7 +30,7 @@ Add `UAnimRewindComponent` to the character. It owns the capture ring buffer and
 {% step %}
 ### Add the hitbox provider component
 
-Add `UAnimRewindHitboxProviderComponent` to the character. On the server it finds the rewind component, the skeletal mesh, and the lag-compensation manager, builds the hitbox shape table from the mesh's physics asset, and registers as the `PosesOnDemand` hitbox source. This is what connects Anim Rewind to hit validation.
+Add `UAnimRewindHitboxProviderComponent` to the character. On the server it finds the rewind component, the actor's first skeletal mesh component, and the lag-compensation manager, builds the hitbox shape table from that mesh's physics asset, and registers as the `PosesOnDemand` hitbox source. Each hitbox follows its bone in the reconstructed pose, looked up on the rewind component's mesh. This is what connects Anim Rewind to hit validation.
 
 <figure><img src="../../.gitbook/assets/image (341).png" alt=""><figcaption></figcaption></figure>
 {% endstep %}
@@ -57,6 +57,10 @@ The failure mode to recognize is a reconstructed pose that comes out collapsed o
 
 {% hint style="warning" %}
 **The sync scope node is missing from the played graph.** If the running graph has no Anim Rewind Network Sync Scope node, the component logs that it captured no graph state because no live graph instance is registered, and every reconstructed pose falls back to a rest pose. Confirm the node is on the graph the character actually plays, not a sibling graph or a layer that never runs.
+{% endhint %}
+
+{% hint style="warning" %}
+**The pose and the hitboxes come from meshes on different skeletons.** The hitboxes are built from the actor's first skeletal mesh component, while the pose is reconstructed on the rewind component's Rewind Skeletal Mesh. When the two meshes don't share a skeleton, the provider logs a warning as it starts that the rewind skeletal mesh and the hitbox mesh use different skeletons, and the hitboxes may not follow the pose. Leave Rewind Skeletal Mesh empty so both use the same mesh, or set it to a mesh on the same skeleton as the one the hitboxes are built from.
 {% endhint %}
 
 {% hint style="warning" %}

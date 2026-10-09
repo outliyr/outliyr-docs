@@ -24,6 +24,7 @@ The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording 
 * **Async actions end with the life they were started for, through a new AsyncActionLifetime plugin.** Every async action of the framework derives from its `ULifetimeAsyncAction`, including GameplayMessageRouter's `ListenForGameplayMessages` and CommonGame's `CreateWidgetAsync`, `PushContentToLayerForPlayer` and confirmation nodes. Both plugins now list AsyncActionLifetime as a dependency, so a project that swaps either for Epic's copy needs to carry the change over. An async action of your own that waits on the game derives from it too, as [Async Action Lifetime](../core-modules/async-action-lifetime.md#writing-your-own) describes.
 * **Running a listening node again replaces its earlier run.** When the same object runs the same team observer, item query or gameplay message listener node again, with the same inputs and the same event bound, the earlier run ends. A Blueprint that relied on two runs of one node delivering the same event twice now receives it once, and a run with other inputs, such as another channel, team or agent, listens alongside.
 * **The confirmation nodes and `WaitForExperienceReady` can be cancelled**, and they end without answering once what started them is gone. The experience waiter also ends if its world is cleaned up before the experience loads.
+* **Anim Rewind's frame lookups hand back keys rather than copies of frames.** `UAnimRewindComponent::CopyFramePairAtTime` is replaced by `FindFramePairKeysAtTime`, which names the two frames around a time, and `GetPoseForFrameKey`, which reconstructs the pose for one of them or reuses it from the pose cache. `CaptureFrame` takes the pending capture recorded when its sim tick ended, and the hitbox provider's `EvaluateShapeTransformsAtTick` takes a frame key. A trait capturer added to the plugin derives its snapshot from `FAnimRewindTraitSnapshot` and says whether the snapshot can be sent over the network, as [Adding a capturer](../core-modules/anim-rewind/supported-traits-and-extension.md#adding-a-capturer) describes.
 
 #### New: Visual Replay (experimental)
 
@@ -74,12 +75,25 @@ The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording 
 * A number pop component makes a new effect when the one it held is gone.
 * Generated weapon icons draw from their alpha in the elimination feed, the death footer and the kill cam, and the weapon icon and its glow in the death UI are drawn at the right size.
 
+#### Anim Rewind
+
+* A captured frame no longer records a graph partway through its update. Capture runs on worker threads alongside the animation update, so a frame could hold some traits from before the update and some from after. Each character's animation update now waits for its capture.
+* Every movement sim tick records the position it ended at. When a frame ran several sim ticks to catch up, all of them were stored with the last tick's position.
+* A reconstructed pose comes out in the mesh's bone order. UAF orders bones by level of detail internally, so on a mesh whose lower LODs drop bones, rewound hitboxes could be placed from the wrong bones.
+* Blend Smoother and Blend Smoother Per Bone nodes placed in a graph are captured, and a blend by bool that switched during a smoothed transition reconstructs both of its children.
+* Reconstructing on a worker thread is safe against garbage collection and never loads an asset.
+* Network sync anchors are applied just before the character's next animation update rather than whenever they arrive, and a full state anchor carries only trait state that survives being sent. Motion matching, pose history, dead blending and blend space keep their own state on each client, as [Network sync](../core-modules/anim-rewind/how-it-works.md#network-sync) describes.
+* `RewindSkeletalMesh` falls back to the mesh of the actor's first skeletal mesh component when left empty, and the hitbox provider warns when that mesh's skeleton differs from the hitbox mesh's.
+* A character that switches to a different animation graph starts a new epoch, and changing the rewind window or sim step clears the history instead of reading past the end of the buffer.
+* Reconstructing a past pose takes about half as long, from 94 to 45 microseconds at the median on the profile test's graph. Shots against the same moment, such as a shotgun's pellets, reuse the cached pose without copying the captured frames.
+
 #### Testing
 
 * Visual Replay's automation suite, grouped by area.
 * Each game mode's kill cam tests live in that mode's own test module, so removing a mode never breaks another plugin's tests.
 * Network tests for item moves and pickups, access filtering, predicted equips across actors, window rebinding and the viewer's team.
 * AsyncActionLifetime's own tests, and tests that each of the framework's async actions ends with what it is tied to and replaces its earlier run.
+* Anim Rewind tests for the bone order remap, Blend Smoother capture, a blend by bool switched during a transition, live graph registration and switching, network anchor serialization and filtering, and resizing the history buffer. The determinism tests compare each reconstruction against the live update.
 
 ***
 
