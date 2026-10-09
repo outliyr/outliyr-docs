@@ -74,6 +74,8 @@ Because the evaluator has no mesh component bound, replaying a tick fires **no**
 
 A request rarely lands exactly on a captured tick, so a query resolves the two frames bracketing the requested time and the normalized position between them; the caller interpolates the two reconstructed poses. Reconstruction is serialized per character and its results are cached for the handful of ticks repeated queries reuse, so the same past tick is not rebuilt twice in a row. Once the evaluator has been primed on the game thread, a query can run on a worker thread, which is what lets the lag-compensation [on-demand backend](../lag-compensation/backends.md) reconstruct off the game thread.
 
+<figure><img src="../../.gitbook/assets/anim-rewind-pose-trailing.png" alt="Rewound hitboxes drawn over three dancing dummies, each a moment behind the live mesh"><figcaption><p>With <code>lyra.LC.Debug.DrawPoses 1</code>, the server draws every character's hitboxes at its pose from 250 milliseconds ago, rebuilt from captured frames, so the green shapes trail the live mesh</p></figcaption></figure>
+
 ***
 
 ## The ring buffer and epochs

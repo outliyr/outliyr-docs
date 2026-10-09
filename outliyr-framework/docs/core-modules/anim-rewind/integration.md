@@ -53,10 +53,10 @@ Add `UAnimRewindHitboxProviderComponent` to the character. On the server it find
 
 ## Common pitfalls
 
-The failure mode to recognize is a reconstructed pose that comes out collapsed or frozen rather than matching the character, which shows up as **mushed hitboxes**. It almost always traces to one of these.
+A broken rewind shows up in one of two ways. Either the character has **no rewound hitboxes** at all, so rewound traces pass straight through it and the debug draws show nothing for it, or its hitboxes are drawn but **don't match the body**. Each traces to one of these.
 
 {% hint style="warning" %}
-**The sync scope node is missing from the played graph.** If the running graph has no Anim Rewind Network Sync Scope node, the component logs that it captured no graph state because no live graph instance is registered, and every reconstructed pose falls back to a rest pose. Confirm the node is on the graph the character actually plays, not a sibling graph or a layer that never runs.
+**The sync scope node is missing from the played graph.** If the running graph has no Anim Rewind Network Sync Scope node, the component logs that it captured no graph state because no live graph instance is registered. Without a registered graph there is nothing to reconstruct from, so no pose is produced and the character has no rewound hitboxes. Confirm the node is on the graph the character actually plays, not a sibling graph or a layer that never runs.
 {% endhint %}
 
 {% hint style="warning" %}
@@ -73,7 +73,11 @@ The failure mode to recognize is a reconstructed pose that comes out collapsed o
 
 {% hint style="info" %}
 The provider and the rewind component both expose development-only debug draws: the provider draws the reconstructed hitbox shapes and the component draws the reconstructed skeleton for a given number of seconds ago. Drawing them together is the fastest way to see whether a bad rewind is the pose or the hitbox mapping. There is also a log that dumps the captured inputs and a side-by-side of captured versus reconstructed state for a past tick.
+
+Lag compensation's own debug draws work on a rewound character too. `lyra.LC.Debug.DrawCollisions 1` draws the rewound hitboxes of every character a validated shot hit, as the server saw them at the moment the shooter fired. The drawing appears in the server's view, so on a listen server look at the host's window.
 {% endhint %}
+
+<figure><img src="../../.gitbook/assets/anim-rewind-registered-hit.png" alt="A shot hitting a dancing dummy, with its rewound hitboxes drawn in green"><figcaption><p>A registered hit with <code>lyra.LC.Debug.DrawCollisions 1</code>. The green hitboxes are the dummy's pose when the shot was fired, which the live mesh has already moved on from</p></figcaption></figure>
 
 ***
 
