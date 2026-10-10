@@ -43,7 +43,7 @@ The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording 
 
 * Rebuilt on Visual Replay. It plays in Play In Editor and standalone, for a listen server's host, and under Iris.
 * The victim watches the killer's own recording, streamed from the killer's machine a slice at a time. The server relays only pieces that match its own record of the kill, within fixed limits, and the victim's own recording plays if the killer's doesn't arrive in time.
-* The kill cam starts as soon as the opening of its window has arrived, behind static while it is prepared, `Killcam.PrepareBudgetMs` milliseconds a frame, 8 by default. The frames it starts and ends in do little more than switch what the player sees, with the work spread over the frames before and after.
+* The kill cam starts as soon as the opening of its window has arrived, behind static while it is prepared, `Killcam.PrepareBudgetMs` milliseconds a frame, 4 by default. The frames it starts and ends in do little more than switch what the player sees, with the work spread over the frames before and after.
 * The killer's aim, camera and hit markers play with the replay, and the killer's exact recorded camera can be shown instead of the copied camera mode.
 * Team colours, markers and the HUD show the match from the killer's side.
 * No kill cam plays without a killing player, and a bot's kill plays the victim's own recording with the bot's tracks.

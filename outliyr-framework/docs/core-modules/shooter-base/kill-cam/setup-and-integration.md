@@ -111,7 +111,7 @@ The three recorders each keep `MaxRecordLengthSeconds` (15) of history, and the 
 | `Killcam.PerspectiveClipKeyToleranceDegrees` | 0.25 | How far a dropped bone rotation sample may be from what blending reproduces |
 | `Killcam.PerspectiveClipKeyToleranceUnits` | 0.03 | The same for translations and scales |
 | `Killcam.RecordedView` | -1 | `1` forces the recorded view, `0` forces the copied camera mode, `-1` leaves it to `bPreferRecordedView` |
-| `Killcam.PrepareBudgetMs` | 8 | Milliseconds per frame spent preparing the replay before it plays. More prepares it in fewer, longer frames, so it appears sooner. 0 prepares it in one frame and removes it in one frame as it ends |
+| `Killcam.PrepareBudgetMs` | 4 | Milliseconds per frame spent preparing the replay before it plays. More prepares it in fewer, longer frames, so it appears sooner. 0 prepares it in one frame and removes it in one frame as it ends |
 
 The Visual Replay recorder has settings of its own, listed on Visual Replay's [Debugging](../../visual-replay/debugging.md) page.
 
