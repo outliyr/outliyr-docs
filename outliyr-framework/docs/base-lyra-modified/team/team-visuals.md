@@ -81,6 +81,8 @@ The `OnViewerTeamChanged` delegate provides three parameters: `bTeamSet`, `Obser
 
 A client often builds its UI before its own player state has arrived. Until it does, there is no viewer, so the observer fires once with `bTeamSet` false and no player state, and fires again with the team once the local player state arrives. Treat `bTeamSet` false as "not known yet". From then on it follows every change of viewer, such as starting to spectate or a kill cam taking the killer's side, and every team change of the current viewer. On a dedicated server, which has no viewer, it ends without firing.
 
+An observer can also hold a change back while the object it was started for doesn't follow viewer changes, as the `FollowsViewerChanges` hook decides, such as an actor no one can see. `CatchUpHeldViewerChanges` brings it up to date, and it fires then only if the viewer, its team or the colour mode ended up different from what it reported last. [Integrating a Game](../../core-modules/visual-replay/integrating-a-game.md#viewer-changes) shows how replays use it.
+
 Use this for spectator UI that needs to update when switching between observed players, the spectator HUD, team-colored overlays during killcam, or commentary systems that need to know whose perspective is active.
 
 <figure><img src="../../.gitbook/assets/image (42).png" alt=""><figcaption></figcaption></figure>

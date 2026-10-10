@@ -43,6 +43,7 @@ LyraGame never links Visual Replay. Where Lyra code needs to take part in replay
 * `ULyraGameplayCueManager::OnGameplayCueHandling` and `OnGameplayCueHandled`, around every cue the game runs;
 * `ULyraContextEffectsSubsystem::OnContextEffectsSpawned`, after context effects such as footsteps spawn;
 * `FIndicatorProjection::OwnerFilter`, which decides whether an indicator is drawn;
+* `UAsyncAction_ObserveViewerTeam::FollowsViewerChanges`, which decides whether an observer reports a viewer change now or holds it back, and `CatchUpHeldViewerChanges`, which brings held back observers up to date;
 * `ULyraInventoryItemInstance::IsStandIn`, which an item asks before registering itself;
 * `ULyraNumberPopComponent::ShouldShowNumberPops`, which damage numbers ask before showing;
 * `UGameplayMessageSubsystem::BroadcastFilter`, which every gameplay message passes through.
@@ -76,6 +77,7 @@ void Install()
     ULyraGameplayCueManager::OnGameplayCueHandled.AddStatic(&RecordGameplayCue);
     ULyraContextEffectsSubsystem::OnContextEffectsSpawned.AddStatic(&RecordContextEffects);
     FIndicatorProjection::OwnerFilter.BindStatic(&ShouldDrawIndicatorFor);
+    UAsyncAction_ObserveViewerTeam::FollowsViewerChanges.BindStatic(&FollowsViewerChanges);
     ULyraInventoryItemInstance::IsStandIn.BindStatic(/* UVisualReplayShellSet::IsStandIn */);
     ULyraNumberPopComponent::ShouldShowNumberPops.BindStatic(/* !UVisualReplayPlayback::IsPlayingLeadIn() */);
     UVisualReplaySession::ConfigureDefaultOptions.BindStatic(&ConfigureSessionOptions);
@@ -105,7 +107,11 @@ Context effects, such as footsteps, are recorded as the actual sounds and Niagar
 
 ### Indicators
 
-A live actor's indicator is hidden while a replay stands in for it, so only its shell's indicator shows, and that one shows the past. This is what keeps an objective marker from appearing twice in a kill cam, once for the live objective and once for its shell.
+A live actor's indicator is hidden while a replay stands in for it, so only its shell's indicator shows, and that one shows the past. This is what keeps an objective marker from appearing twice in a kill cam, once for the live objective and once for its shell. An indicator is hidden too while a replay hides its live actor without standing in for it, as it does a player who respawned after the window opened, so no nameplate floats where nothing is drawn.
+
+### Viewer Changes
+
+A kill cam makes the killer the viewer, so everything that colours by the viewer recolours, the replay's characters for the killer's side. A live character the replay hides would recolour too though no one sees it, so it holds the change back, and catches up when the replay ends only if the view it returns to is really different. After a kill cam that hands the player's own view back, it usually isn't, and the live characters never recolour at all.
 
 ### Items
 

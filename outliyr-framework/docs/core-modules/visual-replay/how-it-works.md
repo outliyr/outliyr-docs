@@ -80,7 +80,8 @@ each update, at replay time t:
     let go of live effects that finished       // their pool may hand them to the replay next
     shells:   apply the recorded state at t    // first, so an actor appearing now has its shell before its events play
     puppets:  place mirrors at t               // transforms, poses, materials; effect, decal and light copies follow
-    shells:   follow their puppets             // the shell and its hidden meshes move to where the puppet draws them
+    shells:   follow their puppets             // the shell and its hidden meshes move to where the puppet draws them,
+                                               // and each mirror takes the look its shell's mesh has
     events:   fire everything recorded up to t // last, so what an event spawns at a shell or a socket appears where it is drawn now
     game hook: OnTimeApplied                   // for example giving a stand-in player its recorded view rotation
 ```

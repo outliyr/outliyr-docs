@@ -29,7 +29,7 @@ The camera ability spawns a kill cam spectator and has it spectate the killer's 
 * the victim shows as an enemy;
 * objective markers and nameplates show the killer's side of the match at that moment.
 
-The replay's shells run their own logic, so a marker on a replayed objective is the shell's marker, showing what the objective was then. The live objective's marker is hidden while it has a stand-in. [Team Visuals](../../../base-lyra-modified/team/team-visuals.md) covers the viewer system, and [Making Game Modes Killcam-Ready](killcam-ready-game-modes.md) covers what a game mode needs for its objectives to show correctly.
+The replay's shells run their own logic, so a marker on a replayed objective is the shell's marker, showing what the objective was then, and the characters the puppets draw take the colours their shells pick for the killer. The live objective's marker is hidden while it has a stand-in. [Team Visuals](../../../base-lyra-modified/team/team-visuals.md) covers the viewer system, and [Making Game Modes Killcam-Ready](killcam-ready-game-modes.md) covers what a game mode needs for its objectives to show correctly.
 
 ***
 

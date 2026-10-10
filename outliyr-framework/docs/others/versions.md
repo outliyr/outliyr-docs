@@ -29,7 +29,7 @@ The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording 
 #### New: Visual Replay (experimental)
 
 * Records what each machine drew, every Movable mesh, pose, material, visibility, effect, decal and light, and the replicated state of every replicated actor, for a window of recent history. Recording runs only on request, and never on a dedicated server.
-* Plays a window back inside the live world for one viewer while the match carries on. Puppets reproduce exactly what was drawn, and shells, real instances of the recorded classes, run their own logic from the recorded state so markers, team colours and attached effects behave.
+* Plays a window back inside the live world for one viewer while the match carries on. Puppets reproduce exactly what was drawn, and shells, real instances of the recorded classes, run their own logic from the recorded state so markers, team colours and attached effects behave. Puppets take the looks their shells set for whoever the replay is watched as, so a kill cam colours teams from the killer's side.
 * A skeletal mesh that keeps animating while this machine isn't drawing it works out its pose for the recording now and then, `Replay.UnseenPoseRateHz` times a second, so a character this machine never drew still replays its animation. While a replay plays, which hides the live world, every such mesh is posed every frame instead, so a later kill cam covering that stretch shows them moving smoothly.
 * Actors kept for reuse, such as recycled gameplay cue actors, are borrowed rather than owned, through pools a game registers with `VisualReplay::RegisterActorPool`.
 * Gameplay cues, context effects and game events are recorded on the replay timeline. A lead-in repeats the events from just before a window that still showed something as it opened, and the later events on the same actor that may have added to it, so lingering effects such as bullet marks are in place from the first frame, and effects first shown partway through their life are caught up.
@@ -45,7 +45,8 @@ The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording 
 * The victim watches the killer's own recording, streamed from the killer's machine a slice at a time. The server relays only pieces that match its own record of the kill, within fixed limits, and the victim's own recording plays if the killer's doesn't arrive in time.
 * The kill cam starts as soon as the opening of its window has arrived, behind static while it is prepared, `Killcam.PrepareBudgetMs` milliseconds a frame, 4 by default. The frames it starts and ends in do little more than switch what the player sees, with the work spread over the frames before and after.
 * The killer's aim, camera and hit markers play with the replay, and the killer's exact recorded camera can be shown instead of the copied camera mode.
-* Team colours, markers and the HUD show the match from the killer's side.
+* Team colours, markers and the HUD show the match from the killer's side. Live characters the kill cam hides don't recolour for it, so switching sides costs only the replay's own characters.
+* Indicators of live actors the kill cam hides are hidden with them, including players who respawned after its window opened.
 * No kill cam plays without a killing player, and a bot's kill plays the victim's own recording with the bot's tracks.
 * Objectives show their recorded state: control points, the planted bomb, flags, the payload and their markers.
 

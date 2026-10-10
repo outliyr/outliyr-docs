@@ -83,7 +83,7 @@ What isn't hidden:
 * **Match-wide actors** such as the game state stay live.
 * **An actor with a shell but no puppet** keeps its live self on screen, since nothing else draws it.
 
-Live HUD elements that point at replayed actors, such as markers over live characters, are a game's concern. `UVisualReplaySession::IsReplacedByStandIn` tells it whether a live actor currently has a stand-in, and [Integrating a Game](integrating-a-game.md) shows how Lyra uses it to hide live indicators.
+Live HUD elements that point at replayed actors, such as markers over live characters, are a game's concern. `UVisualReplaySession::IsReplacedByStandIn` tells it whether a live actor currently has a stand-in, `IsHiddenByReplay` whether a replay hides it from its viewer, as it does an actor that appeared after the window opened, and [Integrating a Game](integrating-a-game.md) shows how Lyra uses both to hide live indicators.
 
 ***
 
