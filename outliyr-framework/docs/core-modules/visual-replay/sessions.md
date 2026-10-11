@@ -54,9 +54,11 @@ Preparing a replay can be heavy: a busy match may have dozens of puppets and she
 4. the lead-in;
 5. the shells of actors that appear later in the window, such as a player who respawns partway through.
 
-`Start` itself only checks that the window holds anything, so the frame the replay is started in stays light. A recording that forgets its history while the replay prepares, as it does when its clock is replaced, first hands over whatever of the window the session has not copied yet.
+Each shell is made, given its recorded state and begun on frames of its own, and a shell is only started when what its class is expected to cost, learned from the shells of that class brought up before, still fits the frame's budget. One heavy class never spills a frame over it.
 
-Nothing of the replay shows while it prepares. Puppets stay hidden, shells are hidden as they are spawned, what the lead-in brings back is hidden and holds still, and the live world stays on screen. When everything is ready, the session shows the puppets and what the lead-in brought back, hides what they replace, applies the first update, calls `OnStandInsReady` and broadcasts `OnPrepared`, so the frame the replay first shows in does little more than switch what the viewer sees. `IsPreparing` tells a game the session is still building, which the kill cam shows as waiting.
+`Start` itself only checks that the window holds anything, and preparing begins on the frame after, so the frame the replay is started in stays light. A recording that forgets its history while the replay prepares, as it does when its clock is replaced, first hands over whatever of the window the session has not copied yet.
+
+Nothing of the replay shows while it prepares. Puppets stay hidden, shells are hidden as they are spawned, what the lead-in brings back is hidden and holds still, and the live world stays on screen. When everything is ready, the session finishes, in a frame of its own when finishing would not fit in what is left of the current one. It shows the puppets and what the lead-in brought back, hides what they replace, applies the first update, calls `OnStandInsReady` and broadcasts `OnPrepared`, so the frame the replay first shows in does little more than switch what the viewer sees. `IsPreparing` tells a game the session is still building, which the kill cam shows as waiting.
 
 A shell made for an actor that appears later stays hidden and stands in for nothing until the replay reaches its actor. That moment then only places the shell and applies its state.
 
