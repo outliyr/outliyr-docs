@@ -74,6 +74,7 @@ The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording 
 
 #### Teams, UI and gameplay
 
+* A quick bar can put the active weapon away. Pressing the slot that is already selected did nothing; with `bReselectActiveSlotToHolster` on, it holsters that slot's item and leaves the pawn unarmed, and pressing the slot again draws it back. The slot stays selected while its item is away, so the bar still shows what the player will draw next and nothing auto-selects around the empty hands. Selecting a different slot draws that slot's item and ends the unarmed state, as does anything else that puts the active item back in hand. `SetActiveSlotHolstered` and `IsActiveSlotHolstered` reach the same state from code, and the active index message carries a `bHolstered` flag for a bar widget that dims the slot while it is empty. The setting is off by default, so a project that has not asked for it behaves as before.
 * `ObserveViewerTeam` fires without a team until the local player state is known, then follows the viewer, so team colours resolve on clients whose player state arrives before their player controller.
 * An indicator set to go with its component is removed the moment the component's actor ends play.
 * Objective markers and nameplates stop their observers when they are unbound, so pooled widgets no longer pile up listeners.
