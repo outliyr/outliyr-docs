@@ -134,6 +134,10 @@ The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording 
 * An item that renders its own icon shows it in an equipment or attachment slot. `ULyraItemViewModel::SetupGeneratedIcon` was the only thing routing a view model's icon through the runtime generator, and nothing called it, in C++ or in Blueprint, so every slot driven by the base view model fell back to the static icon and a weapon, which has none, showed nothing at all. Taking an item now finds the icon generator of the local player, who is the player the icon is drawn for rather than the one who owns the item, so the items on a looted body render as well. A view model that renders its icon its own way, as the tetris grid does, refuses this and keeps its own path.
 * An icon that finishes rendering after its slot has already drawn now reaches the slot. A slot keeps a copy of its item's icon, taken when it was given the item, and the item view model set its icon from the finished render without announcing the change, so that copy stayed as it was until something handed the slot its item again. An equipment slot was blank until the item was moved out and back, and an icon rendered again after an attachment was fitted never appeared.
 
+* Custom pickup routing works. `EPickupRoutingPolicy::Custom` names `DetermineItemDestination` as the hook that decides where a picked up item goes, and nothing ever called that hook, so choosing the policy logged "Custom routing not implemented in base class" and the pickup failed outright. Neither a Blueprint nor a C++ subclass could route around it, because the routing functions were private and non virtual, which left reimplementing the pickup flow as the only way through. The hook is now asked whenever the policy is Custom, and the container and slot it names are where the pickup goes, while a hook that names no container leaves the pickup routed as auto-equip-or-store. An override is consulted only under Custom, so an ability on any other policy behaves as before.
+* A selected item under custom routing goes where the hook says. Selective pickup is resolved before the routing policy, so picking one item out of a pickup under a Custom policy quietly behaved as though the policy were inventory only.
+* Picking up an item no longer risks a crash when the avatar has no controller. Both inventory routing paths dereferenced the result of `GetControllerFromActorInfo` without checking it, which the selective pickup path could reach.
+
 #### Changed
 
 * Weapon actions wait while a weapon is being brought up. The pawn carries `State.Equipment.Changing` from the moment equipment becomes held until the montage animating it ends, and the hero's ability tag relationships hold off firing, melee, grenade, reload, placing an object and inspecting while it is there. Any of those could previously start the instant a slot was pressed, which cut the equip animation short and acted from where the weapon still was, so a weapon could fire from the character's back and then appear in their hand. Jump, dash, drop and emote are deliberately left alone, since none of them plays a weapon montage and holding movement would cost more in feel than it buys. Aiming is left alone for the same reason, and is a row to add for a project that would rather a player could not aim through a weapon that is still coming up. An equip animation that settles before its last frame can declare the weapon ready early with the Equipment Ready notify, rather than making everything wait for the tail of the animation. Without that notify the window lasts until the montage ends.
@@ -153,6 +157,10 @@ The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording 
 
 * The icon generator and the view models that ask it for icons say when an icon cannot be produced, on `LogItemContainerUI` at Verbose. Every way a request could be refused used to answer with no texture and no explanation, which left a blank slot and nothing to read. Raise it with `Log LogItemContainerUI Verbose`.
 
+* The pickup routing surface is protected rather than private, and `BuildTransactionForRouting` is virtual, so a subclass can replace the routing decision and compose the existing builders instead of reimplementing the pickup flow. `ETransactionBuildResult`, the `Build` helpers, `ClassifyPickupContents`, `FinalizeQuickBarPickup` and `ReportInventoryFullAndEnd` moved with it, while the orchestration and prediction state stayed private. Only the decision is virtual, so the contracts the helpers keep with each other stay owned by the ability.
+* `BuildEquipmentTransaction` takes a preferred equipment slot, which is how custom routing steers which slot held gear is equipped into. The QuickBar already accepted one and both call sites passed nothing.
+* The base `DetermineItemDestination` names no destination and clears its out parameters, so an override that calls it first starts from nothing. It previously returned true for the three concrete policies while writing no container or slot, which is indistinguishable from naming the default destination.
+
 #### Testing
 
 * Visual Replay's automation suite, grouped by area.
@@ -160,6 +168,8 @@ The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording 
 * Network tests for item moves and pickups, access filtering, predicted equips across actors, window rebinding and the viewer's team.
 * AsyncActionLifetime's own tests, and tests that each of the framework's async actions ends with what it is tied to and replaces its earlier run.
 * Anim Rewind tests for the bone order remap, Blend Smoother capture, a blend by bool switched during a transition, live graph registration and switching, network anchor serialization and filtering, and resizing the history buffer. The determinism tests now compare each reconstruction against the live update instead of against another reconstruction.
+
+* Pickup routing tests for the custom routing hook: that the base implementation names no destination and clears a pre-filled answer, and that a subclass override is reached and the container and slot it names survive the round trip.
 
 ### v1.1.2 (18 August 2026)
 
