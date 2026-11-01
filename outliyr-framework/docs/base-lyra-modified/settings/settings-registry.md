@@ -22,9 +22,9 @@ Lyra extends this foundation with **`ULyraGameSettingRegistry`**, which creates 
 
 {% stepper %}
 {% step %}
-**Registry created per local player**
+**Registry created per settings screen**
 
-When the settings screen opens, `ULyraGameSettingRegistry::Get()` is called with the current `ULyraLocalPlayer`. If a registry already exists on that player, it is reused. Otherwise, a new one is created and `Initialize()` is called.
+When a settings screen opens it creates a registry for the current `ULyraLocalPlayer` and calls `Initialize()`. The registry belongs to that screen, so each settings screen the player opens builds its tree again rather than reusing an earlier one.
 {% endstep %}
 
 {% step %}
@@ -46,9 +46,15 @@ Inside each function, individual `UGameSetting` objects are created, given a dev
 {% endstep %}
 
 {% step %}
+**Contributors run over the tree**
+
+With all five collections built, every contributor registered by another module runs over them, placing its own settings, adding pages of its own and amending the settings already there. See [Extending Settings](extending-settings.md).
+{% endstep %}
+
+{% step %}
 **Collections registered on the registry**
 
-After each initialization function returns, the resulting collection is stored on the registry (e.g., `VideoSettings`, `AudioSettings`) and registered via `RegisterSetting()`, making it available for the UI to enumerate.
+Each collection is stored on the registry (e.g., `VideoSettings`, `AudioSettings`) and registered via `RegisterSetting()`, making it available for the UI to enumerate. Registering walks a collection once and subscribes to the settings it finds, which is why contributors run before this step and not after it.
 {% endstep %}
 
 {% step %}
