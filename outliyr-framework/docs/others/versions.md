@@ -31,6 +31,7 @@ The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording 
 * **Running a listening node again replaces its earlier run.** When the same object runs the same team observer, item query or gameplay message listener node again, with the same inputs and the same event bound, the earlier run ends. A Blueprint that starts a listener on every activation, respawn or bind no longer collects copies that each deliver the same event, and one that relied on that duplicate delivery now receives each event once. A run with other inputs, such as another channel, team or agent, listens alongside.
 * **The confirmation nodes and `WaitForExperienceReady` can be cancelled**, and they end without answering once what started them is gone. The experience waiter also ends if its world is cleaned up before the experience loads.
 * **Anim Rewind's frame lookups hand back keys rather than copies of frames.** `UAnimRewindComponent::CopyFramePairAtTime` is replaced by `FindFramePairKeysAtTime`, which names the two frames around a time, and `GetPoseForFrameKey`, which reconstructs the pose for one of them or reuses it from the pose cache. `CaptureFrame` takes the pending capture recorded when its sim tick ended, and the hitbox provider's `EvaluateShapeTransformsAtTick` takes a frame key. A trait capturer added to the plugin derives its snapshot from `FAnimRewindTraitSnapshot`, adds it with `AddSnapshot`, restores through the `FRestoreContext` it is handed, and says in its registry entry whether its snapshot can be sent over the network.
+* **A settings registry of your own runs the contributors or loses them.** `ULyraGameSettingRegistry::OnInitialize` builds its five pages, runs every registered contributor over them, then registers them, in that order, because registering a page subscribes to the settings it finds in one walk and a setting added after that walk would never report its own changes. A project with its own registry class, or its own `OnInitialize`, does the same or the settings other modules contribute will not appear.
 
 #### New: Visual Replay (experimental)
 
@@ -83,6 +84,12 @@ The kill cam is rebuilt on **Visual Replay**, a new plugin that keeps recording 
 * A planted bomb stays where it was planted and keeps its planter named as the last carrier.
 * A number pop component makes a new effect when the one it held is gone.
 * Generated weapon icons draw from their alpha in the elimination feed, the death footer and the kill cam, and the weapon icon and its glow in the death UI are drawn at the right size.
+
+#### Settings
+
+* Any module can put settings in the settings menu and amend the ones already there, without editing the settings registry. A plugin or a game module registers a function with `FGameSettingExtensions`, and the registry runs it while building its tree. Through the view it is handed, a contributor resolves any page or section by its developer name, places settings inside it, adds pages of its own, and reaches the settings already there to retarget, rename, clamp, condition or hide them. Registering during a module's startup is early enough that the setting is in the main menu before any match is played, and registration is held outside any engine object so that it works from a module on any loading phase, including those that run before the engine exists.
+* Contributors run in the order of their names rather than the order they registered in, so a page holds its rows in the same order from one run to the next. A setting naming a page the menu does not have, or reusing a developer name, is dropped and reported rather than placed somewhere unintended.
+* A contributed value can be kept without a property of its own. `ULyraSettingsShared` and `ULyraSettingsLocal` hold values under a name, read and written through `FLyraExtensionSettingDataSource`, since a module outside LyraGame cannot add a property to either. Values are strings, which is the form the dynamic settings already exchange with their sources, so one key serves a toggle, a number, a slider or a list alike. A plugin that would rather keep the value itself writes its own data source instead.
 
 #### Anim Rewind
 
