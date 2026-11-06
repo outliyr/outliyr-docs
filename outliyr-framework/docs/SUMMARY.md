@@ -349,6 +349,18 @@
   * [Setup and Integration](core-modules/loadout/setup-and-integration.md)
   * [Extending](core-modules/loadout/extending.md)
 
+* [Navigation](core-modules/navigation/README.md)
+  * [The Map Asset](core-modules/navigation/the-map-asset.md)
+  * [Markers](core-modules/navigation/markers.md)
+  * [Map Views](core-modules/navigation/map-views.md)
+  * [Pings](core-modules/navigation/pings/README.md)
+    * [Kinds of Ping](core-modules/navigation/pings/ping-kinds.md)
+    * [The Wheel and Answers](core-modules/navigation/pings/the-wheel-and-answers.md)
+    * [Limits and Authority](core-modules/navigation/pings/limits-and-authority.md)
+    * [Presentation](core-modules/navigation/pings/presentation.md)
+  * [Setup and Integration](core-modules/navigation/setup-and-integration.md)
+  * [Extending](core-modules/navigation/extending.md)
+
 ## Game Modes
 
 * [Game Mode Details](game-modes/game-mode-details/README.md)
