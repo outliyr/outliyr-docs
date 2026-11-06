@@ -57,7 +57,7 @@ A thing that will not describe itself, and a ping that reached nothing at all, l
 | `SettlesInto`      | A kind whose look this one takes on after a while, or nothing to keep its own           |
 | `ArrivalDuration`  | How long this kind's own look is held before it settles                                 |
 
-Settling replaces the whole look: the picture, the colour and the name all come from the kind settled into. It suits a set of kinds saying different things about the same place, where the difference matters at the moment of the call and the mark afterwards is simply a mark. Who may see the ping and how long it lasts stay with the kind it was placed as.
+Settling replaces the picture and the colour, and leaves the name of the kind that was called. It suits a set of kinds saying different things about the same place: several kinds settling into one picture is what makes them read as one family, and the name is then all that still says which of them was called. Who may see the ping and how long it lasts stay with the kind it was placed as.
 
 {% hint style="warning" %}
 Settling is all or nothing, so a kind that settles loses its own name as well as its own picture. A call whose name is the point of it, such as one naming an opponent or saying what a player means to do, usually wants to keep its look for its whole life.
@@ -85,7 +85,7 @@ The middle is taken across the parts of the actor that can be struck rather than
 | `ReplacementChannel`  | The channel this kind counts against                                                               |
 | `MaxAtOnce`           | How many of that channel may stand at once                                                         |
 | `Cooldown`            | How long a player waits between two pings of that channel                                          |
-| `bRepingRefreshes`    | Whether pinging the same place again refreshes the ping rather than placing a second                |
+| `bRepingRefreshes`    | Whether making this same call about that place again refreshes the ping rather than placing a second |
 | `SamePlaceDistance`   | How close counts as the same place                                                                 |
 | `bShownInFeed`        | Whether this kind reaches the feed                                                                 |
 | `FeedLine`            | How the feed words it                                                                              |
