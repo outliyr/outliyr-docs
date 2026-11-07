@@ -59,8 +59,8 @@ A thing that will not describe itself, and a ping that reached nothing at all, l
 
 Settling replaces the picture and the colour, and leaves the name of the kind that was called. It suits a set of kinds saying different things about the same place: several kinds settling into one picture is what makes them read as one family, and the name is then all that still says which of them was called. Who may see the ping and how long it lasts stay with the kind it was placed as.
 
-{% hint style="warning" %}
-Settling is all or nothing, so a kind that settles loses its own name as well as its own picture. A call whose name is the point of it, such as one naming an opponent or saying what a player means to do, usually wants to keep its look for its whole life.
+{% hint style="info" %}
+A kind whose own picture is the point of it, such as one naming the item it marked, wants no settling at all. Settling suits the calls whose difference matters at the moment it is made, where the name carries that difference afterwards.
 {% endhint %}
 
 ### Following and centring
