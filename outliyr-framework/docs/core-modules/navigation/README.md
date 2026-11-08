@@ -14,6 +14,7 @@ The plugin is one game feature an experience asks for, one view at a time. A mod
 | Floors            | One picture per storey, so upstairs does not show downstairs      |
 | Markers           | A component that puts anything on all three views                 |
 | Granted Reveals   | A marker shown for as long as an effect grants a tag              |
+| Overlays          | Rings and lines drawn over all three views, with their own materials |
 | Minimap           | A view that follows the player                                    |
 | Compass           | A bearing strip that needs no map of the level                    |
 | Map Screen        | A full screen map the player pans, zooms and changes floor on     |
@@ -45,6 +46,7 @@ You should be comfortable with [Experiences](../../base-lyra-modified/gameframew
 
 * **The map is authored, not captured.** What a level looks like from above is a data asset holding a picture per floor, baked in the editor from the level that is open. A capture taken as the game runs costs a render of the world every frame and photographs roofs rather than the rooms beneath them, so every shooter authors it instead.
 * **Anything is marked by carrying a component.** A `UMapMarkerComponent` holds the picture, colour, name, kind, audience and ordering of one marker, so the views never learn what kind of actor they are drawing. An objective, a player, a ping and anything a game invents reach the map the same way.
+* **A shape is put up the same way, and drawn rather than placed.** Some of what a map has to say has a shape instead of a place, such as a zone closing in or a route being flown. A `UMapOverlayComponent` puts rings and lines on the same three views, answering the same questions about who may see them. They are painted rather than placed as widgets, which is what keeps a line the thickness it was given however far the shape reaches.
 * **Reveals are granted rather than written.** A marker names the tags its owner must carry to be shown and the tags that hide it again, so a gameplay effect that marks somebody as spotted reveals them for exactly as long as it lasts, and an attachment that keeps its owner off the map defeats it.
 * **Working out a view is separate from drawing it.** The view classes hand over which part of the picture is in view and the markers in the places they belong. How a map looks is settled entirely by the widget built on them, and the minimap and the map screen differ only in where the view is centred and how far it reaches.
 * **A ping is contextual, and the server decides what it was.** A player presses one key and what they get depends on what they were looking at. Where they were looking is known only on their machine, so the place travels to the server, which checks it and then decides for itself what kind of ping it is from what was actually there.
@@ -59,6 +61,7 @@ You should be comfortable with [Experiences](../../base-lyra-modified/gameframew
 | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | [**The Map Asset**](the-map-asset.md)                       | Authoring a map, baking its floors, fitting the area it covers, and naming which map each level is played with                        |
 | [**Markers**](markers.md)                                   | The marker component end to end: pictures, teams and audience, granted reveals, progress, ordering and the edge of the view          |
+| [**Overlays**](overlays.md)                                 | Shapes drawn over a map: how a view asks for them, what a shape is, how it looks, and the materials that draw it     |
 | [**Map Views**](map-views.md)                               | How a view is worked out, and what the minimap, the compass and the map screen each add to it                                         |
 | [**Pings**](pings/)                                         | The ping system: how a ping is placed and checked, what a kind of ping is, the wheel, answers, limits and presentation                |
 | [**Setup & Integration**](setup-and-integration.md)         | Adding navigation to an experience, baking a map for a level, and putting a game's own objectives on it                               |

@@ -1,12 +1,12 @@
 # Map Views
 
-There are three views of the world in the plugin: a minimap that follows the player, a compass strip, and a map opened over the game. All three work the same way underneath, and none of them draws anything in C++.
+There are three views of the world in the plugin: a minimap that follows the player, a compass strip, and a map opened over the game. All three work the same way underneath, and how each of them looks is settled in Blueprint.
 
 ***
 
 ## Working out a view is not drawing it
 
-`UMapViewWidget` works out what a view of the map shows and stops there. Each frame it decides which part of the authored picture is in view and hands over the markers in the places they belong. How a map looks is settled entirely by the widget built on it.
+`UMapViewWidget` works out what a view of the map shows and stops there. Each frame it decides which part of the authored picture is in view, hands over the markers in the places they belong, and hands the shapes it has worked out to a canvas that paints them. How a map looks is settled entirely by the widget built on it.
 
 That split is what makes the two map views cheap to have both of. The minimap in the corner and the map filling the screen differ in only two answers: where the view is centred and how far it reaches. Everything else, including which floor is shown, how markers are placed, how one is pinned to the edge and which kinds are left out, is shared.
 
@@ -16,9 +16,14 @@ That split is what makes the two map views cheap to have both of. The minimap in
 | The viewed region           | Which part of that picture is in view, as a centre and an extent                    |
 | The viewer's placement      | Where to draw the player's own arrow, and which way it faces                        |
 | The marker views            | Each marker's place on the view, its colour, its pin and its floor difference        |
+| The overlay views           | Each shape's places on the view, how it is drawn and which floor it stands on        |
 | The map's turn              | How far the picture itself is rotated                                               |
 
 A view also hands the region straight to a material with `ApplyViewToMaterial`, which is how the shipped minimap draws the picture, and `ViewToWorld` turns a point on the view back into a place in the world, which is what lets a player ping somewhere from the map screen.
+
+The shapes are the one thing a view does not hand to a widget, because painting them is the only way a ring keeps its line thickness as it shrinks. They go to a `UMapOverlayCanvas` the widget places, which [Overlays](overlays.md) covers. A view without one draws its markers and its picture as usual.
+
+Anything else that needs to read places against the view takes `GetViewProjection` once rather than asking the view place by place, which is also covered there.
 
 <details>
 
@@ -42,6 +47,8 @@ The widget drawing the picture has to be made that much larger than the view in 
 | `PinnedEdgeInset`       | How far inside the edge a pinned marker is held, as a share of the view                           |
 | `bHideWithoutUsableMap` | Whether the view takes itself off screen in a level with no map drawn for it                       |
 | `MapDataOverride`       | A map to show in place of the one the level is being played with                                  |
+
+A view's reach is measured along its **shorter** side. A view wider than it is tall reaches further across the world than it does down, so it simply shows more world across rather than stretching what it shows, and a circle on the ground stays a circle on the view. This is what lets a map filling a wide screen be panned over ground the screen is not deep enough to hold.
 
 The shape matters because it decides where a pinned marker belongs. A marker held exactly at the edge is drawn half outside it, and a view that clips cuts that half away, which is what the inset is for.
 

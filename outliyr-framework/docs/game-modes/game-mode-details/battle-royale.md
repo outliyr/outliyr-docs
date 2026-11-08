@@ -89,6 +89,8 @@ The safe zone is a `B_SafeZone` actor that the scoring component drives through 
 
 Damage is driven by overlap. The zone's capsule reports when a player enters or leaves; a player outside the zone has the current stage's damage effect applied and a player who re-enters has it removed. Advancing to a new stage swaps the damage effect on everyone currently outside, so later rings hurt more.
 
+The wall a player sees is a mesh scaled out to the zone's radius, `SM_SafeZoneWall`, which is an open cylinder of a thousand sides carrying no caps and no collision. The side count is what keeps it reading as a curve rather than as flat panels, because a face grows with the zone and the material lighting it shades each face flat. A wall of a different look is a different material on that mesh, and a zone of a different shape is a different mesh on the same component.
+
 <details>
 
 <summary>Verified safe-zone behavior</summary>
@@ -101,6 +103,20 @@ From `B_Scoring_BattleRoyale` and `B_SafeZone`, read from the Blueprint graphs:
 * Overlap: `InTheZone` removes the damage effect from a player who enters; `OutTheZone` applies the current damage effect to a player who leaves and tracks them in a "players outside" set. `ReplaceGameplayEffects` removes the old effect from everyone outside and applies the new one when a stage changes. The light, medium, heavy, and danger damage effects live under `Game/SafeZone/`.
 
 </details>
+
+#### The zone and the route on the map
+
+A minimap of an island is worth little on its own, because where a player stands only means something against where they are allowed to be. Both the safe zone and the plane's route are drawn on every view of the map, through the Navigation plugin's [overlays](../../core-modules/navigation/overlays.md).
+
+`USafeZoneMapOverlayComponent` on `B_SafeZone` draws three things: the ground outside the zone shaded, the ring the zone stands at, and the ring it is closing to. It is told where the zone stands rather than reading it, by a `Set Zone` call from `UpdateZone`, because what the zone is doing at a given moment lives in the shrink it is running rather than in anything standing still. Every machine runs that shrink for itself, so nothing is replicated for the map. Between stages the zone is closing nowhere, so the two rings are one ring and only one is drawn.
+
+`UDropRouteMapOverlayComponent` on `ADropPlane` draws the route being flown and, over it, the stretch of it players may jump from. It sits on the plane rather than on the routes because the plane is the one thing that knows which route was chosen and whether it is still flying, so a level with several routes laid out in it draws only the one in use, and the line disappears when the plane lands. The route's own shape is read out of the level on whichever machine is drawing it, so only the route's id travels.
+
+The plane is `bAlwaysRelevant` for the same reason. A client beyond its cull distance would otherwise have no plane actor at all, and so no way to learn which route was picked.
+
+Each ships with its own material rather than drawing a plain line. The zone's deepens the shading with distance and runs a gradient around the boundary; the route's carries a pulse travelling the way the plane flies.
+
+The pieces are told apart by colour rather than by weight. The ring the zone stands at takes the colour of the wall a player sees around them in the world, the ground it has taken is washed in a darker shade of the same, and the ring it is closing to is drawn in a colour of its own so that where the wall is now reads apart from where it is going. The route and its drop window are drawn at the same thickness for the same reason: a stretch drawn thicker than the line it sits on reads as a swelling in the line rather than as a stretch that means something.
 
 ### Ground loot and death boxes
 

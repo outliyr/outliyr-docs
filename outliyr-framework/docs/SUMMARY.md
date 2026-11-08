@@ -352,6 +352,7 @@
 * [Navigation](core-modules/navigation/README.md)
   * [The Map Asset](core-modules/navigation/the-map-asset.md)
   * [Markers](core-modules/navigation/markers.md)
+  * [Overlays](core-modules/navigation/overlays.md)
   * [Map Views](core-modules/navigation/map-views.md)
   * [Pings](core-modules/navigation/pings/README.md)
     * [Kinds of Ping](core-modules/navigation/pings/ping-kinds.md)

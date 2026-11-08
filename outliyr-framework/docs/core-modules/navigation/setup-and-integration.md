@@ -53,6 +53,8 @@ What needs deciding per thing:
 
 The shipped modes each do this for their own objectives, which is the clearest place to look at a worked example: control points take their owner's colour and show capture progress, bomb sites come and go as the round moves on, and both flags and their bases carry a picture each.
 
+A thing whose shape matters rather than its place carries a `UMapOverlayComponent` instead, which puts a ring or a line on the same three views. The battle royale safe zone and drop route are the shipped examples, and [Overlays](overlays.md) covers it.
+
 <details>
 
 <summary>Where the dependency goes</summary>

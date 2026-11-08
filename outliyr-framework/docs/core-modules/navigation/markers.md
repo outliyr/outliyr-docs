@@ -4,6 +4,10 @@ An actor appears on the minimap, the compass and the map screen by carrying a `U
 
 A marker registers itself as its owner begins play and drops out as its owner ends play. Every view draws from that one registry rather than searching the world for itself.
 
+{% hint style="info" %}
+Everything on this page from **Teams and audience** onwards belongs to `UMapAnnotationComponent`, which the marker is built on. [Overlays](overlays.md), the shapes drawn over a map, are built on the same thing, so who may see one, whose side it is on, how it is revealed and which is drawn over which all work for a shape exactly as they are described here.
+{% endhint %}
+
 ***
 
 ## What a marker looks like

@@ -20,6 +20,28 @@ An override replaces all three checks, so an override that wants the ordinary ru
 
 ***
 
+## Drawing a shape of something
+
+Subclass `UMapOverlayComponent` and answer its two events. [Overlays](overlays.md) covers what the answers are made of; what follows is what is worth deciding when writing one.
+
+**Say where the shape stands, or be told.** A component can read whatever it is drawing, or be handed the numbers as they change. Reading is less to wire and suits anything whose shape is standing still in the world, such as a route laid out in the level. Being told suits anything whose shape lives in a motion rather than in a value, since there is nothing to read while it is between two places. The safe zone is told, because what it is doing at a given moment lives in the shrink it is running.
+
+**Nothing needs replicating for a shape.** Both machines ask the question for themselves, so a shape worked out from something every machine already runs costs nothing on the wire. A route picked at random is one name travelling, and the route's own shape is read out of the level on whichever machine is drawing it.
+
+**Answer the bounds cheaply or the saving is lost.** The two questions exist so that a shape far out of view costs one answer, which only holds while the first answer stays cheap. A component whose bounds are expensive to work out has made the split pointless and should keep them rather than finding them again.
+
+**Give places to suit the view that asked.** `ViewReach` on the request is how far the asking view sees. A long path answered at full detail for a minimap reaching forty metres is almost entirely places nobody will see resolved.
+
+### A shape with no ring and no line in it
+
+Everything with straight sides is a closed path, so a triangle, a rectangle or a corridor is `Points` and `bClosed` rather than anything new. A curve that is not a circle is a path laid out as finely as it needs to read, and the spacing to lay it at is the component's to choose, since only it knows what the curve is.
+
+### A fill material of your own
+
+A fill is told where the shape stands and left to decide what every part of the view does about it, which is what makes it the only way to shade one side of a shape. It is also the one part of the drawing that cannot be written once for every shape, because the answer depends on what shape it is. The plugin therefore ships a stroke material and leaves fills to whatever puts the shape up. The coordinates a fill is handed are set out under [Overlays](overlays.md).
+
+***
+
 ## A new kind of ping
 
 Author a `UPingDefinition` and list it on the ability. The ordering is the part that needs thought:
@@ -75,6 +97,8 @@ A widget binds as many of its class's named parts as it has a use for and ignore
 <summary>What the view classes let a subclass answer</summary>
 
 `UMapViewWidget` leaves four questions virtual, and the two shipped map views are nothing but different answers to them: where the view is centred, how far it reaches, which floor is shown and how far the map is turned. A third kind of map view, such as one locked to a region rather than to a player, is those four answers and no drawing code.
+
+Everything the base then works out follows from them, including the markers, the shapes and `GetViewProjection`, so a new view inherits the whole of the placement maths by answering those four and nothing else.
 
 </details>
 
