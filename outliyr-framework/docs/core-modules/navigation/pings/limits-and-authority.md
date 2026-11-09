@@ -64,6 +64,20 @@ Pings arriving is a separate matter from pings being placed, because each machin
 
 ***
 
+## Two players on one screen
+
+The views are drawn per player. A minimap, a compass and a map screen each belong to the player whose screen they are on, so each asks who is looking for itself and draws the pings that player is allowed, in that player's team colours.
+
+The mark drawn over the world is not. There is one set of those per machine, decided for and hosted by the first local player, so on a shared screen both players see the marks the first of them may see. The same goes for aiming at a ping: which mark is under the aim is one answer per machine, read from where the first player is looking, so answering a ping and taking one back follow that player too.
+
+{% hint style="info" %}
+This only bites where two players share one screen. One player per machine, which is every online match, reads the same answer either way.
+{% endhint %}
+
+A mode built for a shared screen can still use pings on the map and the compass, which are correct for both players. What it cannot rely on is the mark in the world, or a second player answering a call.
+
+***
+
 ## Asking the subsystem things
 
 | Function                   | Answers                                                                |
