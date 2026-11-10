@@ -51,4 +51,5 @@ A client never says what kind of ping it is making from context, only where it w
 | [**Kinds of Ping**](ping-kinds.md)                         | The definition asset: what a kind fits, what it is drawn with, how long it lasts, and settling into another kind  |
 | [**The Wheel and Answers**](the-wheel-and-answers.md)      | Holding the key, how a call is chosen, and answering somebody else's ping                                        |
 | [**Limits and Authority**](limits-and-authority.md)         | Counts, cooldowns, the rate across kinds, taking a ping back, and who a ping is replicated to                     |
+| [**Pings from the Map**](pings-from-the-map.md)             | Marking a place on the map screen, held to the map rather than to range, with the server finding the ground      |
 | [**Presentation**](presentation.md)                         | The mark drawn over the world, the feed, and the Blueprint hooks a widget binds                                   |

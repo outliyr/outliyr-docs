@@ -358,6 +358,7 @@
     * [Kinds of Ping](core-modules/navigation/pings/ping-kinds.md)
     * [The Wheel and Answers](core-modules/navigation/pings/the-wheel-and-answers.md)
     * [Limits and Authority](core-modules/navigation/pings/limits-and-authority.md)
+    * [Pings from the Map](core-modules/navigation/pings/pings-from-the-map.md)
     * [Presentation](core-modules/navigation/pings/presentation.md)
   * [Setup and Integration](core-modules/navigation/setup-and-integration.md)
   * [Extending](core-modules/navigation/extending.md)
