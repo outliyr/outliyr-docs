@@ -17,7 +17,7 @@ A ping from the map is held to the map instead. The map's picture covers a known
 | Whether there is a map   | The level has a map, and the map covers some ground and has at least one floor          |
 | Whether the place is on it | The point falls on the map's picture, measured the same way the picture is drawn        |
 | Which floor it is on     | The floor the map was showing exists, or the map was showing no floor in particular     |
-| Where the ground is      | The server's own trace straight down through that floor                                  |
+| Where the ground is      | The server's own trace straight down from the top of that floor                             |
 
 There is no range check, deliberately. A place nine kilometres away on a large map is as good as one beside the player.
 
@@ -29,11 +29,13 @@ Every ping the server turns down is logged on `LogNavigationFeature` at Verbose,
 
 The client sends a point on the ground and the floor the map was showing. It does not send a height, since a height is something the server can find for itself.
 
-The server traces straight down through the band of heights that floor covers, from the top of the band to the bottom, and places the ping where the trace first strikes. On a level with floors above one another, that is what puts the ping on the storey the player was looking at rather than on the roof above it.
+The server traces straight down from the top of the floor that was showing and places the ping on the first thing the trace strikes. On a level with floors above one another, starting at the top of the floor shown is what puts the ping on the storey the player was looking at rather than on the roof above it.
 
-Where the map was showing no floor in particular, the trace runs through every floor at once and the ping lands on whatever stands highest. This is the case for a player above every floor, such as one still in the air before a drop.
+A floor's heights describe where a player standing on it is, which is above the ground at their feet, so the trace does not stop at the bottom of the floor. It carries on down until it strikes something. Where the floor shown has nothing beneath the place, such as open ground seen from an upper storey, the ping lands on whatever is below.
 
-Where the trace strikes nothing, no ping is placed. A mark there would stand in the air or underneath the level.
+Nothing stands over the highest floor, so the trace for it starts above everything on the level. The same holds where the map was showing no floor in particular, such as for a player still in the air before a drop.
+
+Where the trace strikes nothing at all, no ping is placed, since a mark there would stand in the air.
 
 {% hint style="info" %}
 The trace uses the ability's `TraceChannel`, `Visibility` by default. Ground a player can see from above but which does not block that channel is ground a map ping passes straight through.
@@ -61,6 +63,7 @@ A screen takes input ahead of the game while it is open, so a key bound for the 
 | `GA_MapPing`          | `TraceChannel`  | What the downward trace for the ground is stopped by                          |
 | The fullscreen map    | `bPointerPings` | Whether a right-click marks the place under the pointer                       |
 | The fullscreen map    | `OnPingAsked`   | Raised as a place is asked for, for a sound or a flash under the pointer      |
+| The fullscreen map    | `PingHint`      | A hint shown only while the player can ping from the map                     |
 
 `OnPingAsked` is raised when the ping is asked for, not when it is placed, because the server may still turn it down. It suits immediate feedback under the pointer. It does not confirm that a mark went down; the mark arriving does that.
 
