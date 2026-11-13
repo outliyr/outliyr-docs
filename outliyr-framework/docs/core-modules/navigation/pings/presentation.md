@@ -85,6 +85,19 @@ Lines are deliberately few and short lived. Pings placed in a run inside `RunWin
 
 Which kinds reach the feed at all is each kind's own business, through `bShownInFeed`. A kind that only says what a player means to do can leave the saying to the mark standing there.
 
+### Answers to your own pings
+
+When a teammate answers one of the viewer's own pings, the feed writes a line saying so, such as "Sam confirmed your ping". The player who placed a ping is often no longer looking at it, and the answer is addressed to them. Answers to other players' pings stay on the mark, so the feed does not fill with the rest of the side's back and forth.
+
+Each teammate has one line per ping. A teammate who changes their answer has their line reworded rather than getting a second one, and a teammate who takes their answer back has their line retired, since it no longer says anything true. Answer lines never join a run of pings.
+
+| Set On                       | Field          | What It Does                                                                                     |
+| ---------------------------- | -------------- | ------------------------------------------------------------------------------------------------ |
+| `UPingResponseDefinition`    | `bShownInFeed` | Whether answering this way writes a line in the feed of the player who placed the ping           |
+| `UPingResponseDefinition`    | `FeedLine`     | What the line says. `{Responder}` is who answered and `{Thing}` is the name of what was marked   |
+
+A line for an answer is drawn with the answer's own picture and colour, and its entry carries the answer in `Response`, so a line widget can tell the two kinds of line apart.
+
 A line is handed something already worded and counted and adds nothing of its own, so a line stands for a run of pings as readily as for one. It is also told when it is shown and when it is retiring, and the feed waits for it to see itself out before taking it away.
 
 ***
