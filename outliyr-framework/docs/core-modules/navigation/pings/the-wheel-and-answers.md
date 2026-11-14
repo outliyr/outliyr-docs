@@ -75,7 +75,7 @@ Answering is held to four things, checked on the server:
 
 A ping of a player's own comes down when they aim at it and press, since saying the same thing twice about the same place says nothing the first saying did not.
 
-If they aim at their own ping and name a different call on the wheel, they are saying something else about that place instead. The old mark is then replaced rather than taken down and a new one put up, so it counts as the one change it is and is not charged twice against what they are allowed.
+Holding the button on a mark of their own therefore offers the kinds of ping rather than the answers, since an answer is not theirs to give. If they aim at their own ping and name a different call on the wheel, they are saying something else about that place instead. The old mark is then replaced rather than taken down and a new one put up, so it counts as the one change it is and is not charged twice against what they are allowed.
 
 <details>
 
