@@ -83,7 +83,9 @@ Holding the button on a mark of their own therefore offers the kinds of ping rat
 
 Which ping a player meant is settled where the marks are drawn, on their own machine, so the server only asks whether the one they named was somewhere their look could have reached. It asks that of the look exactly as reported, where it began as well as which way it ran, because a look measured from one place along a line drawn from another points at nothing in particular. How far that look was allowed to reach has already been settled against where the server has the player standing.
 
-A ping standing on a thing is also pointed at by pointing at the thing, since the mark is about that thing wherever it has gone. A ping standing on a place is not, because the places a player can tell apart from one another are coarser than a trace is.
+A mark resting under the crosshair is pointed at. So is a mark carried by what it marks, meaning a ping of a kind with `bFollowsTarget` set, since such a mark is about that thing wherever it has gone and the thing therefore stands for the mark. Aiming at an opponent reaches the ping on them even where the mark itself has drifted off the crosshair.
+
+A mark that stays where it was put is reached only under the crosshair. It is about that place alone, and the floor or wall it was placed against reaches far past the place pinged, so pointing at that same floor somewhere else entirely does not reach it.
 
 A player standing on top of a ping is treated as looking at it from every direction at once rather than from none.
 
