@@ -18,7 +18,7 @@ Add this fragment to an `ULyraInventoryItemDefinition` and choose the icon sourc
 
 With **`StaticTexture`** selected:
 
-* **`StaticIcon` (`TSoftObjectPtr<UTexture2D>`)**: The texture shown in inventory slots.
+* **`StaticIcon` (`TSoftObjectPtr<UTexture2D>`)**: The texture shown in inventory slots. [Icon Studio](../../../core-modules/icon-studio/README.md) stages and captures one in editor, for an item whose icon you would rather author than have rendered during play.
 
 With **`Generated`** selected:
 
