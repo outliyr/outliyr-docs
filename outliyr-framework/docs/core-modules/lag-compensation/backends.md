@@ -61,7 +61,7 @@ Capture bounds, collision responses, and the finalized transforms, and push the 
 
 ## The Anim Rewind backend
 
-`UAnimRewindHitboxProviderComponent` is a second backend, provided by the experimental [Anim Rewind](../anim-rewind/) system. It uses the `PosesOnDemand` channel: it pushes a bare trail and reconstructs the bracketing poses on request by replaying the character's animation graph headlessly. It exists for characters that do not animate on the server but still need rewound hitboxes, which the default backend cannot serve. It is documented end to end in the Anim Rewind section; here it matters only as the reference on-demand backend.
+`UAnimRewindHitboxProviderComponent` is a second backend, provided by the beta [Anim Rewind](../anim-rewind/) system. It uses the `PosesOnDemand` channel: it pushes a bare trail and reconstructs the bracketing poses on request by replaying the character's animation graph headlessly. It exists for characters that do not animate on the server but still need rewound hitboxes, which the default backend cannot serve. It is documented end to end in the Anim Rewind section; here it matters only as the reference on-demand backend.
 
 {% hint style="warning" %}
 An actor carries **exactly one** hitbox source. The manager returns a source id on the first registration and refuses a second for the same actor, so it never double-reports its hitboxes. Attach the snapshot source or the Anim Rewind provider, not both.

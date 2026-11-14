@@ -3,7 +3,7 @@
 {% hint style="danger" %}
 ### <mark style="color:red;">Experimental</mark>
 
-**Anim Rewind is an experimental system.** It reaches into engine-internal animation trait layouts that are not a stable interface, so it is engine-version fragile by nature, and it only works on characters driven by an Unreal Animation Framework (UAF) graph and Mover. Treat it as a capable but moving foundation: read this section before you rely on it, and validate any trait you depend on with the determinism audit described under [Supported Traits & Extension](supported-traits-and-extension.md).
+**Anim Rewind is a beta system.** It reaches into engine-internal animation trait layouts that are not a stable interface, so it is engine-version fragile by nature, and it only works on characters driven by an Unreal Animation Framework (UAF) graph and Mover. Treat it as a capable but moving foundation: read this section before you rely on it, and validate any trait you depend on with the determinism audit described under [Supported Traits & Extension](supported-traits-and-extension.md).
 {% endhint %}
 
 Server-side hit validation needs to know where a character's hitboxes were a fraction of a second ago (see [Lag Compensation](../lag-compensation/)). The straightforward way to answer that is to record every bone's world-space transform every tick and interpolate the history later. That works, but it costs memory for every tracked character every frame, and it only works if the character's mesh actually animates on the server.

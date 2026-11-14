@@ -56,7 +56,7 @@ What implements the contract is a **backend**. Two ship, and an actor carries ex
 | Backend                                  | Channel         | What it is                                                                                                                                                                                |
 | ---------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`ULagCompensationSnapshotSource`**     | `PosesInTrail`  | The **default backend** that ships with the system. Records finalized transforms every tick; for static geometry and any character animated on the server.                                |
-| **`UAnimRewindHitboxProviderComponent`** | `PosesOnDemand` | An **add-on backend** from the experimental [Anim Rewind](../anim-rewind/) system. Reconstructs poses by replaying the animation graph; for characters that do not animate on the server. |
+| **`UAnimRewindHitboxProviderComponent`** | `PosesOnDemand` | An **add-on backend** from the beta [Anim Rewind](../anim-rewind/) system. Reconstructs poses by replaying the animation graph; for characters that do not animate on the server. |
 
 Neither backend is privileged; both simply implement `ILagCompensationHitboxSource`. A project can add its own on either channel without touching the manager or worker. See [Backends](backends.md).
 

@@ -3,7 +3,7 @@
 {% hint style="danger" %}
 ### <mark style="color:red;">Experimental</mark>
 
-**Visual Replay is an experimental plugin.** It is the foundation of the kill cam and is tested by a large automated suite, but its interfaces may still change between versions. Read this section before building your own features on it.
+**Visual Replay is a beta plugin.** It is the foundation of the kill cam and is tested by a large automated suite, but its interfaces may still change between versions. Read this section before building your own features on it.
 {% endhint %}
 
 A kill cam, an instant replay of a goal, a "here's how you died" all show the recent past of a match that is still going on. Unreal's usual tool for replays records network traffic and plays it back through a separate network driver, typically into a separate copy of the world. That is a heavy machine to keep running just to look a few seconds back, and the replay only knows what the network carried.
