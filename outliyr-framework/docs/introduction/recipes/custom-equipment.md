@@ -32,15 +32,15 @@ Before the steps, the mental model. Equipment is built from a small graph of ass
 
 Other fragments exist for consumables, attachments, category sorting, and custom data, see the [Custom Item Recipe](custom-item.md) for the full menu. Rocket shoes use just these four.
 
-#### **When the player equips it.**&#x20;
+#### **When the player equips it.**
 
 The _Equipment Definition_ (e.g. `WID_RocketShoes`) drives what happens on equip: it spawns the equipment's visual actors on the appropriate sockets, grants the abilities listed in its Ability Set, and configures the slot the equipment occupies (and how it behaves there, held vs. holstered). The Equipment Definition also points at an _Equipment Instance_ class, the runtime representation of the equipment while it's on the player. **The default `Equipment Instance` class is fine for most equipment.** Rocket shoes use the default; guns subclass it.
 
-#### **What the equipment grants.**&#x20;
+#### **What the equipment grants.**
 
 The Equipment Definition references one or more _Ability Sets_, bundles of abilities granted to the player while the equipment is equipped. Each entry in an Ability Set pairs an input tag (e.g. `InputTag.Jump`) with an ability. If your equipment is a pure stat buff with no input-driven behaviour, the Ability Set can grant Gameplay Effects directly without any abilities at all.
 
-#### **What the player sees.**&#x20;
+#### **What the player sees.**
 
 Optional. Equipment doesn't _require_ a visual representation on the player. If yours has one, it's a Blueprint actor (e.g. `B_RocketShoe`) with the mesh and any cosmetic components. The Equipment Definition spawns it on the appropriate socket. Buff items, internal modifiers, and pure-effect items skip this entirely.
 

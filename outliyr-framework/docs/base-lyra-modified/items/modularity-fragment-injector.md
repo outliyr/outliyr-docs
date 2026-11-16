@@ -36,13 +36,13 @@ The key insight: **none of these modes modify the base weapon assets.** ShooterB
 
 ## How It Works
 
-### **`UFragmentInjector`**&#x20;
+### **`UFragmentInjector`**
 
 a Data Asset (`UDataAsset` subclass) that declares a single injection rule set. Each injector targets one item definition class and specifies which fragments to add, replace, or remove. You create concrete injectors as Blueprint assets that inherit from this class.
 
 <figure><img src="../../.gitbook/assets/image (48).png" alt=""><figcaption><p>Example of injecting a battle royale category to a weapon</p></figcaption></figure>
 
-### **`UFragmentInjectorManager`**&#x20;
+### **`UFragmentInjectorManager`**
 
 a `UObject` owned by `ULyraExperienceManagerComponent`. It discovers injector Blueprints through the Asset Registry, applies them during experience loading, and restores the original fragment arrays on unload.
 

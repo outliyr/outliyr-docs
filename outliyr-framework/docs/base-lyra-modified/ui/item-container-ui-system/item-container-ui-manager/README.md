@@ -24,7 +24,7 @@ void UMyInventoryWidget::NativeConstruct() {
 2. **State Desync:** If the Inventory Window selects an item, the Crafting Window doesn't know about it.
 3. **Memory Leaks:** If the widget is removed but the ViewModel is still bound to a global delegate, it stays in memory forever.
 
-#### **The Solution**&#x20;
+#### **The Solution**
 
 the manager keeps one ViewModel per container and shares it across every widget that asks for the same one. When no widget needs it anymore, the manager tears it down. The next pages explain how that works.
 

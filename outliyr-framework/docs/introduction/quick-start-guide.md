@@ -76,7 +76,7 @@ Now that you've played it, let's briefly see where the TDM setup lives:
 
        <figure><img src="../.gitbook/assets/image (3) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption><p><em><code>B_TeamDeathmatch</code> asset open, highlighting key properties.</em></p></figcaption></figure>
 
-#### Other Useful Assets in the TeamDeathmatch plugin
+### Other Useful Assets in the TeamDeathmatch plugin
 
 * `HeroData_TeamDeathmatch` – Player configuration
 * `B_Scoring_TeamDeathmatch` – Scoring logic
@@ -87,7 +87,7 @@ It depends on shared systems like ShooterBase, but no other plugin depends on TD
 
 ***
 
-## **Making a Small Tweak:**
+## **Making a Small Tweak**
 
 Let’s change a rule or component for learning purposes.
 
@@ -110,14 +110,14 @@ See the [Installing & Setup](installing-and-setup.md) guide for how to create on
 
 You've launched a game mode. Three places to go from here:
 
-#### **Pick what you want to build →** [**Recipes**](recipes/).&#x20;
+### Pick what you want to build
 
-A goal-driven router for new equipment, weapons, abilities, items, HUD widgets, and game modes, each with a recipe that takes you from blank asset to working in-game. The fastest path to building.
+[**Recipes**](recipes/) is a goal-driven router for new equipment, weapons, abilities, items, HUD widgets, and game modes, each with a recipe that takes you from blank asset to working in-game. The fastest path to building.
 
-#### **Understand the architecture →** [**Project Architecture**](project-architecture.md).&#x20;
+### Understand the architecture
 
-The big picture, how plugins, Experiences, Game Features, and Pawn Data fit together. Read this when you want the _why_ behind the structure.
+[**Project Architecture**](project-architecture.md) is the big picture, how plugins, Experiences, Game Features, and Pawn Data fit together. Read this when you want the _why_ behind the structure.
 
-#### **Read existing modes for inspiration**&#x20;
+### Read existing modes for inspiration
 
 Each plugin under `Plugins/GameFeatures/` is a complete worked example. **Battle Royale** and **Extraction** show different scales of inventory usage; **Arena** shows character selection and a buy menu; **Prop Hunt** and **Infection** illustrate asymmetric team setups; **Gun Game** uses Gameplay Events to drive progression; **Headquarters** demonstrates advanced respawn logic and so on. Inspect their Experience Definitions and Action Sets to see how the pieces compose in practice.

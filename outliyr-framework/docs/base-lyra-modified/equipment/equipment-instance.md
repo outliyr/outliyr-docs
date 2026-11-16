@@ -401,7 +401,7 @@ EquipmentInstance->AddTagAttribute(TAG_Weapon_SpreadExponent, 1.0f);
 {% endstep %}
 
 {% step %}
-#### Modification&#x20;
+#### Modification
 
 Other systems can modify these values:
 
@@ -420,7 +420,7 @@ Read the value a modifier stack builds on with `GetBaseTagAttributeValue`, and r
 {% endstep %}
 
 {% step %}
-#### Query&#x20;
+#### Query
 
 Abilities or other systems can read the current value using `GetTagAttributeValue(FGameplayTag Tag)` or check for existence using `HasTagAttribute(FGameplayTag Tag)`. The current value is the base value with every live modifier applied, which is what clients receive.
 

@@ -133,7 +133,7 @@ When a window opens, it automatically receives focus on its content widget, no m
 
 {% stepper %}
 {% step %}
-#### **The Window**&#x20;
+#### **The Window**
 
 A draggable shell containing a content widget. Windows track their screen geometry for navigation calculations.
 {% endstep %}

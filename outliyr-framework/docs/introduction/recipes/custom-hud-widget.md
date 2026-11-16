@@ -23,7 +23,7 @@ This recipe assumes you've completed the [Quick Start Guide](../quick-start-guid
 
 The framework gives you four registration paths, each suited to a different scenario. Pick the one that matches your goal, they're not interchangeable.
 
-### **`UGameFeatureAction_AddWidgets` from an Experience.**&#x20;
+### **`UGameFeatureAction_AddWidgets` from an Experience.**
 
 The widget is added to the running HUD when the Experience activates and removed when it ends.
 
@@ -31,7 +31,7 @@ The widget is added to the running HUD when the Experience activates and removed
 
 <figure><img src="../../.gitbook/assets/image (291).png" alt=""><figcaption><p>Example of default shooter widgets</p></figcaption></figure>
 
-### **Pawn Data widget set.**&#x20;
+### **Pawn Data widget set.**
 
 Widgets attached to a specific Pawn Data asset, granted when the player spawns with that Pawn Data and removed when they don't.
 
@@ -40,7 +40,7 @@ Widgets attached to a specific Pawn Data asset, granted when the player spawns w
 
 <figure><img src="../../.gitbook/assets/image (293).png" alt=""><figcaption><p>Specific UI for props in prop hunt</p></figcaption></figure>
 
-### **UI Extension Subsystem (`UUIExtensionSubsystem`).**&#x20;
+### **UI Extension Subsystem (`UUIExtensionSubsystem`).**
 
 The HUD declares **extension points**, tagged placeholders. Your Game Feature registers a widget against an extension point tag, the HUD slots it in. Unregister, and the widget disappears.
 
@@ -57,7 +57,7 @@ Extension points are not confined to the gameplay HUD. The pause menu hosts one 
 <img src="../../.gitbook/assets/image (295).png" alt="" data-size="original">
 {% endhint %}
 
-### **CommonUI layer push.**&#x20;
+### **CommonUI layer push.**
 
 Push widgets onto layered stacks. Each layer is its own stack, pushing adds a widget on top, popping removes it, and the layers stack on each other for predictable z-ordering.
 

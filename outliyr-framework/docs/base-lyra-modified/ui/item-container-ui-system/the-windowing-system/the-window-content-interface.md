@@ -51,7 +51,7 @@ UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 void SetContainerSource(const FInstancedStruct& Source);
 ```
 
-#### **Purpose**&#x20;
+#### **Purpose**
 
 Receive your data source and acquire your ViewModel.
 
@@ -80,7 +80,7 @@ UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 UWidget* GetFocusableContent() const;
 ```
 
-#### **Purpose**&#x20;
+#### **Purpose**
 
 Tell the Shell which widget should get keyboard/controller focus when focus is gained without navigation.
 
@@ -139,7 +139,7 @@ UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 void ReceiveNavigationEntry(EUINavigation Direction, float ScreenCoordinate);
 ```
 
-#### **Purpose**&#x20;
+#### **Purpose**
 
 Position your cursor/selection to align with where navigation came from. This creates a smooth "handoff" between windows, if the user was selecting an item at Y=300 in Window A and navigates right to Window B, Window B should select something near Y=300 on its left edge.
 

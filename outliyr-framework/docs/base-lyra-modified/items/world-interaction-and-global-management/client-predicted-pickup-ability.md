@@ -255,7 +255,7 @@ Called before any pickup logic. Return `false` to prevent the pickup entirely.
 * Validate level requirements
 * Prevent pickup during certain game states
 
-### Routing — **`DetermineItemDestination`**&#x20;
+### Routing — **`DetermineItemDestination`**
 
 <figure><img src="../../../.gitbook/assets/image (225).png" alt="" width="375"><figcaption></figcaption></figure>
 

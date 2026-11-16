@@ -85,7 +85,7 @@ UMyComponent::UMyComponent(const FObjectInitializer& ObjectInitializer)
 
 ***
 
-#### 3. `GetLifetimeReplicatedProps`&#x20;
+#### 3. `GetLifetimeReplicatedProps`
 
 ```cpp
 UMyComponent::GetLifetimeReplicatedProps(

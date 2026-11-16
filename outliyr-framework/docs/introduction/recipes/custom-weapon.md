@@ -50,19 +50,19 @@ Before the steps, the mental model. A weapon in this framework is built from a s
 * _ReticleConfig_ — reticle widget + ammo counter widget. Optional but strongly recommended.
 * _Pickup_ — world drop / pickup. Optional.
 
-#### **When the player equips it.**&#x20;
+#### **When the player equips it.**
 
 The _Equipment Definition_ (e.g. `WID_Rifle`) drives what happens on equip: it spawns the visible weapon actor in the player's hand, grants the abilities listed in its Ability Set, and activates the input bindings tied to those abilities. The Equipment Definition also points at an _Equipment Instance_ class, the runtime representation of the weapon in hand. Guns subclass it through the framework's `Gun Weapon Instance` chain.
 
-#### **What the player sees and hears.**&#x20;
+#### **What the player sees and hears.**
 
 The visible weapon is a _BP Gun Actor_ (e.g. `B_Rifle`), a Blueprint actor with the weapon mesh and the cosmetic components: muzzle flash, shell ejection, tracers, firing audio. It has no gameplay logic. The shooting ability gameplay cues call into this actor when the weapon fires, so every per-weapon cosmetic, visual or audio, lives in one place.
 
-#### **Pulling the trigger.**&#x20;
+#### **Pulling the trigger.**
 
 The Equipment Definition grants an _Ability Set_, a bundle of abilities active while the weapon is held. For most guns it's two: a _firing ability_ and a _reload ability_. Both are subclasses of existing abilities that come with this framework (hitscan, bullet-drop, or predictive-projectile firing; magazine or shell-by-shell reload), tuned by their properties rather than rewritten in code. The firing ability applies a _Damage Gameplay Effect_ on hit, that's where the weapon's actual damage values live.
 
-#### **On screen.**&#x20;
+#### **On screen.**
 
 The reticle widgets, a crosshair and an ammo counter, are referenced from the ReticleConfig fragment on the Item Definition. They're standard UMG widgets that are shown while the weapon is equipped and hides when it isn't.
 
@@ -100,7 +100,7 @@ Every step in [Build the rifle from scratch](custom-weapon.md#build-the-rifle-fr
 
 The Custom Equipment Recipe explains the framework's three-place split for equipment state, static configuration on the Equipment Instance subclass, live values in tag attributes, persistent counts in item stat tags. A weapon uses all three. This section is the concrete walk-through on a rifle.
 
-#### **Settings authored on the subclass.**&#x20;
+#### **Settings authored on the subclass.**
 
 A weapon's Equipment Instance class sits on top of an inheritance chain: `Gun Weapon Instance` → `Ranged Weapon Instance` → `Weapon Instance` → `Equipment Instance`. Each layer already implements something so your rifle doesn't have to:
 
@@ -110,7 +110,7 @@ A weapon's Equipment Instance class sits on top of an inheritance chain: `Gun We
 
 Your rifle subclass (`B_GunWeaponInstance_Rifle`, authored in Step 2) plugs values into the curves and asset references those layers read, the hold animation, recoil curves, damage falloff curve, equip/unequip montages, and starting values for live stats like base spread. You don't reimplement spread, falloff, or recoil from scratch.
 
-#### **Live values in tag attributes.**&#x20;
+#### **Live values in tag attributes.**
 
 Walk through what happens to the rifle's spread as the player picks it up, snaps on a stability attachment, fires, removes the attachment, and unequips:
 
@@ -122,7 +122,7 @@ Walk through what happens to the rifle's spread as the player picks it up, snaps
 
 Every system in the scenario reads and writes by tag name. The firing ability doesn't know which attachments are on the rifle; the attachment doesn't know which weapon it's bolted onto. They just touch `SpreadExponent`.
 
-#### **Persistent counts as item stat tags.**&#x20;
+#### **Persistent counts as item stat tags.**
 
 Magazine ammo isn't a tag attribute. The Gun Fragment on the Item Definition (Step 1) configures the magazine _size_; the current ammo _count_ is stored as a stat tag on the inventory item, so a half-loaded magazine survives the player swapping to a knife and back. Same for kill counters and any durability counter your game tracks.
 
