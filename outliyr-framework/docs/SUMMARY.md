@@ -348,7 +348,6 @@
   * [The Gunsmith](core-modules/loadout/the-gunsmith.md)
   * [Setup and Integration](core-modules/loadout/setup-and-integration.md)
   * [Extending](core-modules/loadout/extending.md)
-
 * [Icon Studio](core-modules/icon-studio/README.md)
 * [Navigation](core-modules/navigation/README.md)
   * [The Map Asset](core-modules/navigation/the-map-asset.md)

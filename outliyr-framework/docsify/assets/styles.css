@@ -336,8 +336,11 @@ div:has(> img) {
     text-decoration: none;
 }
 
-/* Section headers (collapsible group titles) */
-.sidebar ul li > p {
+/* Section headers (collapsible group titles).
+   Scoped away from paragraphs holding a link, since a blank line anywhere in
+   SUMMARY.md makes the whole list loose and wraps every entry in its own
+   paragraph, which would otherwise dress real nav entries as group titles. */
+.sidebar ul li > p:not(:has(> a)) {
     font-size: 0.82rem;
     font-weight: 600;
     letter-spacing: 0.06em;
@@ -345,6 +348,13 @@ div:has(> img) {
     padding: 0.75rem 0.7rem 0.35rem;
     margin: 0.75rem 0 0.25rem;
     color: var(--text-dim);
+}
+
+/* A loose list wraps each entry in a paragraph of its own, whose default
+   margins would space the nav out. Let the link keep its own padding. */
+.sidebar ul li > p:has(> a) {
+    margin: 0;
+    padding: 0;
 }
 
 /* Active page — accent pill with left rail */
