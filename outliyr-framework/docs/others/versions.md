@@ -6,7 +6,7 @@ All notable changes to the Outliyr Framework.
 
 ***
 
-#### v1.2 (14 November 2026)
+### v1.2 (14 November 2026)
 
 Built on Unreal Engine 5.8. 524 commits since v1.1.2.
 
