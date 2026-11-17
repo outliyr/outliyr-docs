@@ -146,7 +146,7 @@ Three systems consume rotation data during gameplay:
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Placement logic** | `FindAvailableSlotsForItem` iterates through `AllowedRotations`, checking if the rotated shape fits at each candidate position.   |
 | **Grid storage**    | When placed, the `FTetrisPlacement` for the item stores the `EItemRotation` that was used, this persists across replication.      |
-| **UI interaction**  | Widgets let the player cycle through `AllowedRotations` (typically by pressing `R` while dragging) and preview the rotated shape. |
+| **UI interaction**  | Widgets let the player cycle through `AllowedRotations` while placing an item and preview the rotated shape. `E` and `Q` rotate by default, bound through `IA_RotateItem` and `IA_RotateItemCounterClockwise`. |
 
 ***
 

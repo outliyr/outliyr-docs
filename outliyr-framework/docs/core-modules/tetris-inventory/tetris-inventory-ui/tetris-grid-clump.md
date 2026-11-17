@@ -242,4 +242,4 @@ ULyraTetrisGridClumpWidget
 └── Focus tracking state
 ```
 
-The input handler is created internally and does not need to be configured manually. It reads the same ViewModel the clump widget does, translating raw input events into ViewModel operations.
+The input handler is created from the widget's `InputHandlerClass` property, so no wiring is needed to get the shipped bindings, and a subclass selected there replaces them. `GetInputHandler()` returns the instance once the widget is constructed. The handler reads the same ViewModel the clump widget does, translating raw input events into ViewModel operations.

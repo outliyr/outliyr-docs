@@ -1,6 +1,6 @@
 # Tetris Grid Input Handler
 
-You hold the left stick to the right and the cursor glides across the grid, slow at first, then accelerating. You tap the D-pad down once and it moves exactly one cell. You press a bumper and the held item rotates 90 degrees. All of this input processing, digital keys, analog sticks, action buttons, repeat rates, lives in `UTetrisGridInputHandler`.
+You hold the left stick to the right and the cursor glides across the grid, slow at first, then accelerating. You tap the D-pad down once and it moves exactly one cell. You pull a trigger and the held item rotates 90 degrees. All of this input processing, digital keys, analog sticks, action buttons, repeat rates, lives in `UTetrisGridInputHandler`.
 
 This handler sits between raw input events and the [Tetris View Model](tetris-view-model.md). It does not render anything or own any state about the grid. It translates "the player pressed Right" into "call `ViewModel->MoveCursor(Right)`" and "the player pressed Confirm" into "call `ViewModel->PickUpItemAtCursor()` or attempt placement."
 
@@ -40,10 +40,10 @@ The handler uses configurable key arrays for each direction:
 
 | Array       | Default Keys                  | Purpose                    |
 | ----------- | ----------------------------- | -------------------------- |
-| `UpKeys`    | `Gamepad_DPad_Up`, `Up`       | Move cursor up one cell    |
-| `DownKeys`  | `Gamepad_DPad_Down`, `Down`   | Move cursor down one cell  |
-| `LeftKeys`  | `Gamepad_DPad_Left`, `Left`   | Move cursor left one cell  |
-| `RightKeys` | `Gamepad_DPad_Right`, `Right` | Move cursor right one cell |
+| `UpKeys`    | `Up`, `Gamepad_DPad_Up`, `W`       | Move cursor up one cell    |
+| `DownKeys`  | `Down`, `Gamepad_DPad_Down`, `S`   | Move cursor down one cell  |
+| `LeftKeys`  | `Left`, `Gamepad_DPad_Left`, `A`   | Move cursor left one cell  |
+| `RightKeys` | `Right`, `Gamepad_DPad_Right`, `D` | Move cursor right one cell |
 
 #### Auto-Repeat
 
@@ -133,11 +133,13 @@ Actions beyond movement are handled through separate key arrays:
 
 | Array                        | Default Keys                         | Action                               |
 | ---------------------------- | ------------------------------------ | ------------------------------------ |
-| `ConfirmKeys`                | `Gamepad_FaceButton_Bottom`, `Enter` | Pick up item or place held item      |
-| `CancelKeys`                 | `Gamepad_FaceButton_Right`, `Escape` | Cancel placement (return item)       |
-| `RotateClockwiseKeys`        | `Gamepad_RightShoulder`, `R`         | Rotate held item clockwise           |
-| `RotateCounterClockwiseKeys` | `Gamepad_LeftShoulder`, `Q`          | Rotate held item counter-clockwise   |
-| `ActionMenuKeys`             | `Gamepad_FaceButton_Left`, `Tab`     | Open context menu for item at cursor |
+| `ConfirmKeys`                | `Enter`, `SpaceBar`, `Gamepad_FaceButton_Bottom` | Pick up item or place held item      |
+| `CancelKeys`                 | `Escape`, `Gamepad_FaceButton_Right`             | Cancel placement, returning the item |
+| `RotateClockwiseKeys`        | `E`, `Gamepad_RightTrigger`                      | Rotate held item clockwise           |
+| `RotateCounterClockwiseKeys` | `Q`, `Gamepad_LeftTrigger`                       | Rotate held item counter-clockwise   |
+| `ActionMenuKeys`             | `Gamepad_FaceButton_Top`                         | Open context menu for item at cursor |
+
+The rotation arrays are the fallback. The keys actually in use come from the two rotation input actions, covered under [Rotation](#rotation) below.
 
 #### Confirm Logic
 
@@ -171,6 +173,19 @@ Rotation keys are only active during placement mode. When pressed:
 5. Clump widgets update the ghost preview
 
 If the item's `AllowedRotations` only contains one entry (e.g., the item cannot rotate), the rotation call is a no-op.
+
+Which key rotates is decided by two input actions rather than by the key arrays:
+
+| Property                       | Default action                      |
+| ------------------------------ | ----------------------------------- |
+| `RotateClockwiseAction`        | `IA_RotateItem`                     |
+| `RotateCounterClockwiseAction` | `IA_RotateItemCounterClockwise`     |
+
+`RefreshRotationKeysFromInputActions(LocalPlayer)` asks the Enhanced Input subsystem which keys those actions are mapped to and replaces `RotateClockwiseKeys` and `RotateCounterClockwiseKeys` with the answer. The clump widget calls it when it creates the handler and again each time the grid takes focus, so a key the player rebinds in the settings screen rotates the item without any further wiring.
+
+`IMC_TetrisInventory` ships the mappings: `E` and the right trigger rotate clockwise, `Q` and the left trigger rotate counter-clockwise. Each direction is resolved on its own, and a direction whose action is unset or has no mapped keys keeps the keys in its array. That is what makes the arrays a fallback rather than the binding.
+
+Point the properties at your own input actions to move rotation onto different keys, or clear them to drive rotation from the key arrays alone.
 
 ***
 
@@ -207,11 +222,13 @@ Override the default key arrays in your subclass or set them at runtime:
 // In your custom handler subclass constructor or initialization
 ConfirmKeys = { EKeys::Gamepad_FaceButton_Bottom, EKeys::SpaceBar };
 CancelKeys = { EKeys::Gamepad_FaceButton_Right, EKeys::Escape, EKeys::RightMouseButton };
-RotateClockwiseKeys = { EKeys::Gamepad_RightShoulder, EKeys::E };
-RotateCounterClockwiseKeys = { EKeys::Gamepad_LeftShoulder, EKeys::Q };
+RotateClockwiseKeys = { EKeys::Gamepad_RightTrigger, EKeys::E };
+RotateCounterClockwiseKeys = { EKeys::Gamepad_LeftTrigger, EKeys::Q };
 ```
 
 These are `TArray<FKey>` properties, so you can also set them in the Blueprint defaults panel or from a settings screen.
+
+The clump widget creates the handler from its `InputHandlerClass` property, so a handler subclass with your own defaults is selected in the widget's Class Defaults rather than passed in code. `GetInputHandler()` returns the live handler, which is how a settings screen reaches the arrays at runtime.
 
 </details>
 
@@ -293,6 +310,7 @@ void UMyTetrisInputHandler::HandleActionInput(FKey Key)
 | Analog movement (left stick)     | `HandleAnalogNavigation()` with deadzone and repeat     |
 | Confirm/cancel/rotate            | `HandleActionInput()` + `HandleConfirmAction()`         |
 | Repeat timing                    | `Tick()` drives timers; `ResetState()` clears them      |
-| Customization                    | Subclass, override key arrays, adjust timing properties |
+| Rotation key bindings            | `RefreshRotationKeysFromInputActions()` from the input actions |
+| Customization                    | Handler subclass on the clump widget, key arrays, timing properties |
 
 The input handler is deliberately simple, it is a translator, not a decision-maker. All game logic (can this item be placed? should this rotation be allowed?) lives in the [Tetris View Model](tetris-view-model.md). The handler just asks the questions.
