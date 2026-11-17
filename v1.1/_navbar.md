@@ -1,0 +1,3 @@
+- [Buy](https://outlier2.gumroad.com/l/outliyr-framework)
+- [Patreon](https://www.patreon.com/c/outliyr)
+- [Discord](https://discord.gg/mRaZHqBbae)
